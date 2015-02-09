@@ -115,7 +115,44 @@ public class ECLEngine
 
     private void generateSelectECL() throws SQLException
     {
-        /*boolean avoidindex = false;
+    	eclCode.append("#OPTION('outputlimit',2000);\n"+
+            				"Layout_Obs := RECORD\n"+
+            				"UNSIGNED5 encounter_num;\n"+
+            				"UNSIGNED5 patient_num;\n"+
+            				"STRING50 concept_cd;\n"+
+            				"STRING50 provider_id;\n"+
+            				"STRING25 start_date;\n"+
+            				"STRING100 modifier_cd;\n"+
+            				"UNSIGNED5 instance_num;\n"+
+            				"STRING50 valtype_cd;\n"+
+            				"STRING255 tval_char;\n"+
+            				"DECIMAL18_5 nval_num;\n"+
+            				"STRING50 valueflag_cd;\n"+
+            				"DECIMAL18_5 quantity_num;\n"+
+            				"STRING50 vunits_cd;\n"+
+            				"STRING25 end_date;\n"+
+            				"STRING50 location_cd;\n"+
+            				"STRING observation_blob;\n"+
+            				"DECIMAL18_5 confidence;\n"+
+            				"STRING25 update_date;\n"+
+            				"STRING25 download_date;\n"+
+            				"STRING25 import_date;\n"+
+            				"STRING50 sourcesystem_cd;\n"+
+            				"UNSIGNED5 upload_id;\n"+
+            				"END;\n"+
+
+            				"allPeople := DATASET('~i2b2demodata::observation_fact2',Layout_Obs,CSV);\n"+
+            				"fewPeople := allPeople(patient_num < 10);\n"+
+            				"OUTPUT(fewPeople,,'~i2b2demodata::observation_fact',CSV);");
+    	
+    	DFUFile hpccQueryFile = dbMetadata.getDFUFile("~i2b2demodata::observation_fact");
+    	HashMap<String, HPCCColumnMetaData> availablecols = new HashMap<String, HPCCColumnMetaData>();
+    	//addFileColsToAvailableCols(hpccQueryFile, availablecols);
+    
+    }
+    	
+    	/*
+        boolean avoidindex = false;
 
         HashMap<String, String> eclEntities = new HashMap<String, String>();
         HashMap<String, String> eclDSSourceMapping = new HashMap<String, String>();
@@ -575,10 +612,10 @@ public class ECLEngine
                     .append("\'));");
 
             expectedDSName = SELECTOUTPUTNAME;
-        }*/
-    }
+        }
+    }*/
 
-    public void createSelectStruct(HashMap<String, String> eclEntities, String datasource)
+    /*public void createSelectStruct(HashMap<String, String> eclEntities, String datasource)
     {
         StringBuilder selectStructSB = new StringBuilder("SelectStruct := RECORD\n");
 
@@ -657,7 +694,7 @@ public class ECLEngine
                                 && !col.isDistinct())
                         {
                             selectStructSB.append(", KEYED");
-                        }*/
+                        }*
 
                         selectStructSB.append(" );");
                     }
@@ -687,7 +724,7 @@ public class ECLEngine
         selectStructSB.append("END;\n");
 
         eclEntities.put("SELECTSTRUCT", selectStructSB.toString());
-    }
+    }*/
 
     /*public SQLType getQueryType()
     {
@@ -701,6 +738,8 @@ public class ECLEngine
     {
         eclCode = new StringBuilder("");
         hpccRequestUrl = null;
+        generateSelectECL();
+        generateSelectURL();
         
         /*
         switch (sqlParser.getSqlType())
@@ -755,7 +794,7 @@ public class ECLEngine
         }*/
     }
 
-    private void generateCallURL() throws SQLException
+    /*private void generateCallURL() throws SQLException
     {
         String urlString;
 
@@ -774,9 +813,9 @@ public class ECLEngine
         }
 
         HPCCJDBCUtils.traceoutln(Level.INFO, "HPCC URL created: " + urlString);
-    }
+    }*/
 
-    private void generateConstSelectURL() throws SQLException
+    /*private void generateConstSelectURL() throws SQLException
     {
         String urlString;
 
@@ -802,9 +841,9 @@ public class ECLEngine
             throw new SQLException(e.getMessage());
         }
         HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCC URL created: " + urlString);
-    }
+    }*/
 
-    private void generateConstSelectECL()
+    /*private void generateConstSelectECL()
     {
         eclCode.append("SelectStruct:=RECORD ");
         expectedretcolumns = sqlParser.getSelectColumns();
@@ -825,7 +864,7 @@ public class ECLEngine
         eclCode.append(ecloutput.toString());
 
         expectedDSName = SELECTOUTPUTNAME;
-    }
+    }*/
 
     private void generateSelectURL() throws SQLException
     {
@@ -851,7 +890,7 @@ public class ECLEngine
 
     public NodeList execute(Map inParameters) throws Exception
     {
-        switch (sqlParser.getSqlType())
+        /*switch (sqlParser.getSqlType())
         {
             case SELECT:
             {
@@ -867,12 +906,12 @@ public class ECLEngine
             }
             default:
                 break;
-        }
+        }*/
 
-        return null;
+        return executeSelect(inParameters);
     }
 
-    public boolean processIndex(DFUFile indexfiletouse, StringBuilder keyedandwild)
+    /*public boolean processIndex(DFUFile indexfiletouse, StringBuilder keyedandwild)
     {
         boolean isPayloadIndex =
                 containsPayload(indexfiletouse.getAllFieldsProps(), sqlParser.getSelectColumns().iterator());
@@ -927,9 +966,9 @@ public class ECLEngine
         }
 
         return isPayloadIndex;
-    }
+    }*/
 
-    private boolean containsPayload(Properties indexfields, Iterator<HPCCColumnMetaData> selectcolsit)
+    /*private boolean containsPayload(Properties indexfields, Iterator<HPCCColumnMetaData> selectcolsit)
     {
         while (selectcolsit.hasNext())
         {
@@ -942,7 +981,7 @@ public class ECLEngine
                 return false;
         }
         return true;
-    }
+    }*/
 
     public NodeList executeSelect(Map inParameters)
     {
@@ -954,7 +993,7 @@ public class ECLEngine
 
             sb.append("&eclText=\n");
 
-            int expectedParamCount = sqlParser.getParameterizedCount();
+            /*int expectedParamCount = sqlParser.getParameterizedCount();
             if (expectedParamCount > 0 && inParameters != null)
             {
                 if (expectedParamCount <= inParameters.size())
@@ -1057,13 +1096,14 @@ public class ECLEngine
                 }
                 else
                     throw new Exception("Insufficient number of parameters provided");
-            }
+            }*/
+            
 
             sb.append(eclCode.toString());
             sb.append("\n");
 
             long startTime = System.currentTimeMillis();
-
+            System.out.println(HPCCJDBCUtils.handleQuotedString("~i2b2demodata::observationfact"));
             HttpURLConnection conn = dbMetadata.createHPCCESPConnection(hpccRequestUrl);
 
             HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + sb);
@@ -1087,7 +1127,7 @@ public class ECLEngine
         }
     }
 
-    private void addFilterClause(StringBuilder sb)
+    /*private void addFilterClause(StringBuilder sb)
     {
         String whereclause = sqlParser.getWhereClauseString();
         if (whereclause != null && whereclause.length() > 0)
@@ -1096,9 +1136,9 @@ public class ECLEngine
             sb.append(whereclause);
             sb.append(" )");
         }
-    }
+    }*/
 
-    private boolean appendTranslatedHavingClause(StringBuilder sb, String latesDSName)
+    /*private boolean appendTranslatedHavingClause(StringBuilder sb, String latesDSName)
     {
         if (sqlParser.hasHavingClause())
         {
@@ -1124,9 +1164,9 @@ public class ECLEngine
         }
 
         return false;
-    }
+    }*/
 
-    public NodeList executeCall( Map inParameters)
+    /*public NodeList executeCall( Map inParameters)
     {
         StringBuilder sb = new StringBuilder();
         try
@@ -1215,7 +1255,7 @@ public class ECLEngine
         {
             throw new RuntimeException(e);
         }
-    }
+    }*/
 
     public NodeList parseDataset(InputStream xml, long startTime) throws Exception
     {
@@ -1309,14 +1349,14 @@ public class ECLEngine
         return resultSchema;
     }
 
-    public String findAppropriateIndex(String index, List<HPCCColumnMetaData> expectedretcolumns, SQLParser parser)
+    /*public String findAppropriateIndex(String index, List<HPCCColumnMetaData> expectedretcolumns, SQLParser parser)
     {
         List<String> indexhint = new ArrayList<String>();
         indexhint.add(index);
         return findAppropriateIndex(indexhint, expectedretcolumns, parser);
-    }
+    }*/
 
-    public String findAppropriateIndex(List<String> relindexes, List<HPCCColumnMetaData> expectedretcolumns, SQLParser parser)
+    /*public String findAppropriateIndex(List<String> relindexes, List<HPCCColumnMetaData> expectedretcolumns, SQLParser parser)
     {
         String indextouse = null;
         List<String> sqlqueryparamnames = new ArrayList<String>();
@@ -1325,7 +1365,7 @@ public class ECLEngine
             return indextouse;
 
         int totalparamcount = parser.getWhereClauseExpressionsCount();
-        /*[ FieldsInIndexCount ][LeftMostKeyIndex][ColsKeyedcount]*/
+        /*[ FieldsInIndexCount ][LeftMostKeyIndex][ColsKeyedcount]*
         int indexscore[][] = new int[relindexes.size()][INDEXSCORECRITERIAVARS];
         int highscore = Integer.MIN_VALUE;
         boolean payloadIdxWithAtLeast1KeyedFieldFound = false;
@@ -1390,5 +1430,5 @@ public class ECLEngine
             }
         }
         return indextouse;
-    }
+    }*/
 }
