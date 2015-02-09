@@ -2254,6 +2254,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
             HPCCJDBCUtils.traceoutln(Level.INFO, "Fetching file information: " + urlString);
             isSuccess = parseDFULogicalFiles(dfulogfilesConn.getInputStream(), false) > 0 ? true : false;
+            System.out.println(dfulogfilesConn.getInputStream());
         }
         catch (SocketTimeoutException e)
         {

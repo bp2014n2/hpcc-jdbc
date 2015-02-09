@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -41,6 +42,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import connectionManagement.HPCCColumnMetaData.ColumnType;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -115,40 +117,19 @@ public class ECLEngine
 
     private void generateSelectECL() throws SQLException
     {
-    	eclCode.append("#OPTION('outputlimit',2000);\n"+
-            				"Layout_Obs := RECORD\n"+
-            				"UNSIGNED5 encounter_num;\n"+
-            				"UNSIGNED5 patient_num;\n"+
-            				"STRING50 concept_cd;\n"+
-            				"STRING50 provider_id;\n"+
-            				"STRING25 start_date;\n"+
-            				"STRING100 modifier_cd;\n"+
-            				"UNSIGNED5 instance_num;\n"+
-            				"STRING50 valtype_cd;\n"+
-            				"STRING255 tval_char;\n"+
-            				"DECIMAL18_5 nval_num;\n"+
-            				"STRING50 valueflag_cd;\n"+
-            				"DECIMAL18_5 quantity_num;\n"+
-            				"STRING50 vunits_cd;\n"+
-            				"STRING25 end_date;\n"+
-            				"STRING50 location_cd;\n"+
-            				"STRING observation_blob;\n"+
-            				"DECIMAL18_5 confidence;\n"+
-            				"STRING25 update_date;\n"+
-            				"STRING25 download_date;\n"+
-            				"STRING25 import_date;\n"+
-            				"STRING50 sourcesystem_cd;\n"+
-            				"UNSIGNED5 upload_id;\n"+
-            				"END;\n"+
-
-            				"allPeople := DATASET('~i2b2demodata::observation_fact2',Layout_Obs,CSV);\n"+
-            				"fewPeople := allPeople(patient_num < 10);\n"+
-            				"OUTPUT(fewPeople,,'~i2b2demodata::observation_fact',CSV);");
+    	eclCode.append("import std;\n"+
+    						"#OPTION('outputlimit',2000);\n"+
+            				"Layout_modDim := RECORD\n"+
+            				"STRING700 modifier_path;\n"+
+    						"END;\n"+
+    						"modDim := DATASET('~i2b2demodata::test',Layout_modDim,CSV);"+
+    						"modDim;");
     	
-    	DFUFile hpccQueryFile = dbMetadata.getDFUFile("~i2b2demodata::observation_fact");
+    	DFUFile hpccQueryFile = dbMetadata.getDFUFile("i2b2demodata::test");
     	HashMap<String, HPCCColumnMetaData> availablecols = new HashMap<String, HPCCColumnMetaData>();
-    	//addFileColsToAvailableCols(hpccQueryFile, availablecols);
-    
+    	addFileColsToAvailableCols(hpccQueryFile, availablecols);
+    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
+    	expectedretcolumns.add(new HPCCColumnMetaData("modifier_path", 0, null));
     }
     	
     	/*
@@ -1103,10 +1084,9 @@ public class ECLEngine
             sb.append("\n");
 
             long startTime = System.currentTimeMillis();
-            System.out.println(HPCCJDBCUtils.handleQuotedString("~i2b2demodata::observationfact"));
             HttpURLConnection conn = dbMetadata.createHPCCESPConnection(hpccRequestUrl);
 
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + sb);
+            //HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + sb);
             OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
             wr.write(sb.toString());
             wr.flush();

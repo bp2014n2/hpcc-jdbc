@@ -111,7 +111,7 @@ public class HPCCStatement implements Statement
                 }
 
                 NodeList rowList = eclQuery.execute(params);
-
+                System.out.println(rowList);
                 if (rowList != null)
                     result = new HPCCResultSet(this, rowList, resultMetadata);
             }

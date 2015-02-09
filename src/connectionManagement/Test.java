@@ -21,11 +21,13 @@ public class Test {
 			 HPCCStatement stmt = (HPCCStatement) connection.createStatement();
 			 
 			/* Create your SQL query */
-			 String mysql = "select * from i2b2demodata::observation_fact where patient_num < 10";
+			 String mysql = "select * from i2b2demodata::test where patient_num < 10";
 			/* Execute your SQL query */
 			 HPCCResultSet res1 = (HPCCResultSet) stmt.executeQuery(mysql);
 			 
-			 System.out.println(res1);
+			 while(res1.next()){
+				 System.out.println(res1.getString(1));
+			 }
 		
 		} catch (SQLException | ClassNotFoundException e) {
 			// TODO Auto-generated catch block
