@@ -48,13 +48,14 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+
 public class ECLEngine
 {
     private HPCCQuery               hpccPublishedQuery = null;
     private String                  expectedDSName = null;
     private NodeList                resultSchema = null;
     private final Properties        hpccConnProps;
-    //private SQLParser               sqlParser;
+    private SQLParser               sqlParser;
     private HPCCDatabaseMetaData    dbMetadata;
 
     private StringBuilder           eclCode;
@@ -74,14 +75,33 @@ public class ECLEngine
     private static final int            NumberofColsKeyedInThisIndex_WEIGHT   = 2;
 
     private static final String         SELECTOUTPUTNAME = "JDBCSelectQueryResult";
+    
+    private static final String			IMPORTSTD = "import std;\n";
+    private static final String 		OUTPUTLIMIT = "#OPTION('outputlimit',2000);\n";
+    private static final String			Layout_ConDim = "RECORD\n"+
+										  "STRING700 concept_path;\n"+
+										  "STRING50 concept_cd;\n"+
+										  "STRING2000 name_char;\n"+
+										  "STRING concept_blob;\n"+
+										  "STRING25 update_date;\n"+
+										  "STRING25 download_date;\n"+
+										  "STRING25 import_date;\n"+
+										  "STRING50 sourcesystem_cd;\n"+
+										  "UNSIGNED5 upload_id;\n"+
+										"END;\n";
+    private static final String			HPCCEngine = "THOR";
+    
+    HashMap<String, String> layouts = new HashMap<String, String> ();
 
     private DocumentBuilderFactory      dbf = DocumentBuilderFactory.newInstance();
 
-    public ECLEngine(HPCCDatabaseMetaData dbmetadata, Properties props)
+    public ECLEngine(HPCCDatabaseMetaData dbmetadata, Properties props, SQLParser parser)
     {
         this.hpccConnProps = props;
         this.dbMetadata = dbmetadata;
-        //this.sqlParser = parser;
+        this.sqlParser = parser;
+        
+        layouts.put("Layout_ConDim", Layout_ConDim);
     }
 
     public List<HPCCColumnMetaData> getExpectedRetCols()
@@ -98,6 +118,8 @@ public class ECLEngine
             availablecols.put(col.getTableName().toUpperCase() + "." + col.getColumnName().toUpperCase(), col);
         }
     }
+    
+    
 
     public NodeList executeSelectConstant()
     {
@@ -117,19 +139,37 @@ public class ECLEngine
 
     private void generateSelectECL() throws SQLException
     {
-    	eclCode.append("import std;\n"+
-    						"#OPTION('outputlimit',2000);\n"+
-            				"Layout_modDim := RECORD\n"+
-            				"STRING700 modifier_path;\n"+
-    						"END;\n"+
-    						"modDim := DATASET('~i2b2demodata::test',Layout_modDim,CSV);"+
-    						"modDim;");
+    	String layoutName = "Layout_ConDim";
+    	eclCode.append(IMPORTSTD).append(OUTPUTLIMIT).append(layoutName).append(" := ").append(layouts.get(layoutName));
+    	String tmpTable = "test";
+    	eclCode.append(tmpTable).append(" := ").append("DATASET(");
+    	String table = sqlParser.getTables().get(0);
+    	eclCode.append("'~").append(table).append("'");
     	
-    	DFUFile hpccQueryFile = dbMetadata.getDFUFile("i2b2demodata::test");
+    	eclCode.append(", ").append(layoutName).append(",").append(HPCCEngine).append(");");
+    	
+    	eclCode.append("OUTPUT(").append(tmpTable);
+    	List<String> selects = sqlParser.getSelects();
+    	if (!selects.isEmpty()) {
+    		eclCode.append(",{").append(String.join(",", selects)).append("}");
+    	} else {
+    		String layout = layouts.get(layoutName);
+    		
+    	}
+    	eclCode.append(");");
+    	
+    	System.out.println(eclCode.toString());
+    	
+    	DFUFile hpccQueryFile = dbMetadata.getDFUFile(table);
     	HashMap<String, HPCCColumnMetaData> availablecols = new HashMap<String, HPCCColumnMetaData>();
     	addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	expectedretcolumns.add(new HPCCColumnMetaData("modifier_path", 0, null));
+    	
+    	for (int i=0; i<selects.size(); i++) {
+    		String column = selects.get(i);
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
+    	}
+    	
     }
     	
     	/*
