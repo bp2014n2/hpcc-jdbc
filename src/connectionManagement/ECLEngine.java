@@ -140,27 +140,58 @@ public class ECLEngine
     private void generateSelectECL() throws SQLException
     {
     	String layoutName = "Layout_ConDim";
-    	eclCode.append(IMPORTSTD).append(OUTPUTLIMIT).append(layoutName).append(" := ").append(layouts.get(layoutName));
     	String tmpTable = "test";
-    	eclCode.append(tmpTable).append(" := ").append("DATASET(");
-    	String table = sqlParser.getTables().get(0);
-    	eclCode.append("'~").append(table).append("'");
-    	
-    	eclCode.append(", ").append(layoutName).append(",").append(HPCCEngine).append(");");
-    	
-    	eclCode.append("OUTPUT(").append(tmpTable);
+    	List<String> tables = sqlParser.getTables();
+    	List<String> orderBys = sqlParser.getOrderBys();
     	List<String> selects = sqlParser.getSelects();
-    	if (!selects.isEmpty()) {
-    		eclCode.append(",{").append(String.join(",", selects)).append("}");
+    	
+    	eclCode.append(IMPORTSTD).append(OUTPUTLIMIT);
+    	eclCode.append(layoutName).append(" := ").append(layouts.get(layoutName));
+    	eclCode.append(tmpTable).append(" := ").append("DATASET(");
+    	
+    	eclCode.append("'~").append(tables.get(0)).append("'");
+    	eclCode.append(", ").append(layoutName).append(",").append(HPCCEngine).append(");\n");
+    	
+    	eclCode.append("OUTPUT(");
+    	StringBuilder tableString = new StringBuilder();
+    	if (!orderBys.isEmpty()) {
+    		tableString.append("SORT(").append(tmpTable).append(",");
+    		tableString.append(orderBys.get(0));
+    		for (int i = 1; i<orderBys.size(); i++) {
+    			tableString.append(",").append(orderBys.get(i));
+    		}
+    		tableString.append(")");
     	} else {
+    		tableString.append(tmpTable);
+    	}
+	
+    	// is select * or select `any_column`?
+    	if (!selects.isEmpty()) {
+    		/*only Java 8
+    		eclCode.append(",{").append(String.join(",", selects)).append("}");*/
+//    		code for Java 7
+    		eclCode.append(tableString.toString());
+    		eclCode.append(",{");
+    		eclCode.append(selects.get(0));
+    				
+       		for (int i = 1; i<selects.size(); i++) {
+       			eclCode.append(",");
+       			eclCode.append(selects.get(i));
+       		}
+       		eclCode.append("}");
+    	} else {
+    		// get all columns from layout
     		String layout = layouts.get(layoutName);
-    		
+    		String[] columns = layout.split(";");
+    		for (String column : columns) {
+    			if (column.split(" ").length > 1) selects.add(column.split(" ")[1]);
+    		}
     	}
     	eclCode.append(");");
     	
     	System.out.println(eclCode.toString());
     	
-    	DFUFile hpccQueryFile = dbMetadata.getDFUFile(table);
+    	DFUFile hpccQueryFile = dbMetadata.getDFUFile(tables.get(0));
     	HashMap<String, HPCCColumnMetaData> availablecols = new HashMap<String, HPCCColumnMetaData>();
     	addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
