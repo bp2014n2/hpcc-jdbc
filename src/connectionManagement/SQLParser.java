@@ -1,47 +1,126 @@
 package connectionManagement;
 
 import java.io.StringReader;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.parser.*;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.*;
 import net.sf.jsqlparser.statement.Statement;
-import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParser{
 	
 	CCJSqlParserManager parserManager = new CCJSqlParserManager();
 	Statement statement;
+	private PlainSelect plain;
 
 	public SQLParser() {
 		
 	}
 	
-	public void generateObjectTree(String sql) {
+	public SQLParser(Expression expression) {
+		statement = (Statement) expression;
+		if (expression instanceof SubSelect) {
+			plain = (PlainSelect) ((SubSelect) expression).getSelectBody();
+		}
+	}
+	
+	public SQLParser(String sql) {
 		try {
 			statement = parserManager.parse(new StringReader(sql));
-	
+			System.out.println("test");
+			
+			if (statement instanceof Select) {
+				plain = (PlainSelect) ((Select) statement).getSelectBody();
+			}
 		} catch (JSQLParserException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
+	public SQLParser (Statement statement) {
+		this.statement = statement;
+		if (statement instanceof Select) {
+			plain = (PlainSelect) ((Select) statement).getSelectBody();
+		}
+	}
+
+	
+	public FromItem getTable() {
+		return plain.getFromItem();
+	}
+	
+	public List<Table> extractAllTables() {
+		ArrayList<Table> allTables = new ArrayList<Table>();
+		
+		if (getTable() instanceof Table) {
+			allTables.add((Table) getTable());
+		} else if (getTable() instanceof SubSelect){
+			allTables.addAll(new SQLParser((Expression) getTable()).extractAllTables());
+		}
+		
+		if (getJoins() != null) {
+			for (Join join : getJoins()) {
+				if (join.getRightItem() instanceof Table) {
+					allTables.add((Table) join.getRightItem());
+				} else if (getTable() instanceof SubSelect){
+					allTables.addAll(new SQLParser((Expression) join.getRightItem()).extractAllTables());
+				}
+			}
+		}
+		
+		if (getWhere() != null) {
+			Expression e = getWhere();
+			if (e instanceof BinaryExpression) {
+				allTables.addAll(new SQLParser((Expression) ((BinaryExpression) e).getRightExpression()).extractAllTables());
+				allTables.addAll(new SQLParser((Expression) ((BinaryExpression) e).getLeftExpression()).extractAllTables());
+			}
+		}
+		
+		System.out.println(allTables.toString());
+		return allTables;
+	}
+	
+	public Expression getWhere() {
+		return plain.getWhere();
+	}
+	
+	public List<Expression> getGroupBys() {
+		return plain.getGroupByColumnReferences();
+	}
+	
+	public List<OrderByElement> getOrderBys() {
+		return plain.getOrderByElements();
+	}
+	
+	public List<Join> getJoins() {
+		return plain.getJoins();
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/*
 	private <T> List<String> getColumns (List<T> elements) {
 		if (elements == null) return (List<String>) new ArrayList<String> ();
+		
 		List<String> result = (List<String>) new ArrayList<String>();
 		for (T element : elements) {
-			String funcName = "getExpression";
 			try {
-				//mega-hyper-krasse Meta-Programmierung
+//				mega-hyper-krasse Meta-Programmierung
 //				mega-hyper-crass meta-programming
-				java.lang.reflect.Method method = element.getClass().getMethod(funcName, null);
+				java.lang.reflect.Method method = element.getClass().getMethod("getExpression", null);
 				Column c = (Column) method.invoke(element, null);
 				result.add(transformColumnToString(c));
 				
@@ -51,39 +130,11 @@ public class SQLParser{
 		}
 		return result;
 	}
+	*/
 	
-	public List<String> getTables() {
-		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
-		/* only working with Java 8
-		List<String> test = tablesNamesFinder.getTableList((Select) statement)
-				.stream()
-				.map(s -> s.replace(".", "::"))
-				.collect(Collectors.toList()); */
-//		code for Java 7
-		List<String> test = tablesNamesFinder.getTableList((Select) statement);
-		for(int i = 0; i<test.size(); i++) {
-			test.set(i, test.get(i).replace(".", "::"));
-		}
-		
-		return test;
-	}
 	
-	public List<String> getGroupBys() {
-		Select select = (Select) statement;
-		PlainSelect plain = (PlainSelect) select.getSelectBody();
-		
-		plain.getGroupByColumnReferences();
-		
-		return null;
-	}
 	
-	public List<String> getOrderBys() {
-		Select select = (Select) statement;
-		PlainSelect plain = (PlainSelect) select.getSelectBody();
-	
-		return getColumns(plain.getOrderByElements());
-	}
-	
+	/*
 	public List<String> getSelects() {
 		Select select = (Select) statement;
 		PlainSelect plain = (PlainSelect) select.getSelectBody();
@@ -97,7 +148,7 @@ public class SQLParser{
 				.map(s -> transformSelectItemToString(s))
 				.collect(Collectors.toList()); */
 //		code for Java 7
-		
+	/*	
 		return getColumns(plain.getSelectItems());
 	}
 	
@@ -111,6 +162,6 @@ public class SQLParser{
 		return string;
 	}
 	
-	
+	*/
 
 }

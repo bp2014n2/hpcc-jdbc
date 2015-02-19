@@ -42,6 +42,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import connectionManagement.HPCCColumnMetaData.ColumnType;
+import net.sf.jsqlparser.schema.Table;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -86,6 +87,7 @@ public class ECLEngine
         this.hpccConnProps = props;
         this.dbMetadata = dbmetadata;
         this.sqlQuery = sql;
+        this.sqlParser = new SQLParser(sql);
         
         
     }
@@ -122,19 +124,27 @@ public class ECLEngine
             throw new RuntimeException(e);
         }
     }
-    /**
-    private void generateSelectECL() throws SQLException {
     	
-    }
-**/
-    
-    private void generateSelectECL() throws SQLException
+    public void generateECL() throws SQLException
     {
-    	
-    	ECLBuilder eclBuilder = new ECLBuilder(sqlQuery);
-    	eclBuilder.generateECL();
-    	
-    	
+    	/*
+        eclCode = new StringBuilder("");
+        hpccRequestUrl = null;
+        
+//      TODO: implement layout-generation and loading of all datasets
+
+    	for (String table : tables) {
+    		eclCode.append(table.split("::")[1]).append(" := ").append("DATASET(");
+    		eclCode.append("'~").append(table).append("'");
+        	eclCode.append(", ").append("Layout_"+table.split("::")[1]).append(",").append(HPCCEngine).append(");\n");
+    	}
+        */
+        generateLayouts();
+		generateTables();
+		
+		ECLBuilder eclBuilder = new ECLBuilder(sqlQuery);
+    	eclCode.append(eclBuilder.generateECL());
+    	/*
     	DFUFile hpccQueryFile = dbMetadata.getDFUFile(eclBuilder.getTables().get(0));
     	HashMap<String, HPCCColumnMetaData> availablecols = new HashMap<String, HPCCColumnMetaData>();
     	addFileColsToAvailableCols(hpccQueryFile, availablecols);
@@ -145,722 +155,29 @@ public class ECLEngine
     		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
     	}
     	
-    }
-    	
-    	/*
-        boolean avoidindex = false;
-
-        HashMap<String, String> eclEntities = new HashMap<String, String>();
-        HashMap<String, String> eclDSSourceMapping = new HashMap<String, String>();
-        HashMap<String, String> translator = null;
-
-        DFUFile indexFileToUse = null;
-        int totalWhereClauseExpressions = 0;
-        boolean isPayloadIndex = false;
-        String indexPosField = null;
-
-        eclCode.append("import std;\n");
-
-        //Currently, query table is always 0th index.
-        String queryFileName = HPCCJDBCUtils.handleQuotedString(sqlParser.getTableName(0)).toUpperCase();
-        if (!dbMetadata.tableExists("", queryFileName))
-            throw new SQLException("Invalid or forbidden table found: " + queryFileName);
-
-        DFUFile hpccQueryFile = dbMetadata.getDFUFile(queryFileName);
-
-        if (!hpccQueryFile.hasFileRecDef())
-            throw new SQLException("Cannot query: " + queryFileName
-                    + " because it does not contain an ECL record definition.");
-
-        HashMap<String, HPCCColumnMetaData> availablecols = new HashMap<String, HPCCColumnMetaData>();
-
-        addFileColsToAvailableCols(hpccQueryFile, availablecols);
-
-        SQLJoinClause joinclause = sqlParser.getJoinClause();
-        if (joinclause != null)
-        {
-            //TODO is there a way to prevent processing join here, and later on??
-            for (int i = 0; i < joinclause.getJoinTablesCount(); i++)
-            {
-                String joinTableName = joinclause.getJoinTableName(i);
-                if (!dbMetadata.tableExists("", joinTableName))
-                    throw new SQLException("Invalid or forbidden Join table found: " + joinTableName);
-
-                DFUFile joinTableFile = dbMetadata.getDFUFile(joinTableName);
-                if (!joinTableFile.hasFileRecDef())
-                    throw new SQLException("Cannot query: "+ joinTableName+" because it does not contain an ECL record definition.");
-
-                addFileColsToAvailableCols(joinTableFile, availablecols);
-            }
-
-            avoidindex = true; // will not be using index
-
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "Will not use INDEX files for \"Join\" query.");
-        }
-
-        sqlParser.verifyAndProcessALLSelectColumns(availablecols);
-
-        expectedretcolumns = sqlParser.getSelectColumns();
-
-        String tmpindexname = null;
-        String indexhint = sqlParser.getIndexHint();
-
-        if (indexhint != null)
-        {
-            if (indexhint.trim().equals("0"))
-            {
-                avoidindex = true;
-                HPCCJDBCUtils.traceoutln(Level.INFO,  "Will not use any index.");
-            }
-            if (!avoidindex)
-            {
-                tmpindexname = findAppropriateIndex(indexhint, expectedretcolumns, sqlParser);
-                if (tmpindexname == null)
-                    HPCCJDBCUtils.traceoutln(Level.INFO,  "Cannot use USE INDEX hint: " + indexhint);
-            }
-        } else
-
-        if (hpccQueryFile.hasRelatedIndexes() && !avoidindex)
-        {
-            tmpindexname = findAppropriateIndex(hpccQueryFile.getRelatedIndexesList(), expectedretcolumns, sqlParser);
-        }
-
-        totalWhereClauseExpressions = sqlParser.getWhereClauseExpressionsCount();
-
-        if (tmpindexname != null)
-        {
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "Generating ECL using index file: " + tmpindexname);
-            indexFileToUse = dbMetadata.getDFUFile(tmpindexname);
-            indexPosField = indexFileToUse.getIdxFilePosField();
-
-            StringBuilder keyedAndWild = new StringBuilder();
-            isPayloadIndex = processIndex(indexFileToUse, keyedAndWild);
-
-            eclEntities.put("KEYEDWILD", keyedAndWild.toString());
-            if (isPayloadIndex)
-                eclEntities.put("PAYLOADINDEX", "true");
-
-            eclDSSourceMapping.put(queryFileName, "IdxDS");
-
-            StringBuffer idxsetupstr = new StringBuffer();
-            idxsetupstr.append("Idx := INDEX(TblDS0, {")
-                    .append(indexFileToUse.getKeyedFieldsAsDelmitedString(',', null)).append("}");
-
-            if (indexFileToUse.getNonKeyedColumnsCount() > 0)
-                idxsetupstr.append(",{ ")
-                            .append(indexFileToUse.getNonKeyedFieldsAsDelmitedString(',', null))
-                            .append(" }");
-
-            idxsetupstr.append(",\'~").append(indexFileToUse.getFullyQualifiedName()).append("\');\n");
-
-            eclEntities.put("IndexDef", idxsetupstr.toString());
-
-            idxsetupstr.setLength(0);
-
-            if (isPayloadIndex)
-            {
-                HPCCJDBCUtils.traceoutln(Level.INFO,  " as PAYLOAD");
-                idxsetupstr.append("IdxDS := Idx(").append(keyedAndWild.toString()).append(");\n");
-            }
-            else
-            {
-                HPCCJDBCUtils.traceoutln(Level.INFO,  " Not as PAYLOAD");
-                idxsetupstr.append("IdxDS := FETCH(TblDS0, Idx( ")
-                           .append(keyedAndWild.toString())
-                           .append("), RIGHT.")
-                           .append(indexFileToUse.getIdxFilePosField())
-                           .append(");\n");
-            }
-            eclEntities.put("IndexRead", idxsetupstr.toString());
-        }
-        else
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "NOT USING INDEX!");
-
-        if (hpccQueryFile.hasFileRecDef())
-        {
-            if (indexFileToUse != null && indexPosField != null)
-                eclCode.append(hpccQueryFile.getFileRecDefwithIndexpos(
-                        indexFileToUse.getFieldMetaData(indexPosField), "TblDS0RecDef"));
-            else
-                eclCode.append(hpccQueryFile.getFileRecDef("TblDS0RecDef"));
-            eclCode.append("\n");
-        }
-        else
-            throw new SQLException("Target HPCC file (" + queryFileName + ") does not contain ECL record definition");
-
-        if (!eclDSSourceMapping.containsKey(queryFileName))
-            eclDSSourceMapping.put(queryFileName, "TblDS0");
-
-        if (!hpccQueryFile.isKeyFile())
-            eclCode.append("TblDS0 := DATASET(\'~").append(hpccQueryFile.getFullyQualifiedName())
-                    .append("\', TblDS0RecDef,").append(hpccQueryFile.getFormat()).append(");\n");
-        else
-        {
-            eclCode.append("TblDS0 := INDEX( ");
-            eclCode.append('{');
-            eclCode.append(hpccQueryFile.getKeyedFieldsAsDelmitedString(',', "TblDS0RecDef"));
-            eclCode.append("},{");
-            eclCode.append(hpccQueryFile.getNonKeyedFieldsAsDelmitedString(',', "TblDS0RecDef"));
-            eclCode.append("},");
-            eclCode.append("\'~").append(hpccQueryFile.getFullyQualifiedName()).append("\');\n");
-        }
-
-        if (joinclause != null)
-        {
-            int joinsCount = joinclause.getJoinTablesCount();
-
-            translator = new HashMap<String, String>();
-            translator.put(queryFileName, "LEFT");
-
-            /*
-             * Each join table triggers a new Join comprised of either the querytable or
-             * the previous join, and the current join table.
-             *
-             * In order to achieve this, the following is performed for each jointable:
-             * Define the tables's record definition: TblDSXRecDef := RECORD fields END;
-             * Create Dataset based on the table's content:
-             *  If the table is not indexed:
-             *   TblDSX := DATASET(\'~HPCCFILENAME', TblDSXRecDef, FILEFORMAT)
-             *  If the table is indexed:
-             *   TblDSX := INDEX({KEYEDFIELDS}, {NONKEYEDFIELDS}, \'~HPCCFILENAME')
-             *
-            for (int joinTableIndex = 0; joinTableIndex < joinsCount; joinTableIndex++)
-            {
-                String hpccJoinFileName = HPCCJDBCUtils.handleQuotedString(joinclause
-                        .getJoinTableName(joinTableIndex)).toUpperCase();
-
-                if (!dbMetadata.tableExists("", hpccJoinFileName))
-                    throw new SQLException("Invalid Join table found: " + hpccJoinFileName);
-
-                DFUFile hpccJoinFile = dbMetadata.getDFUFile(hpccJoinFileName);
-
-                String currntTblDS = "TblDS" + (joinTableIndex+1);
-                String currntTblRecDef = currntTblDS + "RecDef";
-                String currntJoin = "JndDS" + (joinTableIndex+1);
-
-                if (hpccJoinFile.hasFileRecDef())
-                {
-                    //Not currently supporting index fetches for join operations
-                    // if (indexfiletouse != null && indexposfield != null)
-                    // eclcode.append(hpccQueryFile.getFileRecDefwithIndexpos(indexfiletouse.getFieldMetaData(indexposfield),
-                    // "TblDS0RecDef"));
-                    // else
-                    eclCode.append(hpccJoinFile.getFileRecDef("\n" + currntTblRecDef));
-                    eclCode.append("\n");
-                }
-                else
-                    throw new SQLException("Target HPCC file (" + hpccJoinFile + ") does not contain ECL record definition");
-
-                eclDSSourceMapping.put(hpccJoinFileName, currntTblDS);
-
-                if (!hpccJoinFile.isKeyFile())
-                {
-                    eclCode.append(currntTblDS + " := DATASET(\'~")
-                            .append(hpccJoinFile.getFullyQualifiedName())
-                            .append("\', ")
-                            .append(currntTblRecDef)
-                            .append(",")
-                            .append(hpccJoinFile.getFormat())
-                            .append(");\n");
-                }
-                else
-                {
-                    eclCode.append(currntTblDS)
-                            .append(" := INDEX( ")
-                            .append('{')
-                            .append(hpccJoinFile.getKeyedFieldsAsDelmitedString(',', currntTblRecDef))
-                            .append("},{")
-                            .append(hpccJoinFile.getNonKeyedFieldsAsDelmitedString(',', currntTblRecDef))
-                            .append("},\'~")
-                            .append(hpccJoinFile.getFullyQualifiedName())
-                            .append("\');\n");
-                }
-
-                eclCode.append("\n").append(currntJoin).append(" := JOIN( ");
-
-                translator.put(hpccJoinFileName, "RIGHT");
-
-                if(joinTableIndex == 0)
-                {
-                    //First Join, previous DS is TblDS0
-                    eclCode.append("TblDS0");
-                }
-                else
-                {
-                    //N+1th Join, previous DS is JndDSN
-                    eclCode.append("JndDS" + joinTableIndex);
-                }
-
-                String translatedAndFilteredOnClause = joinclause.getOnClause().toECLStringTranslateSource(translator,true, false, false, false);
-
-                if (translatedAndFilteredOnClause == null)
-                    throw new SQLException("Join clause does not contain proper join condition between tables: " + hpccJoinFileName + " and earlier table");
-
-                eclCode.append(", ")
-                        .append(currntTblDS)
-                        .append(", ")
-                        .append(translatedAndFilteredOnClause != null ? translatedAndFilteredOnClause : "TRUE");
-
-                if (totalWhereClauseExpressions > 0)
-                {
-                    eclCode.append(" AND ").append(sqlParser.getWhereClauseStringTranslateSource(translator, false, false));
-                }
-
-                eclCode.append(", ").append(joinclause.getECLTypeStr());
-
-                if (!joinclause.getOnClause().containsEqualityCondition(translator, "LEFT", "RIGHT"))
-                {
-                    HPCCJDBCUtils.traceoutln(Level.WARNING, "Warning: No Join EQUALITY CONDITION detected!, using ECL ALL option");
-                    eclCode.append(", ALL");
-                }
-
-                eclCode.append(" );\n");
-
-                //move this file to LEFT for possible next iteration
-                translator.put(hpccJoinFileName, "LEFT");
-
-                eclDSSourceMapping.put(hpccJoinFileName, "JndDS"+joinsCount);
-            }
-
-            eclDSSourceMapping.put(queryFileName, "JndDS"+joinsCount);
-            eclEntities.put("JoinQuery", "1");
-        }
-
-        eclEntities.put("SourceDS", eclDSSourceMapping.get(queryFileName));
-
-        if (sqlParser.hasOrderByColumns())
-            eclEntities.put("ORDERBY", sqlParser.getOrderByString());
-        if (sqlParser.hasGroupByColumns())
-            eclEntities.put("GROUPBY", sqlParser.getGroupByString());
-        if (sqlParser.hasLimitBy())
-            eclEntities.put("LIMIT", Integer.toString(sqlParser.getLimit()));
-
-        if (eclEntities.get("IndexDef") == null)
-        {
-            if (eclEntities.containsKey("SCALAROUTNAME"))
-            {
-                eclCode.append("OUTPUT(ScalarOut ,NAMED(\'");
-                eclCode.append(eclEntities.get("SCALAROUTNAME"));
-                eclCode.append("\'));");
-            }
-            else
-            {
-                String latestDS = eclEntities.get("SourceDS");
-
-                //Create filtered DS if there's a where clause, and no join clause,
-                //because filtering is applied while performing join.
-                if (sqlParser.getWhereClause() != null && !eclEntities.containsKey("JoinQuery"))
-                {
-                    latestDS += "Filtered";
-                    eclCode.append(latestDS).append(" := ");
-                    eclCode.append(eclEntities.get("SourceDS"));
-
-                    addFilterClause(eclCode);
-                    eclCode.append(";\n");
-                }
-
-                // If group by contains HAVING clause, use ECL 'HAVING'
-                // function,
-                // otherwise group can be done implicitly in table step.
-                // since the implicit approach has better performance.
-                if (eclEntities.containsKey("GROUPBY") && sqlParser.hasHavingClause())
-                {
-                    eclCode.append(latestDS).append("Grouped").append(" := GROUP( ");
-                    eclCode.append(latestDS);
-                    eclCode.append(", ");
-                    eclCode.append(eclEntities.get("GROUPBY"));
-                    eclCode.append(", ALL);\n");
-
-                    latestDS += "Grouped";
-
-                    if (appendTranslatedHavingClause(eclCode, latestDS))
-                        latestDS += "Having";
-                }
-
-                createSelectStruct(eclEntities, latestDS);
-                eclCode.append(eclEntities.get("SELECTSTRUCT"));
-
-                eclCode.append(latestDS).append("Table").append(" := TABLE( ");
-                eclCode.append(latestDS);
-
-                eclCode.append(", SelectStruct ");
-
-                if (eclEntities.containsKey("GROUPBY") && !sqlParser.hasHavingClause())
-                {
-                    eclCode.append(", ");
-                    eclCode.append(eclEntities.get("GROUPBY"));
-                }
-                eclCode.append(");\n");
-
-                latestDS += "Table";
-
-                if (sqlParser.isSelectDistinct())
-                {
-                    eclCode.append(latestDS)
-                    .append("Deduped := Dedup( ")
-                    .append(latestDS)
-                    .append(", HASH);\n");
-                    latestDS += "Deduped";
-                }
-
-                eclCode.append("OUTPUT(CHOOSEN(");
-                if (eclEntities.containsKey("ORDERBY"))
-                    eclCode.append("SORT( ");
-
-                eclCode.append(latestDS);
-                if (eclEntities.containsKey("ORDERBY"))
-                {
-                    eclCode.append(",");
-                    eclCode.append(eclEntities.get("ORDERBY"));
-                    eclCode.append(")");
-                }
-            }
-        }
-        else
-        // use index
-        {
-            //Not creating a filtered DS because filtering is applied while
-            //performing index read/fetch.
-            eclCode.append(eclEntities.get("IndexDef"));
-            eclCode.append(eclEntities.get("IndexRead"));
-            String latestDS = "IdxDS";
-
-            if (eclEntities.containsKey("COUNTDEDUP"))
-                eclCode.append(eclEntities.get("COUNTDEDUP"));
-
-            if (eclEntities.containsKey("SCALAROUTNAME"))
-            {
-                eclCode.append("OUTPUT(ScalarOut ,NAMED(\'");
-                eclCode.append(eclEntities.get("SCALAROUTNAME"));
-                eclCode.append("\'));\n");
-            }
-            else
-            {
-                // If group by contains HAVING clause, use ECL 'HAVING' function,
-                // otherwise group can be done implicitly in table step.
-                // since the implicit approach has better performance.
-                if (eclEntities.containsKey("GROUPBY") && sqlParser.hasHavingClause())
-                {
-                    eclCode.append(latestDS).append("Grouped").append(" := GROUP( ");
-                    eclCode.append(latestDS);
-                    eclCode.append(", ");
-                    eclCode.append(eclEntities.get("GROUPBY"));
-                    eclCode.append(", ALL);\n");
-
-                    latestDS += "Grouped";
-
-                    if (appendTranslatedHavingClause(eclCode, latestDS))
-                        latestDS += "Having";
-                }
-
-                createSelectStruct(eclEntities, latestDS);
-
-                eclCode.append(eclEntities.get("SELECTSTRUCT"));
-
-                eclCode.append(latestDS)
-                .append("Table := TABLE(")
-                .append(latestDS)
-                .append(", SelectStruct ");
-
-                if (eclEntities.containsKey("GROUPBY") && !sqlParser.hasHavingClause())
-                {
-                    eclCode.append(", ");
-                    eclCode.append(eclEntities.get("GROUPBY"));
-                }
-                eclCode.append(");\n");
-                latestDS += "Table";
-
-                if (sqlParser.isSelectDistinct())
-                {
-                    eclCode.append(latestDS)
-                    .append("Deduped := Dedup( ")
-                    .append(latestDS)
-                    .append(", HASH);\n");
-
-                    latestDS += "Deduped";
-                }
-
-                if (eclEntities.containsKey("ORDERBY"))
-                {
-                    eclCode.append(latestDS).append("Sorted := SORT( ").append(latestDS).append(", ");
-                    eclCode.append(eclEntities.get("ORDERBY"));
-                    eclCode.append(");\n");
-                    latestDS += "Sorted";
-                }
-
-                eclCode.append("OUTPUT(CHOOSEN(");
-                eclCode.append(latestDS);
-            }
-        }
-
-        if (!eclEntities.containsKey("SCALAROUTNAME"))
-        {
-            eclCode.append(",");
-            if (!eclEntities.containsKey("NONSCALAREXPECTED") && !sqlParser.hasGroupByColumns())
-                eclCode.append("1");
-            else if (eclEntities.containsKey("LIMIT"))
-                eclCode.append(eclEntities.get("LIMIT"));
-            else
-                eclCode.append(hpccConnProps.getProperty("EclResultLimit"));
-
-            eclCode.append("),NAMED(\'")
-                    .append(SELECTOUTPUTNAME)
-                    .append("\'));");
-
-            expectedDSName = SELECTOUTPUTNAME;
-        }
-    }*/
-
-    /*public void createSelectStruct(HashMap<String, String> eclEntities, String datasource)
-    {
-        StringBuilder selectStructSB = new StringBuilder("SelectStruct := RECORD\n");
-
-        for (int i = 0; i < expectedretcolumns.size(); i++)
-        {
-            selectStructSB.append(" ");
-            HPCCColumnMetaData col = expectedretcolumns.get(i);
-
-            if (col.getColumnType() == ColumnType.CONSTANT)
-            {
-                selectStructSB.append(col.getEclType())
-                              .append(" ")
-                              .append(col.getColumnNameOrAlias())
-                              .append(" := ")
-                              .append(col.getConstantValue())
-                              .append("; ");
-
-                if (i == 0 && expectedretcolumns.size() == 1)
-                    eclEntities.put("SCALAROUTNAME", col.getColumnNameOrAlias());
-            }
-            else if (col.getColumnType() == ColumnType.FUNCTION)
-            {
-                ECLFunction func = ECLFunctions.getEclFunction(col.getColumnName());
-                if (func != null)
-                {
-                    List<HPCCColumnMetaData> funccols = col.getFunccols();
-                    {
-                        selectStructSB.append(col.getAlias() + " := ");
-                        selectStructSB.append(func.getEclFunction()).append("( ");
-
-                        if (sqlParser.hasGroupByColumns())
-                        {
-                            selectStructSB.append("GROUP ");
-                        }
-                        else
-                        {
-                            if (col.isDistinct())
-                            {
-                                selectStructSB.append("DEDUP( ");
-                                selectStructSB.append(datasource);
-                                addFilterClause(selectStructSB);
-
-                                for (int j = 0; j < funccols.size(); j++)
-                                {
-                                    String paramname = funccols.get(j).getColumnName();
-                                    selectStructSB.append(", ");
-                                    selectStructSB.append(paramname);
-                                }
-                                selectStructSB.append(", HASH)");
-                            }
-                            else
-                            {
-                                selectStructSB.append(datasource);
-                                addFilterClause(selectStructSB);
-                            }
-                        }
-
-                        if (!(func.getName().equals("COUNT")) && funccols.size() > 0)
-                        {
-                            String paramname = funccols.get(0).getColumnName();
-                            if (!paramname.equals("*") && funccols.get(0).getColumnType() != ColumnType.CONSTANT)
-                            {
-                                selectStructSB.append(", ");
-                                selectStructSB.append(datasource);
-                                selectStructSB.append(".");
-                                selectStructSB.append(paramname);
-                            }
-                        }
-
-                        //AS OF community_3.8.6-4 this is causing error:
-                        // (0,0): error C3000: assert(!cond) failed - file: /var/jenkins/workspace/<build number>/HPCC-Platform/ecl/hqlcpp/hqlhtcpp.cpp, line XXXXX
-                        //Bug reported: https://track.hpccsystems.com/browse/HPCC-8268
-                        //Leaving this code out until fix is produced.
-                        /*if (eclEntities.containsKey("PAYLOADINDEX")
-                                && !sqlParser.hasGroupByColumns()
-                                && !col.isDistinct())
-                        {
-                            selectStructSB.append(", KEYED");
-                        }*
-
-                        selectStructSB.append(" );");
-                    }
-                }
-                else
-                    HPCCJDBCUtils.traceoutln(Level.WARNING, "Unrecognized function detected: " + col.getColumnName());
-            }
-            else
-            {
-                eclEntities.put("NONSCALAREXPECTED", "TRUE");
-                selectStructSB.append(col.getEclType())
-                .append(" ")
-                .append(col.getColumnNameOrAlias())
-                .append(" := ");
-                if (col.hasContentModifier())
-                    selectStructSB.append(col.getContentModifierStr()).append("( ");
-
-                selectStructSB.append(datasource)
-                .append(".")
-                .append(col.getColumnName());
-                if (col.hasContentModifier())
-                    selectStructSB.append(" )");
-                selectStructSB.append(";");
-            }
-            selectStructSB.append("\n");
-        }
-        selectStructSB.append("END;\n");
-
-        eclEntities.put("SELECTSTRUCT", selectStructSB.toString());
-    }*/
-
-    /*public SQLType getQueryType()
-    {
-    	if (sqlParser != null)
-            return sqlParser.getSqlType();
-        else
-            return SQLType.UNKNOWN;
-    }*/
-
-    public void generateECL() throws SQLException
-    {
-        eclCode = new StringBuilder("");
-        hpccRequestUrl = null;
-        generateSelectECL();
+    	*/
         generateSelectURL();
-        
-        /*
-        switch (sqlParser.getSqlType())
-        {
-            case SELECT:
-            {
-                generateSelectECL();
-                generateSelectURL();
-
-                break;
-            }
-            case SELECTCONST:
-            {
-                generateConstSelectECL();
-                generateConstSelectURL();
-
-                break;
-            }
-            case  CALL:
-            {
-                hpccPublishedQuery =
-                        dbMetadata.getHpccQuery(HPCCJDBCUtils.handleQuotedString(sqlParser.getStoredProcName()));
-
-                if (hpccPublishedQuery != null)
-                {
-                    /*list of published input params for this published query*
-                    storeProcInParams = hpccPublishedQuery.getAllInFields();
-
-                    /*array of values for this query*
-                    procInParamValues = sqlParser.getStoredProcInParamVals();
-
-                    expectedretcolumns = hpccPublishedQuery.getAllNonInFields();
-
-                    expectedDSName = hpccPublishedQuery.getDefaultTableName();
-
-                    int inParamValuesCount = procInParamValues == null ? 0 : procInParamValues.length;
-
-                    if (inParamValuesCount != storeProcInParams.size())
-                        //throw new SQLException(hpccPublishedQuery.getName() + " expects "+ storeProcInParams.size() + " input parameters, " + " received " + inParamValuesCount);
-                        HPCCJDBCUtils.traceoutln(Level.WARNING,  "WARNING: " + hpccPublishedQuery.getID() + " expects "+ storeProcInParams.size() + " input parameter(s), " + " received " + inParamValuesCount);
-
-                    generateCallURL();
-
-                }
-                else
-                    throw new SQLException("Invalid Stored Procedure found, verify name and QuerySet: " + sqlParser.getStoredProcName());
-
-                break;
-            }
-            default:
-                throw new SQLException("Invalid SQL type detected!");
-        }*/
     }
-
-    /*private void generateCallURL() throws SQLException
-    {
-        String urlString;
-
-        try
-        {
-            urlString = hpccConnProps.getProperty("WsECLAddress")
-                + ":" + hpccConnProps.getProperty("WsECLPort")
-                + "/WsEcl/submit/query/" + hpccPublishedQuery.getQuerySet()
-                + "/" + hpccPublishedQuery.getName() + "/expanded";
-
-            hpccRequestUrl = HPCCJDBCUtils.makeURL(urlString);
-        }
-        catch (Exception e)
-        {
-            throw new SQLException(e.getMessage());
-        }
-
-        HPCCJDBCUtils.traceoutln(Level.INFO, "HPCC URL created: " + urlString);
-    }*/
-
-    /*private void generateConstSelectURL() throws SQLException
-    {
-        String urlString;
-
-        try
-        {
-            urlString = hpccConnProps.getProperty("WsECLDirectAddress") + ":"
-                    + hpccConnProps.getProperty("WsECLDirectPort") + "/EclDirect/RunEcl?Submit";
-
-            if (hpccConnProps.containsKey("TargetCluster"))
-            {
-                urlString += "&cluster=";
-                urlString += hpccConnProps.getProperty("TargetCluster");
-            }
-            else
-                HPCCJDBCUtils.traceoutln(Level.INFO,  "No cluster property found, executing query on EclDirect default cluster");
-
-            urlString += "&eclText=";
-            urlString += URLEncoder.encode(eclCode.toString(), "UTF-8");
-            hpccRequestUrl = HPCCJDBCUtils.makeURL(urlString);
-        }
-        catch (Exception e)
-        {
-            throw new SQLException(e.getMessage());
-        }
-        HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCC URL created: " + urlString);
-    }*/
-
-    /*private void generateConstSelectECL()
-    {
-        eclCode.append("SelectStruct:=RECORD ");
-        expectedretcolumns = sqlParser.getSelectColumns();
-        StringBuilder ecloutput = new StringBuilder("OUTPUT(DATASET([{ ");
-        for (int i = 1; i <= expectedretcolumns.size(); i++)
-        {
-            HPCCColumnMetaData col = expectedretcolumns.get(i - 1);
-            eclCode.append(col.getEclType()).append(" ").append(col.getColumnName()).append("; ");
-            ecloutput.append(col.getConstantValue());
-            if (i < expectedretcolumns.size())
-                ecloutput.append(", ");
-        }
-        ecloutput.append("}],SelectStruct), NAMED(\'");
-        ecloutput.append(SELECTOUTPUTNAME);
-        ecloutput.append("\'));");
-
-        eclCode.append(" END; ");
-        eclCode.append(ecloutput.toString());
-
-        expectedDSName = SELECTOUTPUTNAME;
-    }*/
+    
+    private String generateLayouts() {
+		StringBuilder layoutsString = new StringBuilder();
+		for (Table table : sqlParser.extractAllTables()) {
+			String tableName = table.getName();
+//	    	eclCode.append(tmpTable).append(" := ").append("DATASET(");
+			layoutsString.append("Layout_"+tableName+" := ");
+			layoutsString.append(ECLBuilder.getLayouts().get(tableName));
+			layoutsString.append("\n");
+			
+		}
+		layoutsString.append("\n");
+		System.out.println(layoutsString.toString());
+		return layoutsString.toString();
+	}
+    
+    private String generateTables() {
+//    	eclCode.append(tmpTable).append(" := ").append("DATASET(");
+    	return null;
+    }
 
     private void generateSelectURL() throws SQLException
     {
@@ -886,98 +203,8 @@ public class ECLEngine
 
     public NodeList execute(Map inParameters) throws Exception
     {
-        /*switch (sqlParser.getSqlType())
-        {
-            case SELECT:
-            {
-                return executeSelect(inParameters);
-            }
-            case SELECTCONST:
-            {
-                return executeSelectConstant();
-            }
-            case CALL:
-            {
-                return executeCall(inParameters);
-            }
-            default:
-                break;
-        }*/
-
         return executeSelect(inParameters);
     }
-
-    /*public boolean processIndex(DFUFile indexfiletouse, StringBuilder keyedandwild)
-    {
-        boolean isPayloadIndex =
-                containsPayload(indexfiletouse.getAllFieldsProps(), sqlParser.getSelectColumns().iterator());
-
-        Vector<String> keyed = new Vector<String>();
-        Vector<String> wild = new Vector<String>();
-
-        // Create keyed and wild string
-        Properties keyedcols = indexfiletouse.getKeyedColumns();
-        for (int i = 1; i <= keyedcols.size(); i++)
-        {
-            String keyedcolname = (String) keyedcols.get(i);
-            if (sqlParser.whereClauseContainsKey(keyedcolname))
-
-                keyed.add(" " + sqlParser.getExpressionFromColumnName(keyedcolname) + " ");
-            else if (keyed.isEmpty())
-                wild.add(" " + keyedcolname + " ");
-        }
-
-        if (isPayloadIndex)
-        {
-            if (keyed.size() > 0)
-            {
-                keyedandwild.append("KEYED( ");
-                for (int i = 0; i < keyed.size(); i++)
-                {
-                    keyedandwild.append(keyed.get(i));
-                    if (i < keyed.size() - 1)
-                        keyedandwild.append(" AND ");
-                }
-                keyedandwild.append(" )");
-            }
-            if (wild.size() > 0)
-            {
-                // TODO should I bother making sure there's a KEYED entry ?
-                for (int i = 0; i < wild.size(); i++)
-                {
-                    keyedandwild.append(" and WILD( ");
-                    keyedandwild.append(wild.get(i));
-                    keyedandwild.append(" )");
-                }
-            }
-
-            keyedandwild.append(" and (").append(sqlParser.getWhereClauseString()).append(" )");
-        }
-        else
-        // non-payload just AND the keyed expressions
-        {
-            keyedandwild.append("( ");
-            keyedandwild.append(sqlParser.getWhereClauseString());
-            keyedandwild.append(" )");
-        }
-
-        return isPayloadIndex;
-    }*/
-
-    /*private boolean containsPayload(Properties indexfields, Iterator<HPCCColumnMetaData> selectcolsit)
-    {
-        while (selectcolsit.hasNext())
-        {
-            HPCCColumnMetaData currentselectcol = selectcolsit.next();
-            String colname = currentselectcol.getColumnName();
-            HPCCColumnMetaData.ColumnType type = currentselectcol.getColumnType();
-            if (type == ColumnType.FIELD && !indexfields.containsKey(colname.toUpperCase()))
-                return false;
-            else if (type == ColumnType.FUNCTION  && !containsPayload(indexfields, currentselectcol.getFunccols().iterator()))
-                return false;
-        }
-        return true;
-    }*/
 
     public NodeList executeSelect(Map inParameters)
     {
@@ -1094,7 +321,7 @@ public class ECLEngine
                     throw new Exception("Insufficient number of parameters provided");
             }*/
             
-
+            System.out.println(eclCode.toString());
             sb.append(eclCode.toString());
             sb.append("\n");
 
