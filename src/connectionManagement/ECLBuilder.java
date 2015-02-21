@@ -3,11 +3,26 @@ package connectionManagement;
 import java.util.HashMap;
 import java.util.List;
 
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
+import net.sf.jsqlparser.expression.operators.relational.InExpression;
+import net.sf.jsqlparser.expression.operators.relational.LikeExpression;
+import net.sf.jsqlparser.expression.operators.relational.MinorThan;
+import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.OrderByElement;
+import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectItem;
+import net.sf.jsqlparser.statement.select.SubSelect;
 
 public class ECLBuilder {
 	
@@ -26,25 +41,11 @@ public class ECLBuilder {
     private List<OrderByElement> orderBys;
     private List<SelectItem> selects;
    
-	public ECLBuilder(String sql) {
+	public ECLBuilder() {
 		setupLayouts();
-		sqlParser = new SQLParser(sql);
-		table = sqlParser.getTable();
-//		this.sql = sql;
+//		table = sqlParser.getTable();
 	}
-	
-	public ECLBuilder(Statement statement) {
-		setupLayouts();
-		sqlParser = new SQLParser(statement);
-		table = sqlParser.getTable();
-	}
-	
-	public ECLBuilder (Expression expression) {
-		setupLayouts();
-		sqlParser = new SQLParser(expression);
-		table = sqlParser.getTable();
-	}
-	
+
 	public static HashMap<String, String> getLayouts() {
 		setupLayouts();
 		return layouts;
@@ -60,28 +61,29 @@ public class ECLBuilder {
 		layouts.put("visit_dimension", Layout_VisitDimension);
 	}
 	
-	public String generateECL() {
+	public String generateECL(String sql) {
 		
 	/*  TODO: CHECK FOR:
 	 * 		SELECT
 	 * 		INSERT
 	 * 		UPDATE	
 	 */
-		
-		switch (sqlParser.statement.getClass().getName().substring(sqlParser.statement.getClass().getName().lastIndexOf('.') + 1)) {
-		case "Select": return generateSelectECL();
-		default: return null;
-		} 	
+		sqlParser = new SQLParser(sql);
+		if (sqlParser.statement instanceof Select) {
+			return generateSelectECL(sql);
+		} else {
+			return "";
+		}
 	}
 	
-	private String generateSelectECL() {
+	private String generateSelectECL(String statement) {
 		
     	orderBys = sqlParser.getOrderBys();
 //    	selects = sqlParser.getSelects();
     	
 //    	TODO: FIRST CHECK FOR ORDERBY
     	
-    	if (!orderBys.isEmpty()) {
+    	if (orderBys != null) {
     		eclCode.append("SORT(");
     	}
     	
@@ -91,10 +93,30 @@ public class ECLBuilder {
      *  if subselect
      *  	then call ECLBuilder with subselect(if possible as string)
      */
+    	FromItem table = sqlParser.getTable();
+    	
+    	if (table instanceof Table) {
+    		eclCode.append(((Table) table).getName());
+    	} else if (table instanceof SubSelect){
+    		eclCode.append("(");
+    /*
+     * TODO: remove brackets around tableString
+     */	
+    		String innerStatement = trimInnerStatement(table.toString());
+    		eclCode.append(new ECLBuilder().generateECL(innerStatement));
+    		eclCode.append(")");
+    	}
+    	
     	
     /*	TODO: CHECK FOR WHERE
      *  getExpressionECL()
      */
+    	
+    	Expression whereItems = sqlParser.getWhere();
+    	String where = getExpressionECL(whereItems);
+    	
+    	
+    	
     
     	/*	TODO: CHECK SELECTS
          *  for SelectExpressionItem
@@ -109,9 +131,15 @@ public class ECLBuilder {
     	 *	 Close OrderBy: FromItem should be finished, add column/expression for ordering 
     	 */
     	
-    	if (!orderBys.isEmpty()) {
+    	if (orderBys != null) {
     		eclCode.append(", ");
-//    		for ()
+    		for (OrderByElement orderByElement : orderBys) {
+    			/*  
+    			 * TODO: multiple orderByElements
+    			 */
+    			eclCode.append(orderByElement.getExpression().toString());
+    		}
+    		eclCode.append(")");
     	}
     	/*
     	eclCode.append("OUTPUT(");
@@ -151,7 +179,67 @@ public class ECLBuilder {
     	}
     	eclCode.append(");");
     	*/
-    	System.out.println(eclCode.toString());
+    	System.out.println("eclCode for "+sqlParser.statement.toString()+": \n"+eclCode.toString());
     	return(eclCode.toString());
+	}
+	private String getExpressionECL(Expression expressionItem) {
+		StringBuilder expression = new StringBuilder();
+		if (expressionItem instanceof LikeExpression) {
+			
+		} else if (expressionItem instanceof BinaryExpression) {
+			expression.append(new ECLBuilder().getExpressionECL(((BinaryExpression) expressionItem).getLeftExpression()));
+			expression.append(getSymbolOfExpression((BinaryExpression) expressionItem));
+			expression.append(new ECLBuilder().getExpressionECL(((BinaryExpression) expressionItem).getRightExpression()));
+		} else if (expressionItem instanceof InExpression) {
+			expression.append(new ECLBuilder().getExpressionECL(((InExpression) expressionItem).getLeftExpression()));
+			expression.append(" IN ");
+			expression.append("(");
+			if (((InExpression) expressionItem).getRightItemsList() instanceof ExpressionList) {
+				for (Expression exp : ((ExpressionList) ((InExpression) expressionItem).getRightItemsList()).getExpressions()) {
+					expression.append(new ECLBuilder().getExpressionECL(exp));
+				}
+			} else if (((InExpression) expressionItem).getRightItemsList() instanceof SubSelect) {
+				expression.append("(");
+				expression.append(new ECLBuilder().generateECL(((SubSelect) ((InExpression) expressionItem).getRightItemsList()).getSelectBody().toString()));
+				expression.append(")");
+			}
+			expression.append(")");
+		} else if (expressionItem instanceof Column) {
+			expression.append(((Column) expressionItem).getColumnName());
+		} else if (expressionItem instanceof SubSelect) {
+			expression.append("(");
+			expression.append(new ECLBuilder().generateECL(((SubSelect) expressionItem).getSelectBody().toString()));
+			expression.append(")");
+		} else if (expressionItem instanceof Function) {
+			
+		} 
+		return expression.toString();
+	}
+
+	private String getSymbolOfExpression(BinaryExpression whereItems) {
+		if (whereItems instanceof AndExpression) {
+			return "&&";
+		} else if (whereItems instanceof OrExpression) {
+			return "||";
+		} else if (whereItems instanceof MinorThan) {
+			return "<";
+		} else if (whereItems instanceof EqualsTo) {
+			return "=";
+		} else if (whereItems instanceof GreaterThan) {
+			return ">";
+		} else if (whereItems instanceof NotEqualsTo) {
+			return "!=";
+		} 
+		return null;
+	}
+
+	private String trimInnerStatement(String innerStatement) {
+//		System.out.println("innerStatement before trimming: "+innerStatement);
+		if (innerStatement.charAt(0) == '(') {
+			int end = innerStatement.lastIndexOf(")");
+			innerStatement = innerStatement.substring(1, end);
+		}
+//		System.out.println("innerStatement after trimming: "+innerStatement);
+		return innerStatement;
 	}
 }

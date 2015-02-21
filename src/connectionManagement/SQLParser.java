@@ -7,34 +7,40 @@ import java.util.List;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.LongValue;
+import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.parser.*;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.delete.Delete;
+import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.select.*;
+import net.sf.jsqlparser.statement.update.Update;
 import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParser{
 	
 	CCJSqlParserManager parserManager = new CCJSqlParserManager();
 	Statement statement;
+	Expression expression;
 	private PlainSelect plain;
 
 	public SQLParser() {
-		
 	}
 	
 	public SQLParser(Expression expression) {
-		statement = (Statement) expression;
 		if (expression instanceof SubSelect) {
+			statement = (Statement) expression;
 			plain = (PlainSelect) ((SubSelect) expression).getSelectBody();
-		}
+		} else if (expression instanceof MinorThan || expression instanceof Column || expression instanceof LongValue) {
+			this.expression = expression;			
+		} 
 	}
 	
 	public SQLParser(String sql) {
 		try {
 			statement = parserManager.parse(new StringReader(sql));
-			System.out.println("test");
-			
 			if (statement instanceof Select) {
 				plain = (PlainSelect) ((Select) statement).getSelectBody();
 			}
@@ -49,56 +55,48 @@ public class SQLParser{
 			plain = (PlainSelect) ((Select) statement).getSelectBody();
 		}
 	}
-
 	
 	public FromItem getTable() {
+		if (plain == null) return null;
 		return plain.getFromItem();
 	}
 	
-	public List<Table> extractAllTables() {
-		ArrayList<Table> allTables = new ArrayList<Table>();
-		
-		if (getTable() instanceof Table) {
-			allTables.add((Table) getTable());
-		} else if (getTable() instanceof SubSelect){
-			allTables.addAll(new SQLParser((Expression) getTable()).extractAllTables());
+	public List<String> extractAllTables() {
+		List<String> tableList;
+		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
+		if (statement instanceof Select) {
+			tableList = tablesNamesFinder.getTableList((Select) statement);
+		} else if (statement instanceof Insert) {
+			tableList = tablesNamesFinder.getTableList((Insert) statement);
+		} else if (statement instanceof Update) {
+			tableList = tablesNamesFinder.getTableList((Update) statement);
+		} else {
+			tableList = null;
 		}
-		
-		if (getJoins() != null) {
-			for (Join join : getJoins()) {
-				if (join.getRightItem() instanceof Table) {
-					allTables.add((Table) join.getRightItem());
-				} else if (getTable() instanceof SubSelect){
-					allTables.addAll(new SQLParser((Expression) join.getRightItem()).extractAllTables());
-				}
-			}
+		List<String> lowerTableList = new ArrayList<String>();
+		for (String table : tableList) {
+			lowerTableList.add(table.toLowerCase());
 		}
-		
-		if (getWhere() != null) {
-			Expression e = getWhere();
-			if (e instanceof BinaryExpression) {
-				allTables.addAll(new SQLParser((Expression) ((BinaryExpression) e).getRightExpression()).extractAllTables());
-				allTables.addAll(new SQLParser((Expression) ((BinaryExpression) e).getLeftExpression()).extractAllTables());
-			}
-		}
-		
-		System.out.println(allTables.toString());
-		return allTables;
+		return lowerTableList;
 	}
 	
 	public Expression getWhere() {
+		if (plain == null) return null;
 		return plain.getWhere();
 	}
 	
 	public List<Expression> getGroupBys() {
+		if (plain == null) return null;
 		return plain.getGroupByColumnReferences();
 	}
 	
 	public List<OrderByElement> getOrderBys() {
+		if (plain == null) return null;
 		return plain.getOrderByElements();
 	}
 	
 	public List<Join> getJoins() {
+		if (plain == null) return null;
 		return plain.getJoins();
 	}
 	

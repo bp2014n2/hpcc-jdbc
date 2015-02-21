@@ -60,7 +60,7 @@ public class ECLEngine
     private String					sqlQuery;
     private HPCCDatabaseMetaData    dbMetadata;
 
-    private StringBuilder           eclCode;
+    private StringBuilder           eclCode = new StringBuilder();
     private URL                     hpccRequestUrl;
     private ArrayList<HPCCColumnMetaData> storeProcInParams = null;
     private String[]                    procInParamValues = null;
@@ -77,7 +77,7 @@ public class ECLEngine
     private static final int            NumberofColsKeyedInThisIndex_WEIGHT   = 2;
 
     private static final String         SELECTOUTPUTNAME = "JDBCSelectQueryResult";
-    
+    private static final String			HPCCEngine = "THOR";
     
 
     private DocumentBuilderFactory      dbf = DocumentBuilderFactory.newInstance();
@@ -87,6 +87,8 @@ public class ECLEngine
         this.hpccConnProps = props;
         this.dbMetadata = dbmetadata;
         this.sqlQuery = sql;
+        
+        System.out.println("sql: \n"+ sql);
         this.sqlParser = new SQLParser(sql);
         
         
@@ -139,11 +141,11 @@ public class ECLEngine
         	eclCode.append(", ").append("Layout_"+table.split("::")[1]).append(",").append(HPCCEngine).append(");\n");
     	}
         */
-        generateLayouts();
-		generateTables();
+        eclCode.append(generateLayouts());
+		eclCode.append(generateTables());
 		
-		ECLBuilder eclBuilder = new ECLBuilder(sqlQuery);
-    	eclCode.append(eclBuilder.generateECL());
+		ECLBuilder eclBuilder = new ECLBuilder();
+    	eclCode.append(eclBuilder.generateECL(sqlQuery));
     	/*
     	DFUFile hpccQueryFile = dbMetadata.getDFUFile(eclBuilder.getTables().get(0));
     	HashMap<String, HPCCColumnMetaData> availablecols = new HashMap<String, HPCCColumnMetaData>();
@@ -156,27 +158,35 @@ public class ECLEngine
     	}
     	
     	*/
+    	
+    	System.out.println(eclCode.toString());
         generateSelectURL();
     }
     
     private String generateLayouts() {
 		StringBuilder layoutsString = new StringBuilder();
-		for (Table table : sqlParser.extractAllTables()) {
-			String tableName = table.getName();
-//	    	eclCode.append(tmpTable).append(" := ").append("DATASET(");
+		for (String table : sqlParser.extractAllTables()) {
+			String tableName = table.split("\\.")[1];
 			layoutsString.append("Layout_"+tableName+" := ");
 			layoutsString.append(ECLBuilder.getLayouts().get(tableName));
 			layoutsString.append("\n");
 			
 		}
-		layoutsString.append("\n");
-		System.out.println(layoutsString.toString());
+//		layoutsString.append("\n");
+//		System.out.println("layouts_string: \n"+layoutsString.toString());
 		return layoutsString.toString();
 	}
     
     private String generateTables() {
-//    	eclCode.append(tmpTable).append(" := ").append("DATASET(");
-    	return null;
+    	StringBuilder datasetsString = new StringBuilder();
+    	for (String table : sqlParser.extractAllTables()) {
+			String tableName = table.split("\\.")[1];
+			datasetsString.append(tableName).append(" := ").append("DATASET(");
+			datasetsString.append("'~").append(table.replaceAll("\\.", "::")).append("'");
+			datasetsString.append(", ").append("Layout_"+tableName).append(",").append(HPCCEngine).append(");\n");
+			
+		}
+    	return datasetsString.toString();
     }
 
     private void generateSelectURL() throws SQLException
