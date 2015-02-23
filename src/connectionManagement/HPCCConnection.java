@@ -38,11 +38,6 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
-/**
- *
- * @author rpastrana
- */
-
 public class HPCCConnection implements Connection
 {
     private boolean              closed;

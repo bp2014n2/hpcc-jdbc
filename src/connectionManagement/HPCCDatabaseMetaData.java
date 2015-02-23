@@ -104,26 +104,18 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     public HPCCDatabaseMetaData(Properties props)
     {
         super();
-        this.serverAddress = props.getProperty("ServerAddress", HPCCDriver.SERVERADDRESSDEFAULT);
-        this.targetcluster = props.getProperty("TargetCluster", HPCCDriver.CLUSTERDEFAULT);
-        this.queryset = props.getProperty("QuerySet", HPCCDriver.QUERYSETDEFAULT);
+        this.serverAddress = props.getProperty("ServerAddress");
+        this.targetcluster = props.getProperty("TargetCluster");
+        this.queryset = props.getProperty("QuerySet");
 
-        this.basewseclwatchurl = props.getProperty("WsECLWatchAddress", this.serverAddress) + ":" +
-                             props.getProperty("WsECLWatchPort", HPCCDriver.WSECLWATCHPORTDEFAULT);
-        this.UserName = props.getProperty("username", "");
-        this.basicAuth = props.getProperty("BasicAuth",
-                HPCCConnection.createBasicAuth(this.UserName, props.getProperty("password", "")));
-        this.lazyLoad = Boolean.parseBoolean(props.getProperty("LazyLoad", HPCCDriver.LAZYLOADDEFAULT));
-        this.pageSize = HPCCJDBCUtils.stringToInt(
-                props.getProperty("PageSize"),
-                Integer.valueOf(HPCCDriver.FETCHPAGESIZEDEFAULT));
-        this.pageOffset = HPCCJDBCUtils.stringToInt(
-                props.getProperty("PageOffset"),
-                Integer.valueOf(HPCCDriver.FETCHPAGEOFFSETDEFAULT));
-        this.connectTimoutMillis = HPCCJDBCUtils.stringToInt(props.getProperty("ConnectTimeoutMilli"),
-                Integer.valueOf(HPCCDriver.CONNECTTIMEOUTMILDEFAULT));
-        this.readTimoutMillis = HPCCJDBCUtils.stringToInt(props.getProperty("ReadTimeoutMilli"),
-                Integer.valueOf(HPCCDriver.READTIMEOUTMILDEFAULT));
+        this.basewseclwatchurl = props.getProperty("WsECLWatchAddress") + ":" + props.getProperty("WsECLWatchPort");
+        this.UserName = props.getProperty("username");
+        this.basicAuth = props.getProperty("BasicAuth",HPCCConnection.createBasicAuth(this.UserName, props.getProperty("password", "")));
+        this.lazyLoad = Boolean.parseBoolean(props.getProperty("LazyLoad"));
+        this.pageSize = Integer.parseInt(props.getProperty("PageSize"));
+        this.pageOffset = Integer.parseInt(props.getProperty("PageOffset"));
+        this.connectTimoutMillis = Integer.parseInt(props.getProperty("ConnectTimeoutMilli"));
+        this.readTimoutMillis = Integer.parseInt(props.getProperty("ReadTimeoutMilli"));
 
         HPCCJDBCUtils.traceoutln(Level.INFO, "HPCCDatabaseMetaData ServerAddress: " + serverAddress
                 + " TargetCluster: " + targetcluster + " eclwatch: " + basewseclwatchurl);
@@ -498,22 +490,19 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     @Override
     public String getDriverVersion() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getDriverVersion");
-        return HPCCVersionTracker.HPCCMajor + "." + HPCCVersionTracker.HPCCMinor + "." + HPCCVersionTracker.HPCCPoint;
+        return "1.0";
     }
 
     @Override
     public int getDriverMajorVersion()
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getDriverMajorVersion");
-        return HPCCVersionTracker.HPCCMajor;
+        return 1;
     }
 
     @Override
     public int getDriverMinorVersion()
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getDriverMinorVersion");
-        return HPCCVersionTracker.HPCCMinor;
+        return 0;
     }
 
     @Override
@@ -2254,7 +2243,6 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
             HPCCJDBCUtils.traceoutln(Level.INFO, "Fetching file information: " + urlString);
             isSuccess = parseDFULogicalFiles(dfulogfilesConn.getInputStream(), false) > 0 ? true : false;
-            System.out.println(dfulogfilesConn.getInputStream());
         }
         catch (SocketTimeoutException e)
         {

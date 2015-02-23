@@ -785,18 +785,6 @@ public class HPCCJDBCUtils
         return theURL;
     }
 
-    public static URL verifyURL(String urlstr) throws MalformedURLException
-    {
-        try
-        {
-            return new URL(urlstr);
-        }
-        catch (Exception e)
-        {
-            throw new MalformedURLException(e.getLocalizedMessage());
-        }
-    }
-
     public static String ensureURLProtocol(String urlstr)
     {
         if (!URLPROTPATTERN.matcher(urlstr).matches())
