@@ -1,17 +1,17 @@
 package connectionManagement;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-//import java.util.Properties;
+import java.util.Properties;
 
 public class Test {
 	public static void main(String[] args) throws ClassNotFoundException {
 		try {
 			Class.forName("connectionManagement.HPCCDriver");
-			/*Properties connprops = new Properties();
-			connprops.put("PageOffset", "asdas");
-			connprops.put("EclResultLimit", "20as00");
-			HPCCConnection connection = (HPCCConnection) DriverManager.getDriver("jdbc:hpcc").connect("http://192.168.56.101", connprops);*/
-			HPCCConnection connection = (HPCCConnection) DriverManager.getConnection("http://192.168.56.101", "test", "test");
+			Properties connectionProperties = new Properties();
+			connectionProperties.put("PageOffset", "asdas");
+			connectionProperties.put("EclResultLimit", "20as00");
+			HPCCConnection connection = (HPCCConnection) DriverManager.getDriver("jdbc:hpcc").connect("http://192.168.56.101", connectionProperties);
+			//HPCCConnection connection = (HPCCConnection) DriverManager.getConnection("http://192.168.56.101", "test", "test");
 			
 			/* create HPCCStatement object for single use SQL query execution */
 			 HPCCStatement stmt = (HPCCStatement) connection.createStatement();

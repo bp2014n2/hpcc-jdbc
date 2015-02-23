@@ -48,14 +48,13 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-
 public class ECLEngine
 {
     private HPCCQuery               hpccPublishedQuery = null;
     private String                  expectedDSName = null;
     private NodeList                resultSchema = null;
     private final Properties        hpccConnProps;
-    private SQLParser               sqlParser;
+    //private SQLParser               sqlParser;
     private HPCCDatabaseMetaData    dbMetadata;
 
     private StringBuilder           eclCode;
@@ -75,33 +74,14 @@ public class ECLEngine
     private static final int            NumberofColsKeyedInThisIndex_WEIGHT   = 2;
 
     private static final String         SELECTOUTPUTNAME = "JDBCSelectQueryResult";
-    
-    private static final String			IMPORTSTD = "import std;\n";
-    private static final String 		OUTPUTLIMIT = "#OPTION('outputlimit',2000);\n";
-    private static final String			Layout_ConDim = "RECORD\n"+
-										  "STRING700 concept_path;\n"+
-										  "STRING50 concept_cd;\n"+
-										  "STRING2000 name_char;\n"+
-										  "STRING concept_blob;\n"+
-										  "STRING25 update_date;\n"+
-										  "STRING25 download_date;\n"+
-										  "STRING25 import_date;\n"+
-										  "STRING50 sourcesystem_cd;\n"+
-										  "UNSIGNED5 upload_id;\n"+
-										"END;\n";
-    private static final String			HPCCEngine = "THOR";
-    
-    HashMap<String, String> layouts = new HashMap<String, String> ();
 
     private DocumentBuilderFactory      dbf = DocumentBuilderFactory.newInstance();
 
-    public ECLEngine(HPCCDatabaseMetaData dbmetadata, Properties props, SQLParser parser)
+    public ECLEngine(HPCCDatabaseMetaData dbmetadata, Properties props)
     {
         this.hpccConnProps = props;
         this.dbMetadata = dbmetadata;
-        this.sqlParser = parser;
-        
-        layouts.put("Layout_ConDim", Layout_ConDim);
+        //this.sqlParser = parser;
     }
 
     public List<HPCCColumnMetaData> getExpectedRetCols()
@@ -118,8 +98,6 @@ public class ECLEngine
             availablecols.put(col.getTableName().toUpperCase() + "." + col.getColumnName().toUpperCase(), col);
         }
     }
-    
-    
 
     public NodeList executeSelectConstant()
     {
@@ -139,68 +117,19 @@ public class ECLEngine
 
     private void generateSelectECL() throws SQLException
     {
-    	String layoutName = "Layout_ConDim";
-    	String tmpTable = "test";
-    	List<String> tables = sqlParser.getTables();
-    	List<String> orderBys = sqlParser.getOrderBys();
-    	List<String> selects = sqlParser.getSelects();
+    	eclCode.append("import std;\n"+
+    						"#OPTION('outputlimit',2000);\n"+
+            				"Layout_modDim := RECORD\n"+
+            				"STRING700 modifier_path;\n"+
+    						"END;\n"+
+    						"modDim := DATASET('~i2b2demodata::test',Layout_modDim,CSV);"+
+    						"modDim;");
     	
-    	eclCode.append(IMPORTSTD).append(OUTPUTLIMIT);
-    	eclCode.append(layoutName).append(" := ").append(layouts.get(layoutName));
-    	eclCode.append(tmpTable).append(" := ").append("DATASET(");
-    	
-    	eclCode.append("'~").append(tables.get(0)).append("'");
-    	eclCode.append(", ").append(layoutName).append(",").append(HPCCEngine).append(");\n");
-    	
-    	eclCode.append("OUTPUT(");
-    	StringBuilder tableString = new StringBuilder();
-    	if (!orderBys.isEmpty()) {
-    		tableString.append("SORT(").append(tmpTable).append(",");
-    		tableString.append(orderBys.get(0));
-    		for (int i = 1; i<orderBys.size(); i++) {
-    			tableString.append(",").append(orderBys.get(i));
-    		}
-    		tableString.append(")");
-    	} else {
-    		tableString.append(tmpTable);
-    	}
-	
-    	// is select * or select `any_column`?
-    	if (!selects.isEmpty()) {
-    		/*only Java 8
-    		eclCode.append(",{").append(String.join(",", selects)).append("}");*/
-//    		code for Java 7
-    		eclCode.append(tableString.toString());
-    		eclCode.append(",{");
-    		eclCode.append(selects.get(0));
-    				
-       		for (int i = 1; i<selects.size(); i++) {
-       			eclCode.append(",");
-       			eclCode.append(selects.get(i));
-       		}
-       		eclCode.append("}");
-    	} else {
-    		// get all columns from layout
-    		String layout = layouts.get(layoutName);
-    		String[] columns = layout.split(";");
-    		for (String column : columns) {
-    			if (column.split(" ").length > 1) selects.add(column.split(" ")[1]);
-    		}
-    	}
-    	eclCode.append(");");
-    	
-    	System.out.println(eclCode.toString());
-    	
-    	DFUFile hpccQueryFile = dbMetadata.getDFUFile(tables.get(0));
+    	DFUFile hpccQueryFile = dbMetadata.getDFUFile("i2b2demodata::test");
     	HashMap<String, HPCCColumnMetaData> availablecols = new HashMap<String, HPCCColumnMetaData>();
     	addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	
-    	for (int i=0; i<selects.size(); i++) {
-    		String column = selects.get(i);
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
-    	}
-    	
+    	expectedretcolumns.add(new HPCCColumnMetaData("modifier_path", 0, null));
     }
     	
     	/*

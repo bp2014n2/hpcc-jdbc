@@ -68,41 +68,43 @@ public class HPCCDriver implements Driver{
     		traceOutLine(url +" has the wrong format (e.g. missing protocol)");
     	}
         
-    	for(Object propertyKey : properties.keySet()){
-    		if((driverProperties.keySet().contains(propertyKey) && !propertyKey.equals("ServerAddress")) || (propertyKey.equals("user"))){
-    			String propertyValue = properties.getProperty((String) propertyKey);
-    			switch((String)propertyKey){
-    				case "WsECLWatchAddress":
-    				case "WsECLAddress":
-    				case "WsECLDirectAddress":
-    					if(!isValidURL(propertyValue)){
-    						traceOutLine(propertyValue +" is not a valid URL for "+propertyKey+" (now using: "+driverProperties.get(propertyKey)+")");
-    						continue;
-    					}
-    					break;
-    				case "PageSize":
-    				case "PageOffset":
-    				case "ConnectTimeoutMilli":
-    				case "ReadTimeoutMilli":
-    					if(!HPCCJDBCUtils.isNumeric(propertyValue)){
-    						traceOutLine(propertyValue +" is not a number and not valid for "+propertyKey+" (now using: "+driverProperties.get(propertyKey)+")");
-    						continue;
-    					}
-    					break;
-    				case "user":
-    					propertyKey += "name";
-    					break;
-    				case "TraceLevel":
-    					HPCCJDBCUtils.initTracing(propertyValue, Boolean.parseBoolean(properties.getProperty("TraceToFile")));
-    					break;
-    				case "EclResultLimit":
-    					if(!HPCCJDBCUtils.isNumeric(propertyValue) || !propertyValue.equals("ALL")){
-    						traceOutLine(propertyValue +" is not a valid value for "+propertyKey+" (now using: "+driverProperties.get(propertyKey)+")");
-    						continue;
-    					}
-       			}
-    			driverProperties.setProperty((String) propertyKey, propertyValue);
-    		}
+    	if(properties != null){
+	    	for(Object propertyKey : properties.keySet()){
+	    		if((driverProperties.keySet().contains(propertyKey) && !propertyKey.equals("ServerAddress")) || (propertyKey.equals("user"))){
+	    			String propertyValue = properties.getProperty((String) propertyKey);
+	    			switch((String)propertyKey){
+	    				case "WsECLWatchAddress":
+	    				case "WsECLAddress":
+	    				case "WsECLDirectAddress":
+	    					if(!isValidURL(propertyValue)){
+	    						traceOutLine(propertyValue +" is not a valid URL for "+propertyKey+" (now using: "+driverProperties.get(propertyKey)+")");
+	    						continue;
+	    					}
+	    					break;
+	    				case "PageSize":
+	    				case "PageOffset":
+	    				case "ConnectTimeoutMilli":
+	    				case "ReadTimeoutMilli":
+	    					if(!HPCCJDBCUtils.isNumeric(propertyValue)){
+	    						traceOutLine(propertyValue +" is not a number and not valid for "+propertyKey+" (now using: "+driverProperties.get(propertyKey)+")");
+	    						continue;
+	    					}
+	    					break;
+	    				case "EclResultLimit":
+	    					if(!HPCCJDBCUtils.isNumeric(propertyValue) && !propertyValue.equals("ALL")){
+	    						traceOutLine(propertyValue +" is not a valid value for "+propertyKey+" (now using: "+driverProperties.get(propertyKey)+")");
+	    						continue;
+	    					}
+	    					break;
+	    				case "user":
+	    					propertyKey += "name";
+	    					break;
+	    				case "TraceLevel":
+	    					HPCCJDBCUtils.initTracing(propertyValue, Boolean.parseBoolean(properties.getProperty("TraceToFile")));
+	       			}
+	    			driverProperties.setProperty((String) propertyKey, propertyValue);
+	    		}
+	    	}
     	}
     	
 		driverProperties.put("Basic Auth", HPCCConnection.createBasicAuth(driverProperties.getProperty("username"), driverProperties.getProperty("password")));
