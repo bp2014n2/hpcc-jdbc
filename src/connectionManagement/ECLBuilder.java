@@ -1,13 +1,17 @@
 package connectionManagement;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.expression.LongValue;
+import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
+import net.sf.jsqlparser.expression.operators.relational.Between;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
@@ -18,9 +22,11 @@ import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
@@ -72,6 +78,7 @@ public class ECLBuilder {
 		if (sqlParser.statement instanceof Select) {
 			return generateSelectECL(sql);
 		} else {
+			System.out.println("error, found:"+sqlParser.statement.getClass());
 			return "";
 		}
 	}
@@ -99,9 +106,6 @@ public class ECLBuilder {
     		eclCode.append(((Table) table).getName());
     	} else if (table instanceof SubSelect){
     		eclCode.append("(");
-    /*
-     * TODO: remove brackets around tableString
-     */	
     		String innerStatement = trimInnerStatement(table.toString());
     		eclCode.append(new ECLBuilder().generateECL(innerStatement));
     		eclCode.append(")");
@@ -113,18 +117,18 @@ public class ECLBuilder {
      */
     	
     	Expression whereItems = sqlParser.getWhere();
-    	String where = getExpressionECL(whereItems);
+    	if (whereItems != null) {
+    		String where = generateExpressionECL(whereItems);
+        	eclCode.append("(");
+        	eclCode.append(where);
+        	eclCode.append(")");
+    	}
     	
     	
     	
-    
-    	/*	TODO: CHECK SELECTS
-         *  for SelectExpressionItem
-         *  	do getExpressionECL()
-         */	
     	
     	/*	TODO: CHECK FOR GROUP BY
-         *  not yet checkd
+         *  not yet checked
          */
     	
     	/*
@@ -141,105 +145,155 @@ public class ECLBuilder {
     		}
     		eclCode.append(")");
     	}
-    	/*
-    	eclCode.append("OUTPUT(");
-    	StringBuilder tableString = new StringBuilder();
-    	if (!orderBys.isEmpty()) {
-    		tableString.append("SORT(").append(.split("::")[1]).append(",");
-    		tableString.append(orderBys.get(0));
-    		for (int i = 1; i<orderBys.size(); i++) {
-    			tableString.append(",").append(orderBys.get(i));
-    		}
-    		tableString.append(")");
-    	} else {
-    		tableString.append(.split("::")[1]);
+    	
+
+        
+    	/*	TODO: CHECK SELECTS
+         *  for SelectExpressionItem
+         *  	do getExpressionECL()
+         */	
+    	eclCode.append(", ");
+    	ArrayList<SelectItem> selectItems = (ArrayList<SelectItem>) sqlParser.getSelectItems();
+    	StringBuilder select = new StringBuilder();
+    	if (!selectItems.isEmpty()) {
+    		select.append("{");
     	}
-	
-    	// is select * or select `any_column`?
-    	if (!selects.isEmpty()) {
-    		/*only Java 8
-    		eclCode.append(",{").append(String.join(",", selects)).append("}");
-//    		code for Java 7
-    		eclCode.append(tableString.toString());
-    		eclCode.append(",{");
-    		eclCode.append(selects.get(0));
-    				
-       		for (int i = 1; i<selects.size(); i++) {
-       			eclCode.append(",");
-       			eclCode.append(selects.get(i));
-       		}
-       		eclCode.append("}");
-    	} else {
-    		// get all columns from layout
-    		String layout = layouts.get(tables.get(0).split("::")[1]);
-    		String[] columns = layout.split(";");
-    		for (String column : columns) {
-    			if (column.split(" ").length > 1) selects.add(column.split(" ")[1]);
+    	for (int i = 0; i<selectItems.size(); i++) {
+    		SelectItem selectItem = selectItems.get(i);
+    		if (selectItem instanceof AllColumns) {
+//    			no filtering
+    		} else if (selectItem instanceof SelectExpressionItem) {
+    			select.append(generateExpressionECL((Expression) ((SelectExpressionItem) selectItem).getExpression()));
+    		}
+    		if (i != (selectItems.size()-1)) {
+    			select.append(", ");
     		}
     	}
-    	eclCode.append(");");
-    	*/
-    	System.out.println("eclCode for "+sqlParser.statement.toString()+": \n"+eclCode.toString());
+    	if (!selectItems.isEmpty()) {
+    		select.append("}");
+    	}
+    	eclCode.append(select.toString());
+
+//    	System.out.println("eclCode for "+sqlParser.statement.toString()+": \n"+eclCode.toString());
     	return(eclCode.toString());
 	}
-	private String getExpressionECL(Expression expressionItem) {
+	private String generateExpressionECL(Expression expressionItem) {
 		StringBuilder expression = new StringBuilder();
+//		System.out.println(expressionItem.getClass());
+		
 		if (expressionItem instanceof LikeExpression) {
-			
+			expression.append(parseLikeExpression((LikeExpression) expressionItem));
 		} else if (expressionItem instanceof BinaryExpression) {
-			expression.append(new ECLBuilder().getExpressionECL(((BinaryExpression) expressionItem).getLeftExpression()));
+			expression.append(generateExpressionECL(((BinaryExpression) expressionItem).getLeftExpression()));
 			expression.append(getSymbolOfExpression((BinaryExpression) expressionItem));
-			expression.append(new ECLBuilder().getExpressionECL(((BinaryExpression) expressionItem).getRightExpression()));
+			expression.append(generateExpressionECL(((BinaryExpression) expressionItem).getRightExpression()));
 		} else if (expressionItem instanceof InExpression) {
-			expression.append(new ECLBuilder().getExpressionECL(((InExpression) expressionItem).getLeftExpression()));
-			expression.append(" IN ");
-			expression.append("(");
-			if (((InExpression) expressionItem).getRightItemsList() instanceof ExpressionList) {
-				for (Expression exp : ((ExpressionList) ((InExpression) expressionItem).getRightItemsList()).getExpressions()) {
-					expression.append(new ECLBuilder().getExpressionECL(exp));
-				}
-			} else if (((InExpression) expressionItem).getRightItemsList() instanceof SubSelect) {
-				expression.append("(");
-				expression.append(new ECLBuilder().generateECL(((SubSelect) ((InExpression) expressionItem).getRightItemsList()).getSelectBody().toString()));
-				expression.append(")");
-			}
-			expression.append(")");
+			expression.append(parseInExpression((InExpression) expressionItem));
 		} else if (expressionItem instanceof Column) {
+			if (((Column) expressionItem).getTable().getName() != null) {
+//				expression.append(((Column) expressionItem).getTable().getName());
+//				expression.append(".");
+			}
 			expression.append(((Column) expressionItem).getColumnName());
 		} else if (expressionItem instanceof SubSelect) {
 			expression.append("(");
 			expression.append(new ECLBuilder().generateECL(((SubSelect) expressionItem).getSelectBody().toString()));
 			expression.append(")");
 		} else if (expressionItem instanceof Function) {
+			expression.append(parseFunction((Function) expressionItem));
+		}  else if (expressionItem instanceof Between) {
+			expression.append("(");
+			expression.append(generateExpressionECL(((Between) expressionItem).getLeftExpression()));
+			expression.append(" BETWEEN ");
+			expression.append(generateExpressionECL(((Between) expressionItem).getBetweenExpressionStart()));
+			expression.append(" AND ");
+			expression.append(generateExpressionECL(((Between) expressionItem).getBetweenExpressionEnd()));
+			expression.append(")");
+		} else if (expressionItem instanceof StringValue) {
+			expression.append(((StringValue) expressionItem).getValue());
+		} else if (expressionItem instanceof LongValue) {
+			expression.append(((LongValue) expressionItem).getValue());
+		} else if (expressionItem instanceof SelectExpressionItem) {
 			
-		} 
+		}
+		return expression.toString();
+	}
+
+	private String parseFunction(Function function) {
+		StringBuilder functionString = new StringBuilder();
+		switch(function.getName()) {
+		case "COUNT": 
+			functionString.append("COUNT(");
+			for (Expression expression : function.getParameters().getExpressions()) {
+				functionString.append(generateExpressionECL(expression));
+			}
+			functionString.append(")");
+			break;
+			
+		}
+		return functionString.toString();
+	}
+
+	private String parseLikeExpression(LikeExpression expressionItem) {
+		StringBuilder likeString = new StringBuilder();
+		String stringValue = ((StringValue) expressionItem.getRightExpression()).getValue();
+		likeString.append("(");
+		if (stringValue.endsWith("%")) {
+			System.out.println(stringValue);
+			stringValue = stringValue.substring(0, stringValue.length()-1);
+			stringValue = stringValue.replace("\\", "\\\\");
+			
+			System.out.println(stringValue);
+			likeString.append("Std.Str.StartsWith(");
+		}
+		likeString.append(generateExpressionECL(expressionItem.getLeftExpression()));
+		likeString.append(", '");
+		likeString.append(stringValue);
+		likeString.append("\'))");
+		
+		return likeString.toString();
+	}
+	
+	private String parseInExpression(InExpression expressionItem) {
+		StringBuilder expression = new StringBuilder();
+		expression.append(generateExpressionECL(((InExpression) expressionItem).getLeftExpression()));
+		expression.append(" IN ");
+		expression.append("(");
+		if (((InExpression) expressionItem).getRightItemsList() instanceof ExpressionList) {
+			for (Expression exp : ((ExpressionList) ((InExpression) expressionItem).getRightItemsList()).getExpressions()) {
+				expression.append(generateExpressionECL(exp));
+			}
+		} else if (((InExpression) expressionItem).getRightItemsList() instanceof SubSelect) {
+			expression.append("(");
+			expression.append(new ECLBuilder().generateECL(((SubSelect) ((InExpression) expressionItem).getRightItemsList()).getSelectBody().toString()));
+			expression.append(")");
+		}
+		expression.append(")");
 		return expression.toString();
 	}
 
 	private String getSymbolOfExpression(BinaryExpression whereItems) {
 		if (whereItems instanceof AndExpression) {
-			return "&&";
+			return " && ";
 		} else if (whereItems instanceof OrExpression) {
-			return "||";
+			return " || ";
 		} else if (whereItems instanceof MinorThan) {
-			return "<";
+			return " < ";
 		} else if (whereItems instanceof EqualsTo) {
-			return "=";
+			return " = ";
 		} else if (whereItems instanceof GreaterThan) {
-			return ">";
+			return " > ";
 		} else if (whereItems instanceof NotEqualsTo) {
-			return "!=";
+			return " != ";
 		} 
 		return null;
 	}
 
 	private String trimInnerStatement(String innerStatement) {
-//		System.out.println("innerStatement before trimming: "+innerStatement);
 		if (innerStatement.charAt(0) == '(') {
 			int end = innerStatement.lastIndexOf(")");
 			innerStatement = innerStatement.substring(1, end);
 		}
-//		System.out.println("innerStatement after trimming: "+innerStatement);
 		return innerStatement;
 	}
 }

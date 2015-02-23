@@ -61,7 +61,12 @@ public class SQLParser{
 		return plain.getFromItem();
 	}
 	
-	public List<String> extractAllTables() {
+	public List<SelectItem> getSelectItems() {
+		if (plain == null) return null;
+		return plain.getSelectItems();
+	}
+	
+	public List<String> getAllTables() {
 		List<String> tableList;
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
 		if (statement instanceof Select) {

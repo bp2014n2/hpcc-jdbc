@@ -141,31 +141,40 @@ public class ECLEngine
         	eclCode.append(", ").append("Layout_"+table.split("::")[1]).append(",").append(HPCCEngine).append(");\n");
     	}
         */
+    	eclCode.append("#OPTION('outputlimit', 2000);\n");
+    	eclCode.append(generateImports());
         eclCode.append(generateLayouts());
 		eclCode.append(generateTables());
 		
+		eclCode.append("OUTPUT(");
 		ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append(eclBuilder.generateECL(sqlQuery));
-    	/*
-    	DFUFile hpccQueryFile = dbMetadata.getDFUFile(eclBuilder.getTables().get(0));
+    	eclCode.append(");");
+    	
+    	System.out.println(eclCode.toString());
+    	
+    	String tables = sqlParser.getAllTables().get(0);
+    	DFUFile hpccQueryFile = dbMetadata.getDFUFile(tables);
     	HashMap<String, HPCCColumnMetaData> availablecols = new HashMap<String, HPCCColumnMetaData>();
     	addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	
-    	for (int i=0; i<eclBuilder.getSelects().size(); i++) {
-    		String column = eclBuilder.getSelects().get(i);
+  
+    	for (int i=0; i<sqlParser.getSelectItems().size(); i++) {
+    		String column = sqlParser.getSelectItems().get(i).toString();
     		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
     	}
     	
-    	*/
     	
-    	System.out.println(eclCode.toString());
         generateSelectURL();
+    }
+    
+    private String generateImports() {
+    	return "IMPORT STD;\n";
     }
     
     private String generateLayouts() {
 		StringBuilder layoutsString = new StringBuilder();
-		for (String table : sqlParser.extractAllTables()) {
+		for (String table : sqlParser.getAllTables()) {
 			String tableName = table.split("\\.")[1];
 			layoutsString.append("Layout_"+tableName+" := ");
 			layoutsString.append(ECLBuilder.getLayouts().get(tableName));
@@ -179,7 +188,7 @@ public class ECLEngine
     
     private String generateTables() {
     	StringBuilder datasetsString = new StringBuilder();
-    	for (String table : sqlParser.extractAllTables()) {
+    	for (String table : sqlParser.getAllTables()) {
 			String tableName = table.split("\\.")[1];
 			datasetsString.append(tableName).append(" := ").append("DATASET(");
 			datasetsString.append("'~").append(table.replaceAll("\\.", "::")).append("'");
