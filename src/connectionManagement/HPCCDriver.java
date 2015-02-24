@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package connectionManagement;
 
-import java.net.URLDecoder;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -26,373 +25,125 @@ import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
-import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
-public class HPCCDriver implements Driver
-{
-    public static final String   ECLRESULTLIMDEFAULT      = "100";
-    public static final String   CLUSTERDEFAULT           = "hthor";
-    public static final String   QUERYSETDEFAULT          = "hthor";
-    public static final String   SERVERADDRESSDEFAULT     = HPCCJDBCUtils.defaultprotocol + HPCCJDBCUtils.protocolsep + "localhost";
-    public static final String   WSECLWATCHPORTDEFAULT    = "8010";
-    public static final String   WSECLPORTDEFAULT         = "8002";
-    public static final String   WSECLDIRECTPORTDEFAULT   = "8010";
-    public static final String   FETCHPAGESIZEDEFAULT     = "100";
-    public static final String   FETCHPAGEOFFSETDEFAULT   = "0";
-    public static final String   LAZYLOADDEFAULT          = "true";
-    public static final String   CONNECTTIMEOUTMILDEFAULT = "5000";
-    public static final String   READTIMEOUTMILDEFAULT    = "15000";
-    public static final String   JDBCURLPROTOCOL          = "jdbc:hpcc";
-    public static final String   TRACETOFILEDEFAULT       = "false";
-    public static final String   TRACELEVELDEFAULT        = HPCCJDBCUtils.defaultLogLevel.getName();
-
-    private static DriverPropertyInfo[] infoArray;
-
-    static
-    {
-        try
-        {
-            HPCCDriver driver = new HPCCDriver();
+public class HPCCDriver implements Driver{
+    
+    private HPCCDriverProperties driverProperties;
+    
+    static{
+    	try{
+    		HPCCDriver driver = new HPCCDriver();
             DriverManager.registerDriver(driver);
-            initializePropInfo();
-
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCC JDBC Driver registered.");
+            traceOutLine("Driver registered");
         }
-        catch (SQLException ex)
-        {
-            ex.printStackTrace();
+        catch (SQLException sqlException){
+        	sqlException.printStackTrace();
         }
     }
+    
+    public HPCCDriver(){
+    	this.driverProperties = new HPCCDriverProperties();
+    }
+    
+    public Connection connect (){
+    	return new HPCCConnection(driverProperties);
+    }
+    
+    public Connection connect(String url){
+		return this.connect(url, null);
+    }
+    
+    public Connection connect(String url, Properties properties){
+    	if(isValidURL(url)){
+    		if(url.contains("jdbc:hpcc;")){
+    			url = url.replaceFirst("jdbc:hpcc;", "");
+    		}
+    		for(String property : driverProperties.getAllPropertiesUsingServerAddress()){
+    			driverProperties.put(property, url);
+    		}
+    	}else{
+    		traceOutLine(url +" has the wrong format (e.g. missing protocol)");
+    	}
+        
+    	if(properties != null){
+	    	for(Object propertyKey : properties.keySet()){
+	    		if((driverProperties.keySet().contains(propertyKey) && !propertyKey.equals("ServerAddress")) || (propertyKey.equals("user"))){
+	    			String propertyValue = properties.getProperty((String) propertyKey);
+	    			switch((String)propertyKey){
+	    				case "WsECLWatchAddress":
+	    				case "WsECLAddress":
+	    				case "WsECLDirectAddress":
+	    					if(!isValidURL(propertyValue)){
+	    						traceOutLine(propertyValue +" is not a valid URL for "+propertyKey+" (now using: "+driverProperties.get(propertyKey)+")");
+	    						continue;
+	    					}
+	    					break;
+	    				case "PageSize":
+	    				case "PageOffset":
+	    				case "ConnectTimeoutMilli":
+	    				case "ReadTimeoutMilli":
+	    					if(!HPCCJDBCUtils.isNumeric(propertyValue)){
+	    						traceOutLine(propertyValue +" is not a number and not valid for "+propertyKey+" (now using: "+driverProperties.get(propertyKey)+")");
+	    						continue;
+	    					}
+	    					break;
+	    				case "EclResultLimit":
+	    					if(!HPCCJDBCUtils.isNumeric(propertyValue) && !propertyValue.equals("ALL")){
+	    						traceOutLine(propertyValue +" is not a valid value for "+propertyKey+" (now using: "+driverProperties.get(propertyKey)+")");
+	    						continue;
+	    					}
+	    					break;
+	    				case "user":
+	    					propertyKey += "name";
+	    					break;
+	    				case "TraceLevel":
+	    					HPCCJDBCUtils.initTracing(propertyValue, Boolean.parseBoolean(properties.getProperty("TraceToFile")));
+	       			}
+	    			driverProperties.setProperty((String) propertyKey, propertyValue);
+	    		}
+	    	}
+    	}
+    	
+		driverProperties.put("Basic Auth", HPCCConnection.createBasicAuth(driverProperties.getProperty("username"), driverProperties.getProperty("password")));
 
-    public HPCCDriver()
-    {
+		traceOutLine("Connecting to " + driverProperties.getProperty("ServerAddress"));
+        return new HPCCConnection(driverProperties);
     }
 
-    public Connection connect(String url, Properties info) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection jdbc url: " + url);
-
-        Properties connprops = new Properties();
-
-        if (info != null && info.size() > 0)
-            connprops.putAll(info);
-
-        try
-        {
-            if (url != null && acceptsURL(url))
-            {
-                StringTokenizer urltokens = new StringTokenizer(url, ":;");
-
-                while (urltokens.hasMoreTokens())
-                {
-                    String token = urltokens.nextToken();
-                    if (token.contains("="))
-                    {
-                        StringTokenizer keyvalues = new StringTokenizer(token, "=");
-                        while (keyvalues.hasMoreTokens())
-                        {
-                            String key = keyvalues.nextToken();
-                            String value = keyvalues.nextToken();
-                            if (!connprops.containsKey(key))
-                                connprops.put(key, URLDecoder.decode(value, "UTF-8"));
-                            else
-                                HPCCJDBCUtils.traceoutln(Level.FINEST,  "Connection property: " + key + " found in info properties and URL, ignoring URL value");
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            HPCCJDBCUtils.traceoutln(Level.SEVERE, "Issue parsing URL! \"" + url + "\"");
-        }
-
-        try
-        {
-            if (!connprops.containsKey("ServerAddress"))
-                connprops.setProperty("ServerAddress", SERVERADDRESSDEFAULT);
-
-            String serverAddress = HPCCJDBCUtils.ensureURLProtocol(connprops.getProperty("ServerAddress"));           
-            try
-            {
-                HPCCJDBCUtils.verifyURL(serverAddress);
-            }
-            catch (Exception e)
-            {
-                throw new Exception("HPCCDriver found invalid ServerAddress: " + connprops.getProperty("ServerAddress") +": " + e.getLocalizedMessage());
-            }
-            
-            if (!connprops.containsKey("TraceLevel"))
-                connprops.setProperty("TraceLevel", TRACELEVELDEFAULT);
-
-            if (!connprops.containsKey("TraceToFile"))
-                connprops.setProperty("TraceToFile", TRACETOFILEDEFAULT);
-
-            if (connprops.containsKey("TraceLevel"))
-                HPCCJDBCUtils.initTracing(connprops.getProperty("TraceLevel"),
-                    Boolean.parseBoolean(connprops.getProperty("TraceToFile")));
-
-            if (!connprops.containsKey("TargetCluster"))
-                connprops.setProperty("TargetCluster", CLUSTERDEFAULT);
-
-            if (!connprops.containsKey("QuerySet"))
-                connprops.setProperty("QuerySet", QUERYSETDEFAULT);
-
-            if (!connprops.containsKey("WsECLWatchAddress"))
-            {
-                connprops.setProperty("WsECLWatchAddress", serverAddress);
-            }
-            else
-            {
-                String wseclwatchadd =  HPCCJDBCUtils.ensureURLProtocol(connprops.getProperty("WsECLWatchAddress"));
-                try
-                {
-                    HPCCJDBCUtils.verifyURL(wseclwatchadd);
-                    connprops.setProperty("WsECLWatchAddress",wseclwatchadd);
-                }
-                catch (Exception e)
-                {
-                    throw new Exception("HPCCDriver found invalid WsECLWatchAddress: " + connprops.getProperty("WsECLWatchAddress") +": " + e.getLocalizedMessage());
-                }
-            }
-
-            if (!connprops.containsKey("WsECLWatchPort"))
-                connprops.setProperty("WsECLWatchPort", WSECLWATCHPORTDEFAULT);
-
-            if (!connprops.containsKey("WsECLAddress"))
-            {
-                connprops.setProperty("WsECLAddress", serverAddress);
-            }
-            else
-            {
-                String wsecladd = HPCCJDBCUtils.ensureURLProtocol(connprops.getProperty("WsECLAddress"));
-                try
-                {
-                    HPCCJDBCUtils.verifyURL(wsecladd);
-                    connprops.setProperty("WsECLAddress",wsecladd);
-                }
-                catch (Exception e)
-                {
-                    throw new Exception("HPCCDriver found invalid WsECLAddress: " + connprops.getProperty("WsECLAddress") +": " + e.getLocalizedMessage());
-                }
-            }
-
-            if (!connprops.containsKey("WsECLPort"))
-                connprops.setProperty("WsECLPort", WSECLPORTDEFAULT);
-
-            if (!connprops.containsKey("WsECLDirectAddress"))
-            {
-                connprops.setProperty("WsECLDirectAddress", serverAddress);
-            }
-            else
-            {
-                String wsecldirectadd = HPCCJDBCUtils.ensureURLProtocol(connprops.getProperty("WsECLDirectAddress"));
-                try
-                {
-                    HPCCJDBCUtils.verifyURL(wsecldirectadd);
-                    connprops.setProperty("WsECLDirectAddress",wsecldirectadd);
-                }
-                catch (Exception e)
-                {
-                    throw new Exception("HPCCDriver found invalid WsECLDirectAddress: " + connprops.getProperty("WsECLDirectAddress") +": " + e.getLocalizedMessage());
-                }
-            }
-
-            if (!connprops.containsKey("WsECLDirectPort"))
-                connprops.setProperty("WsECLDirectPort", WSECLDIRECTPORTDEFAULT);
-
-            if (connprops.containsKey("user"))
-                connprops.setProperty("username", connprops.getProperty("user"));
-
-            if (!connprops.containsKey("username"))
-                connprops.setProperty("username", "");
-
-            if (!connprops.containsKey("password"))
-                connprops.setProperty("password", "");
-
-            if (!connprops.containsKey("PageSize") || !HPCCJDBCUtils.isNumeric(connprops.getProperty("PageSize")))
-                connprops.setProperty("PageSize", String.valueOf(FETCHPAGESIZEDEFAULT));
-
-            if (!connprops.containsKey("PageOffset") || !HPCCJDBCUtils.isNumeric(connprops.getProperty("PageOffset")))
-                connprops.setProperty("PageOffset", String.valueOf(FETCHPAGEOFFSETDEFAULT));
-
-            if (!connprops.containsKey("ConnectTimeoutMilli")
-                    || !HPCCJDBCUtils.isNumeric(connprops.getProperty("ConnectTimeoutMilli")))
-                connprops.setProperty("ConnectTimeoutMilli", String.valueOf(CONNECTTIMEOUTMILDEFAULT));
-
-            if (!connprops.containsKey("ReadTimeoutMilli")
-                    || !HPCCJDBCUtils.isNumeric(connprops.getProperty("ReadTimeoutMilli")))
-                connprops.setProperty("ReadTimeoutMilli", String.valueOf(READTIMEOUTMILDEFAULT));
-
-            boolean setdefaultreslim = false;
-            if (connprops.containsKey("EclResultLimit"))
-            {
-                String eclreslim = connprops.getProperty("EclResultLimit").trim();
-                try
-                {
-                    if (HPCCJDBCUtils.isNumeric(eclreslim))
-                    {
-                        if (Integer.valueOf(eclreslim).intValue() <= 0)
-                            setdefaultreslim = true;
-                    }
-                    else
-                    {
-                        if (!eclreslim.equalsIgnoreCase("ALL"))
-                            setdefaultreslim = true;
-                    }
-                }
-                catch (Exception e)
-                {
-                    setdefaultreslim = true;
-                }
-            }
-            else
-                setdefaultreslim = true;
-
-            if (setdefaultreslim)
-            {
-                connprops.setProperty("EclResultLimit", ECLRESULTLIMDEFAULT);
-                HPCCJDBCUtils.traceoutln(Level.WARNING,  "Invalid Numeric EclResultLimit value detected, using default value: "+ECLRESULTLIMDEFAULT);
-            }
-
-            String basicAuth = HPCCConnection.createBasicAuth(connprops.getProperty("username"), connprops.getProperty("password"));
-
-            connprops.put("BasicAuth", basicAuth);
-
-            if (!connprops.containsKey("LazyLoad"))
-                connprops.setProperty("LazyLoad", LAZYLOADDEFAULT);
-
-        }
-        catch (Exception e)
-        {
-            HPCCJDBCUtils.traceoutln(Level.SEVERE,   "Issue detected while setting connection properties!");
-            HPCCJDBCUtils.traceoutln(Level.SEVERE,   e.getLocalizedMessage());
-            return null;
-        }
-
-        HPCCJDBCUtils.traceoutln(Level.INFO,"HPCCDriver::connect " + connprops.getProperty("ServerAddress"));
-
-        return new HPCCConnection(connprops);
+	private boolean isValidURL(String url){
+    	Pattern ipAddressRegex = Pattern.compile("\\bhttps?://\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b");
+    	Pattern urlNameRegex = Pattern.compile("\\bhttps?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]\\b");
+    	return ((url != null) && ((ipAddressRegex.matcher(url).matches()) || (urlNameRegex.matcher(url).matches())));
+	}
+	
+	public boolean acceptsURL(String url) throws SQLException {
+		return ((url != null) && (url.equals("jdbc:hpcc")));
+	}
+	
+    public DriverPropertyInfo[] getPropertyInfo(String url, Properties properties) {
+        return driverProperties.getProperties();
     }
 
-    public boolean acceptsURL(String url) throws SQLException
-    {
-        return url != null && url.matches("^(?i)jdbc:hpcc((:|;).*)*?");
+    public int getMajorVersion(){
+        return 1;
     }
 
-    private static void initializePropInfo()
-    {
-        String [] boolchoices = new String [] {"true", "false"};
-
-        int totalConfigProps = 19;
-        infoArray = new DriverPropertyInfo[totalConfigProps];
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("ConnectTimeoutMilli", CONNECTTIMEOUTMILDEFAULT);
-        infoArray[totalConfigProps].description = "HPCC requests connection time out value in milliseconds.";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("ReadTimeoutMilli", READTIMEOUTMILDEFAULT);
-        infoArray[totalConfigProps].description = "HPCC requests connection read time out value in milliseconds.";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("LazyLoad", LAZYLOADDEFAULT);
-        infoArray[totalConfigProps].description = "If disabled, all HPCC metadata loaded and cached at connect time; otherwise HPCC file, and published query info is loaded on-demand";
-        infoArray[totalConfigProps].required = false;
-        infoArray[totalConfigProps].choices = boolchoices;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("EclResultLimit", ECLRESULTLIMDEFAULT);
-        infoArray[totalConfigProps].description = "Default limit on number of result records returned.";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("TraceLevel", TRACELEVELDEFAULT);
-        infoArray[totalConfigProps].choices = HPCCJDBCUtils.getTraceLevelStrOptions();
-        infoArray[totalConfigProps].description = "Logging level (java.util.logging.level).";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("TraceToFile", TRACETOFILEDEFAULT);
-        infoArray[totalConfigProps].description = "false -> System.out, true -> " + HPCCJDBCUtils.workingDir +  HPCCJDBCUtils.traceFileName;
-        infoArray[totalConfigProps].required = false;
-        infoArray[totalConfigProps].choices = boolchoices;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("TargetCluster", CLUSTERDEFAULT);
-        infoArray[totalConfigProps].description = "Target cluster on which to execute ECL code.";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("QuerySet", QUERYSETDEFAULT);
-        infoArray[totalConfigProps].description = "Queryset from which published query (Stored Procedure) is chosen.";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("PageSize", FETCHPAGESIZEDEFAULT);
-        infoArray[totalConfigProps].description = "Number of HPCC data files (DB tables) or HPCC published queries (DB Stored Procs) displayed.";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("PageOffset", FETCHPAGEOFFSETDEFAULT);
-        infoArray[totalConfigProps].description = "Starting HPCC data file or HPCC published queries displayed.";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("password", "");
-        infoArray[totalConfigProps].description = "HPCC password (*Use JDBC client secure interface if available*).";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("username", "");
-        infoArray[totalConfigProps].description = "HPCC username (*Use JDBC client secure interface if available*).";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("WsECLDirectPort", WSECLDIRECTPORTDEFAULT);
-        infoArray[totalConfigProps].description = "WsECLDirect port (required if HPCC configuration does not use default port).";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("WsECLDirectAddress", "myWsECLDirectAddress");
-        infoArray[totalConfigProps].description = "WsECLDirect Address (required if different than ServerAddress).";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("WsECLPort", WSECLPORTDEFAULT);
-        infoArray[totalConfigProps].description = "WsECL port (required if HPCC configuration does not use default port).";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("WsECLAddress", "myWsECLAddress");
-        infoArray[totalConfigProps].description = "WsECLAddress Address (required if different than ServerAddress).";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("WsECLWatchPort", WSECLWATCHPORTDEFAULT);
-        infoArray[totalConfigProps].description = "WsECLWatch port (required if HPCC configuration does not use default port).";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("WsECLWatchAddress", "myWsECLWatchAddress");
-        infoArray[totalConfigProps].description = "WsECLWatch address (required if different than ServerAddress).";
-        infoArray[totalConfigProps].required = false;
-
-        infoArray[--totalConfigProps] = new DriverPropertyInfo("ServerAddress", "myHPCCAddress");
-        infoArray[totalConfigProps].description = "Target HPCC ESP Address (used to contact WsECLWatch, WsECLDirect, or WsECL if override not specified).";
-        infoArray[totalConfigProps].required = true;
+    public int getMinorVersion(){
+        return 0;
     }
 
-    public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException
-    {
-        return infoArray;
-    }
-
-    public int getMajorVersion()
-    {
-        return HPCCVersionTracker.HPCCMajor;
-    }
-
-    public int getMinorVersion()
-    {
-        return HPCCVersionTracker.HPCCMinor;
-    }
-
-    public boolean jdbcCompliant()
-    {
+    public boolean jdbcCompliant(){
         return true;
     }
 
-	@Override
 	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
+	private static void traceOutLine(String errorMessage){
+		HPCCJDBCUtils.traceoutln(Level.INFO, HPCCDriver.class.getSimpleName()+": "+errorMessage);
+	}
 }

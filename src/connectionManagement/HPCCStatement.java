@@ -66,7 +66,7 @@ public class HPCCStatement implements Statement
                     parser.process(sqlQuery);
                 else
                     throw new SQLException("Error parser is not ready, cannot execute query");*/
-            	
+
                 eclQuery = new ECLEngine(dbMetadata, hpccConnection.getProperties(), sqlQuery);
 
                 eclQuery.generateECL();
@@ -111,7 +111,6 @@ public class HPCCStatement implements Statement
                 }
 
                 NodeList rowList = eclQuery.execute(params);
-                System.out.println(rowList);
                 if (rowList != null)
                     result = new HPCCResultSet(this, rowList, resultMetadata);
             }

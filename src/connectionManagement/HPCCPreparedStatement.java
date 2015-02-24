@@ -715,8 +715,6 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         {
             setNull(parameterIndex, targetSqlType);
         }
-
-        System.out.println(parameters.get(parameterIndex));
     }
 
     public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException

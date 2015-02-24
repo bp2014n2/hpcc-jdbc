@@ -42,13 +42,11 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import connectionManagement.HPCCColumnMetaData.ColumnType;
-import net.sf.jsqlparser.schema.Table;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
 
 public class ECLEngine
 {
@@ -56,15 +54,19 @@ public class ECLEngine
     private String                  expectedDSName = null;
     private NodeList                resultSchema = null;
     private final Properties        hpccConnProps;
+
     private SQLParser               sqlParser;
     private String					sqlQuery;
+
     private HPCCDatabaseMetaData    dbMetadata;
 
     private StringBuilder           eclCode = new StringBuilder();
-    private URL                     hpccRequestUrl;
+    
+	private URL                     hpccRequestUrl;
     private ArrayList<HPCCColumnMetaData> storeProcInParams = null;
     private String[]                    procInParamValues = null;
     private List<HPCCColumnMetaData>    expectedretcolumns = null;
+    private HashMap<String, HPCCColumnMetaData> availablecols = null;
 
     private static final int            INDEXSCORECRITERIAVARS         = 3;
 
@@ -78,7 +80,6 @@ public class ECLEngine
 
     private static final String         SELECTOUTPUTNAME = "JDBCSelectQueryResult";
     private static final String			HPCCEngine = "THOR";
-    
 
     private DocumentBuilderFactory      dbf = DocumentBuilderFactory.newInstance();
 
@@ -87,17 +88,22 @@ public class ECLEngine
         this.hpccConnProps = props;
         this.dbMetadata = dbmetadata;
         this.sqlQuery = sql;
-        
-        System.out.println("sql: \n"+ sql);
         this.sqlParser = new SQLParser(sql);
-        
-        
     }
 
     public List<HPCCColumnMetaData> getExpectedRetCols()
     {
         return expectedretcolumns;
     }
+    
+    
+    /**
+     * Returns the current ECLCode as String. Is used in tests to check the correctness of the code generation. 
+     * @return		eclCode as String
+     */
+    public String getEclCode() {
+		return eclCode.toString();
+	}
 
     private void addFileColsToAvailableCols(DFUFile dfufile, HashMap<String, HPCCColumnMetaData> availablecols)
     {
@@ -108,8 +114,6 @@ public class ECLEngine
             availablecols.put(col.getTableName().toUpperCase() + "." + col.getColumnName().toUpperCase(), col);
         }
     }
-    
-    
 
     public NodeList executeSelectConstant()
     {
@@ -129,18 +133,6 @@ public class ECLEngine
     	
     public void generateECL() throws SQLException
     {
-    	/*
-        eclCode = new StringBuilder("");
-        hpccRequestUrl = null;
-        
-//      TODO: implement layout-generation and loading of all datasets
-
-    	for (String table : tables) {
-    		eclCode.append(table.split("::")[1]).append(" := ").append("DATASET(");
-    		eclCode.append("'~").append(table).append("'");
-        	eclCode.append(", ").append("Layout_"+table.split("::")[1]).append(",").append(HPCCEngine).append(");\n");
-    	}
-        */
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
         eclCode.append(generateLayouts());
@@ -150,21 +142,21 @@ public class ECLEngine
 		ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append(eclBuilder.generateECL(sqlQuery));
     	eclCode.append(");");
+    
+    	availablecols = new HashMap<String, HPCCColumnMetaData>();
     	
-    	System.out.println(eclCode.toString());
-    	
-    	String tables = sqlParser.getAllTables().get(0);
-    	DFUFile hpccQueryFile = dbMetadata.getDFUFile(tables);
-    	HashMap<String, HPCCColumnMetaData> availablecols = new HashMap<String, HPCCColumnMetaData>();
-    	addFileColsToAvailableCols(hpccQueryFile, availablecols);
-    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-  
-    	for (int i=0; i<sqlParser.getSelectItems().size(); i++) {
-    		String column = sqlParser.getSelectItems().get(i).toString();
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
+    	for (String table : sqlParser.getAllTables()) {
+    		String tableName = table.replace(".", "::");
+    		DFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
+    		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	}
     	
-    	
+    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
+    	ArrayList<String> selectItems = (ArrayList<String>) sqlParser.getAllSelectItems();
+    	for (int i=0; i<selectItems.size(); i++) {
+    		String column = selectItems.get(i);
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
+    	}  	
         generateSelectURL();
     }
     
@@ -181,8 +173,6 @@ public class ECLEngine
 			layoutsString.append("\n");
 			
 		}
-//		layoutsString.append("\n");
-//		System.out.println("layouts_string: \n"+layoutsString.toString());
 		return layoutsString.toString();
 	}
     
@@ -192,8 +182,7 @@ public class ECLEngine
 			String tableName = table.split("\\.")[1];
 			datasetsString.append(tableName).append(" := ").append("DATASET(");
 			datasetsString.append("'~").append(table.replaceAll("\\.", "::")).append("'");
-			datasetsString.append(", ").append("Layout_"+tableName).append(",").append(HPCCEngine).append(");\n");
-			
+			datasetsString.append(", ").append("Layout_"+tableName).append(",").append(HPCCEngine).append(");\n");		
 		}
     	return datasetsString.toString();
     }

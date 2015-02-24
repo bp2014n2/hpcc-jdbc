@@ -21,7 +21,6 @@ import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.OrderByElement;
@@ -41,15 +40,12 @@ public class ECLBuilder {
     private static final String			Layout_PatientMapping ="RECORD STRING200 patient_ide;  STRING50 patient_ide_source;  UNSIGNED5 patient_num;  STRING50 patient_ide_status;  STRING50 project_id;  STRING25 upload_date;STRING25 update_date;STRING25 download_date;STRING25 import_date;STRING50 sourcesystem_cd;UNSIGNED5 upload_id;END;";
     private static final String			Layout_ProviderDimension ="RECORD STRING50 provider_id;  STRING700 provider_path;  STRING850 name_char;  STRING provider_blob; STRING25 update_date;  STRING25 download_date;  STRING25 import_date;  STRING50 sourcesystem_cd;  UNSIGNED5 upload_id;END;";
     private static final String			Layout_VisitDimension = "RECORD UNSIGNED5 encounter_num;  UNSIGNED5 patient_num;  STRING50 active_status_cd;  STRING25 start_date;  STRING25 end_date;  STRING50 inout_cd;  STRING50 location_cd;  STRING900 location_path;  UNSIGNED5 length_of_stay;  STRING visit_blob;  STRING25 update_date;  STRING25 download_date;  STRING25 import_date;  STRING50 sourcesystem_cd;  UNSIGNED5 upload_id; END;";
-    static HashMap<String, String> layouts = new HashMap<String, String> ();
- 
-    private FromItem table;
+    public static HashMap<String, String> layouts = new HashMap<String, String> ();
+
     private List<OrderByElement> orderBys;
-    private List<SelectItem> selects;
    
 	public ECLBuilder() {
 		setupLayouts();
-//		table = sqlParser.getTable();
 	}
 
 	public static HashMap<String, String> getLayouts() {
@@ -86,7 +82,6 @@ public class ECLBuilder {
 	private String generateSelectECL(String statement) {
 		
     	orderBys = sqlParser.getOrderBys();
-//    	selects = sqlParser.getSelects();
     	
 //    	TODO: FIRST CHECK FOR ORDERBY
     	
@@ -152,10 +147,15 @@ public class ECLBuilder {
          *  for SelectExpressionItem
          *  	do getExpressionECL()
          */	
-    	eclCode.append(", ");
+    	
     	ArrayList<SelectItem> selectItems = (ArrayList<SelectItem>) sqlParser.getSelectItems();
     	StringBuilder select = new StringBuilder();
-    	if (!selectItems.isEmpty()) {
+    	Boolean isNotSelectAll = false;
+    	for (SelectItem selectItem : selectItems) {
+    		if(!(selectItem instanceof AllColumns)) isNotSelectAll = true;
+    	}
+    	if (!selectItems.isEmpty() && isNotSelectAll) {
+    		eclCode.append(", ");
     		select.append("{");
     	}
     	for (int i = 0; i<selectItems.size(); i++) {
@@ -169,17 +169,14 @@ public class ECLBuilder {
     			select.append(", ");
     		}
     	}
-    	if (!selectItems.isEmpty()) {
+    	if (!selectItems.isEmpty() && isNotSelectAll) {
     		select.append("}");
     	}
     	eclCode.append(select.toString());
-
-//    	System.out.println("eclCode for "+sqlParser.statement.toString()+": \n"+eclCode.toString());
     	return(eclCode.toString());
 	}
 	private String generateExpressionECL(Expression expressionItem) {
 		StringBuilder expression = new StringBuilder();
-//		System.out.println(expressionItem.getClass());
 		
 		if (expressionItem instanceof LikeExpression) {
 			expression.append(parseLikeExpression((LikeExpression) expressionItem));
@@ -210,7 +207,9 @@ public class ECLBuilder {
 			expression.append(generateExpressionECL(((Between) expressionItem).getBetweenExpressionEnd()));
 			expression.append(")");
 		} else if (expressionItem instanceof StringValue) {
+			expression.append("'");
 			expression.append(((StringValue) expressionItem).getValue());
+			expression.append("'");
 		} else if (expressionItem instanceof LongValue) {
 			expression.append(((LongValue) expressionItem).getValue());
 		} else if (expressionItem instanceof SelectExpressionItem) {
@@ -220,17 +219,22 @@ public class ECLBuilder {
 	}
 
 	private String parseFunction(Function function) {
+		StringBuilder innerFunctionString = new StringBuilder();
 		StringBuilder functionString = new StringBuilder();
-		switch(function.getName()) {
-		case "COUNT": 
-			functionString.append("COUNT(");
+		if (function.isAllColumns()) {
+//			innerFunctionString.append();
+		} else {
 			for (Expression expression : function.getParameters().getExpressions()) {
-				functionString.append(generateExpressionECL(expression));
+				innerFunctionString.append(generateExpressionECL(expression));
 			}
-			functionString.append(")");
-			break;
-			
 		}
+		functionString.append(function.getName().toLowerCase()+"_"+ innerFunctionString.toString() +" := ");
+		functionString.append(function.getName());
+		functionString.append("(");
+		functionString.append(innerFunctionString.toString());
+		functionString.append(")");
+		
+	
 		return functionString.toString();
 	}
 

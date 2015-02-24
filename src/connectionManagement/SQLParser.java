@@ -7,6 +7,7 @@ import java.util.List;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.parser.*;
@@ -64,6 +65,37 @@ public class SQLParser{
 	public List<SelectItem> getSelectItems() {
 		if (plain == null) return null;
 		return plain.getSelectItems();
+	}
+	
+	public List<String> getAllSelectItems() {
+		ArrayList<String> allSelects = new ArrayList<String>();
+		for (SelectItem selectItem : getSelectItems()) {
+			if (selectItem instanceof SelectExpressionItem) {
+				Expression expression = ((SelectExpressionItem) selectItem).getExpression();
+				if (expression instanceof Column) {
+					allSelects.add(expression.toString());
+				} else if (expression instanceof Function) {
+					String function = expression.toString().replace("(", "_").replace(")", "").toLowerCase();
+					allSelects.add(function);
+				}
+			}
+			else if (selectItem instanceof AllColumns) {
+				if (getTable() instanceof Table) {
+					String tableName = ((Table) getTable()).getName();
+					String layout = ECLBuilder.getLayouts().get(tableName);
+					String[] layout_splitted = layout.split(";");
+					for (String l : layout_splitted) {
+						String[] foo = l.split(" ");
+						allSelects.add(foo[foo.length-1]);
+					}
+				} else if (getTable() instanceof SubSelect) {
+					allSelects.addAll(new SQLParser(((SubSelect) getTable()).toString()).getAllSelectItems());
+				}
+				
+			}
+			
+		}
+		return allSelects;
 	}
 	
 	public List<String> getAllTables() {
