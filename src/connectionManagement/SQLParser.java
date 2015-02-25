@@ -137,66 +137,15 @@ public class SQLParser{
 		return plain.getJoins();
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	/*
-	private <T> List<String> getColumns (List<T> elements) {
-		if (elements == null) return (List<String>) new ArrayList<String> ();
-		
-		List<String> result = (List<String>) new ArrayList<String>();
-		for (T element : elements) {
-			try {
-//				mega-hyper-krasse Meta-Programmierung
-//				mega-hyper-crass meta-programming
-				java.lang.reflect.Method method = element.getClass().getMethod("getExpression", null);
-				Column c = (Column) method.invoke(element, null);
-				result.add(transformColumnToString(c));
-				
-			} catch (Exception e) {
-				e.printStackTrace();
-			} 
-		}
-		return result;
-	}
-	*/
-	
-	
-	
-	/*
-	public List<String> getSelects() {
-		Select select = (Select) statement;
-		PlainSelect plain = (PlainSelect) select.getSelectBody();
-		if (plain.getSelectItems().get(0) instanceof AllColumns) {
-			return (List<String>) new ArrayList<String>();
-		}
-		
-		/* only working with Java 8
-		List<String> selectItems = plain.getSelectItems()
-				.stream()
-				.map(s -> transformSelectItemToString(s))
-				.collect(Collectors.toList()); */
-//		code for Java 7
-	/*	
-		return getColumns(plain.getSelectItems());
+	public Boolean isDistinct() {
+		if (plain == null || plain.getDistinct() == null) return false;
+		return true;
 	}
 	
-	public String transformColumnToString(Column c) {
-		String string = "";
-		if (c.getTable().getName() != null) {
-			string += c.getTable();
-			string += ".";
-		}
-		string += c.getColumnName();
-		return string;
+	protected Boolean isSelectAll() {
+    	for (SelectItem selectItem : getSelectItems()) {
+    		if(selectItem instanceof AllColumns) return true;
+    	}
+    	return false;
 	}
-	
-	*/
-
 }

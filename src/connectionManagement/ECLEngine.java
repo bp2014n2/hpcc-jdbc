@@ -143,6 +143,7 @@ public class ECLEngine
     	eclCode.append(eclBuilder.generateECL(sqlQuery));
     	eclCode.append(");");
     
+    	System.out.println(eclCode.toString());
     	availablecols = new HashMap<String, HPCCColumnMetaData>();
     	
     	for (String table : sqlParser.getAllTables()) {

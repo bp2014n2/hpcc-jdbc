@@ -1,119 +1,123 @@
 package unitTests;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+
 import java.sql.SQLException;
+
+import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import connectionManagement.ECLBuilder;
 
 public class ECLBuilderTest {
-
+	
+	private static ECLBuilder eclBuilder;
+	
+	@BeforeClass
+	public static void initialize() {
+		eclBuilder = new ECLBuilder();
+	}
 	
 	@Test
 	public void shouldTranslateSimpleSelect() throws SQLException {
-		assertEquals(new ECLBuilder().generateECL("select * from mySchema.myTable"), "myTable");
-		assertEquals(new ECLBuilder().generateECL("select myColumn from mySchema.myTable"), "myTable, {myColumn}");
-		assertEquals(new ECLBuilder().generateECL("select distinct myColumn from mySchema.myTable"), "");
-		assertEquals(new ECLBuilder().generateECL("select myColumnA, myColumnB as myNewColumnB from mySchema.myTable"), "myTable, {myColumnA, myNewColumnB := myColumnB}");
+		assertEquals(eclBuilder.generateECL("select * from mySchema.myTable"), "myTable");
+		assertEquals(eclBuilder.generateECL("select myColumn from mySchema.myTable"), "Table(myTable, {myColumn})");
+		assertEquals(eclBuilder.generateECL("select distinct * from mySchema.myTable"), "DEDUP(myTable, All)");
+		assertEquals(eclBuilder.generateECL("select distinct myColumn from mySchema.myTable"), "DEDUP(Table(myTable, {myColumn}), All)");
+		assertEquals(eclBuilder.generateECL("select myColumnA, myColumnB as myNewColumnB from mySchema.myTable"), "Table(myTable, {myColumnA, myNewColumnB := myColumnB})");
 	}
 
 	@Test
 	public void shouldTranslateSelectWithWhere() {
-		assertEquals(new ECLBuilder().generateECL("select * from mySchema.myTable where myColumn = 'foo'"), "myTable(myColumn = 'foo')");
-		assertEquals(new ECLBuilder().generateECL("select myColumn from mySchema.myTable where myColumn = 'foo'"), "myTable(myColumn = 'foo'), {myColumn}");
-		assertEquals(new ECLBuilder().generateECL("select myColumn from mySchema.myTable where myColumn is NULL"), "myTable(myColumn = ''), {myColumn}");
+		assertEquals(eclBuilder.generateECL("select * from mySchema.myTable where myColumn = 'foo'"), "myTable(myColumn = 'foo')");
+		assertEquals(eclBuilder.generateECL("select myColumn from mySchema.myTable where myColumn = 'foo'"), "Table(myTable(myColumn = 'foo'), {myColumn})");
+		assertEquals(eclBuilder.generateECL("select myColumn from mySchema.myTable where myColumn is NULL"), "Table(myTable(myColumn = ''), {myColumn})");
 	}
 	
 	@Test
 	public void shouldTranslateSelectWithLike() {
-		assertEquals(new ECLBuilder().generateECL("select * from mySchema.myTable where myColumn like 'foo%'"), "myTable(myColumn[1..3] = 'foo')");
+		assertEquals(eclBuilder.generateECL("select * from mySchema.myTable where myColumn like 'foo%'"), "myTable(myColumn[1..3] = 'foo')");
+		assertEquals(eclBuilder.generateECL("select * from mySchema.myTable where myColumn like 'foo'"), "myTable(myColumn[1..3] = 'foo')");
 	}
 	
 	@Test
 	public void shouldTranslateSelectWithOrderBy() {
-		assertEquals(new ECLBuilder().generateECL("select * from mySchema.myTable order by myColumn"), "SORT(myTable, myColumn)");
+		assertEquals(eclBuilder.generateECL("select * from mySchema.myTable order by myColumn"), "SORT(myTable, myColumn)");
+		assertEquals(eclBuilder.generateECL("select myColumn from mySchema.myTable order by myColumn"), "SORT(Table(myTable, {myColumn}), myColumn)");
+		assertEquals(eclBuilder.generateECL("select distinct myColumn from mySchema.myTable order by myColumn"), "SORT(DEDUP(Table(myTable, {myColumn}), All), myColumn)");
+//		following query is currently not supported because of an unknown equivalent in ECL
+//		assertEquals(eclBuilder.generateECL("select myColumn from myTable group by myColumn order by count(*)"), "");
+		
 	}
 	
-	@Test
+	@Test 
 	public void shouldTranslateSelectWithGroupBy() {
-		fail("not yet implemented");
-		assertEquals(new ECLBuilder().generateECL("select * from mySchema.myTable group by myColumn"), "SORT(myTable, myColumn)");
-	}
-	
-	@Test
-	public void shouldTranslateSelectWithCountStar() {
-		fail("not yet implemented");
-		assertEquals(new ECLBuilder().generateECL("select count(*) from mySchema.myTable"), "SORT(myTable, myColumn)");
+		assertEquals(eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn"), "Table(myTable, {myColumn}, myColumn)");
+		assertEquals(eclBuilder.generateECL("select count(myColumn) from mySchema.myTable group by myColumn"), "Table(myTable, {count_myColumn := count(group)}, myColumn)");
+		assertEquals(eclBuilder.generateECL("select myColumn, count(myColumn) from mySchema.myTable group by myColumn order by count(*)"), "SORT(Table(myTable, {myColumn, count_myColumn := count(group)}, myColumn), count(group))");
 	}
 	
 	@Test
 	public void shouldTranslateSelectWithCount() {
-		fail("not yet implemented");
-		assertEquals(new ECLBuilder().generateECL("select count(myColumn) from mySchema.myTable"), "SORT(myTable, myColumn)");
+		assertEquals(eclBuilder.generateECL("select count(*) from mySchema.myTable"), "Table(myTable, {count_ := count(group)})");
+		assertEquals(eclBuilder.generateECL("select count(myColumn) from mySchema.myTable"), "Table(myTable, {count_myColumn := count(group)})");
 	}
-	
-	@Test
+		
+	@Test @Ignore
 	public void shouldTranslateSelectWithLimit() {
-		fail("not yet implemented");
-		assertEquals(new ECLBuilder().generateECL("select myColumn from mySchema.myTable limit 1"), "SORT(myTable, myColumn)");
+		assertEquals(eclBuilder.generateECL("select myColumn from mySchema.myTable limit 1"), "");
 	}
 	
-	@Test
+	@Test @Ignore
 	public void shouldTranslateSelectWithJoin() {
-		fail("not yet implemented");
-		assertEquals(new ECLBuilder().generateECL("select myColumn from mySchema.myTableA, mySchema.myTableB where myTableA.columnA = myTableB.columnB"), "SORT(myTable, myColumn)");
+		assertEquals(eclBuilder.generateECL("select myColumn from mySchema.myTableA, mySchema.myTableB where myTableA.columnA = myTableB.columnB"), "");
 	}
 	
 	@Test
 	public void shouldTranslateSelectWithSubselectInFrom() {
-		fail("not yet implemented");
-		assertEquals(new ECLBuilder().generateECL("select myColumnA from (select myColumnA, myColumnB from myTable)"), "SORT(myTable, myColumn)");
+		assertEquals(eclBuilder.generateECL("select myColumnA from (select myColumnA, myColumnB from myTable)"), "Table((Table(myTable, {myColumnA, myColumnB})), {myColumnA})");
 	}
 	
 	@Test
 	public void shouldTranslateSelectWithSubselectInWhere() {
-		fail("not yet implemented");
-		assertEquals(new ECLBuilder().generateECL("select myColumnA from myTableA where myColumnB in (select myColumnC from myTableB)"), "SORT(myTable, myColumn)");
+//		not implemented yet
+//		assertEquals(eclBuilder.generateECL("select myColumnA from myTableA where myColumnB in ('myValue1', 'myValue2')"), "Table(myTableA(myColumnB in dictionary([{'myValue1'}, {'myValue2'}], {STRING15 myColumnB})), {myColumnA})");
+		assertEquals(eclBuilder.generateECL("select myColumnA from myTableA where myColumnB in (select myColumnC from myTableB)"), "Table(myTableA(myColumnB in set(Table(myTableB, {myColumnC}))), {myColumnA})");
 	}
 	
-	@Test
+	@Test @Ignore
 	public void shouldTranslateSelectWithFunction() {
-		fail("not yet implemented");
-		assertEquals(new ECLBuilder().generateECL("select nextval('mySequence')"), "");
+		assertEquals(eclBuilder.generateECL("select nextval('mySequence')"), "");
 	}
 	
-	@Test
+	@Test @Ignore
 	public void shouldTranslateInsertInto() {
-		fail("not yet implemented");
-		assertEquals(new ECLBuilder().generateECL("insert into myTable values (valueA)"), "");
-		assertEquals(new ECLBuilder().generateECL("insert into myTable values (valueA, valueB)"), "");
-		assertEquals(new ECLBuilder().generateECL("insert into myTable (columnA) values (valueA)"), "");
-		assertEquals(new ECLBuilder().generateECL("insert into myTable (columnA, columnB) values (valueA, valueB)"), "");
-		assertEquals(new ECLBuilder().generateECL("insert into myTable (columnA, columnB) values (valueA, valueB) returning *"), "");
-		assertEquals(new ECLBuilder().generateECL("insert into myTable (myColumnA) with x as (select myColumnC from anotherTable) select x.myColumnB from x"), "");
-		assertEquals(new ECLBuilder().generateECL("insert into myTable (myColumnA) select * from (select myColumnB from anotherTable)"), "");
+		assertEquals(eclBuilder.generateECL("insert into myTable values (valueA)"), "");
+		assertEquals(eclBuilder.generateECL("insert into myTable values (valueA, valueB)"), "");
+		assertEquals(eclBuilder.generateECL("insert into myTable (columnA) values (valueA)"), "");
+		assertEquals(eclBuilder.generateECL("insert into myTable (columnA, columnB) values (valueA, valueB)"), "");
+		assertEquals(eclBuilder.generateECL("insert into myTable (columnA, columnB) values (valueA, valueB) returning *"), "");
+		assertEquals(eclBuilder.generateECL("insert into myTable (myColumnA) with x as (select myColumnC from anotherTable) select x.myColumnB from x"), "");
+		assertEquals(eclBuilder.generateECL("insert into myTable (myColumnA) select * from (select myColumnB from anotherTable)"), "");
 	}
 	
-	@Test
+	@Test @Ignore
 	public void shouldTranslateUpdate() {
-		fail("not yet implemented");
-		assertEquals(new ECLBuilder().generateECL("update myTable set myColumn = 'myValue'"), "");
-		assertEquals(new ECLBuilder().generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"), "");
+		assertEquals(eclBuilder.generateECL("update myTable set myColumn = 'myValue'"), "");
+		assertEquals(eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"), "");
 		
 	}
 	
-	@Test
+	@Test @Ignore
 	public void shouldTranslateDropTable() {
-		fail("not yet implemented");
-		assertEquals(new ECLBuilder().generateECL("drop myTable"), "");		
+		assertEquals(eclBuilder.generateECL("drop myTable"), "");		
 	}
 	
-	@Test
+	@Test @Ignore
 	public void shouldCreateTable() {
-		fail("not yet implemented");
-		assertEquals(new ECLBuilder().generateECL("create table newTable (myColumnA myTypeA, myColumnB myTypeB"), "");
-		assertEquals(new ECLBuilder().generateECL("create temp table newTable (myColumnA myTypeA, myColumnB myTypeB"), "");
+		assertEquals(eclBuilder.generateECL("create table newTable (myColumnA myTypeA, myColumnB myTypeB"), "");
+		assertEquals(eclBuilder.generateECL("create temp table newTable (myColumnA myTypeA, myColumnB myTypeB"), "");
 		
 	}
 	
