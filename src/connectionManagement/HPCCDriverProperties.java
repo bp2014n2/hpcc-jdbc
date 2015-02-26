@@ -8,14 +8,13 @@ import java.util.Properties;
 public class HPCCDriverProperties extends Properties{
 	private static final long serialVersionUID = 1L;
 	
-	private static final int DEFAULT_VALUE_POSITION = 0;
-	private static final int DESCRIPTION_POSITION = 1;
+	private static final int DEFAULT_VALUE = 0;
+	private static final int DESCRIPTION = 1;
 	
 	private static final String DEFAULT_SERVER_ADDRESS = "http://localhost";
 	
 	private static HashMap<String, String[]> defaultProperties = new HashMap<String, String[]>(){
 		private static final long serialVersionUID = 1L;
-
 		{
 			put("ConnectTimeoutMilli", 	new String[]{"5000","HPCC requests connection time out value in milliseconds."});
 			put("ReadTimeoutMilli", 	new String[]{"15000","HPCC requests connection read time out value in milliseconds."});
@@ -36,7 +35,7 @@ public class HPCCDriverProperties extends Properties{
 			put("WsECLWatchAddress", 	new String[]{DEFAULT_SERVER_ADDRESS, "WsECLWatch address (required if different than ServerAddress)."});
 			put("WsECLAddress", 		new String[]{DEFAULT_SERVER_ADDRESS, "WsECLAddress Address (required if different than ServerAddress)."});
 			put("WsECLDirectAddress", 	new String[]{DEFAULT_SERVER_ADDRESS, "WsECLDirect Address (required if different than ServerAddress)."});
-			put("Basic Auth", 			new String[]{HPCCConnection.createBasicAuth("hpccdemo", "hpccdemo"), "Basic Authentication is created at run-time level (from username and password)"});
+			put("Basic Auth", 			new String[]{"This property is set in either case by the connect method!", "Basic Authentication is created at run-time level (from username and password)"});
 		}
 	};
 	
@@ -47,22 +46,26 @@ public class HPCCDriverProperties extends Properties{
 
 	public void initializeProperties() {
 		for(String key : defaultProperties.keySet()){
-			this.put(key, defaultProperties.get(key)[DEFAULT_VALUE_POSITION]);
+			this.setProperty(key, defaultProperties.get(key)[DEFAULT_VALUE]);
 		}
 	}
 	
-	public Object put(Object key, Object value){
+	public Object setProperty(String key, String value){
 		boolean isInDefaultProperies = defaultProperties.containsKey(key);
 		if(isInDefaultProperies){
-			super.put(key, value);
+			super.setProperty(key, value);
 		}
 		return isInDefaultProperies;
 	}
 	
+	public String getProperty(String key){
+		return (String) super.getProperty(key);
+	} 
+	
 	public LinkedList<String> getAllPropertiesUsingServerAddress(){
 		LinkedList<String> propertiesWithServerAddress = new LinkedList<String>();
 		for(String key : defaultProperties.keySet()){
-			if(defaultProperties.get(key)[DEFAULT_VALUE_POSITION].equals(DEFAULT_SERVER_ADDRESS)){
+			if(defaultProperties.get(key)[DEFAULT_VALUE].equals(DEFAULT_SERVER_ADDRESS)){
 				propertiesWithServerAddress.add(key);
 			}
 		}
@@ -79,11 +82,11 @@ public class HPCCDriverProperties extends Properties{
 		int propertyCount = 0;
 		
 		for(String propertyName : defaultProperties.keySet()){
-			String propertyValue = (String) this.get(propertyName);
-			String defaultValue = defaultProperties.get(propertyName)[DEFAULT_VALUE_POSITION];
-			String propertyDescription = defaultProperties.get(propertyName)[DESCRIPTION_POSITION]+"(default: "+defaultValue+")";
+			String propertyValue = this.getProperty(propertyName);
+			String defaultValue = defaultProperties.get(propertyName)[DEFAULT_VALUE];
+			String propertyDescription = defaultProperties.get(propertyName)[DESCRIPTION]+"(default: "+defaultValue+")";
 			
-			propertyInformation[propertyCount] = new DriverPropertyInfo((String)propertyName, propertyValue);
+			propertyInformation[propertyCount] = new DriverPropertyInfo(propertyName, propertyValue);
 			propertyInformation[propertyCount].description = propertyDescription;
 			propertyInformation[propertyCount].required = propertyName.equals("ServerAddress");
 			

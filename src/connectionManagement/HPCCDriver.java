@@ -62,7 +62,7 @@ public class HPCCDriver implements Driver{
     			url = url.replaceFirst("jdbc:hpcc;", "");
     		}
     		for(String property : driverProperties.getAllPropertiesUsingServerAddress()){
-    			driverProperties.put(property, url);
+    			driverProperties.setProperty(property, url);
     		}
     	}else{
     		traceOutLine(url +" has the wrong format (e.g. missing protocol)");
@@ -72,12 +72,13 @@ public class HPCCDriver implements Driver{
 	    	for(Object propertyKey : properties.keySet()){
 	    		if((driverProperties.keySet().contains(propertyKey) && !propertyKey.equals("ServerAddress")) || (propertyKey.equals("user"))){
 	    			String propertyValue = properties.getProperty((String) propertyKey);
+	    			String defaultValue = driverProperties.getProperty((String) propertyKey);
 	    			switch((String)propertyKey){
 	    				case "WsECLWatchAddress":
 	    				case "WsECLAddress":
 	    				case "WsECLDirectAddress":
 	    					if(!isValidURL(propertyValue)){
-	    						traceOutLine(propertyValue +" is not a valid URL for "+propertyKey+" (now using: "+driverProperties.get(propertyKey)+")");
+	    						traceOutLine(propertyValue +" is not a valid URL for "+propertyKey, defaultValue);
 	    						continue;
 	    					}
 	    					break;
@@ -86,13 +87,13 @@ public class HPCCDriver implements Driver{
 	    				case "ConnectTimeoutMilli":
 	    				case "ReadTimeoutMilli":
 	    					if(!HPCCJDBCUtils.isNumeric(propertyValue)){
-	    						traceOutLine(propertyValue +" is not a number and not valid for "+propertyKey+" (now using: "+driverProperties.get(propertyKey)+")");
+	    						traceOutLine(propertyValue +" is not a number and not valid for "+propertyKey, defaultValue);
 	    						continue;
 	    					}
 	    					break;
 	    				case "EclResultLimit":
 	    					if(!HPCCJDBCUtils.isNumeric(propertyValue) && !propertyValue.equals("ALL")){
-	    						traceOutLine(propertyValue +" is not a valid value for "+propertyKey+" (now using: "+driverProperties.get(propertyKey)+")");
+	    						traceOutLine(propertyValue +" is not a valid value for "+propertyKey, defaultValue);
 	    						continue;
 	    					}
 	    					break;
@@ -107,7 +108,7 @@ public class HPCCDriver implements Driver{
 	    	}
     	}
     	
-		driverProperties.put("Basic Auth", HPCCConnection.createBasicAuth(driverProperties.getProperty("username"), driverProperties.getProperty("password")));
+		driverProperties.setProperty("Basic Auth", HPCCConnection.createBasicAuth(driverProperties.getProperty("username"), driverProperties.getProperty("password")));
 
 		traceOutLine("Connecting to " + driverProperties.getProperty("ServerAddress"));
         return new HPCCConnection(driverProperties);
@@ -145,5 +146,9 @@ public class HPCCDriver implements Driver{
 	
 	private static void traceOutLine(String errorMessage){
 		HPCCJDBCUtils.traceoutln(Level.INFO, HPCCDriver.class.getSimpleName()+": "+errorMessage);
+	}
+	
+	private static void traceOutLine(String errorMessage, String defaultProperty){
+		traceOutLine(errorMessage+" (now using: "+defaultProperty+")");
 	}
 }
