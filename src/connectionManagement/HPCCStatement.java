@@ -67,7 +67,7 @@ public class HPCCStatement implements Statement
                 else
                     throw new SQLException("Error parser is not ready, cannot execute query");*/
 
-                eclQuery = new ECLEngine(dbMetadata, hpccConnection.getProperties());
+                eclQuery = new ECLEngine(dbMetadata, hpccConnection.getProperties(), sqlQuery);
 
                 eclQuery.generateECL();
                 resultMetadata = new HPCCResultSetMetadata(eclQuery.getExpectedRetCols(), hpccResultSetName);
