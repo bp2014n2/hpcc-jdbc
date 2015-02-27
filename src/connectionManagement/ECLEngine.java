@@ -133,13 +133,13 @@ public class ECLEngine
     	
     public void generateECL() throws SQLException
     {
+    	ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
-        eclCode.append(generateLayouts());
+        eclCode.append(generateLayouts(eclBuilder));
 		eclCode.append(generateTables());
 		
 		eclCode.append("OUTPUT(");
-		ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append(eclBuilder.generateECL(sqlQuery));
     	eclCode.append(");");
     
@@ -153,7 +153,7 @@ public class ECLEngine
     	}
     	
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	ArrayList<String> selectItems = (ArrayList<String>) sqlParser.getAllSelectItems();
+    	ArrayList<String> selectItems = (ArrayList<String>) sqlParser.getAllSelectItemsInQuery();
     	for (int i=0; i<selectItems.size(); i++) {
     		String column = selectItems.get(i);
     		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
@@ -165,12 +165,12 @@ public class ECLEngine
     	return "IMPORT STD;\n";
     }
     
-    private String generateLayouts() {
+    private String generateLayouts(ECLBuilder eclBuilder) {
 		StringBuilder layoutsString = new StringBuilder();
 		for (String table : sqlParser.getAllTables()) {
 			String tableName = table.split("\\.")[1];
 			layoutsString.append("Layout_"+tableName+" := ");
-			layoutsString.append(ECLBuilder.getLayouts().get(tableName));
+			layoutsString.append(ECLLayouts.getLayouts().get(tableName));
 			layoutsString.append("\n");
 			
 		}

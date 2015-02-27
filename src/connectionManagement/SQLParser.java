@@ -2,7 +2,10 @@ package connectionManagement;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.BinaryExpression;
@@ -27,10 +30,10 @@ public class SQLParser{
 	Expression expression;
 	private PlainSelect plain;
 
-	public SQLParser() {
+	protected SQLParser() {
 	}
 	
-	public SQLParser(Expression expression) {
+	protected SQLParser(Expression expression) {
 		if (expression instanceof SubSelect) {
 			statement = (Statement) expression;
 			plain = (PlainSelect) ((SubSelect) expression).getSelectBody();
@@ -39,7 +42,7 @@ public class SQLParser{
 		} 
 	}
 	
-	public SQLParser(String sql) {
+	protected SQLParser(String sql) {
 		try {
 			statement = parserManager.parse(new StringReader(sql));
 			if (statement instanceof Select) {
@@ -50,24 +53,24 @@ public class SQLParser{
 		}
 	}
 	
-	public SQLParser (Statement statement) {
+	protected SQLParser (Statement statement) {
 		this.statement = statement;
 		if (statement instanceof Select) {
 			plain = (PlainSelect) ((Select) statement).getSelectBody();
 		}
 	}
 	
-	public FromItem getTable() {
+	protected FromItem getFromItem() {
 		if (plain == null) return null;
 		return plain.getFromItem();
 	}
 	
-	public List<SelectItem> getSelectItems() {
+	protected List<SelectItem> getSelectItems() {
 		if (plain == null) return null;
 		return plain.getSelectItems();
 	}
 	
-	public List<String> getAllSelectItems() {
+	protected List<String> getAllSelectItemsInQuery() {
 		ArrayList<String> allSelects = new ArrayList<String>();
 		for (SelectItem selectItem : getSelectItems()) {
 			if (selectItem instanceof SelectExpressionItem) {
@@ -80,25 +83,30 @@ public class SQLParser{
 				}
 			}
 			else if (selectItem instanceof AllColumns) {
-				if (getTable() instanceof Table) {
-					String tableName = ((Table) getTable()).getName();
-					String layout = ECLBuilder.getLayouts().get(tableName);
-					String[] layout_splitted = layout.split(";");
-					for (String l : layout_splitted) {
-						String[] foo = l.split(" ");
-						allSelects.add(foo[foo.length-1]);
-					}
-				} else if (getTable() instanceof SubSelect) {
-					allSelects.addAll(new SQLParser(((SubSelect) getTable()).toString()).getAllSelectItems());
-				}
-				
-			}
-			
+				if (getFromItem() instanceof Table) {
+					String tableName = ((Table) getFromItem()).getName();
+					allSelects.addAll(ECLLayouts.getAllColumns(tableName));
+				} else if (getFromItem() instanceof SubSelect) {
+					allSelects.addAll(new SQLParser(((SubSelect) getFromItem()).toString()).getAllSelectItemsInQuery());
+				}	
+			}		
 		}
 		return allSelects;
 	}
 	
-	public List<String> getAllTables() {
+	protected TreeSet<String> getAllColumns() {
+		FromItem fromItem = getFromItem();
+		String table;
+		if (fromItem instanceof Table) {
+			table = ((Table) fromItem).getName();
+			return ECLLayouts.getAllColumns(table);
+		} else {
+			return new SQLParser((SubSelect) fromItem).getAllColumns();
+		}
+		
+	}
+	
+	protected List<String> getAllTables() {
 		List<String> tableList;
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
 		if (statement instanceof Select) {
@@ -117,27 +125,37 @@ public class SQLParser{
 		return lowerTableList;
 	}
 	
-	public Expression getWhere() {
+	protected Limit getLimit() {
+		if (plain == null) return null;
+		return plain.getLimit();
+	}
+	
+	
+	protected Expression getWhere() {
 		if (plain == null) return null;
 		return plain.getWhere();
 	}
 	
-	public List<Expression> getGroupBys() {
+	protected void setWhere(Expression expression) {
+		plain.setWhere(expression);
+	}
+	
+	protected List<Expression> getGroupBys() {
 		if (plain == null) return null;
 		return plain.getGroupByColumnReferences();
 	}
 	
-	public List<OrderByElement> getOrderBys() {
+	protected List<OrderByElement> getOrderBys() {
 		if (plain == null) return null;
 		return plain.getOrderByElements();
 	}
 	
-	public List<Join> getJoins() {
+	protected List<Join> getJoins() {
 		if (plain == null) return null;
 		return plain.getJoins();
 	}
 	
-	public Boolean isDistinct() {
+	protected Boolean isDistinct() {
 		if (plain == null || plain.getDistinct() == null) return false;
 		return true;
 	}
@@ -147,5 +165,15 @@ public class SQLParser{
     		if(selectItem instanceof AllColumns) return true;
     	}
     	return false;
+	}
+	
+	protected Expression getHaving() {
+		if (plain == null) return null;
+		return plain.getHaving();
+	}
+	
+	protected HashSet<String> concatenateSelectsOrderBysHaving() {
+		
+		return null;
 	}
 }

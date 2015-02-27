@@ -16,7 +16,7 @@ public class Test {
 			 HPCCStatement stmt = (HPCCStatement) connection.createStatement();
 			 
 			/* Create your SQL query */
-			 String query = "select concept_path from i2b2demodata.concept_dimension";
+			 String query = "";
 			 
 			/* Execute your SQL query */
 			 HPCCResultSet res1 = (HPCCResultSet) stmt.executeQuery(query);

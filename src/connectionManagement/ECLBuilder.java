@@ -1,8 +1,11 @@
 package connectionManagement;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
@@ -27,6 +30,7 @@ import net.sf.jsqlparser.statement.drop.Drop;
 import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
+import net.sf.jsqlparser.statement.select.Limit;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
@@ -35,39 +39,6 @@ import net.sf.jsqlparser.statement.select.SubSelect;
 import net.sf.jsqlparser.statement.update.Update;
 
 public class ECLBuilder {
-        
-    private static final String			Layout_ConceptDimension = "RECORD STRING700 concept_path;  STRING50 concept_cd;  STRING2000 name_char;  STRING concept_blob;  STRING25 update_date;  STRING25 download_date;  STRING25 import_date;  STRING50 sourcesystem_cd;  UNSIGNED5 upload_id;END;";
-    private static final String			Layout_PatientDimension = "RECORD UNSIGNED5 patient_num;STRING50 vital_status_cd;STRING25 birth_date;STRING25 death_date;STRING50 sex_cd;UNSIGNED2 age_in_years_num;STRING50 language_cd;STRING50 race_cd;STRING50 marital_status_cd;STRING50 religion_cd;STRING10 zip_cd;STRING700 statecityzip_path;STRING50 income_cd;STRING patient_blob;STRING25 update_date;STRING25 download_date;STRING25 import_date;STRING50 sourcesystem_cd;UNSIGNED5 upload_id;END;";
-    private static final String			Layout_ObservationFact = "RECORD UNSIGNED5 encounter_num;UNSIGNED5 patient_num;STRING50 concept_cd;STRING50 provider_id;STRING25 start_date;STRING100 modifier_cd;UNSIGNED5 instance_num;STRING50 valtype_cd;STRING255 tval_char;DECIMAL18_5 nval_num;STRING50 valueflag_cd;DECIMAL18_5 quantity_num;STRING50 vunits_cd;STRING25 end_date;STRING50 location_cd;STRING observation_blob;DECIMAL18_5 confidence;STRING25 update_date;STRING25 download_date;STRING25 import_date;STRING50 sourcesystem_cd;UNSIGNED5 upload_id;END;";
-    private static final String			Layout_PatientMapping ="RECORD STRING200 patient_ide;  STRING50 patient_ide_source;  UNSIGNED5 patient_num;  STRING50 patient_ide_status;  STRING50 project_id;  STRING25 upload_date;STRING25 update_date;STRING25 download_date;STRING25 import_date;STRING50 sourcesystem_cd;UNSIGNED5 upload_id;END;";
-    private static final String			Layout_ProviderDimension ="RECORD STRING50 provider_id;  STRING700 provider_path;  STRING850 name_char;  STRING provider_blob; STRING25 update_date;  STRING25 download_date;  STRING25 import_date;  STRING50 sourcesystem_cd;  UNSIGNED5 upload_id;END;";
-    private static final String			Layout_VisitDimension = "RECORD UNSIGNED5 encounter_num;  UNSIGNED5 patient_num;  STRING50 active_status_cd;  STRING25 start_date;  STRING25 end_date;  STRING50 inout_cd;  STRING50 location_cd;  STRING900 location_path;  UNSIGNED5 length_of_stay;  STRING visit_blob;  STRING25 update_date;  STRING25 download_date;  STRING25 import_date;  STRING50 sourcesystem_cd;  UNSIGNED5 upload_id; END;";
-    public static HashMap<String, String> layouts = new HashMap<String, String> ();
-
-    
-   
-	public ECLBuilder() {
-		setupLayouts();
-	}
-
-	/**
-	 * 
-	 * @return returns a HashMap with all layouts from i2b2demodata referenced by the table name
-	 */
-	public static HashMap<String, String> getLayouts() {
-		setupLayouts();
-		return layouts;
-		
-	}
-	
-	private static void setupLayouts () {
-		layouts.put("concept_dimension", Layout_ConceptDimension);
-		layouts.put("patient_dimension", Layout_PatientDimension);
-		layouts.put("observation_fact", Layout_ObservationFact);
-		layouts.put("patient_mapping", Layout_PatientMapping);
-		layouts.put("provider_dimension", Layout_ProviderDimension);
-		layouts.put("visit_dimension", Layout_VisitDimension);
-	}
 	
 	/**
 	 * This method generates ECL code from a given SQL code. 
@@ -106,22 +77,37 @@ public class ECLBuilder {
 	
 	private String generateSelectECL(SQLParser sqlParser) {
 		StringBuilder eclCode = new StringBuilder();
-		  	
+		
     	generateFrom(sqlParser, eclCode);
     	generateWhere(sqlParser, eclCode);    	
-    	generateSelects(sqlParser, eclCode);   	
+    	generateSelects(sqlParser, eclCode, true);
     	generateGroupBys(sqlParser, eclCode);
-    	convertToTable(sqlParser, eclCode); 	
-    	generateDistinct(sqlParser, eclCode);
+    	convertToTable(sqlParser, eclCode); 	  	
     	generateOrderBys(sqlParser, eclCode);
+    	if(sqlParser.getOrderBys() != null) {
+    		generateSelects(sqlParser, eclCode, false);
+        	convertToTable(sqlParser, eclCode); 
+    	}
+    	generateDistinct(sqlParser, eclCode);
+    	generateLimit(sqlParser, eclCode);
     	
     	return(eclCode.toString());
 	}
 	
 	private void convertToTable(SQLParser sqlParser, StringBuilder eclCode) {
-		if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null && !sqlParser.isSelectAll()) {
+		if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
     		eclCode.insert(0, "Table(");
     		eclCode.append(")");
+    	}
+	}
+	
+	private void generateLimit(SQLParser sqlParser, StringBuilder eclCode) {
+		Limit limit = sqlParser.getLimit();
+		if (limit != null) {
+			eclCode.insert(0, "CHOOSEN(");
+			eclCode.append(", ");
+			eclCode.append(limit.getRowCount());
+			eclCode.append(")");
     	}
 	}
 	
@@ -154,7 +140,7 @@ public class ECLBuilder {
     			 */
     			Expression orderBy = orderByElement.getExpression();
     			if (orderBy instanceof Function) {
-    				eclCode.append(parseFunction((Function) orderBy));
+    				eclCode.append(nameFunction((Function) orderBy));
     			} else {
     				eclCode.append(parseExpressionECL(orderByElement.getExpression()));
     			}
@@ -164,7 +150,7 @@ public class ECLBuilder {
 	}
 	
 	private void generateFrom(SQLParser sqlParser, StringBuilder from) {
-		FromItem table = sqlParser.getTable();
+		FromItem table = sqlParser.getFromItem();
 		if (table instanceof Table) {
 			from.append(((Table) table).getName());
     	} else if (table instanceof SubSelect){
@@ -191,27 +177,49 @@ public class ECLBuilder {
 	 * @return
 	 */
 	
-	private void generateSelects(SQLParser sqlParser, StringBuilder select) {
-		ArrayList<SelectItem> selectItems = (ArrayList<SelectItem>) sqlParser.getSelectItems();
+	private void generateSelects(SQLParser sqlParser, StringBuilder select, Boolean inner) { 
+    	select.append(", ");
+    	select.append("{");
+    	TreeSet<String> selectItemsStrings = new TreeSet<String>();
+    	if(inner) {
+    		if (sqlParser.getOrderBys() != null) {
+    			for (OrderByElement orderByElement : sqlParser.getOrderBys()) {
+        			Expression orderBy = orderByElement.getExpression();
+        			if (orderBy instanceof Function) {
+        				StringBuilder function = new StringBuilder();
+        				function.append(nameFunction((Function) orderBy));
+        				function.append(" := ");
+        				function.append(parseFunction((Function) orderBy));
+        				selectItemsStrings.add(function.toString());
+        			} else {
+        				selectItemsStrings.add(parseExpressionECL(orderByElement.getExpression()));
+        			}
+        		}
+    		}	
+    	}
     	
-    	if (!selectItems.isEmpty() && !sqlParser.isSelectAll()) {
-    		select.append(", ");
-    		select.append("{");
+	    if (sqlParser.isSelectAll()) {
+	    	selectItemsStrings.addAll(sqlParser.getAllColumns());
+	    } else {
+	    	ArrayList<SelectItem> selectItems = (ArrayList<SelectItem>) sqlParser.getSelectItems();
+	    	for (SelectItem selectItem : selectItems) {
+		   		if (selectItem instanceof SelectExpressionItem) {
+		   			StringBuilder selectItemString = new StringBuilder();
+		   			if (((SelectExpressionItem) selectItem).getAlias() != null) {
+		   				selectItemString.append(((SelectExpressionItem) selectItem).getAlias().getName());
+		   				selectItemString.append(" := ");
+		   			}
+		   			selectItemString.append(parseExpressionECL((Expression) ((SelectExpressionItem) selectItem).getExpression()));
+		   			selectItemsStrings.add(selectItemString.toString());
+		   		}
+		   	}
+	    }
+	    String selectItemString = "";
+    	for (String selectItem : selectItemsStrings) {
+    		selectItemString += (selectItemString=="" ? "":", ")+selectItem;
     	}
-    	for (int i = 0; i<selectItems.size(); i++) {
-    		SelectItem selectItem = selectItems.get(i);
-    		if (selectItem instanceof SelectExpressionItem) {
-    			if (((SelectExpressionItem) selectItem).getAlias() != null) {
-    				select.append(((SelectExpressionItem) selectItem).getAlias().getName());
-    				select.append(" := ");
-    			}
-    			select.append(parseExpressionECL((Expression) ((SelectExpressionItem) selectItem).getExpression()));
-    		}
-    		if (i != (selectItems.size()-1)) select.append(", ");
-    	}
-    	if (!selectItems.isEmpty() && !sqlParser.isSelectAll()) {
-    		select.append("}");
-    	}
+    	select.append(selectItemString);
+    	select.append("}");
 	}
 	
 	/**
@@ -279,10 +287,7 @@ public class ECLBuilder {
 	
 	private String nameFunction(Function function) {
 		StringBuilder innerFunctionString = new StringBuilder();
-//		StringBuilder functionString = new StringBuilder();
-		if (function.isAllColumns()) {
-//			innerFunctionString.append();
-		} else {
+		if (!function.isAllColumns()) {
 			for (Expression expression : function.getParameters().getExpressions()) {
 				innerFunctionString.append(parseExpressionECL(expression));
 			}
@@ -353,5 +358,24 @@ public class ECLBuilder {
 			innerStatement = innerStatement.substring(1, end);
 		}
 		return innerStatement;
+	}
+	
+	private AndExpression findJoinCondition(AndExpression expression) {
+		if (expression.getRightExpression() instanceof Column && expression.getLeftExpression() instanceof Column) return expression;
+		if (expression.getRightExpression() instanceof AndExpression) return findJoinCondition(expression);
+		if (expression.getLeftExpression() instanceof AndExpression) return findJoinCondition(expression);
+		return null;
+	}
+	
+	private Expression parseJoinCondition(SQLParser sqlParser) {
+		Expression where = sqlParser.getWhere();
+		if (where instanceof EqualsTo) {
+			sqlParser.setWhere(null);
+			return where;
+		} else if (where instanceof AndExpression) {
+			
+		}
+		
+		return null;
 	}
 }
