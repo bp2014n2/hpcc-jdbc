@@ -7,10 +7,12 @@ public class Test {
 	public static void main(String[] args) {
 		try {
 			Class.forName("connectionManagement.HPCCDriver");
+			
 			Properties connectionProperties = new Properties();
 			connectionProperties.put("PageOffset", "asdas");
 			connectionProperties.put("EclResultLimit", "20as00");
 			HPCCConnection connection = (HPCCConnection) DriverManager.getDriver("jdbc:hpcc").connect("http://192.168.56.101", connectionProperties);
+			//HPCCConnection connection = (HPCCConnection) DriverManager.getConnection("http://192.168.56.101", "test", "test");
 			
 			/* create HPCCStatement object for single use SQL query execution */
 			 HPCCStatement stmt = (HPCCStatement) connection.createStatement();
