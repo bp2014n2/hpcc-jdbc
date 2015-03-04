@@ -57,6 +57,7 @@ public class ECLBuilderTest {
 	@Test 
 	public void shouldTranslateSelectWithGroupBy() {
 		assertEquals("Table(myTable, {myColumn}, myColumn)", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn"));
+		assertEquals("Table(myTable, {myColumn}, myColumnA, myColumnB)", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumnA, myColumnB"));
 		assertEquals("Table(myTable, {count_myColumn := count(group)}, myColumn)", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable group by myColumn"));
 		assertEquals("Table(SORT(Table(myTable, {count_ := count(group), myColumn}, myColumn), count_), {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn order by count(*)"));
 	}
@@ -94,18 +95,17 @@ public class ECLBuilderTest {
 	public void shouldTranslateSelectWithFunction() {
 //		not implemented yet
 		assertEquals("", eclBuilder.generateECL("select nextval('mySequence')"));
-		assertEquals("", eclBuilder.generateECL("select nextval('mySequence')"));
 	}
 	
 	@Test @Ignore
 	public void shouldTranslateInsertInto() {
-		assertEquals("", eclBuilder.generateECL("insert into myTable values (valueA)"));
-		assertEquals("", eclBuilder.generateECL("insert into myTable values (valueA, valueB)"));
-		assertEquals("", eclBuilder.generateECL("insert into myTable (columnA) values (valueA)"));
-		assertEquals("", eclBuilder.generateECL("insert into myTable (columnA, columnB) values (valueA, valueB)"));
-		assertEquals("", eclBuilder.generateECL("insert into myTable (columnA, columnB) values (valueA, valueB) returning *"));
-		assertEquals("", eclBuilder.generateECL("insert into myTable (myColumnA) with x as (select myColumnC from anotherTable) select x.myColumnB from x"));
-		assertEquals("", eclBuilder.generateECL("insert into myTable (myColumnA) select * from (select myColumnB from anotherTable)"));
+		assertEquals("", eclBuilder.generateECL("insert into myTable values (valueA, valueB, valueC)"));
+		assertEquals("", eclBuilder.generateECL("insert into myTable (myColumnA) values (valueA)"));
+		assertEquals("", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB)"));
+//		currently not supported
+//		assertEquals("", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB) returning *"));
+//		assertEquals("", eclBuilder.generateECL("insert into myTable (myColumnA) with x as (select myColumnC from anotherTable) select x.myColumnB from x"));
+//		assertEquals("", eclBuilder.generateECL("insert into myTable (myColumnA) select * from (select myColumnB from anotherTable)"));
 	}
 	
 	@Test @Ignore
@@ -117,7 +117,7 @@ public class ECLBuilderTest {
 	
 	@Test @Ignore
 	public void shouldTranslateDropTable() {
-		assertEquals("", eclBuilder.generateECL("drop myTable"));		
+		assertEquals("Std.File.DeleteLogicalFile('~mySchema::myTable')", eclBuilder.generateECL("drop mySchema.myTable"));		
 	}
 	
 	@Test @Ignore

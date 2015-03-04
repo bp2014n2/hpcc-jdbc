@@ -20,6 +20,7 @@ import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.expression.operators.relational.IsNullExpression;
+import net.sf.jsqlparser.expression.operators.relational.ItemsList;
 import net.sf.jsqlparser.expression.operators.relational.LikeExpression;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
@@ -54,28 +55,75 @@ public class ECLBuilder {
 	 * 		INSERT
 	 * 		UPDATE	
 	 */
-		SQLParser sqlParser = new SQLParser(sql);
-		if (sqlParser.statement instanceof Select) {
-			return generateSelectECL(sqlParser);
-		} else if (sqlParser.statement instanceof Insert) {
-//			return generateInsertECL();
-		} else if (sqlParser.statement instanceof Update) {
-//			return generateUpdateECL();
-		} else if (sqlParser.statement instanceof Drop) {
-//			return generateDropECL();
-		} else {
-			System.out.println("error, found:"+sqlParser.statement.getClass());
-			return "";
-		}
+		switch(SQLParser.sqlIsInstanceOf(sql)) {
+    	case "Select":
+    		return generateSelectECL(new SQLParserSelect(sql));
+		case "Insert":
+    		return generateInsertECL(new SQLParserInsert(sql));
+    	case "Update":
+//    		return generateUpdateECL(new SQLParserUpdate(sql));
+    	case "Drop":
+    		return generateDropECL(new SQLParserDrop(sql));
+		default:
+    		System.out.println("type of sql not recognized"+SQLParser.sqlIsInstanceOf(sql));
+    	}
 		return null;
 	}
 	
+	
+	private String generateDropECL(SQLParserDrop sqlParser) {
+		StringBuilder eclCode = new StringBuilder();
+		
+		String fileName = sqlParser.getName();;
+		eclCode.append("Std.File.DeleteLogicalFile('~i2b2demodata::"+fileName+"', true);");
+		
+		return eclCode.toString();
+	}
+
+
 	/**
-	 * Generates the ECL code for a select statement (saved in global variable)
+	 * Generates the ECL code for a insert statement 
+	 * @return returns the ECL code for the given insert statement
+	 */
+	private String generateInsertECL(SQLParserInsert sqlParser) {
+		StringBuilder eclCode = new StringBuilder();
+		String subFileName = "~"+sqlParser.getTable().getFullyQualifiedName().replaceAll("\\.", "::");
+		eclCode.append("BaseFile :='"+subFileName+"';\n");
+		
+		eclCode.append("OUTPUT(");
+		generateNewDataset(sqlParser, eclCode);
+		subFileName += Long.toString(System.currentTimeMillis());
+		eclCode.append("),,'"+subFileName+"', overwrite);\n");
+		
+		eclCode.append("SEQUENTIAL(Std.File.StartSuperFileTransaction(), Std.File.AddSuperFile(");
+		eclCode.append("BaseFile");
+		eclCode.append(", '"+subFileName+"'),");
+		eclCode.append("Std.File.FinishSuperFileTransaction());");
+		return eclCode.toString();
+	}
+
+	private void generateNewDataset(SQLParserInsert sqlParser, StringBuilder eclCode) {
+		eclCode.append("DATASET([{");
+		if (sqlParser.isAllColumns()) {
+			String columnString = "";
+			for (Expression expression : sqlParser.getExpressions()) {
+				columnString += (columnString=="" ? "":", ")+parseExpressionECL(expression);
+			}
+			eclCode.append(columnString);
+		} else {
+			
+		}
+		eclCode.append("}], ");
+		eclCode.append("Layout_"+sqlParser.getTable().getName());
+		
+	}
+	
+	/**
+	 * Generates the ECL code for a select statement
 	 * @return returns the ECL code for the given select statement
 	 */
 	
-	private String generateSelectECL(SQLParser sqlParser) {
+	private String generateSelectECL(SQLParserSelect sqlParser) {
 		StringBuilder eclCode = new StringBuilder();
 		
     	generateFrom(sqlParser, eclCode);
@@ -94,14 +142,14 @@ public class ECLBuilder {
     	return(eclCode.toString());
 	}
 	
-	private void convertToTable(SQLParser sqlParser, StringBuilder eclCode) {
+	private void convertToTable(SQLParserSelect sqlParser, StringBuilder eclCode) {
 		if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
     		eclCode.insert(0, "Table(");
     		eclCode.append(")");
     	}
 	}
 	
-	private void generateLimit(SQLParser sqlParser, StringBuilder eclCode) {
+	private void generateLimit(SQLParserSelect sqlParser, StringBuilder eclCode) {
 		Limit limit = sqlParser.getLimit();
 		if (limit != null) {
 			eclCode.insert(0, "CHOOSEN(");
@@ -111,24 +159,24 @@ public class ECLBuilder {
     	}
 	}
 	
-	private void generateDistinct(SQLParser sqlParser, StringBuilder eclCode) {
+	private void generateDistinct(SQLParserSelect sqlParser, StringBuilder eclCode) {
 		if (sqlParser.isDistinct()) {
 			eclCode.insert(0, "DEDUP(");
 			eclCode.append(", All)");
     	}
 	}
 	
-	private void generateGroupBys(SQLParser sqlParser, StringBuilder eclCode) {
+	private void generateGroupBys(SQLParserSelect sqlParser, StringBuilder eclCode) {
 		List<Expression> groupBys = sqlParser.getGroupBys(); 
 		if (groupBys != null) {
-			eclCode.append(", ");
 			for (Expression expression : groupBys) {
+				eclCode.append(", ");
 				eclCode.append(parseExpressionECL(expression));
 			}
 		}
 	}
 	
-	private void generateOrderBys(SQLParser sqlParser, StringBuilder eclCode) {
+	private void generateOrderBys(SQLParserSelect sqlParser, StringBuilder eclCode) {
 		List<OrderByElement> orderBys = sqlParser.getOrderBys(); 	
     	if (orderBys != null) {
     		eclCode.insert(0, "SORT(");
@@ -149,7 +197,7 @@ public class ECLBuilder {
     	}
 	}
 	
-	private void generateFrom(SQLParser sqlParser, StringBuilder from) {
+	private void generateFrom(SQLParserSelect sqlParser, StringBuilder from) {
 		FromItem table = sqlParser.getFromItem();
 		if (table instanceof Table) {
 			from.append(((Table) table).getName());
@@ -161,7 +209,7 @@ public class ECLBuilder {
     	}
 	}
 	
-	private void generateWhere(SQLParser sqlParser, StringBuilder where) {
+	private void generateWhere(SQLParserSelect sqlParser, StringBuilder where) {
 		Expression whereItems = sqlParser.getWhere();
     	if (whereItems != null) {
     		where.append("(");
@@ -177,7 +225,7 @@ public class ECLBuilder {
 	 * @return
 	 */
 	
-	private void generateSelects(SQLParser sqlParser, StringBuilder select, Boolean inner) { 
+	private void generateSelects(SQLParserSelect sqlParser, StringBuilder select, Boolean inner) { 
     	select.append(", ");
     	select.append("{");
     	TreeSet<String> selectItemsStrings = new TreeSet<String>();
@@ -367,7 +415,7 @@ public class ECLBuilder {
 		return null;
 	}
 	
-	private Expression parseJoinCondition(SQLParser sqlParser) {
+	private Expression parseJoinCondition(SQLParserSelect sqlParser) {
 		Expression where = sqlParser.getWhere();
 		if (where instanceof EqualsTo) {
 			sqlParser.setWhere(null);
