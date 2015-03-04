@@ -251,7 +251,7 @@ public class ECLEngine
 				table = table.split("\\.")[1];
 			}
 			
-			layoutsString.append("Layout_"+table+" := ");
+			layoutsString.append(table+"_record := ");
 			layoutsString.append(ECLLayouts.getLayouts().get(table));
 			layoutsString.append("\n");
 			
@@ -269,7 +269,7 @@ public class ECLEngine
 			
 			datasetsString.append(tableName).append(" := ").append("DATASET(");
 			datasetsString.append("'~").append(table.replaceAll("\\.", "::")).append("'");
-			datasetsString.append(", ").append("Layout_"+tableName).append(",").append(HPCCEngine).append(");\n");		
+			datasetsString.append(", ").append(tableName+"_record").append(",").append(HPCCEngine).append(");\n");		
 		}
     	return datasetsString.toString();
     }

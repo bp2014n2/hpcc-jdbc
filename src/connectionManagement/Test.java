@@ -16,15 +16,16 @@ public class Test {
 			 HPCCStatement stmt = (HPCCStatement) connection.createStatement();
 			 
 			/* Create your SQL query */
-			 String query = "Select * from i2b2demodata.concept_dimension";
+			 String query = "insert into i2b2demodata.modifier_dimension values('test','test','test','test','test','test','test','test',5);";
 			 
 			/* Execute your SQL query */
-			 HPCCResultSet res1 = (HPCCResultSet) stmt.executeQuery(query);
+			 //HPCCResultSet res1 = (HPCCResultSet) 
+					 stmt.executeQuery(query);
 			 
 			 /* Check the result set */
-			 while(res1.next()){
-				 System.out.println(res1.getString(3));
-			 }
+//			 while(res1.next()){
+//				 System.out.println(res1.getString(3));
+//			 }
 		
 		} catch (SQLException | ClassNotFoundException e) {
 			e.printStackTrace();

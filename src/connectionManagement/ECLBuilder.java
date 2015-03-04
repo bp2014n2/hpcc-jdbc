@@ -51,8 +51,6 @@ public class ECLBuilder {
 	public String generateECL(String sql) {
 		
 	/*  TODO: CHECK FOR:
-	 * 		SELECT
-	 * 		INSERT
 	 * 		UPDATE	
 	 */
 		switch(SQLParser.sqlIsInstanceOf(sql)) {
@@ -87,18 +85,16 @@ public class ECLBuilder {
 	 */
 	private String generateInsertECL(SQLParserInsert sqlParser) {
 		StringBuilder eclCode = new StringBuilder();
-		String subFileName = "~"+sqlParser.getTable().getFullyQualifiedName().replaceAll("\\.", "::");
-		eclCode.append("BaseFile :='"+subFileName+"';\n");
+		String tableName = sqlParser.getTable().getName();
+		String tablePath = "~"+sqlParser.getTable().getFullyQualifiedName().replaceAll("\\.", "::");
 		
-		eclCode.append("OUTPUT(");
+		eclCode.append("OUTPUT("+ tableName +" + ");
 		generateNewDataset(sqlParser, eclCode);
-		subFileName += Long.toString(System.currentTimeMillis());
-		eclCode.append("),,'"+subFileName+"', overwrite);\n");
+		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
+		eclCode.append("),,'"+newTablePath+"', overwrite);\n");
 		
-		eclCode.append("SEQUENTIAL(Std.File.StartSuperFileTransaction(), Std.File.AddSuperFile(");
-		eclCode.append("BaseFile");
-		eclCode.append(", '"+subFileName+"'),");
-		eclCode.append("Std.File.FinishSuperFileTransaction());");
+		eclCode.append("Std.File.DeleteLogicalFile('"+tablePath+"');\n");
+		eclCode.append("Std.File.RenameLogicalFile('"+newTablePath+"','"+tablePath+"');");
 		return eclCode.toString();
 	}
 
@@ -114,7 +110,7 @@ public class ECLBuilder {
 			
 		}
 		eclCode.append("}], ");
-		eclCode.append("Layout_"+sqlParser.getTable().getName());
+		eclCode.append(sqlParser.getTable().getName()+"_record");
 		
 	}
 	
