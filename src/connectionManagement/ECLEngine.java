@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package connectionManagement;
 
+import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
@@ -162,6 +163,7 @@ public class ECLEngine
     	
     private void generateDropECL() throws SQLException {
     	ECLBuilder eclBuilder = new ECLBuilder();
+    	eclCode.append("#OPTION('name', 'java drop')");
     	eclCode.append(generateImports());
 		eclCode.append(eclBuilder.generateECL(sqlQuery));
 		
@@ -183,6 +185,10 @@ public class ECLEngine
 
 	private void generateInsertECL() throws SQLException{
     	ECLBuilder eclBuilder = new ECLBuilder();
+    	eclCode.append("#OPTION('name', 'java insert');\n");
+    	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
+    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
+//    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
         eclCode.append(generateLayouts(eclBuilder));
@@ -191,8 +197,10 @@ public class ECLEngine
 		eclCode.append(eclBuilder.generateECL(sqlQuery));
 		
 		
+		eclCode.append("");
+		System.out.println(eclCode.toString());
+		
 		availablecols = new HashMap<String, HPCCColumnMetaData>();
-    	
     	for (String table : sqlParser.getAllTables()) {
     		String tableName = table.replace(".", "::");
     		DFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
@@ -213,6 +221,7 @@ public class ECLEngine
 	public void generateSelectECL() throws SQLException
     {
     	ECLBuilder eclBuilder = new ECLBuilder();
+    	eclCode.append("#OPTION('name', 'java select')");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
         eclCode.append(generateLayouts(eclBuilder));
@@ -422,10 +431,13 @@ public class ECLEngine
 
             long startTime = System.currentTimeMillis();
             HttpURLConnection conn = dbMetadata.createHPCCESPConnection(hpccRequestUrl);
-
-            //HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + sb);
+            
+//          replace "+" in http request body since it is a reserved character representing a space character
+            String body = sb.toString().replace("+", "%2B");
+            
+            HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + body);
             OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-            wr.write(sb.toString());
+            wr.write(body);
             wr.flush();
 
             responseCode = conn.getResponseCode();

@@ -88,13 +88,26 @@ public class ECLBuilder {
 		String tableName = sqlParser.getTable().getName();
 		String tablePath = "~"+sqlParser.getTable().getFullyQualifiedName().replaceAll("\\.", "::");
 		
+//		load superfile
+		eclCode.append("SuperFile := '"+tablePath+"';\n");
+		
+//		create subfile
+//		"%2B" is 
 		eclCode.append("OUTPUT("+ tableName +" + ");
 		generateNewDataset(sqlParser, eclCode);
 		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
-		eclCode.append("),,'"+newTablePath+"', overwrite);\n");
+		eclCode.append(",,'"+newTablePath+"', overwrite);\n");
 		
-		eclCode.append("Std.File.DeleteLogicalFile('"+tablePath+"');\n");
-		eclCode.append("Std.File.RenameLogicalFile('"+newTablePath+"','"+tablePath+"');");
+//		add new subfile to superfile
+//		eclCode.append("Std.File.DeleteLogicalFile('"+tablePath+"');\n");
+//		eclCode.append("Std.File.RenameLogicalFile('"+newTablePath+"','"+tablePath+"');");
+		
+		eclCode.append("SEQUENTIAL(\n Std.File.StartSuperFileTransaction(),\n Std.File.ClearSuperFile(SuperFile),\n"
+				+ "STD.File.DeleteLogicalFile((STRING)'~' + Std.File.GetSuperFileSubName(SuperFile, 1)),"
+				+ " Std.File.AddSuperFile(SuperFile, '");
+		eclCode.append(newTablePath);
+		eclCode.append("'),\n Std.File.FinishSuperFileTransaction());");
+		
 		return eclCode.toString();
 	}
 
@@ -110,7 +123,7 @@ public class ECLBuilder {
 			
 		}
 		eclCode.append("}], ");
-		eclCode.append(sqlParser.getTable().getName()+"_record");
+		eclCode.append(sqlParser.getTable().getName()+"_record)");
 		
 	}
 	

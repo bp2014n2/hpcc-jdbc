@@ -111,8 +111,7 @@ public class ECLBuilderTest {
 	@Test @Ignore
 	public void shouldTranslateUpdate() {
 		assertEquals("", eclBuilder.generateECL("update myTable set myColumn = 'myValue'"));
-		assertEquals("", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"));
-		
+		assertEquals("", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"));	
 	}
 	
 	@Test @Ignore
@@ -125,7 +124,6 @@ public class ECLBuilderTest {
 		assertEquals("", eclBuilder.generateECL("create table newTable (myColumnA myTypeA, myColumnB myTypeB"));
 		assert(ECLLayouts.getLayouts().containsKey("myTable"));
 		assertEquals("", eclBuilder.generateECL("create temp table newTable (myColumnA myTypeA, myColumnB myTypeB"));
-		
 	}
 	
 }
