@@ -16,7 +16,8 @@ public class Test {
 			 HPCCStatement stmt = (HPCCStatement) connection.createStatement();
 			 
 			/* Create your SQL query */
-			 String query = "update i2b2demodata.query_global_temp set concept_cd = 'myValue'";
+			 String query = "update i2b2demodata.query_global_temp set concept_cd = 'myValue' where exists (select 1 from (select patient_num from i2b2demodata.observation_fact where concept_cd = '1') t where t.patient_num = 2)";
+//			 String query = "select concept_cd from i2b2demodata.concept_dimension where substring(concept_cd from '(ATC|ICD):.*' <> ''";
 
 			 //String query = "insert into i2b2demodata.query_global_temp(patient_num,panel_count)values(123456,0);";
 //			 String query = "insert into i2b2demodata.query_global_temp select modifier_cd as start_date, modifier_path as concept_cd from i2b2demodata.modifier_dimension;";
