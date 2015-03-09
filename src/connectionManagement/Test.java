@@ -17,7 +17,7 @@ public class Test {
 			 
 			/* Create your SQL query */
 			 //String query = "insert into i2b2demodata.query_global_temp(patient_num,panel_count)values(123456,0);";
-			 String query = "insert into i2b2demodata.query_global_temp select modifier_cd as start_date, modifier_path as concept_cd from i2b2demodata.modifier_dimension;";
+			 String query = "insert into i2b2demodata.query_global_temp(concept_cd, start_date) select modifier_cd as concept_cd, download_date as start_date from i2b2demodata.modifier_dimension;";
 			 
 			/* Execute your SQL query */
 			 //HPCCResultSet res1 = (HPCCResultSet) 

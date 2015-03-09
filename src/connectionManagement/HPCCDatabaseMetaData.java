@@ -2192,7 +2192,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
                         if (file.getFullyQualifiedName().length() > 0)
                         {
-                            if (file.getRecordCount() >= 0)
+                            if (file.getIntRecordCount() >= 0)
                             {
                                 if (fetchHPCCFileColumnInfo(file, db))
                                     dfuFileParsedCount++;

@@ -71,7 +71,7 @@ public class SQLParser{
 		if (statement instanceof Select) {
 			tableList = tablesNamesFinder.getTableList((Select) statement);
 		} else if (statement instanceof Insert) {
-			tableList.add(((Insert) statement).getTable().getFullyQualifiedName());
+			tableList = tablesNamesFinder.getTableList((Insert) statement);
 		} else if (statement instanceof Update) {
 			tableList = tablesNamesFinder.getTableList((Update) statement);
 		} else {

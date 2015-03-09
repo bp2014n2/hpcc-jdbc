@@ -202,9 +202,14 @@ public class ECLEngine
 		System.out.println(eclCode.toString());
 		
 		availablecols = new HashMap<String, HPCCColumnMetaData>();
+		String tableName;
     	for (String table : sqlParser.getAllTables()) {
-    		String tableName = table.replace(".", "::");
-    		DFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
+    		if(table.contains(".")) {
+    			tableName = table.replace(".", "::");
+    		} else {
+    			tableName = "i2b2demodata::"+table;
+    		}
+			DFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
     		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	}
     	
@@ -275,6 +280,9 @@ public class ECLEngine
     		String tableName = table;
     		if (table.contains(".")) {
     			tableName = tableName.split("\\.")[1];
+			} else {
+				tableName = table;
+				table = "i2b2demodata::"+tableName;
 			}
 			
 			datasetsString.append(tableName).append(" := ").append("DATASET(");
