@@ -3,6 +3,7 @@ package connectionManagement;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -83,7 +84,9 @@ public class ECLBuilder {
 		StringBuilder eclCode = new StringBuilder();
 		
 		String fileName = sqlParser.getName();;
-		eclCode.append("Std.File.DeleteLogicalFile('~i2b2demodata::"+fileName+"', true);");
+		eclCode.append("IF(Std.File.SuperFileExists('~i2b2demodata::"+fileName+"'),")
+		.append("\nStd.File.DeleteSuperFile('~i2b2demodata::"+fileName+"'),")
+		.append("\nStd.File.DeleteLogicalFile('~i2b2demodata::"+fileName+"', true));");
 		
 		return eclCode.toString();
 	}
@@ -102,7 +105,7 @@ public class ECLBuilder {
 		eclCode.append("SuperFile := '"+tablePath+"';\n");
 		
 //		create subfile
-//		"%2B" is 
+//		"%2B" is +
 		eclCode.append("OUTPUT("+ tableName +" + ");
 		generateNewDataset(sqlParser, eclCode);
 		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
@@ -122,21 +125,52 @@ public class ECLBuilder {
 	}
 
 	private void generateNewDataset(SQLParserInsert sqlParser, StringBuilder eclCode) {
-		eclCode.append("DATASET([{");
 		if (sqlParser.isAllColumns()) {
-			String columnString = "";
-			for (Expression expression : sqlParser.getExpressions()) {
-				columnString += (columnString=="" ? "":", ")+parseExpressionECL(expression);
+			if (sqlParser.getItemsList() instanceof SubSelect) {
+			eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
+			} else {
+				eclCode.append("DATASET([{");
+				String valueString = "";
+				for (Expression expression : sqlParser.getExpressions()) {
+					valueString += (valueString=="" ? "":", ")+parseExpressionECL(expression);
+				}
+				eclCode.append(valueString);
+				eclCode.append("}], ");
+				eclCode.append(sqlParser.getTable().getName()+"_record)");
 			}
-			eclCode.append(columnString);
 		} else {
-			
+			eclCode.append("TABLE(");
+			List<String> columns = sqlParser.getColumnNames();
+			if (sqlParser.getItemsList() instanceof SubSelect) {
+				eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
+			} else {
+				eclCode.append("DATASET([{");
+				String valueString = "";
+				for (Expression expression : sqlParser.getExpressions()) {
+					valueString += (valueString=="" ? "":", ")+parseExpressionECL(expression);
+				}
+				eclCode.append(valueString);
+				eclCode.append("}], {");
+				String columnString = "";
+				for(String column : columns){
+					columnString += (columnString=="" ? "":", ");
+					columnString += ECLLayouts.getECLDataType(sqlParser.getTable().getName(), column);
+					columnString += " "+column;
+				}
+				eclCode.append(columnString + "})");
+			}
+			eclCode.append(",{");
+			LinkedHashSet<String> allColumns = sqlParser.getAllCoumns();
+			String tableColumnString = "";
+			for(String column : allColumns){
+				String dataType = ECLLayouts.getECLDataType(sqlParser.getTable().getName(), column);
+				tableColumnString += (tableColumnString=="" ? "":", ");
+				tableColumnString += (columns.contains(column)?column:dataType+" "+column+" := "+(dataType.startsWith("UNSIGNED")?"0":"''"));
+			}
+			eclCode.append(tableColumnString)
+				.append("})");
 		}
-		eclCode.append("}], ");
-		eclCode.append(sqlParser.getTable().getName()+"_record)");
-		
 	}
-	
 	/**
 	 * Generates the ECL code for a select statement
 	 * @return returns the ECL code for the given select statement

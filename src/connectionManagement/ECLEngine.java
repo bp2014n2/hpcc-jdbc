@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -176,7 +178,7 @@ public class ECLEngine
    		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	TreeSet<String> columns = (TreeSet<String>) ECLLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
+    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
     	int i=0;
     	for (String column : columns) {
     		i++;
@@ -211,7 +213,7 @@ public class ECLEngine
     	}
     	
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	TreeSet<String> columns = (TreeSet<String>) ECLLayouts.getAllColumns(((SQLParserInsert) sqlParser).getTable().getName());
+    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserInsert) sqlParser).getTable().getName());
     	int i=0;
     	for (String column : columns) {
     		i++;
@@ -428,17 +430,16 @@ public class ECLEngine
                     throw new Exception("Insufficient number of parameters provided");
             }*/
             
-            System.out.println(eclCode.toString());
             sb.append(eclCode.toString());
             sb.append("\n");
 
             long startTime = System.currentTimeMillis();
             HttpURLConnection conn = dbMetadata.createHPCCESPConnection(hpccRequestUrl);
             
+            HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + sb.toString());
+            
 //          replace "+" in http request body since it is a reserved character representing a space character
             String body = sb.toString().replace("+", "%2B");
-            
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + body);
             OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
             wr.write(body);
             wr.flush();
