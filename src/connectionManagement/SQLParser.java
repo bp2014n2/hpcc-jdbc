@@ -58,6 +58,8 @@ public class SQLParser{
 				return "Insert";
 			} else if (statement instanceof Drop) {
 				return "Drop";
+			} else if (statement instanceof Update) {
+				return "Update";
 			}
 		} catch (JSQLParserException e) {
 			e.printStackTrace();

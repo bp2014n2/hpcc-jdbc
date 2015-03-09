@@ -59,7 +59,7 @@ public class ECLBuilder {
 		case "Insert":
     		return generateInsertECL(new SQLParserInsert(sql));
     	case "Update":
-//    		return generateUpdateECL(new SQLParserUpdate(sql));
+    		return generateUpdateECL(new SQLParserUpdate(sql));
     	case "Drop":
     		return generateDropECL(new SQLParserDrop(sql));
 		default:
@@ -69,6 +69,16 @@ public class ECLBuilder {
 	}
 	
 	
+	private String generateUpdateECL(SQLParserUpdate sqlParser) {
+		StringBuilder eclCode = new StringBuilder();
+		
+		eclCode.append("table_updated := ");
+		
+		
+		return eclCode.toString();
+	}
+
+
 	private String generateDropECL(SQLParserDrop sqlParser) {
 		StringBuilder eclCode = new StringBuilder();
 		

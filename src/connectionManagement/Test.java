@@ -16,11 +16,11 @@ public class Test {
 			 HPCCStatement stmt = (HPCCStatement) connection.createStatement();
 			 
 			/* Create your SQL query */
-			 String query = "insert into i2b2demodata.query_global_temp values('test','test','test','test','test','test','test','test',5);";
+			 String query = "update i2b2demodata.query_global_temp set concept_cd = 'myValue'";
 			 
 			/* Execute your SQL query */
 			 //HPCCResultSet res1 = (HPCCResultSet) 
-					 stmt.executeQuery(query);
+			 stmt.executeQuery(query);
 			 
 			 /* Check the result set */
 //			 while(res1.next()){
