@@ -2,15 +2,21 @@ package connectionManagement;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.TreeSet;
 
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.ItemsList;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.select.FromItem;
+import net.sf.jsqlparser.statement.select.SubSelect;
 
 public class SQLParserInsert extends SQLParser {
 
@@ -50,5 +56,22 @@ public class SQLParserInsert extends SQLParser {
 		return ((ExpressionList) ((Insert) statement).getItemsList()).getExpressions();
 	}
 	
+	protected List<String> getColumnNames() {
+		List<Column> columns = ((Insert) statement).getColumns();
+		List<String> columnNames = new ArrayList<String>();
+		for (Column column : columns) {
+			columnNames.add(column.getColumnName());
+		}
+		return columnNames;
+	}
+
+	protected LinkedHashSet<String> getAllCoumns() {
+		String table = ((Insert) statement).getTable().getName();
+		return ECLLayouts.getAllColumns(table);
+	}
+
+	public ItemsList getItemsList() {
+		return ((Insert) statement).getItemsList();
+	}
 
 }

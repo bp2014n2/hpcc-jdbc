@@ -3,6 +3,7 @@ package connectionManagement;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -94,7 +95,7 @@ public class SQLParserSelect extends SQLParser {
 		return allSelects;
 	}
 	
-	protected TreeSet<String> getAllColumns() {
+	protected LinkedHashSet<String> getAllColumns() {
 		FromItem fromItem = getFromItem();
 		String table;
 		if (fromItem instanceof Table) {
