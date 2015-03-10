@@ -165,17 +165,13 @@ public class ECLBuilder {
 		
 //		create subfile
 //		"%2B" is +
-		eclCode.append("OUTPUT("+ tableName +" + ");
+		eclCode.append("OUTPUT(");
 		generateNewDataset(sqlParser, eclCode);
 		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
 		eclCode.append(",,'"+newTablePath+"', overwrite);\n");
 		
 //		add new subfile to superfile
-//		eclCode.append("Std.File.DeleteLogicalFile('"+tablePath+"');\n");
-//		eclCode.append("Std.File.RenameLogicalFile('"+newTablePath+"','"+tablePath+"');");
-		
-		eclCode.append("SEQUENTIAL(\n Std.File.StartSuperFileTransaction(),\n Std.File.ClearSuperFile(SuperFile),\n"
-				+ "STD.File.DeleteLogicalFile((STRING)'~' + Std.File.GetSuperFileSubName(SuperFile, 1)),"
+		eclCode.append("SEQUENTIAL(\n Std.File.StartSuperFileTransaction(),\n"
 				+ " Std.File.AddSuperFile(SuperFile, '");
 		eclCode.append(newTablePath);
 		eclCode.append("'),\n Std.File.FinishSuperFileTransaction());");

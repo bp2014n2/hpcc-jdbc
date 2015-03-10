@@ -227,7 +227,7 @@ public class ECLEngine
     		} else {
     			tableName = "i2b2demodata::"+table;
     		}
-			DFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
+    		DFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
     		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	}
     	
