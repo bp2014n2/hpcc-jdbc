@@ -17,6 +17,7 @@ import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.Between;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
@@ -60,16 +61,83 @@ public class ECLBuilder {
 		case "Insert":
     		return generateInsertECL(new SQLParserInsert(sql));
     	case "Update":
-//    		return generateUpdateECL(new SQLParserUpdate(sql));
+    		return generateUpdateECL(new SQLParserUpdate(sql));
     	case "Drop":
     		return generateDropECL(new SQLParserDrop(sql));
 		default:
-    		System.out.println("type of sql not recognized"+SQLParser.sqlIsInstanceOf(sql));
+    		System.out.println("type of sql not recognized "+SQLParser.sqlIsInstanceOf(sql));
     	}
 		return null;
 	}
 	
 	
+	private String generateUpdateECL(SQLParserUpdate sqlParser) {
+		StringBuilder eclCode = new StringBuilder();
+		eclCode.append("updates := ");
+		StringBuilder updateTable = new StringBuilder();
+		updateTable.append(sqlParser.getName());
+		if (sqlParser.getWhere() != null) {
+			Expression expression = sqlParser.getWhere();
+			
+			updateTable.append("(");
+			updateTable.append(parseExpressionECL(expression));
+			updateTable.append(")");
+		}
+		updateTable.append(", ");
+		ArrayList<String> columns = (ArrayList<String>) sqlParser.getColumns();
+		LinkedHashSet<String> allColumns = sqlParser.getAllCoumns();
+		String selectString = "";
+		for(String column : allColumns){
+			if (!columns.contains(column)) {
+				selectString += (selectString=="" ? "":", ");
+				selectString += column;
+			}
+		}
+		updateTable.append("{");
+		updateTable.append(selectString);
+		updateTable.append("}");
+		
+		convertToTable(updateTable);
+		updateTable.append(", ");
+
+		updateTable.append("{");
+		String tableColumnString = "";
+		for(String column : allColumns){
+			tableColumnString += (tableColumnString=="" ? "":", ");
+			tableColumnString += (columns.contains(column)?column+" := "+sqlParser.getExpressions().get(sqlParser.getColumns().indexOf(column)):column);
+		}
+		updateTable.append(tableColumnString);
+		updateTable.append("}");
+		
+		convertToTable(updateTable);
+		updateTable.append(";\n");
+		eclCode.append(updateTable.toString());
+		
+		eclCode.append("OUTPUT(");
+		StringBuilder outputTable = new StringBuilder();
+		if (sqlParser.getWhere() != null) {
+			eclCode.append(sqlParser.getName());
+			Expression expression = sqlParser.getWhere();
+			outputTable.append("(NOT");
+			outputTable.append("(");
+			
+			outputTable.append(parseExpressionECL(expression));
+			outputTable.append("))");
+		}
+		String newTablePath = "~"+sqlParser.getFullName()+Long.toString(System.currentTimeMillis());
+		outputTable.append("+updates,, '"+newTablePath+"', overwrite);\n");
+		eclCode.append(outputTable.toString());
+		
+		eclCode.append("SEQUENTIAL(\n Std.File.StartSuperFileTransaction(),\n Std.File.ClearSuperFile('~"+sqlParser.getFullName()+"'),\n"
+				+ "STD.File.DeleteLogicalFile((STRING)'~' + Std.File.GetSuperFileSubName('~"+sqlParser.getFullName()+"', 1)),\n"
+				+ " Std.File.AddSuperFile('~"+sqlParser.getFullName()+"',\n '");
+		eclCode.append(newTablePath);
+		eclCode.append("'),\n Std.File.FinishSuperFileTransaction());");
+		
+		return eclCode.toString();
+	}
+
+
 	private String generateDropECL(SQLParserDrop sqlParser) {
 		StringBuilder eclCode = new StringBuilder();
 		
@@ -169,11 +237,16 @@ public class ECLBuilder {
     	generateWhere(sqlParser, eclCode);    	
     	generateSelects(sqlParser, eclCode, true);
     	generateGroupBys(sqlParser, eclCode);
-    	convertToTable(sqlParser, eclCode); 	  	
+    	 
+    	if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
+    		convertToTable(eclCode);
+    	}
     	generateOrderBys(sqlParser, eclCode);
     	if(sqlParser.getOrderBys() != null) {
     		generateSelects(sqlParser, eclCode, false);
-        	convertToTable(sqlParser, eclCode); 
+    		if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
+        		convertToTable(eclCode);
+        	}
     	}
     	generateDistinct(sqlParser, eclCode);
     	generateLimit(sqlParser, eclCode);
@@ -181,11 +254,9 @@ public class ECLBuilder {
     	return(eclCode.toString());
 	}
 	
-	private void convertToTable(SQLParserSelect sqlParser, StringBuilder eclCode) {
-		if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
-    		eclCode.insert(0, "Table(");
-    		eclCode.append(")");
-    	}
+	private void convertToTable(StringBuilder eclCode) {
+   		eclCode.insert(0, "Table(");
+   		eclCode.append(")");
 	}
 	
 	private void generateLimit(SQLParserSelect sqlParser, StringBuilder eclCode) {
@@ -358,6 +429,9 @@ public class ECLBuilder {
 		} else if (expressionItem instanceof IsNullExpression) {
 			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
 			expression.append(" = ''");
+		} else if (expressionItem instanceof ExistsExpression) {
+			expression.append("EXISTS ");
+			expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
 		}
 		return expression.toString();
 	}

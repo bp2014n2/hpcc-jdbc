@@ -18,19 +18,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package connectionManagement;
 
-import java.io.DataOutputStream;
+
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.math.BigDecimal;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
+
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -38,17 +37,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
-import java.util.Vector;
+
 import java.util.logging.Level;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-
-import connectionManagement.HPCCColumnMetaData.ColumnType;
-import net.sf.jsqlparser.statement.drop.Drop;
-import net.sf.jsqlparser.statement.insert.Insert;
-import net.sf.jsqlparser.statement.select.Select;
-import net.sf.jsqlparser.statement.update.Update;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -57,7 +50,7 @@ import org.w3c.dom.NodeList;
 
 public class ECLEngine
 {
-    private HPCCQuery               hpccPublishedQuery = null;
+//    private HPCCQuery               hpccPublishedQuery = null;
     private String                  expectedDSName = null;
     private NodeList                resultSchema = null;
     private final Properties        hpccConnProps;
@@ -70,22 +63,22 @@ public class ECLEngine
     private StringBuilder           eclCode = new StringBuilder();
     
 	private URL                     hpccRequestUrl;
-    private ArrayList<HPCCColumnMetaData> storeProcInParams = null;
-    private String[]                    procInParamValues = null;
+//    private ArrayList<HPCCColumnMetaData> storeProcInParams = null;
+//    private String[]                    procInParamValues = null;
     private List<HPCCColumnMetaData>    expectedretcolumns = null;
     private HashMap<String, HPCCColumnMetaData> availablecols = null;
 
-    private static final int            INDEXSCORECRITERIAVARS         = 3;
+//    private static final int            INDEXSCORECRITERIAVARS         = 3;
 
-    private static final int            NumberOfCommonParamInThisIndex_INDEX = 0;
-    private static final int            LeftMostKeyIndexPosition_INDEX       = 1;
-    private static final int            NumberofColsKeyedInThisIndex_INDEX   = 2;
+//    private static final int            NumberOfCommonParamInThisIndex_INDEX = 0;
+//    private static final int            LeftMostKeyIndexPosition_INDEX       = 1;
+//    private static final int            NumberofColsKeyedInThisIndex_INDEX   = 2;
 
-    private static final int            NumberOfCommonParamInThisIndex_WEIGHT = 5;
-    private static final int            LeftMostKeyIndexPosition_WEIGHT       = 3;
-    private static final int            NumberofColsKeyedInThisIndex_WEIGHT   = 2;
+//    private static final int            NumberOfCommonParamInThisIndex_WEIGHT = 5;
+//    private static final int            LeftMostKeyIndexPosition_WEIGHT       = 3;
+//    private static final int            NumberofColsKeyedInThisIndex_WEIGHT   = 2;
 
-    private static final String         SELECTOUTPUTNAME = "JDBCSelectQueryResult";
+//    private static final String         SELECTOUTPUTNAME = "JDBCSelectQueryResult";
     private static final String			HPCCEngine = "THOR";
 
     private DocumentBuilderFactory      dbf = DocumentBuilderFactory.newInstance();
@@ -114,7 +107,7 @@ public class ECLEngine
 
     private void addFileColsToAvailableCols(DFUFile dfufile, HashMap<String, HPCCColumnMetaData> availablecols)
     {
-        Enumeration fields = dfufile.getAllFields();
+        Enumeration<?> fields = dfufile.getAllFields();
         while (fields.hasMoreElements())
         {
             HPCCColumnMetaData col = (HPCCColumnMetaData) fields.nextElement();
@@ -150,8 +143,8 @@ public class ECLEngine
     		generateInsertECL();
     		break;
     	case "Update":
-//    		this.sqlParser = new SQLParserUpdate(sqlQuery);
-//    		generateUpdateECL();
+    		this.sqlParser = new SQLParserUpdate(sqlQuery);
+    		generateUpdateECL();
     		break;
     	case "Drop":
     		this.sqlParser = new SQLParserDrop(sqlQuery);
@@ -162,9 +155,20 @@ public class ECLEngine
     	}
     }
     	
-    private void generateDropECL() throws SQLException {
+    private void generateUpdateECL() throws SQLException{
+		ECLBuilder eclBuilder = new ECLBuilder();
+		eclCode.append("#OPTION('name', 'java update')\n");
+    	eclCode.append(generateImports());
+    	eclCode.append(generateLayouts(eclBuilder));
+		eclCode.append(generateTables());
+    	eclCode.append(eclBuilder.generateECL(sqlQuery));
+    	
+    	System.out.println(eclCode.toString());
+	}
+
+	private void generateDropECL() throws SQLException {
     	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#OPTION('name', 'java drop')");
+    	eclCode.append("#OPTION('name', 'java drop')\n");
     	eclCode.append(generateImports());
 		eclCode.append(eclBuilder.generateECL(sqlQuery));
 		
