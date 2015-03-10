@@ -1,6 +1,6 @@
 package unitTests;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.sql.SQLException;
 
@@ -108,11 +108,19 @@ public class ECLBuilderTest {
 //		assertEquals("", eclBuilder.generateECL("insert into myTable (myColumnA) select * from (select myColumnB from anotherTable)"));
 	}
 	
-	@Test @Ignore
+	@Test
 	public void shouldTranslateUpdate() {
-		assertEquals("", eclBuilder.generateECL("update myTable set myColumn = 'myValue'"));
-		assertEquals("", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"));	
-	}
+			assertTrue(eclBuilder.generateECL("update myTable set myColumn = 'myValue'")
+					.matches("updates := Table(Table(myTable, {myColumnA, myColumnB}), {STRING50 myColumn := 'myValue', myColumnA, myColumnB});\n"+
+				"OUTPUT(+updates,, '~myTable.*', overwrite);\n"+
+				"SEQUENTIAL(\n"+
+				" Std.File.StartSuperFileTransaction(),\n"+
+				" Std.File.ClearSuperFile('~myTable'),\n"+
+				"STD.File.DeleteLogicalFile((STRING)'~' + Std.File.GetSuperFileSubName('~myTable', 1)),\n"+
+				" Std.File.AddSuperFile('~myTable', '~myTable.*'),\n"+
+				" Std.File.FinishSuperFileTransaction());\n"));
+		//assertEquals("", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"));	
+	} 
 	
 	@Test @Ignore
 	public void shouldTranslateDropTable() {

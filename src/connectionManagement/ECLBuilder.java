@@ -103,8 +103,9 @@ public class ECLBuilder {
 		updateTable.append("{");
 		String tableColumnString = "";
 		for(String column : allColumns){
+			
 			tableColumnString += (tableColumnString=="" ? "":", ");
-			tableColumnString += (columns.contains(column)?column+" := "+sqlParser.getExpressions().get(sqlParser.getColumns().indexOf(column)):column);
+			tableColumnString += (columns.contains(column)?ECLLayouts.getECLDataType(sqlParser.getName(), column)+" "+column+" := "+sqlParser.getExpressions().get(sqlParser.getColumns().indexOf(column)):column);
 		}
 		updateTable.append(tableColumnString);
 		updateTable.append("}");

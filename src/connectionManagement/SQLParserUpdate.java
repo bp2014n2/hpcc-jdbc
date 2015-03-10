@@ -29,7 +29,9 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	protected String getFullName() {
-		return ((Update) statement).getTable().getFullyQualifiedName();
+		String fullName = ((Update) statement).getTable().getFullyQualifiedName();
+		fullName = fullName.replace(".", "::");
+		return fullName;
 	}
 	
 	protected Expression getWhere() {

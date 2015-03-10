@@ -157,18 +157,32 @@ public class ECLEngine
     	
     private void generateUpdateECL() throws SQLException{
 		ECLBuilder eclBuilder = new ECLBuilder();
-		eclCode.append("#OPTION('name', 'java update')\n");
+		eclCode.append("#OPTION('name', 'java update');\n");
     	eclCode.append(generateImports());
     	eclCode.append(generateLayouts(eclBuilder));
 		eclCode.append(generateTables());
     	eclCode.append(eclBuilder.generateECL(sqlQuery));
     	
     	System.out.println(eclCode.toString());
+    	
+    	availablecols = new HashMap<String, HPCCColumnMetaData>();
+
+   		DFUFile hpccQueryFile = dbMetadata.getDFUFile(((SQLParserUpdate) sqlParser).getFullName());
+   		addFileColsToAvailableCols(hpccQueryFile, availablecols);
+    	
+    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
+    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserUpdate) sqlParser).getName());
+    	int i=0;
+    	for (String column : columns) {
+    		i++;
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
+    	}  	
+        generateSelectURL();
 	}
 
 	private void generateDropECL() throws SQLException {
     	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#OPTION('name', 'java drop')\n");
+    	eclCode.append("#OPTION('name', 'java drop');\n");
     	eclCode.append(generateImports());
 		eclCode.append(eclBuilder.generateECL(sqlQuery));
 		
@@ -285,7 +299,7 @@ public class ECLEngine
     		if (table.contains(".")) {
     			tableName = tableName.split("\\.")[1];
 			} else {
-				tableName = table;
+//				tableName = table;
 				table = "i2b2demodata::"+tableName;
 			}
 			
