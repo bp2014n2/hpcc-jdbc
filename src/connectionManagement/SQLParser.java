@@ -20,6 +20,7 @@ import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.parser.*;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.delete.Delete;
 import net.sf.jsqlparser.statement.drop.Drop;
 import net.sf.jsqlparser.statement.insert.Insert;
@@ -64,6 +65,8 @@ public class SQLParser{
 				return "Drop";
 			} else if (statement instanceof Update) {
 				return "Update";
+			} else if (statement instanceof CreateTable) {
+				return "Create";
 			}
 		} catch (JSQLParserException e) {
 			e.printStackTrace();

@@ -12,6 +12,7 @@ import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LongValue;
+import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
@@ -20,11 +21,13 @@ import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
+import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.expression.operators.relational.IsNullExpression;
 import net.sf.jsqlparser.expression.operators.relational.ItemsList;
 import net.sf.jsqlparser.expression.operators.relational.LikeExpression;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
+import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
@@ -64,6 +67,8 @@ public class ECLBuilder {
     		return generateUpdateECL(new SQLParserUpdate(sql));
     	case "Drop":
     		return generateDropECL(new SQLParserDrop(sql));
+    	case "Create":
+    		return generateCreateECL(new SQLParserCreate(sql));
 		default:
     		System.out.println("type of sql not recognized "+SQLParser.sqlIsInstanceOf(sql));
     	}
@@ -71,6 +76,22 @@ public class ECLBuilder {
 	}
 	
 	
+	private String generateCreateECL(SQLParserCreate sqlParser) {
+		StringBuilder eclCode = new StringBuilder();
+		String tableName = ((SQLParserCreate) sqlParser).getTableName();
+		eclCode.append("OUTPUT(DATASET([],{");
+		//remove "RECORD " at beginning of Layout definition
+		String recordString = ECLLayouts.getLayouts().get(tableName.toLowerCase());
+		recordString = recordString.substring(7, recordString.length() - 6).replace(";", ",");
+		if(recordString == null) {
+			recordString = ((SQLParserCreate) sqlParser).getRecord();
+		}
+		eclCode.append(recordString);
+		eclCode.append("}),,'~%NEWTABLE%',OVERWRITE);");
+		return eclCode.toString();
+	}
+
+
 	private String generateUpdateECL(SQLParserUpdate sqlParser) {
 		StringBuilder eclCode = new StringBuilder();
 		
@@ -153,12 +174,6 @@ public class ECLBuilder {
 		outputTable.append("+updates,, '"+newTablePath+"', overwrite);\n");
 		eclCode.append(outputTable.toString());
 		
-		eclCode.append("SEQUENTIAL(\n Std.File.StartSuperFileTransaction(),\n Std.File.ClearSuperFile('~"+sqlParser.getFullName()+"'),\n"
-				+ "STD.File.DeleteLogicalFile((STRING)'~' + Std.File.GetSuperFileSubName('~"+sqlParser.getFullName()+"', 1)),\n"
-				+ " Std.File.AddSuperFile('~"+sqlParser.getFullName()+"',\n '");
-		eclCode.append(newTablePath);
-		eclCode.append("'),\n Std.File.FinishSuperFileTransaction());");
-		
 		return eclCode.toString();
 	}
 
@@ -182,23 +197,13 @@ public class ECLBuilder {
 	private String generateInsertECL(SQLParserInsert sqlParser) {
 		StringBuilder eclCode = new StringBuilder();
 		String tableName = sqlParser.getTable().getName();
-		String tablePath = "~"+sqlParser.getTable().getFullyQualifiedName().replaceAll("\\.", "::");
-		
-//		load superfile
-		eclCode.append("SuperFile := '"+tablePath+"';\n");
+		String tablePath = "~i2b2demodata::"+tableName;
 		
 //		create subfile
 //		"%2B" is +
 		eclCode.append("OUTPUT(");
 		generateNewDataset(sqlParser, eclCode);
-		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
-		eclCode.append(",,'"+newTablePath+"', overwrite);\n");
-		
-//		add new subfile to superfile
-		eclCode.append("SEQUENTIAL(\n Std.File.StartSuperFileTransaction(),\n"
-				+ " Std.File.AddSuperFile(SuperFile, '");
-		eclCode.append(newTablePath);
-		eclCode.append("'),\n Std.File.FinishSuperFileTransaction());");
+		eclCode.append(",,'%NEWTABLE%', overwrite);\n");
 		
 		return eclCode.toString();
 	}
@@ -223,7 +228,7 @@ public class ECLBuilder {
 			if (sqlParser.getItemsList() instanceof SubSelect) {
 				eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
 			} else {
-				eclCode.append("DATASET([{");
+				eclCode.append("(DATASET([{");
 				String valueString = "";
 				for (Expression expression : sqlParser.getExpressions()) {
 					valueString += (valueString=="" ? "":", ")+parseExpressionECL(expression);
@@ -280,7 +285,7 @@ public class ECLBuilder {
 	}
 	
 	private void convertToTable(StringBuilder eclCode) {
-   		eclCode.insert(0, "Table(");
+   		eclCode.insert(0, "TABLE(");
    		eclCode.append(")");
 	}
 	
@@ -457,6 +462,8 @@ public class ECLBuilder {
 		} else if (expressionItem instanceof ExistsExpression) {
 			expression.append("EXISTS ");
 			expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
+		} else if (expressionItem instanceof Parenthesis) {
+			expression.append("("+parseExpressionECL(((Parenthesis) expressionItem).getExpression())+")");
 		}
 		return expression.toString();
 	}
@@ -511,31 +518,38 @@ public class ECLBuilder {
 	
 	private String parseInExpression(InExpression expressionItem) {
 		StringBuilder expression = new StringBuilder();
-		expression.append(parseExpressionECL(((InExpression) expressionItem).getLeftExpression()));
-		expression.append(" in ");
-		expression.append("set(");
+		String inColumn = parseExpressionECL(((InExpression) expressionItem).getLeftExpression());
+		expression.append(inColumn);
+		expression.append(" IN ");
 		if (((InExpression) expressionItem).getRightItemsList() instanceof ExpressionList) {
+			expression.append("[");
 			for (Expression exp : ((ExpressionList) ((InExpression) expressionItem).getRightItemsList()).getExpressions()) {
 				expression.append(parseExpressionECL(exp));
+			expression.append("]");
 			}
 		} else if (((InExpression) expressionItem).getRightItemsList() instanceof SubSelect) {
+			expression.append("SET(");
 			expression.append(new ECLBuilder().generateECL(((SubSelect) ((InExpression) expressionItem).getRightItemsList()).getSelectBody().toString()));
+			expression.append(","+inColumn+")");
 		}
-		expression.append(")");
 		return expression.toString();
 	}
 
 	private String getSymbolOfExpression(BinaryExpression whereItems) {
 		if (whereItems instanceof AndExpression) {
-			return " && ";
+			return " AND ";
 		} else if (whereItems instanceof OrExpression) {
-			return " || ";
+			return " OR ";
 		} else if (whereItems instanceof MinorThan) {
 			return " < ";
-		} else if (whereItems instanceof EqualsTo) {
-			return " = ";
+		} else if (whereItems instanceof MinorThanEquals) {
+			return " <= ";
 		} else if (whereItems instanceof GreaterThan) {
 			return " > ";
+		} else if (whereItems instanceof GreaterThanEquals) {
+			return " >= ";
+		} else if (whereItems instanceof EqualsTo) {
+			return " = ";
 		} else if (whereItems instanceof NotEqualsTo) {
 			return " != ";
 		} 

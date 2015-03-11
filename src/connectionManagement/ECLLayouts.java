@@ -92,7 +92,7 @@ public class ECLLayouts {
 	
 	public static String getECLDataType(String table, String column){
 		String dataType = "unknown";
-		String[] columns = layouts.get(table).split(";");
+		String[] columns = layouts.get(table.toLowerCase()).split(";");
 		for(String l : columns) {
 			if (!l.matches(".*"+column)) continue;
 			String[] entries = l.split(" ");
@@ -104,7 +104,7 @@ public class ECLLayouts {
 	
 	public static LinkedHashSet<String> getAllColumns(String table) {
 		LinkedHashSet<String> allColumns = new LinkedHashSet<String>();
-		String[] columns = layouts.get(table).split(";");
+		String[] columns = layouts.get(table.toLowerCase()).split(";");
 		for (String l : columns) {
 			if (l.matches(".*END")) continue;
 			String[] entries = l.split(" ");
