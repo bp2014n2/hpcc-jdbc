@@ -73,16 +73,40 @@ public class ECLBuilder {
 	
 	private String generateUpdateECL(SQLParserUpdate sqlParser) {
 		StringBuilder eclCode = new StringBuilder();
-		eclCode.append("updates := ");
-		StringBuilder updateTable = new StringBuilder();
-		updateTable.append(sqlParser.getName());
+		
+		StringBuilder preSelection = new StringBuilder();
 		if (sqlParser.getWhere() != null) {
 			Expression expression = sqlParser.getWhere();
 			
-			updateTable.append("(");
-			updateTable.append(parseExpressionECL(expression));
-			updateTable.append(")");
+			if (expression instanceof ExistsExpression) {
+				
+				
+				preSelection.append("joinedSets := JOIN(");
+				preSelection.append(sqlParser.getName());
+				preSelection.append(", ");
+				preSelection.append("Table(");
+				Expression e = sqlParser.containsJoinCondition(expression);
+				SubSelect subSelect = (SubSelect) ((ExistsExpression) expression).getRightExpression();
+				
+				preSelection.append(parseSubSelect(subSelect));
+				preSelection.append(")");
+				eclCode.append(preSelection.toString());
+				
+				//clear StringBuilder
+				preSelection.setLength(0);
+			} else {
+				preSelection.append("(");
+				preSelection.append(parseExpressionECL(expression));
+				preSelection.append(")");
+			}
+			
 		}
+		
+		
+		eclCode.append("updates := ");
+		StringBuilder updateTable = new StringBuilder();
+		updateTable.append(sqlParser.getName());
+		updateTable.append(preSelection.toString());
 		updateTable.append(", ");
 		ArrayList<String> columns = (ArrayList<String>) sqlParser.getColumns();
 		LinkedHashSet<String> allColumns = sqlParser.getAllCoumns();
@@ -407,7 +431,7 @@ public class ECLBuilder {
 			expression.append(((Column) expressionItem).getColumnName());
 		} else if (expressionItem instanceof SubSelect) {
 			expression.append("(");
-			expression.append(new ECLBuilder().generateECL(((SubSelect) expressionItem).getSelectBody().toString()));
+			expression.append(parseSubSelect(expressionItem));
 			expression.append(")");
 		} else if (expressionItem instanceof Function) {
 			expression.append(nameFunction((Function) expressionItem));
@@ -435,6 +459,10 @@ public class ECLBuilder {
 			expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
 		}
 		return expression.toString();
+	}
+	
+	private String parseSubSelect(Expression expression) {
+		return new ECLBuilder().generateECL(((SubSelect) expression).getSelectBody().toString());
 	}
 	
 	/**

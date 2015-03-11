@@ -16,7 +16,24 @@ public class Test {
 			 HPCCStatement stmt = (HPCCStatement) connection.createStatement();
 			 
 			/* Create your SQL query */
-			 String query = "update i2b2demodata.query_global_temp set concept_cd = 'myNewValue' where exists(select 1 from i2b2demodata.observation_fact where i2b2demodata.query_global_temp.patient_num = i2b2demodata.observation_fact.patient_num)";
+//			 String query = "update i2b2demodata.query_global_temp set concept_cd = 'anotherNewValue' where exists(select 1 from i2b2demodata.observation_fact where concept_cd='ATC:J01CE02' and i2b2demodata.query_global_temp.patient_num = i2b2demodata.observation_fact.patient_num)";
+//			 String query = "update i2b2demodata.query_global_temp set concept_cd = 'anotherNewValue' where patient_num = 11";
+			 String query = "update QUERY_GLOBAL_TEMP  set panel_count = 1"+ 
+							 " where QUERY_GLOBAL_TEMP.panel_count = 0"+
+							 " and exists"+
+							 "   (select 1 from"+
+							 "     (select f.patient_num  from i2b2demodata.observation_fact f"+  
+							 "       where f.concept_cd IN"+
+							 "         (select concept_cd  from i2b2demodata.concept_dimension"+
+							 "           where concept_path LIKE '\\ICD\\M00-M99\\M50-M54\\M54\\%')"+
+							 "       AND (f.MODIFIER_CD IN"+
+							 "         (select MODIFIER_CD from i2b2demodata.MODIFIER_DIMENSION"+
+							 "           where MODIFIER_PATH LIKE '\\Diagnosesicherheit\\%'))"+
+							 "       AND (valtype_cd = 'T' AND tval_char IN ('G'))"+
+							 "       AND (f.start_date >= '2011-01-01T00:00:00' "+
+							 "         AND f.start_date <= '2012-01-01T00:00:00')"+
+							 "       group by f.patient_num) t"+
+							 "     where QUERY_GLOBAL_TEMP.patient_num = t.patient_num);";
 //			 String query = "select concept_cd from i2b2demodata.concept_dimension where substring(concept_cd from '(ATC|ICD):.*' <> ''";
 
 			 //String query = "insert into i2b2demodata.query_global_temp(patient_num,panel_count)values(123456,0);";

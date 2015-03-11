@@ -112,13 +112,13 @@ public class ECLBuilderTest {
 	public void shouldTranslateUpdate() {
 			assertTrue(eclBuilder.generateECL("update myTable set myColumn = 'myValue'")
 					.matches("updates := Table(Table(myTable, {myColumnA, myColumnB}), {STRING50 myColumn := 'myValue', myColumnA, myColumnB});\n"+
-				"OUTPUT(+updates,, '~myTable.*', overwrite);\n"+
+				"OUTPUT(+updates,, '~myTable[0-9]{13}', overwrite);\n"+
 				"SEQUENTIAL(\n"+
 				" Std.File.StartSuperFileTransaction(),\n"+
 				" Std.File.ClearSuperFile('~myTable'),\n"+
 				"STD.File.DeleteLogicalFile((STRING)'~' + Std.File.GetSuperFileSubName('~myTable', 1)),\n"+
-				" Std.File.AddSuperFile('~myTable', '~myTable.*'),\n"+
-				" Std.File.FinishSuperFileTransaction());\n"));
+				" Std.File.AddSuperFile('~myTable', '~myTable[0-9]{13}'),\n"+
+				" Std.File.FinishSuperFileTransaction());"));
 		//assertEquals("", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"));	
 	} 
 	

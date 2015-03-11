@@ -6,9 +6,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.select.SubSelect;
 import net.sf.jsqlparser.statement.update.Update;
 
 public class SQLParserUpdate extends SQLParser {
@@ -55,5 +58,7 @@ public class SQLParserUpdate extends SQLParser {
 	protected ArrayList<Expression> getExpressions() {
 		return (ArrayList<Expression>) ((Update) statement).getExpressions();
 	}
+	
+	
 
 }
