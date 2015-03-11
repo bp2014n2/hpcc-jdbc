@@ -2173,7 +2173,11 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
                                 }
                                 else if (NodeName.equals("IntSize"))
                                 {
-                                    file.setIntSize(Integer.parseInt(currentTextCont));
+                                	try {
+                                		file.setIntSize(Integer.parseInt(currentTextCont));
+                                	} catch(NumberFormatException e) {
+                                		file.setLongSize(Long.parseLong(currentTextCont));
+                                	}
                                 }
                                 else if (NodeName.equals("IntRecordCount"))
                                 {

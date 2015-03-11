@@ -3,6 +3,7 @@ package unitTests;
 import static org.junit.Assert.*;
 
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -97,9 +98,15 @@ public class ECLBuilderTest {
 		assertEquals("", eclBuilder.generateECL("select nextval('mySequence')"));
 	}
 	
-	@Test @Ignore
+	@Test
 	public void shouldTranslateInsertInto() {
-		assertEquals("", eclBuilder.generateECL("insert into myTable values (valueA, valueB, valueC)"));
+		assertTrue(eclBuilder.generateECL("insert into myTable values (valueA, valueB, valueC)").matches(
+				Pattern.quote("OUTPUT(DATASET([{valueA, valueB, valueC}], myTable_record),,'~i2b2demodata::myTable")
+				+"[0-9]{13}"+Pattern.quote("', overwrite);")+"\n"
+				+Pattern.quote("SEQUENTIAL(")+"\n"
+				+Pattern.quote("Std.File.StartSuperFileTransaction(),")+"\n"
+				+Pattern.quote("Std.File.AddSuperFile(SuperFile, '~i2b2demodata::myTable")+"[0-9]{13}"+Pattern.quote("'),")+"\n"
+				+Pattern.quote("Std.File.FinishSuperFileTransaction());")));
 		assertEquals("", eclBuilder.generateECL("insert into myTable (myColumnA) values (valueA)"));
 		assertEquals("", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB)"));
 //		currently not supported
