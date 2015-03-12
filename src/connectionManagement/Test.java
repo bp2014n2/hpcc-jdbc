@@ -1,6 +1,8 @@
 package connectionManagement;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Properties;
 
 public class Test {
@@ -45,9 +47,11 @@ public class Test {
 //			 ECLBuilder eclBuilder = new ECLBuilder();
 //			 System.out.println(eclBuilder.generateECL(query));
 			 
+			 String queryQT = "INSERT INTO i2b2demodata.QT_QUERY_MASTER (name, USER_ID, group_id, create_date) VALUES ('JDBCLevelTest', 'demo', 'Demo', '2015-03-12 14:40:00.222') RETURNING *";
+			 
 			/* Execute your SQL query */
 			 //HPCCResultSet res1 = (HPCCResultSet) 
-			 stmt.executeQuery(query3);
+			 printResultSet(stmt.executeQuery(queryQT));
 			 
 			 /* Check the result set */
 //			 while(res1.next()){
@@ -56,6 +60,42 @@ public class Test {
 		
 		} catch (SQLException | ClassNotFoundException e) {
 			e.printStackTrace();
+		}
+	}
+	
+	
+	private static void printResultSet(ResultSet res) throws SQLException {
+
+		if (!res.next()) {
+			return;
+		} else {
+			res.first();
+		}
+		ArrayList<String[]> table = new ArrayList<String[]>();
+		
+		int columnCount = res.getMetaData().getColumnCount();
+		do{
+			String[] row = new String[columnCount];
+			for(int i = 0; i<columnCount; i++) {
+				row[i] = res.getString(i+1).trim();
+			}
+			table.add(row);
+		 } while(res.next());
+//		System.out.println(res.getMetaData().getColumnCount());
+		int[] columnWidths = new int[columnCount];
+		for (final String[] row : table) {
+			for (int j=0; j<row.length; j++) {
+				columnWidths[j] = java.lang.Math.max(columnWidths[j], row[j].length());
+			}
+		}
+		for(int i = 0; i<table.size(); i++) {
+			String[] row = table.get(i); 
+			String stringFormat = "|";
+			for (int j : columnWidths) {
+				stringFormat += " %-"+(j+1)+"s|";
+			}
+//		    String stringFormat = "%15s%15s%15s%15s%15s%15s%15s%15s";
+			System.out.printf(stringFormat+"\n", row);
 		}
 	}
 }
