@@ -195,13 +195,13 @@ public class ECLEngine
 
    		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	
-    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserUpdate) sqlParser).getName());
-    	int i=0;
-    	for (String column : columns) {
-    		i++;
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
-    	}  	
+//    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
+//    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserUpdate) sqlParser).getName());
+//    	int i=0;
+//    	for (String column : columns) {
+//    		i++;
+//    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
+//    	}  	
         generateSelectURL();
 	}
 
@@ -237,7 +237,7 @@ public class ECLEngine
 
 	private void generateInsertECL() throws SQLException{
     	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#OPTION('name', 'java insert');\n");
+    	eclCode.append("#option('name', 'java insert');\n");
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
     	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");

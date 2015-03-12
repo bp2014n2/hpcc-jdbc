@@ -170,8 +170,8 @@ public class ECLBuilder {
 			outputTable.append(parseExpressionECL(expression));
 			outputTable.append("))");
 		}
-		String newTablePath = "~"+sqlParser.getFullName()+Long.toString(System.currentTimeMillis());
-		outputTable.append("+updates,, '"+newTablePath+"', overwrite);\n");
+
+		outputTable.append("+updates,, '~%NEWTABLE%', overwrite);\n");
 		eclCode.append(outputTable.toString());
 		
 		return eclCode.toString();
@@ -203,7 +203,7 @@ public class ECLBuilder {
 //		"%2B" is +
 		eclCode.append("OUTPUT(");
 		generateNewDataset(sqlParser, eclCode);
-		eclCode.append(",,'%NEWTABLE%', overwrite);\n");
+		eclCode.append(",,'~%NEWTABLE%', overwrite);\n");
 		
 		return eclCode.toString();
 	}
@@ -249,7 +249,7 @@ public class ECLBuilder {
 			for(String column : allColumns){
 				String dataType = ECLLayouts.getECLDataType(sqlParser.getTable().getName(), column);
 				tableColumnString += (tableColumnString=="" ? "":", ");
-				tableColumnString += (columns.contains(column)?column:dataType+" "+column+" := "+(dataType.startsWith("UNSIGNED")?"0":"''"));
+				tableColumnString += (columns.contains(column)?column:dataType+" "+column+" := "+(dataType.startsWith("UNSIGNED")||dataType.startsWith("integer")?"0":"''"));
 			}
 			eclCode.append(tableColumnString)
 				.append("})");
@@ -502,14 +502,16 @@ public class ECLBuilder {
 	private String parseLikeExpression(LikeExpression expressionItem) {
 		StringBuilder likeString = new StringBuilder();
 		String stringValue = ((StringValue) expressionItem.getRightExpression()).getValue();
+		if (stringValue.endsWith("%")) stringValue = stringValue.replace("%", "");
+		int count = stringValue.length();
 		stringValue = stringValue.replace("\\", "\\\\");
 		likeString.append("");
 		likeString.append(parseExpressionECL(expressionItem.getLeftExpression()));
 		likeString.append("[");
-		if (stringValue.endsWith("%")) stringValue = stringValue.replace("%", "");
+		
 		likeString.append("1");
 		likeString.append("..");
-		likeString.append(stringValue.length());
+		likeString.append(count);
 		likeString.append("] = '");
 		likeString.append(stringValue);
 		likeString.append("\'");

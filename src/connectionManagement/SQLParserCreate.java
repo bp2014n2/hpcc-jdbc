@@ -56,7 +56,7 @@ public class SQLParserCreate extends SQLParser {
 			dataType = "varchar";
 		}
 		switch(dataType) {
-		case "int": newDataType = "INTEGER"; break;
+		case "int": newDataType = "UNSIGNED5"; break;
 		case "varchar": newDataType = "STRING"+charLength; break;
 		case "timestamp": newDataType = "STRING25"; break;
 		default: newDataType = "unknown";
