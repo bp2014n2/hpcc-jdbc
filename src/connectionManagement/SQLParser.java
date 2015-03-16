@@ -12,10 +12,6 @@ import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LongValue;
-import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
-import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
-import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
-import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.parser.*;
 import net.sf.jsqlparser.schema.Column;
@@ -92,33 +88,9 @@ public class SQLParser{
 		}
 		return lowerTableList;
 	}
-	
-	protected Expression containsJoinCondition(Expression expression) {
-		if (expression instanceof EqualsTo && ((EqualsTo) expression).getLeftExpression() instanceof Column && ((EqualsTo) expression).getRightExpression() instanceof Column) {
-			return expression;
-		}
-		
-		if (expression instanceof BinaryExpression) {
-			Expression e =  containsJoinCondition(((BinaryExpression) expression).getLeftExpression());
-			if (e == null) {
-				e = containsJoinCondition(((BinaryExpression) expression).getRightExpression());
-			}
-			return e;
-		}
-		
-		if (expression instanceof SubSelect) {
-			return containsJoinCondition(((PlainSelect) ((SubSelect) expression).getSelectBody()).getWhere());
-		}
-		
-		if (expression instanceof ExistsExpression) {
-			return containsJoinCondition(((ExistsExpression) expression).getRightExpression());
-		}
-		
-		if (expression instanceof InExpression) {
-			return containsJoinCondition(((InExpression) expression).getLeftExpression());
-		}
-		
-		return null;
+
+	public boolean hasWhereOf(String table, String column) {
+		return statement.toString().contains(table) && statement.toString().contains(column);
 	}
 	
 	

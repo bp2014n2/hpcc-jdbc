@@ -83,11 +83,14 @@ public class ECLEngine
     {
         this.hpccConnProps = props;
         this.dbMetadata = dbmetadata;
-        this.sqlQuery = sql;
-//        this.sqlParser = new SQLParser(sql);
+        this.sqlQuery = convertToAppropriateSQL(sql);
     }
 
-    public List<HPCCColumnMetaData> getExpectedRetCols()
+    private String convertToAppropriateSQL(String sql) {
+		return sql;
+	}
+
+	public List<HPCCColumnMetaData> getExpectedRetCols()
     {
         return expectedretcolumns;
     }
@@ -239,7 +242,7 @@ public class ECLEngine
     	ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append("#option('name', 'java insert');\n");
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
-    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
+//    	eclCode.append("#OPTION('targetclustertype', 'thor');\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
@@ -285,7 +288,7 @@ public class ECLEngine
 	public void generateSelectECL() throws SQLException
     {
     	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#OPTION('name', 'java select')");
+    	eclCode.append("#OPTION('name', 'java select');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
         eclCode.append(generateLayouts(eclBuilder));
@@ -299,7 +302,7 @@ public class ECLEngine
     	availablecols = new HashMap<String, HPCCColumnMetaData>();
     	
     	for (String table : sqlParser.getAllTables()) {
-    		String tableName = table.replace(".", "::");
+    		String tableName = table.contains(".")?table.replace(".", "::"):"i2b2demodata::"+table;
     		DFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
     		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	}
@@ -334,7 +337,10 @@ public class ECLEngine
     
     private String generateTables() {
     	StringBuilder datasetsString = new StringBuilder();
+    	StringBuilder indicesString = new StringBuilder();
+    	boolean usingIndices = false;
     	for (String table : sqlParser.getAllTables()) {
+    		usingIndices = false;
     		String tableName = table;
     		if (table.contains(".")) {
     			tableName = tableName.split("\\.")[1];
@@ -342,12 +348,31 @@ public class ECLEngine
 //				tableName = table;
 				table = "i2b2demodata::"+tableName;
 			}
-			
-			datasetsString.append(tableName).append(" := ").append("DATASET(");
+			switch(tableName) {
+			case "observation_fact":
+				usingIndices = true;
+				if(sqlParser.hasWhereOf("observation_fact","concept_cd")) {
+					indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd}, {patient_num, modifier_cd, valtype_cd, tval_char, start_date}, '~i2b2demodata::observation_fact_idx_inverted_concept_cd');\n");
+				} else if(sqlParser.hasWhereOf("observation_fact","provider_id")) {
+					indicesString.append("observation_fact := INDEX(observation_fact_table, {provider_id}, {modifier_cd, valtype_cd, tval_char, start_date, patient_num}, '~i2b2demodata::observation_fact_idx_inverted_provider_id_all');\n");
+				} else
+					indicesString.append("observation_fact := INDEX(observation_fact_table, {start_date,concept_cd, modifier_cd,valtype_cd,tval_char,patient_num},{}, '~i2b2demodata::observation_fact_idx_start_date');\n");
+				break;
+			case "provider_dimension": 
+				usingIndices = true;
+				indicesString.append("provider_dimension := INDEX(provider_dimension_table, {provider_path}, {provider_id}, '~i2b2demodata::provider_dimension_idx_inverted');\n");
+				break;
+			case "concept_dimension": 
+				usingIndices = true;
+				indicesString.append("concept_dimension := INDEX(concept_dimension_table, {concept_path}, {concept_cd}, '~i2b2demodata::concept_dimension_idx_inverted');\n");
+				break;
+			default: break; 
+			}
+			datasetsString.append(tableName).append(usingIndices?"_table":"").append(" := ").append("DATASET(");
 			datasetsString.append("'~").append(table.replaceAll("\\.", "::")).append("'");
-			datasetsString.append(", ").append(tableName+"_record").append(",").append(HPCCEngine).append(");\n");		
+			datasetsString.append(", ").append(tableName+"_record").append(",").append(HPCCEngine).append(");\n");			
 		}
-    	return datasetsString.toString();
+    	return datasetsString.toString() + indicesString.toString();
     }
 
     private void generateSelectURL() throws SQLException
@@ -518,8 +543,13 @@ public class ECLEngine
                         + "\nVerify access to WsECLDirect: " + hpccRequestUrl, e);
             }
             else
-                throw new RuntimeException(e);
+            	if(e.getMessage().contains("Error in response:")) {
+            		System.out.println("Server response: "+e.getMessage().substring(e.getMessage().indexOf("'")+1,e.getMessage().length() - 1)+" and Philipp stinks");
+            	} else {
+            		throw new RuntimeException(e);	
+            	}
         }
+		return null;
     }
 
     /*private void addFilterClause(StringBuilder sb)

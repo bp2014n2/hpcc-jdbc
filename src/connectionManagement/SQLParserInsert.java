@@ -2,6 +2,7 @@ package connectionManagement;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -13,6 +14,11 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.WithItem;
+import net.sf.jsqlparser.statement.update.Update;
+import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserInsert extends SQLParser {
 
@@ -66,8 +72,33 @@ public class SQLParserInsert extends SQLParser {
 		return ECLLayouts.getAllColumns(table);
 	}
 
-	public ItemsList getItemsList() {
+	protected ItemsList getItemsList() {
 		return ((Insert) statement).getItemsList();
 	}
 
+	protected boolean hasWith() {
+		try {return ((Insert) statement).getSelect().getWithItemsList() != null;} catch (NullPointerException e) {}
+		return false;
+	}
+
+	protected List<WithItem> getWithItemsList() {
+		return ((Insert) statement).getSelect().getWithItemsList();
+	}
+
+	protected Select getSelect() {
+		return ((Insert) statement).getSelect();
+	}
+	
+	protected List<String> getAllTables() {
+		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
+		List<String> tableList = new ArrayList<String>();
+		tableList = tablesNamesFinder.getTableList((Insert) statement);
+		tableList.addAll(tablesNamesFinder.getTableList(getSelect()));
+		List<String> lowerTableList = new ArrayList<String>();
+		for (String table : tableList) {
+			if (table.contains(".")) table = table.substring(table.indexOf(".")+1);
+			lowerTableList.add(table.toLowerCase());
+		}
+		return lowerTableList;
+	}
 }

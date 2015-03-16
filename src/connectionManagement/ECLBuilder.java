@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -42,6 +43,7 @@ import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
+import net.sf.jsqlparser.statement.select.WithItem;
 import net.sf.jsqlparser.statement.update.Update;
 
 public class ECLBuilder {
@@ -82,9 +84,10 @@ public class ECLBuilder {
 		eclCode.append("OUTPUT(DATASET([],{");
 		//remove "RECORD " at beginning of Layout definition
 		String recordString = ECLLayouts.getLayouts().get(tableName.toLowerCase());
-		recordString = recordString.substring(7, recordString.length() - 6).replace(";", ",");
 		if(recordString == null) {
 			recordString = ((SQLParserCreate) sqlParser).getRecord();
+		} else {
+			recordString = recordString.substring(7, recordString.length() - 6).replace(";", ",");
 		}
 		eclCode.append(recordString);
 		eclCode.append("}),,'~%NEWTABLE%',OVERWRITE);");
@@ -99,28 +102,9 @@ public class ECLBuilder {
 		if (sqlParser.getWhere() != null) {
 			Expression expression = sqlParser.getWhere();
 			
-			if (expression instanceof ExistsExpression) {
-				
-				
-				preSelection.append("joinedSets := JOIN(");
-				preSelection.append(sqlParser.getName());
-				preSelection.append(", ");
-				preSelection.append("Table(");
-				Expression e = sqlParser.containsJoinCondition(expression);
-				SubSelect subSelect = (SubSelect) ((ExistsExpression) expression).getRightExpression();
-				
-				preSelection.append(parseSubSelect(subSelect));
-				preSelection.append(")");
-				eclCode.append(preSelection.toString());
-				
-				//clear StringBuilder
-				preSelection.setLength(0);
-			} else {
-				preSelection.append("(");
-				preSelection.append(parseExpressionECL(expression));
-				preSelection.append(")");
-			}
-			
+			preSelection.append("(");
+			preSelection.append(parseExpressionECL(expression));
+			preSelection.append(")");			
 		}
 		
 		
@@ -168,10 +152,10 @@ public class ECLBuilder {
 			outputTable.append("(");
 			
 			outputTable.append(parseExpressionECL(expression));
-			outputTable.append("))");
+			outputTable.append("))+");
 		}
 
-		outputTable.append("+updates,, '~%NEWTABLE%', overwrite);\n");
+		outputTable.append("updates,, '~%NEWTABLE%', overwrite);\n");
 		eclCode.append(outputTable.toString());
 		
 		return eclCode.toString();
@@ -180,11 +164,7 @@ public class ECLBuilder {
 
 	private String generateDropECL(SQLParserDrop sqlParser) {
 		StringBuilder eclCode = new StringBuilder();
-		
-		String fileName = sqlParser.getName();;
-		eclCode.append("IF(Std.File.SuperFileExists('~i2b2demodata::"+fileName+"'),")
-		.append("\nStd.File.DeleteSuperFile('~i2b2demodata::"+fileName+"'),")
-		.append("\nStd.File.DeleteLogicalFile('~i2b2demodata::"+fileName+"', true));");
+		eclCode.append("Std.File.DeleteLogicalFile('~"+sqlParser.getFullName().replace(".", "::")+"', true)");
 		
 		return eclCode.toString();
 	}
@@ -196,9 +176,13 @@ public class ECLBuilder {
 	 */
 	private String generateInsertECL(SQLParserInsert sqlParser) {
 		StringBuilder eclCode = new StringBuilder();
-		String tableName = sqlParser.getTable().getName();
-		String tablePath = "~i2b2demodata::"+tableName;
 		
+		if (sqlParser.hasWith()) {
+			for (WithItem withItem : sqlParser.getWithItemsList()) {
+				eclCode.append(withItem.getName()+" := ");
+				eclCode.append(new ECLBuilder().generateECL(withItem.getSelectBody().toString())+";\n");
+			}
+		}
 //		create subfile
 //		"%2B" is +
 		eclCode.append("OUTPUT(");
@@ -225,9 +209,9 @@ public class ECLBuilder {
 		} else {
 			eclCode.append("TABLE(");
 			List<String> columns = sqlParser.getColumnNames();
-			if (sqlParser.getItemsList() instanceof SubSelect) {
-				eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
-			} else {
+			if (sqlParser.getSelect() != null) {
+				eclCode.append(generateECL(sqlParser.getSelect().getSelectBody().toString()));
+			} else if (sqlParser.getItemsList() != null) {
 				eclCode.append("(DATASET([{");
 				String valueString = "";
 				for (Expression expression : sqlParser.getExpressions()) {
@@ -343,7 +327,7 @@ public class ECLBuilder {
 			from.append(((Table) table).getName());
     	} else if (table instanceof SubSelect){
     		from.append("(");
-    		String innerStatement = trimInnerStatement(table.toString());
+    		String innerStatement = sqlParser.trimInnerStatement(table.toString());
     		from.append(new ECLBuilder().generateECL(innerStatement));
     		from.append(")");
     	}
@@ -366,48 +350,60 @@ public class ECLBuilder {
 	 */
 	
 	private void generateSelects(SQLParserSelect sqlParser, StringBuilder select, Boolean inner) { 
-    	select.append(", ");
-    	select.append("{");
-    	TreeSet<String> selectItemsStrings = new TreeSet<String>();
-    	if(inner) {
-    		if (sqlParser.getOrderBys() != null) {
-    			for (OrderByElement orderByElement : sqlParser.getOrderBys()) {
-        			Expression orderBy = orderByElement.getExpression();
-        			if (orderBy instanceof Function) {
-        				StringBuilder function = new StringBuilder();
-        				function.append(nameFunction((Function) orderBy));
-        				function.append(" := ");
-        				function.append(parseFunction((Function) orderBy));
-        				selectItemsStrings.add(function.toString());
-        			} else {
-        				selectItemsStrings.add(parseExpressionECL(orderByElement.getExpression()));
-        			}
-        		}
-    		}	
-    	}
+		if (sqlParser.isCount()) {
+			select.insert(0, "COUNT(");
+			select.append(")");
+		} else {
+			LinkedHashSet<String> selectItemsStrings = new LinkedHashSet<String>();
+			select.append(", ");
+			select.append("{");
+			if(inner) {
+				if (sqlParser.getOrderBys() != null) {
+					for (OrderByElement orderByElement : sqlParser.getOrderBys()) {
+						Expression orderBy = orderByElement.getExpression();
+						if (orderBy instanceof Function) {
+							StringBuilder function = new StringBuilder();
+							function.append(nameFunction((Function) orderBy));
+							function.append(" := ");
+							function.append(parseFunction((Function) orderBy));
+							selectItemsStrings.add(function.toString());
+						} else {
+							selectItemsStrings.add(parseExpressionECL(orderByElement.getExpression()));
+						}
+					}
+				}	
+			}
     	
-	    if (sqlParser.isSelectAll()) {
-	    	selectItemsStrings.addAll(sqlParser.getAllColumns());
-	    } else {
-	    	ArrayList<SelectItem> selectItems = (ArrayList<SelectItem>) sqlParser.getSelectItems();
-	    	for (SelectItem selectItem : selectItems) {
-		   		if (selectItem instanceof SelectExpressionItem) {
-		   			StringBuilder selectItemString = new StringBuilder();
-		   			if (((SelectExpressionItem) selectItem).getAlias() != null) {
-		   				selectItemString.append(((SelectExpressionItem) selectItem).getAlias().getName());
-		   				selectItemString.append(" := ");
+			if (sqlParser.isSelectAll()){
+				if(sqlParser.getFromItem() instanceof SubSelect) {
+					selectItemsStrings.addAll(sqlParser.getFromItemColumns());
+				} else {
+					selectItemsStrings.addAll(sqlParser.getAllColumns());
+				}
+			} else {
+				ArrayList<SelectItem> selectItems = (ArrayList<SelectItem>) sqlParser.getSelectItems();
+				for (SelectItem selectItem : selectItems) {
+					if (selectItem instanceof SelectExpressionItem) {
+						StringBuilder selectItemString = new StringBuilder();
+						if (((SelectExpressionItem) selectItem).getAlias() != null) {
+							if ((Expression) ((SelectExpressionItem) selectItem).getExpression() instanceof LongValue) {
+			   					selectItemString.append("INTEGER1 "); //necessary when parsing  for example "0 as panel_count"
+			   				}
+			   				selectItemString.append(((SelectExpressionItem) selectItem).getAlias().getName());
+		   					selectItemString.append(" := ");
+		   				}
+		   				selectItemString.append(parseExpressionECL((Expression) ((SelectExpressionItem) selectItem).getExpression()));
+		   				selectItemsStrings.add(selectItemString.toString());
 		   			}
-		   			selectItemString.append(parseExpressionECL((Expression) ((SelectExpressionItem) selectItem).getExpression()));
-		   			selectItemsStrings.add(selectItemString.toString());
-		   		}
-		   	}
-	    }
-	    String selectItemString = "";
-    	for (String selectItem : selectItemsStrings) {
-    		selectItemString += (selectItemString=="" ? "":", ")+selectItem;
-    	}
-    	select.append(selectItemString);
-    	select.append("}");
+	    		}
+	    	}
+	    	String selectItemString = "";
+    		for (String selectItem : selectItemsStrings) {
+    			selectItemString += (selectItemString=="" ? "":", ")+selectItem;
+    		}
+    		select.append(selectItemString);
+    		select.append("}");
+		}
 	}
 	
 	/**
@@ -459,9 +455,28 @@ public class ECLBuilder {
 		} else if (expressionItem instanceof IsNullExpression) {
 			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
 			expression.append(" = ''");
-		} else if (expressionItem instanceof ExistsExpression) {
-			expression.append("EXISTS ");
-			expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
+		} else if (expressionItem instanceof ExistsExpression) {		
+			SQLParserSelect subParser = new SQLParserSelect(((SubSelect)((ExistsExpression) expressionItem).getRightExpression()).getSelectBody().toString());	
+			Expression where = subParser.getWhere();
+			String joinColumn = null;
+			if(where instanceof EqualsTo) {
+				String left = ((EqualsTo)where).getLeftExpression().toString();
+				String right = ((EqualsTo)where).getRightExpression().toString();
+				if(right.contains(".") && left.contains(".")) {
+					if(!right.substring(0,right.indexOf(".") + 1).equals(left.substring(0,left.indexOf(".") + 1)) 
+					&& right.substring(right.indexOf(".") + 1).equals(left.substring(left.indexOf(".") + 1))){
+						joinColumn = right.substring(right.indexOf(".") + 1);
+					}
+				}
+			}
+			expression.append(joinColumn+" IN SET(");
+			if(subParser.getSelectItems().size() == 1) {
+				if(subParser.getSelectItems().get(0).toString().equals("1"))
+					if(subParser.getFromItem() instanceof SubSelect)
+				expression.append(parseExpressionECL((Expression)subParser.getFromItem()));
+			} else
+				expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
+			expression.append(", "+joinColumn+")");
 		} else if (expressionItem instanceof Parenthesis) {
 			expression.append("("+parseExpressionECL(((Parenthesis) expressionItem).getExpression())+")");
 		}
@@ -479,7 +494,7 @@ public class ECLBuilder {
 	 */
 
 	private String parseFunction(Function function) {	
-		return function.getName()+"(group)";
+		return function.getName()+"(GROUP)";
 	}
 	
 	private String nameFunction(Function function) {
@@ -556,14 +571,6 @@ public class ECLBuilder {
 			return " != ";
 		} 
 		return null;
-	}
-
-	private String trimInnerStatement(String innerStatement) {
-		if (innerStatement.charAt(0) == '(') {
-			int end = innerStatement.lastIndexOf(")");
-			innerStatement = innerStatement.substring(1, end);
-		}
-		return innerStatement;
 	}
 	
 	private AndExpression findJoinCondition(AndExpression expression) {

@@ -16,8 +16,8 @@ public class HPCCDriverProperties extends Properties{
 	private static HashMap<String, String[]> defaultProperties = new HashMap<String, String[]>(){
 		private static final long serialVersionUID = 1L;
 		{
-			put("ConnectTimeoutMilli", 	new String[]{"5000","HPCC requests connection time out value in milliseconds."});
-			put("ReadTimeoutMilli", 	new String[]{"15000","HPCC requests connection read time out value in milliseconds."});
+			put("ConnectTimeoutMilli", 	new String[]{"5000000","HPCC requests connection time out value in milliseconds."});
+			put("ReadTimeoutMilli", 	new String[]{"15000000","HPCC requests connection read time out value in milliseconds."});
 			put("LazyLoad", 			new String[]{"true","If disabled, all HPCC metadata loaded and cached at connect time; otherwise HPCC file, and published query info is loaded on-demand."});
 			put("EclResultLimit", 		new String[]{"100","Default limit on number of result records returned."});
 			put("TraceLevel", 			new String[]{HPCCJDBCUtils.defaultLogLevel.getName(),	"Logging level (java.util.logging.level)."});

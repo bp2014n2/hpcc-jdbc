@@ -2,6 +2,7 @@ package connectionManagement;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -160,5 +161,27 @@ public class SQLParserSelect extends SQLParser {
 	protected HashSet<String> concatenateSelectsOrderBysHaving() {
 		
 		return null;
+	}
+
+	protected List<String> getFromItemColumns() {
+		if (plain == null) return null;
+		List<SelectItem> selectItems = new SQLParserSelect(trimInnerStatement(plain.getFromItem().toString())).getSelectItems();
+		List<String> selectItemStrings = new ArrayList<String>();
+		for (SelectItem selectItem : selectItems) {
+			selectItemStrings.add(selectItem.toString());
+		}
+		return selectItemStrings;
+	}	
+	
+	protected String trimInnerStatement(String innerStatement) {
+		if (innerStatement.charAt(0) == '(') {
+			int end = innerStatement.lastIndexOf(")");
+			innerStatement = innerStatement.substring(1, end);
+		}
+		return innerStatement;
+	}
+
+	public boolean isCount() {
+		return (getSelectItems().size() == 1 && getSelectItems().get(0).toString().toLowerCase().contains("count"));
 	}
 }

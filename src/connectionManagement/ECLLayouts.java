@@ -36,7 +36,7 @@ public class ECLLayouts {
     private static final String			Layout_SetUploadStatus = "RECORD UNSIGNED5 upload_id; UNSIGNED5 set_type_id; STRING50 source_cd; UNSIGNED no_of_record; UNSIGNED loaded_record; UNSIGNED deleted_record; STRING25 load_date; STRING25 end_date; STRING100 load_status; STRING message; STRING input_file_name; STRING log_file_name; STRING500 transform_name; END;";
     private static final String			Layout_SourceMaster = "RECORD STRING50 source_cd; STRING300 description; STRING25 create_date; END;";
     private static final String			Layout_UploadStatus = "RECORD UNSIGNED5 upload_id; STRING500 upload_label; STRING100 user_id; STRING50 source_cd; UNSIGNED no_of_record; UNSIGNED loaded_record; UNSIGNED deleted_record; STRING25 load_date; STRING25 end_date; STRING100 load_status; STRING message; STRING input_file_name; STRING log_file_name; STRING500 transform_name; END;";
-    private static final String			Layout_QueryGlobalTemp = "RECORD UNSIGNED5 encounter_num; UNSIGNED5 patient_num; UNSIGNED5 instance_num; STRING50 concept_cd; STRING25 start_date; STRING50 provider_id; integer8 panel_count; UNSIGNED5 fact_count; UNSIGNED5 fact_panels; END;";
+    private static final String			Layout_QueryGlobalTemp = "RECORD UNSIGNED5 encounter_num; UNSIGNED5 patient_num; UNSIGNED5 instance_num; STRING50 concept_cd; STRING25 start_date; STRING50 provider_id; INTEGER1 panel_count; UNSIGNED5 fact_count; UNSIGNED5 fact_panels; END;";
     private static final String			Layout_Dx = "RECORD UNSIGNED5 encounter_num; UNSIGNED5 patient_num; UNSIGNED5 instance_num; STRING50 concept_cd; STRING25 start_date; STRING50 provider_id; STRING25 temporal_start_date; STRING25 temporal_end_date; END;";
     
     private static HashMap<String, String> layouts = new HashMap<String, String> ();
@@ -92,6 +92,7 @@ public class ECLLayouts {
 	
 	public static String getECLDataType(String table, String column){
 		String dataType = "unknown";
+	    HashMap<String, String> layouts = getLayouts();
 		String[] columns = layouts.get(table.toLowerCase()).split(";");
 		for(String l : columns) {
 			if (!l.matches(".*"+column)) continue;

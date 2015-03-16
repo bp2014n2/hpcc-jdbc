@@ -42,7 +42,8 @@ public class SQLParserCreate extends SQLParser {
 		List<ColumnDefinition> columns = ((CreateTable) statement).getColumnDefinitions();
 		String records = "";
 		for(ColumnDefinition column : columns) {
-			records += parseDataType(column.getColDataType().toString())+" "+column.getColumnName()+"; ";
+			records += (records == ""?"":", ");
+			records += parseDataType(column.getColDataType().toString())+" "+column.getColumnName();
 		}
 		return records;
 	}
@@ -56,7 +57,7 @@ public class SQLParserCreate extends SQLParser {
 			dataType = "varchar";
 		}
 		switch(dataType) {
-		case "int": newDataType = "UNSIGNED5"; break;
+		case "int": newDataType = "INTEGER5"; break;
 		case "varchar": newDataType = "STRING"+charLength; break;
 		case "timestamp": newDataType = "STRING25"; break;
 		default: newDataType = "unknown";

@@ -29,7 +29,7 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	protected String getName() {
-		return ((Update) statement).getTable().getName();
+		return ((Update) statement).getTables().get(0).getName();
 	}
 	
 	protected String getFullName() {
@@ -41,7 +41,7 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	protected LinkedHashSet<String> getAllCoumns() {
-		String table = ((Update) statement).getTable().getName();
+		String table = ((Update) statement).getTables().get(0).getName();
 		return ECLLayouts.getAllColumns(table);
 	}
 	
@@ -56,6 +56,11 @@ public class SQLParserUpdate extends SQLParser {
 	
 	protected ArrayList<Expression> getExpressions() {
 		return (ArrayList<Expression>) ((Update) statement).getExpressions();
+	}
+
+	protected Expression containsJoinCondition(Expression expression) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	
