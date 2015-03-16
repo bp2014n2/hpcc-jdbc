@@ -1,21 +1,3 @@
-/*##############################################################################
-
-Copyright (C) 2011 HPCC Systems.
-
-All rights reserved. This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
-############################################################################## */
-
 package connectionManagement;
 
 import java.sql.Connection;
@@ -57,10 +39,7 @@ public class HPCCDriver implements Driver{
     }
     
     public Connection connect(String url, Properties properties){
-    	if(isValidURL(url)){
-    		if(url.contains("jdbc:hpcc;")){
-    			url = url.replaceFirst("jdbc:hpcc;", "");
-    		}
+    	if(acceptsURL(url)){
     		for(String property : driverProperties.getAllPropertiesUsingServerAddress()){
     			driverProperties.setProperty(property, url);
     		}
@@ -77,7 +56,7 @@ public class HPCCDriver implements Driver{
 	    				case "WsECLWatchAddress":
 	    				case "WsECLAddress":
 	    				case "WsECLDirectAddress":
-	    					if(!isValidURL(propertyValue)){
+	    					if(!acceptsURL(propertyValue)){
 	    						traceOutLine(propertyValue +" is not a valid URL for "+propertyKey, defaultValue);
 	    						continue;
 	    					}
@@ -113,15 +92,15 @@ public class HPCCDriver implements Driver{
 		traceOutLine("Connecting to " + driverProperties.getProperty("ServerAddress"));
         return new HPCCConnection(driverProperties);
     }
-
-	private boolean isValidURL(String url){
-    	Pattern ipAddressRegex = Pattern.compile("\\bhttps?://\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b");
-    	Pattern urlNameRegex = Pattern.compile("\\bhttps?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]\\b");
+	
+	public boolean acceptsURL(String url) {
+		Pattern ipAddressRegex = Pattern.compile("\\bjdbc:hpcc://\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b");
+    	Pattern urlNameRegex = Pattern.compile("\\bjdbc:hpcc://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]\\b");
     	return ((url != null) && ((ipAddressRegex.matcher(url).matches()) || (urlNameRegex.matcher(url).matches())));
 	}
 	
-	public boolean acceptsURL(String url) throws SQLException {
-		return ((url != null) && (url.equals("jdbc:hpcc")));
+	public void resetProperties(){
+		driverProperties.reset();
 	}
 	
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties properties) {
@@ -129,11 +108,11 @@ public class HPCCDriver implements Driver{
     }
 
     public int getMajorVersion(){
-        return 1;
+        return HPCCDriverInformation.getMajorVersion();
     }
 
     public int getMinorVersion(){
-        return 0;
+        return HPCCDriverInformation.getMinorVersion();
     }
 
     public boolean jdbcCompliant(){
