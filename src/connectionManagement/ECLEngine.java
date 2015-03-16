@@ -18,26 +18,30 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package connectionManagement;
 
-
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TreeSet;
+import java.util.Vector;
 import java.util.logging.Level;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+
+import connectionManagement.HPCCColumnMetaData.ColumnType;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -46,7 +50,7 @@ import org.w3c.dom.NodeList;
 
 public class ECLEngine
 {
-//    private HPCCQuery               hpccPublishedQuery = null;
+    private HPCCQuery               hpccPublishedQuery = null;
     private String                  expectedDSName = null;
     private NodeList                resultSchema = null;
     private final Properties        hpccConnProps;
@@ -59,22 +63,22 @@ public class ECLEngine
     private StringBuilder           eclCode = new StringBuilder();
     
 	private URL                     hpccRequestUrl;
-//    private ArrayList<HPCCColumnMetaData> storeProcInParams = null;
-//    private String[]                    procInParamValues = null;
+    private ArrayList<HPCCColumnMetaData> storeProcInParams = null;
+    private String[]                    procInParamValues = null;
     private List<HPCCColumnMetaData>    expectedretcolumns = null;
     private HashMap<String, HPCCColumnMetaData> availablecols = null;
 
-//    private static final int            INDEXSCORECRITERIAVARS         = 3;
+    private static final int            INDEXSCORECRITERIAVARS         = 3;
 
-//    private static final int            NumberOfCommonParamInThisIndex_INDEX = 0;
-//    private static final int            LeftMostKeyIndexPosition_INDEX       = 1;
-//    private static final int            NumberofColsKeyedInThisIndex_INDEX   = 2;
+    private static final int            NumberOfCommonParamInThisIndex_INDEX = 0;
+    private static final int            LeftMostKeyIndexPosition_INDEX       = 1;
+    private static final int            NumberofColsKeyedInThisIndex_INDEX   = 2;
 
-//    private static final int            NumberOfCommonParamInThisIndex_WEIGHT = 5;
-//    private static final int            LeftMostKeyIndexPosition_WEIGHT       = 3;
-//    private static final int            NumberofColsKeyedInThisIndex_WEIGHT   = 2;
+    private static final int            NumberOfCommonParamInThisIndex_WEIGHT = 5;
+    private static final int            LeftMostKeyIndexPosition_WEIGHT       = 3;
+    private static final int            NumberofColsKeyedInThisIndex_WEIGHT   = 2;
 
-//    private static final String         SELECTOUTPUTNAME = "JDBCSelectQueryResult";
+    private static final String         SELECTOUTPUTNAME = "JDBCSelectQueryResult";
     private static final String			HPCCEngine = "THOR";
 
     private DocumentBuilderFactory      dbf = DocumentBuilderFactory.newInstance();
@@ -84,7 +88,7 @@ public class ECLEngine
         this.hpccConnProps = props;
         this.dbMetadata = dbmetadata;
         this.sqlQuery = sql;
-//        this.sqlParser = new SQLParser(sql);
+        this.sqlParser = new SQLParser(sql);
     }
 
     public List<HPCCColumnMetaData> getExpectedRetCols()
@@ -103,7 +107,7 @@ public class ECLEngine
 
     private void addFileColsToAvailableCols(DFUFile dfufile, HashMap<String, HPCCColumnMetaData> availablecols)
     {
-        Enumeration<?> fields = dfufile.getAllFields();
+        Enumeration fields = dfufile.getAllFields();
         while (fields.hasMoreElements())
         {
             HPCCColumnMetaData col = (HPCCColumnMetaData) fields.nextElement();
@@ -126,172 +130,16 @@ public class ECLEngine
             throw new RuntimeException(e);
         }
     }
-    
-    public void generateECL() throws SQLException 
+    	
+    public void generateECL() throws SQLException
     {
-    	switch(SQLParser.sqlIsInstanceOf(sqlQuery)) {
-    	case "Select":
-    		this.sqlParser = new SQLParserSelect(sqlQuery);
-    		generateSelectECL();
-    		break;
-    	case "Insert":
-    		this.sqlParser = new SQLParserInsert(sqlQuery);
-    		generateInsertECL();
-    		break;
-    	case "Update":
-    		this.sqlParser = new SQLParserUpdate(sqlQuery);
-    		generateUpdateECL();
-    		break;
-    	case "Drop":
-    		this.sqlParser = new SQLParserDrop(sqlQuery);
-    		generateDropECL();
-    		break;
-    	case "Create":
-    		this.sqlParser = new SQLParserCreate(sqlQuery);
-    		generateCreateECL();
-    		break;
-    	default:
-    		System.out.println("type of sql not recognized"+SQLParser.sqlIsInstanceOf(sqlQuery));
-    	}
-    }
-    	
-    private void generateCreateECL() throws SQLException {
-		ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append(generateImports());
-		String tablePath = ((SQLParserCreate) sqlParser).getFullName();
-		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
-		eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
-		eclCode.append("\nSEQUENTIAL(Std.File.CreateSuperFile('~"+tablePath+"'),\n");
-		eclCode.append("Std.File.StartSuperFileTransaction(),\n");
-		eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
-		eclCode.append("Std.File.FinishSuperFileTransaction());");
-        generateSelectURL();
-	}
-
-	private void generateUpdateECL() throws SQLException{
-		ECLBuilder eclBuilder = new ECLBuilder();
-		eclCode.append("#OPTION('name', 'java update');\n");
-    	eclCode.append(generateImports());
-    	eclCode.append(generateLayouts(eclBuilder));
-		eclCode.append(generateTables());
-		
-    	String tablePath = ((SQLParserUpdate)sqlParser).getFullName();
-		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
-    	
-		eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
-		
-   		DFUFile hpccQueryFile = dbMetadata.getDFUFile(((SQLParserUpdate) sqlParser).getFullName());
-		
-		eclCode.append("SEQUENTIAL(\nStd.File.StartSuperFileTransaction(),\n Std.File.ClearSuperFile('~"+tablePath+"'),\n");
-		for(String subfile : hpccQueryFile.getSubfiles()) {
-			eclCode.append("Std.File.DeleteLogicalFile('~"+subfile+"'),\n");
-		}
-		eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
-		eclCode.append("Std.File.FinishSuperFileTransaction());");
-		System.out.println(eclCode.toString());
-    	
-    	availablecols = new HashMap<String, HPCCColumnMetaData>();
-
-
-   		addFileColsToAvailableCols(hpccQueryFile, availablecols);
-    	
-//    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-//    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserUpdate) sqlParser).getName());
-//    	int i=0;
-//    	for (String column : columns) {
-//    		i++;
-//    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
-//    	}  	
-        generateSelectURL();
-	}
-
-	private void generateDropECL() throws SQLException {
-    	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#OPTION('name', 'java drop');\n");
-    	eclCode.append(generateImports());
-//		eclCode.append(eclBuilder.generateECL(sqlQuery));
-    	
-    	String tablePath = ((SQLParserDrop) sqlParser).getFullName();
-		
-		availablecols = new HashMap<String, HPCCColumnMetaData>();
-
-   		DFUFile hpccQueryFile = dbMetadata.getDFUFile(tablePath);
-//   		addFileColsToAvailableCols(hpccQueryFile, availablecols);
-   		if(hpccQueryFile != null) {
-   			if(hpccQueryFile.isSuperFile()) {
-   				eclCode.append("Std.File.DeleteSuperFile('~"+tablePath+"', TRUE);\n");
-   			} else {
-   				eclCode.append("Std.File.DeleteLogicalFile('~"+tablePath+"');\n");
-   			}
-   		}
-//    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-//    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
-//    	int i=0;
-//    	for (String column : columns) {
-//    		i++;
-//    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
-//    	}  	
-        generateSelectURL();
-        
-	}
-
-	private void generateInsertECL() throws SQLException{
-    	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#option('name', 'java insert');\n");
-    	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
-    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
-//    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
-        eclCode.append(generateLayouts(eclBuilder));
-		eclCode.append(generateTables());
-		
-		String tablePath = "i2b2demodata::"+ ((SQLParserInsert)sqlParser).getTable().getName();
-		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
-		
-		eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
-		
-
-//		add new subfile to superfile
-		eclCode.append("SEQUENTIAL(\n Std.File.StartSuperFileTransaction(),\n"
-				+ " Std.File.AddSuperFile('~"+tablePath+"', '~"+newTablePath);
-		eclCode.append("'),\n Std.File.FinishSuperFileTransaction());");
-		
-		System.out.println(eclCode.toString());
-		
-		availablecols = new HashMap<String, HPCCColumnMetaData>();
-		String tableName;
-    	for (String table : sqlParser.getAllTables()) {
-    		if(table.contains(".")) {
-    			tableName = table.replace(".", "::");
-    		} else {
-    			tableName = "i2b2demodata::"+table;
-    		}
-    		DFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
-    		addFileColsToAvailableCols(hpccQueryFile, availablecols);
-    	}
-    	
-    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserInsert) sqlParser).getTable().getName());
-    	int i=0;
-    	for (String column : columns) {
-    		i++;
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
-    	}  	
-        generateSelectURL();
-		
-	}
-
-	public void generateSelectECL() throws SQLException
-    {
-    	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#OPTION('name', 'java select')");
-    	eclCode.append("#OPTION('outputlimit', 2000);\n");
-    	eclCode.append(generateImports());
-        eclCode.append(generateLayouts(eclBuilder));
+        eclCode.append(generateLayouts());
 		eclCode.append(generateTables());
 		
 		eclCode.append("OUTPUT(");
+		ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append(eclBuilder.generateECL(sqlQuery));
     	eclCode.append(");");
     
@@ -305,7 +153,7 @@ public class ECLEngine
     	}
     	
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	ArrayList<String> selectItems = (ArrayList<String>) ((SQLParserSelect) sqlParser).getAllSelectItemsInQuery();
+    	ArrayList<String> selectItems = (ArrayList<String>) sqlParser.getAllSelectItems();
     	for (int i=0; i<selectItems.size(); i++) {
     		String column = selectItems.get(i);
     		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
@@ -317,15 +165,12 @@ public class ECLEngine
     	return "IMPORT STD;\n";
     }
     
-    private String generateLayouts(ECLBuilder eclBuilder) {
+    private String generateLayouts() {
 		StringBuilder layoutsString = new StringBuilder();
 		for (String table : sqlParser.getAllTables()) {
-			if (table.contains(".")) {
-				table = table.split("\\.")[1];
-			}
-			
-			layoutsString.append(table+"_record := ");
-			layoutsString.append(ECLLayouts.getLayouts().get(table));
+			String tableName = table.split("\\.")[1];
+			layoutsString.append("Layout_"+tableName+" := ");
+			layoutsString.append(ECLBuilder.getLayouts().get(tableName));
 			layoutsString.append("\n");
 			
 		}
@@ -335,17 +180,10 @@ public class ECLEngine
     private String generateTables() {
     	StringBuilder datasetsString = new StringBuilder();
     	for (String table : sqlParser.getAllTables()) {
-    		String tableName = table;
-    		if (table.contains(".")) {
-    			tableName = tableName.split("\\.")[1];
-			} else {
-//				tableName = table;
-				table = "i2b2demodata::"+tableName;
-			}
-			
+			String tableName = table.split("\\.")[1];
 			datasetsString.append(tableName).append(" := ").append("DATASET(");
 			datasetsString.append("'~").append(table.replaceAll("\\.", "::")).append("'");
-			datasetsString.append(", ").append(tableName+"_record").append(",").append(HPCCEngine).append(");\n");		
+			datasetsString.append(", ").append("Layout_"+tableName).append(",").append(HPCCEngine).append(");\n");		
 		}
     	return datasetsString.toString();
     }
@@ -492,18 +330,16 @@ public class ECLEngine
                     throw new Exception("Insufficient number of parameters provided");
             }*/
             
+            System.out.println(eclCode.toString());
             sb.append(eclCode.toString());
             sb.append("\n");
 
             long startTime = System.currentTimeMillis();
             HttpURLConnection conn = dbMetadata.createHPCCESPConnection(hpccRequestUrl);
-            
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + sb.toString());
-            
-//          replace "+" in http request body since it is a reserved character representing a space character
-            String body = sb.toString().replace("+", "%2B");
+
+            //HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + sb);
             OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-            wr.write(body);
+            wr.write(sb.toString());
             wr.flush();
 
             responseCode = conn.getResponseCode();

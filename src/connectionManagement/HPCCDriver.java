@@ -57,16 +57,12 @@ public class HPCCDriver implements Driver{
     }
     
     public Connection connect(String url, Properties properties){
-    	if(isValidURL(url)){
-    		if(url.contains("jdbc:hpcc;")){
-    			url = url.replaceFirst("jdbc:hpcc;", "");
-    		}
+    	if(acceptsURL(url)){
     		for(String property : driverProperties.getAllPropertiesUsingServerAddress()){
     			driverProperties.setProperty(property, url);
     		}
     	}else{
     		traceOutLine(url +" has the wrong format (e.g. missing protocol)");
-    		return null;
     	}
         
     	if(properties != null){
@@ -78,7 +74,7 @@ public class HPCCDriver implements Driver{
 	    				case "WsECLWatchAddress":
 	    				case "WsECLAddress":
 	    				case "WsECLDirectAddress":
-	    					if(!isValidURL(propertyValue)){
+	    					if(!acceptsURL(propertyValue)){
 	    						traceOutLine(propertyValue +" is not a valid URL for "+propertyKey, defaultValue);
 	    						continue;
 	    					}
@@ -114,15 +110,15 @@ public class HPCCDriver implements Driver{
 		traceOutLine("Connecting to " + driverProperties.getProperty("ServerAddress"));
         return new HPCCConnection(driverProperties);
     }
-
-	private boolean isValidURL(String url){
-    	Pattern ipAddressRegex = Pattern.compile("\\bhttps?://\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b");
-    	Pattern urlNameRegex = Pattern.compile("\\bhttps?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]\\b");
+	
+	public boolean acceptsURL(String url) {
+		Pattern ipAddressRegex = Pattern.compile("\\bjdbc:hpcc://\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b");
+    	Pattern urlNameRegex = Pattern.compile("\\bjdbc:hpcc://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]\\b");
     	return ((url != null) && ((ipAddressRegex.matcher(url).matches()) || (urlNameRegex.matcher(url).matches())));
 	}
 	
-	public boolean acceptsURL(String url) throws SQLException {
-		return ((url != null) && (url.equals("jdbc:hpcc")));
+	public void resetProperties(){
+		driverProperties.reset();
 	}
 	
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties properties) {
@@ -130,11 +126,11 @@ public class HPCCDriver implements Driver{
     }
 
     public int getMajorVersion(){
-        return 1;
+        return HPCCDriverInformation.getMajorVersion();
     }
 
     public int getMinorVersion(){
-        return 0;
+        return HPCCDriverInformation.getMinorVersion();
     }
 
     public boolean jdbcCompliant(){

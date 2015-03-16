@@ -11,7 +11,7 @@ public class HPCCDriverProperties extends Properties{
 	private static final int DEFAULT_VALUE = 0;
 	private static final int DESCRIPTION = 1;
 	
-	private static final String DEFAULT_SERVER_ADDRESS = "http://localhost";
+	private static final String DEFAULT_SERVER_ADDRESS = "jdbc:hpcc://localhost";
 	
 	private static HashMap<String, String[]> defaultProperties = new HashMap<String, String[]>(){
 		private static final long serialVersionUID = 1L;
@@ -28,6 +28,7 @@ public class HPCCDriverProperties extends Properties{
 			put("PageOffset", 			new String[]{"0","Starting HPCC data file or HPCC published queries displayed."});
 			put("password", 			new String[]{"hpccdemo","HPCC password (*Use JDBC client secure interface if available*)."});
 			put("username", 			new String[]{"hpccdemo","HPCC username (*Use JDBC client secure interface if available*)."});
+			put("Protocol", 			new String[]{"https","Protocol used to establish the connection to the HPCC Server."});
 			put("WsECLDirectPort", 		new String[]{"8010","WsECLDirect port (required if HPCC configuration does not use default port)."});
 			put("WsECLPort", 			new String[]{"8002","WsECL port (required if HPCC configuration does not use default port)."});
 			put("WsECLWatchPort", 		new String[]{"8010","WsECLWatch port (required if HPCC configuration does not use default port)."});
@@ -44,6 +45,10 @@ public class HPCCDriverProperties extends Properties{
 		this.initializeProperties();
 	}
 
+	public void reset() {
+		this.initializeProperties();
+	}
+	
 	public void initializeProperties() {
 		for(String key : defaultProperties.keySet()){
 			this.setProperty(key, defaultProperties.get(key)[DEFAULT_VALUE]);
@@ -98,5 +103,5 @@ public class HPCCDriverProperties extends Properties{
 		}
 		
 		return propertyInformation;
-	}	
+	}
 }

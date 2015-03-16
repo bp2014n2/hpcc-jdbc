@@ -2173,11 +2173,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
                                 }
                                 else if (NodeName.equals("IntSize"))
                                 {
-                                	try {
-                                		file.setIntSize(Integer.parseInt(currentTextCont));
-                                	} catch(NumberFormatException e) {
-                                		file.setLongSize(Long.parseLong(currentTextCont));
-                                	}
+                                    file.setIntSize(Integer.parseInt(currentTextCont));
                                 }
                                 else if (NodeName.equals("IntRecordCount"))
                                 {
@@ -2196,7 +2192,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
                         if (file.getFullyQualifiedName().length() > 0)
                         {
-                            if (file.getIntRecordCount() >= 0)
+                            if (file.getRecordCount() >= 0)
                             {
                                 if (fetchHPCCFileColumnInfo(file, db))
                                     dfuFileParsedCount++;

@@ -19,12 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package connectionManagement;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 
@@ -103,13 +101,13 @@ public class HPCCStatement implements Statement
                 {
                     String message = className + ":  Cannot execute SQL command";
 
-//                    if (warnings != null)
-//                    {
-//                        SQLException  we = warnings.getNextException();
-//                        if(we != null)
-//                            message += "\n\t" + we.getLocalizedMessage();
-//                    }
-//                    throw new SQLException(message);
+                    if (warnings != null)
+                    {
+                        SQLException  we = warnings.getNextException();
+                        if(we != null)
+                            message += "\n\t" + we.getLocalizedMessage();
+                    }
+                    throw new SQLException(message);
                 }
 
                 NodeList rowList = eclQuery.execute(params);
@@ -145,35 +143,7 @@ public class HPCCStatement implements Statement
         sqlQuery = sql;
 
         HPCCJDBCUtils.traceoutln(Level.INFO,  className + ": executeQuery(" + sql + ")");
-        String query = sql.toLowerCase();
-        
-        ArrayList<String> blacklist = new ArrayList<String>();
-        blacklist.add("qt_query_master");
-        blacklist.add("qt_query_result_type");
-        blacklist.add("qt_query_status_type");
-        blacklist.add("qt_patient_set_collection");
-        
-        /*
-         * Could be dangerous if there is a query that contains the table names in a string etc
-         */
-        for (String psqlQuery : blacklist) {
-        	if(query.contains(psqlQuery)) {
-            	try {
-    				Class.forName("org.postgresql.Driver");
-    				Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2", "i2b2demodata", "demouser");
-    				
-    				/* create HPCCStatement object for single use SQL query execution */
-    				Statement stmt = connection.createStatement();
-    				return stmt.executeQuery(sql);
-    			} catch (ClassNotFoundException e) {
-    				// TODO Auto-generated catch block
-    				e.printStackTrace();
-    			}	
-            	break;
-            }
-        }
-        
-        
+
         processQuery();
 
         return executeHPCCQuery(null);
