@@ -101,13 +101,13 @@ public class HPCCStatement implements Statement
                 {
                     String message = className + ":  Cannot execute SQL command";
 
-                    if (warnings != null)
-                    {
-                        SQLException  we = warnings.getNextException();
-                        if(we != null)
-                            message += "\n\t" + we.getLocalizedMessage();
-                    }
-                    throw new SQLException(message);
+//                    if (warnings != null)
+//                    {
+//                        SQLException  we = warnings.getNextException();
+//                        if(we != null)
+//                            message += "\n\t" + we.getLocalizedMessage();
+//                    }
+//                    throw new SQLException(message);
                 }
 
                 NodeList rowList = eclQuery.execute(params);

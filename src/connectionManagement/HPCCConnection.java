@@ -128,7 +128,7 @@ public class HPCCConnection implements Connection
         HPCCJDBCUtils.traceoutln(Level.FINEST,"HPCCConnection: prepareCall(string sql) Not supported yet.");
         throw new UnsupportedOperationException("HPCCConnection: prepareCall(string sql) Not supported yet.");
     }
-    
+
     public String nativeSQL(String sql) throws SQLException
     {
         HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: nativeSQL(string sql) Not supported yet.");

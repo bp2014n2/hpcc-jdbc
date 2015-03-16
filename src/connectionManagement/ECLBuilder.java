@@ -253,7 +253,7 @@ public class ECLBuilder {
     	generateGroupBys(sqlParser, eclCode);
     	 
     	if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
-    		convertToTable(eclCode);
+    		if (!((SQLParserSelect) sqlParser).isCount()) convertToTable(eclCode);
     	}
     	generateOrderBys(sqlParser, eclCode);
     	if(sqlParser.getOrderBys() != null) {

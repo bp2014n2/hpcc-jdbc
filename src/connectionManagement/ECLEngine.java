@@ -294,9 +294,9 @@ public class ECLEngine
         eclCode.append(generateLayouts(eclBuilder));
 		eclCode.append(generateTables());
 		
-		eclCode.append("OUTPUT(");
+		if (!((SQLParserSelect) sqlParser).isCount()) eclCode.append("OUTPUT(");
     	eclCode.append(eclBuilder.generateECL(sqlQuery));
-    	eclCode.append(");");
+    	if (!((SQLParserSelect) sqlParser).isCount()) eclCode.append(");");
     
     	System.out.println(eclCode.toString());
     	availablecols = new HashMap<String, HPCCColumnMetaData>();

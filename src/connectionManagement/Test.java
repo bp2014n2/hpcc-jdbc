@@ -39,13 +39,13 @@ public class Test {
 			 String query9 = "insert into DX (patient_num) select * from (select distinct patient_num from QUERY_GLOBAL_TEMP where panel_count = 2) q;";
 			 String query10 = "select count(distinct patient_num) as patient_num_count from DX;";
 			/* Execute your SQL query */
-			 HPCCResultSet res1 = (HPCCResultSet) 
-			 stmt.executeQuery(query10);
+//			 HPCCResultSet res1 = (HPCCResultSet) 
+			 stmt.executeQuery(query1);
 			 
 			 /* Check the result set */
-			 while(res1.next()){
-				 System.out.println(res1.getString(3));
-			 }//#OPTION('name', 'java insert');
+//			 while(res1.next()){
+//				 System.out.println(res1.getString(3));
+//			 }//#OPTION('name', 'java insert');
 		
 		} catch (SQLException | ClassNotFoundException e) {
 			e.printStackTrace();
