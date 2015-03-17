@@ -47,7 +47,7 @@ public class HPCCConnection implements Connection
     private SQLWarning           warnings = null;
     private String               catalog = HPCCJDBCUtils.HPCCCATALOGNAME;
 
-    public HPCCConnection(Properties props)
+    public HPCCConnection(HPCCDriverProperties props)
     {
         this.connectionProps = props;
 
@@ -82,28 +82,10 @@ public class HPCCConnection implements Connection
         return connectionProps.getProperty(propname, "");
     }
 
-    public String getServerAddress()
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: getServerAddress( )");
-        return this.connectionProps.getProperty("ServerAddress");
-    }
-
-    public void setServerAddress(String serverAddress)
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: setServerAddress( " + serverAddress + " )");
-        this.connectionProps.setProperty("ServerAddress", serverAddress);
-    }
-
     public HPCCDatabaseMetaData getDatabaseMetaData()
     {
         HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: getDatabaseMetaData(  )");
         return metadata;
-    }
-
-    public void setMetadata(HPCCDatabaseMetaData metadata)
-    {
-        HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection: setMetadata(  )");
-        this.metadata = metadata;
     }
 
     public Statement createStatement() throws SQLException
