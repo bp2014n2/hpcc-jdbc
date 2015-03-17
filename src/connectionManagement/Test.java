@@ -12,7 +12,7 @@ public class Test {
 			connectionProperties.put("EclResultLimit", "2000");
 			connectionProperties.put("username", "eha");
 			connectionProperties.put("password", "eha");
-			HPCCConnection connection = (HPCCConnection) DriverManager.getDriver("jdbc:hpcc").connect("http://54.93.130.121", connectionProperties);
+			HPCCConnection connection = (HPCCConnection) DriverManager.getDriver("jdbc:hpcc://54.93.130.121:8010/i2b2").connect("jdbc:hpcc://54.93.130.121:8010/i2b2", connectionProperties);
 			
 			/* create HPCCStatement object for single use SQL query execution */
 			 HPCCStatement stmt = (HPCCStatement) connection.createStatement();
