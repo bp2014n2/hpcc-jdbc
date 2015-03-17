@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -78,6 +79,8 @@ public class ECLEngine
     private static final String			HPCCEngine = "THOR";
 
     private DocumentBuilderFactory      dbf = DocumentBuilderFactory.newInstance();
+    
+    private String sub = null;
 
     public ECLEngine(HPCCDatabaseMetaData dbmetadata, Properties props, String sql)
     {
@@ -87,7 +90,20 @@ public class ECLEngine
     }
 
     private String convertToAppropriateSQL(String sql) {
+		if(sql.toLowerCase().contains("substring")){
+			String substring = sql.substring(sql.indexOf("substring"), sql.indexOf("substring")+52).toLowerCase();
+			substring = substring.replace("substring(", "");
+			substring = substring.replace(" from ", "[");
+			substring = substring.replace(" for ", "..");
+			substring = substring.replaceAll(Pattern.quote(")")+".*", "]");
+			setSubstring(substring);
+			sql = sql.replace(sql.substring(sql.indexOf("substring"), sql.indexOf("substring")+52),substring);
+		}
 		return sql;
+	}
+
+	private void setSubstring(String substring) {
+		sub = substring;
 	}
 
 	public List<HPCCColumnMetaData> getExpectedRetCols()
@@ -351,12 +367,13 @@ public class ECLEngine
 			switch(tableName) {
 			case "observation_fact":
 				usingIndices = true;
-				if(sqlParser.hasWhereOf("observation_fact","concept_cd")) {
-					indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd}, {patient_num, modifier_cd, valtype_cd, tval_char, start_date}, '~i2b2demodata::observation_fact_idx_inverted_concept_cd');\n");
-				} else if(sqlParser.hasWhereOf("observation_fact","provider_id")) {
-					indicesString.append("observation_fact := INDEX(observation_fact_table, {provider_id}, {modifier_cd, valtype_cd, tval_char, start_date, patient_num}, '~i2b2demodata::observation_fact_idx_inverted_provider_id_all');\n");
-				} else
-					indicesString.append("observation_fact := INDEX(observation_fact_table, {start_date,concept_cd, modifier_cd,valtype_cd,tval_char,patient_num},{}, '~i2b2demodata::observation_fact_idx_start_date');\n");
+				indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd, start_date, patient_num},{}, '~i2b2demodata::observation_fact_idx_r_query');");
+//				if(sqlParser.hasWhereOf("observation_fact","concept_cd")) {
+//					indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd}, {patient_num, modifier_cd, valtype_cd, tval_char, start_date}, '~i2b2demodata::observation_fact_idx_inverted_concept_cd');\n");
+//				} else if(sqlParser.hasWhereOf("observation_fact","provider_id")) {
+//					indicesString.append("observation_fact := INDEX(observation_fact_table, {provider_id}, {modifier_cd, valtype_cd, tval_char, start_date, patient_num}, '~i2b2demodata::observation_fact_idx_inverted_provider_id_all');\n");
+//				} else
+//					indicesString.append("observation_fact := INDEX(observation_fact_table, {start_date,concept_cd, modifier_cd,valtype_cd,tval_char,patient_num},{}, '~i2b2demodata::observation_fact_idx_start_date');\n");
 				break;
 			case "provider_dimension": 
 				usingIndices = true;
@@ -516,7 +533,11 @@ public class ECLEngine
                 else
                     throw new Exception("Insufficient number of parameters provided");
             }*/
-            
+            if(sub != null) {
+            	String correctedEclCode = eclCode.toString().replace("[1..7] := concept_cd", "concept_cd_sub := concept_cd[1..7]");
+            	eclCode.delete(0, eclCode.length());
+            	eclCode.append(correctedEclCode);
+            }
             sb.append(eclCode.toString());
             sb.append("\n");
 

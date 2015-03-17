@@ -65,6 +65,7 @@ public class SQLParser{
 				return "Create";
 			}
 		} catch (JSQLParserException e) {
+			System.out.println("No valid SQL:");
 			e.printStackTrace();
 		}
 		return "";
