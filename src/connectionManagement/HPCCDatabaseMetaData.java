@@ -105,10 +105,11 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     {
         super();
         this.serverAddress = props.getProperty("ServerAddress");
+        this.serverAddress = this.serverAddress.replaceFirst("jdbc:hpcc:", "http:");
         this.targetcluster = props.getProperty("TargetCluster");
         this.queryset = props.getProperty("QuerySet");
 
-        this.basewseclwatchurl = props.getProperty("WsECLWatchAddress") + ":" + props.getProperty("WsECLWatchPort");
+        this.basewseclwatchurl = (props.getProperty("WsECLWatchAddress") + ":" + props.getProperty("WsECLWatchPort")).replaceFirst("jdbc:hpcc:", "http:");
         this.UserName = props.getProperty("username");
         this.basicAuth = props.getProperty("BasicAuth",HPCCConnection.createBasicAuth(this.UserName, props.getProperty("password", "")));
         this.lazyLoad = Boolean.parseBoolean(props.getProperty("LazyLoad"));
