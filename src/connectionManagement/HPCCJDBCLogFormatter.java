@@ -25,7 +25,9 @@ public class HPCCJDBCLogFormatter  extends Formatter
     {
         StringBuilder builder = new StringBuilder();
 
-        builder.append(DF.get().format(new Date(arg0.getMillis())))
+        builder.append("["+arg0.getLevel()+"]")
+        	   .append(" ")
+        	   .append(DF.get().format(new Date(arg0.getMillis())))
                .append(" ")
                .append(String.format(THREADFORMAT, Thread.currentThread().getId()))
                .append(" ")
