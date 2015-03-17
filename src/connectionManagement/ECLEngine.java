@@ -379,8 +379,8 @@ public class ECLEngine
     {
         try
         {
-            String urlString = hpccConnProps.getProperty("WsECLDirectAddress") + ":"
-                    + hpccConnProps.getProperty("WsECLDirectPort") + "/EclDirect/RunEcl?Submit";
+            String urlString = (hpccConnProps.getProperty("WsECLDirectAddress") + ":"
+                    + hpccConnProps.getProperty("WsECLDirectPort") + "/EclDirect/RunEcl?Submit").replaceFirst("jdbc:hpcc:", "http:");
 
             if (hpccConnProps.containsKey("TargetCluster"))
                 urlString += "&cluster=" + hpccConnProps.getProperty("TargetCluster");
