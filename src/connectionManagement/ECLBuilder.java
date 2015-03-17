@@ -47,7 +47,7 @@ import net.sf.jsqlparser.statement.select.WithItem;
 import net.sf.jsqlparser.statement.update.Update;
 
 public class ECLBuilder {
-	
+	private boolean hasAlias;
 	/**
 	 * This method generates ECL code from a given SQL code. 
 	 * Therefore it delegates the generation to the appropriate method, 
@@ -386,6 +386,7 @@ public class ECLBuilder {
 					if (selectItem instanceof SelectExpressionItem) {
 						StringBuilder selectItemString = new StringBuilder();
 						if (((SelectExpressionItem) selectItem).getAlias() != null) {
+							setHasAlias(true);
 							if ((Expression) ((SelectExpressionItem) selectItem).getExpression() instanceof LongValue) {
 			   					selectItemString.append("INTEGER1 "); //necessary when parsing  for example "0 as panel_count"
 			   				}
@@ -435,8 +436,10 @@ public class ECLBuilder {
 			expression.append(parseSubSelect(expressionItem));
 			expression.append(")");
 		} else if (expressionItem instanceof Function) {
-			expression.append(nameFunction((Function) expressionItem));
-			expression.append(" := ");
+			if (!hasAlias()) {
+				expression.append(nameFunction((Function) expressionItem));
+				expression.append(" := ");
+			}
 			expression.append(parseFunction((Function) expressionItem));
 		}  else if (expressionItem instanceof Between) {
 			expression.append("(");
@@ -483,6 +486,20 @@ public class ECLBuilder {
 		return expression.toString();
 	}
 	
+	private boolean hasAlias() {
+		if(hasAlias) {
+			setHasAlias(false);
+			return true;
+		} else
+			return false;
+	}
+
+
+	private void setHasAlias(boolean b) {
+		hasAlias = b;
+	}
+
+
 	private String parseSubSelect(Expression expression) {
 		return new ECLBuilder().generateECL(((SubSelect) expression).getSelectBody().toString());
 	}
@@ -494,7 +511,7 @@ public class ECLBuilder {
 	 */
 
 	private String parseFunction(Function function) {	
-		return function.getName()+"(GROUP)";
+		return function.getName().toUpperCase()+"(GROUP)";
 	}
 	
 	private String nameFunction(Function function) {
