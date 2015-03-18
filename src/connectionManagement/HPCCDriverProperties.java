@@ -11,7 +11,8 @@ public class HPCCDriverProperties extends Properties{
 	private static final int DEFAULT_VALUE = 0;
 	private static final int DESCRIPTION = 1;
 	
-	private static final String DEFAULT_SERVER_ADDRESS = "jdbc:hpcc://localhost";
+	private static final String DEFAULT_SERVER_ADDRESS = "//localhost";
+	private static final String DEFAULT_PORT = "8010";
 	
 	private static HashMap<String, String[]> defaultProperties = new HashMap<String, String[]>(){
 		private static final long serialVersionUID = 1L;
@@ -28,10 +29,10 @@ public class HPCCDriverProperties extends Properties{
 			put("PageOffset", 			new String[]{"0","Starting HPCC data file or HPCC published queries displayed."});
 			put("password", 			new String[]{"hpccdemo","HPCC password (*Use JDBC client secure interface if available*)."});
 			put("username", 			new String[]{"hpccdemo","HPCC username (*Use JDBC client secure interface if available*)."});
-			put("Protocol", 			new String[]{"https","Protocol used to establish the connection to the HPCC Server."});
-			put("WsECLDirectPort", 		new String[]{"8010","WsECLDirect port (required if HPCC configuration does not use default port)."});
+			put("Protocol", 			new String[]{"http:","Protocol used to establish the connection to the HPCC Server."});
+			put("WsECLDirectPort", 		new String[]{DEFAULT_PORT,"WsECLDirect port (required if HPCC configuration does not use default port)."});
 			put("WsECLPort", 			new String[]{"8002","WsECL port (required if HPCC configuration does not use default port)."});
-			put("WsECLWatchPort", 		new String[]{"8010","WsECLWatch port (required if HPCC configuration does not use default port)."});
+			put("WsECLWatchPort", 		new String[]{DEFAULT_PORT,"WsECLWatch port (required if HPCC configuration does not use default port)."});
 			put("ServerAddress", 		new String[]{DEFAULT_SERVER_ADDRESS, "Target HPCC ESP Address (used to contact WsECLWatch, WsECLDirect, or WsECL if override not specified)."});
 			put("WsECLWatchAddress", 	new String[]{DEFAULT_SERVER_ADDRESS, "WsECLWatch address (required if different than ServerAddress)."});
 			put("WsECLAddress", 		new String[]{DEFAULT_SERVER_ADDRESS, "WsECLAddress Address (required if different than ServerAddress)."});
@@ -68,13 +69,21 @@ public class HPCCDriverProperties extends Properties{
 	} 
 	
 	public LinkedList<String> getAllPropertiesUsingServerAddress(){
-		LinkedList<String> propertiesWithServerAddress = new LinkedList<String>();
+		return this.getAllPropertiesUsingAttribute(DEFAULT_SERVER_ADDRESS);
+	}
+	
+	public LinkedList<String> getAllPropertiesUsingDefaultPort() {
+		return this.getAllPropertiesUsingAttribute(DEFAULT_PORT);
+	}
+	
+	private LinkedList<String> getAllPropertiesUsingAttribute(String attribute){
+		LinkedList<String> propertiesWithAttribute = new LinkedList<String>();
 		for(String key : defaultProperties.keySet()){
-			if(defaultProperties.get(key)[DEFAULT_VALUE].equals(DEFAULT_SERVER_ADDRESS)){
-				propertiesWithServerAddress.add(key);
+			if(defaultProperties.get(key)[DEFAULT_VALUE].equals(attribute)){
+				propertiesWithAttribute.add(key);
 			}
 		}
-		return propertiesWithServerAddress;
+		return propertiesWithAttribute;
 	}
 	
 	public DriverPropertyInfo[] getProperties(){

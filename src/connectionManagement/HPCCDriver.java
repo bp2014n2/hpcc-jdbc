@@ -14,6 +14,9 @@ import java.util.regex.Pattern;
 public class HPCCDriver implements Driver{
     
     private HPCCDriverProperties driverProperties;
+    private HPCCUrlParser urlParser;
+    private static final int URI 		= 0;
+    private static final int PORT 		= 1;
     
     static{
     	try{
@@ -28,20 +31,20 @@ public class HPCCDriver implements Driver{
     
     public HPCCDriver(){
     	this.driverProperties = new HPCCDriverProperties();
-    }
-    
-    public Connection connect (){
-    	return new HPCCConnection(driverProperties);
-    }
-    
-    public Connection connect(String url){
-		return this.connect(url, null);
+    	this.urlParser = new HPCCUrlParser();
     }
     
     public Connection connect(String url, Properties properties){
+    	String[] parsedURL;
     	if(acceptsURL(url)){
-    		for(String property : driverProperties.getAllPropertiesUsingServerAddress()){
-    			driverProperties.setProperty(property, url.substring(0, url.lastIndexOf(":")));
+    		parsedURL = this.parseURL(url);
+    		for(String uriProperty : driverProperties.getAllPropertiesUsingServerAddress()){
+    			driverProperties.setProperty(uriProperty, parsedURL[URI]);
+    		}
+    		if(parsedURL[PORT] != null){
+    			for(String portProperty : driverProperties.getAllPropertiesUsingDefaultPort()){
+    				driverProperties.setProperty(portProperty, parsedURL[PORT]);
+    			}
     		}
     	}else{
     		traceOutLine(url +" has the wrong format (e.g. missing protocol)");
@@ -60,6 +63,7 @@ public class HPCCDriver implements Driver{
 	    						traceOutLine(propertyValue +" is not a valid URL for "+propertyKey, defaultValue);
 	    						continue;
 	    					}
+	    					propertyValue = this.parseURL(propertyValue)[URI];
 	    					break;
 	    				case "PageSize":
 	    				case "PageOffset":
@@ -86,16 +90,15 @@ public class HPCCDriver implements Driver{
 	    		}
 	    	}
     	}
-    	
 		driverProperties.setProperty("Basic Auth", HPCCConnection.createBasicAuth(driverProperties.getProperty("username"), driverProperties.getProperty("password")));
 
-		traceOutLine("Connecting to " + driverProperties.getProperty("ServerAddress"));
+		traceOutLine("Connecting to " + driverProperties.getProperty("Protocol") + driverProperties.getProperty("ServerAddress"));
         return new HPCCConnection(driverProperties);
     }
-	
+
 	public boolean acceptsURL(String url) {
-		Pattern ipAddressRegex = Pattern.compile("\\bjdbc:hpcc://\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b");
-    	Pattern urlNameRegex = Pattern.compile("\\bjdbc:hpcc://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]\\b");
+		Pattern ipAddressRegex = Pattern.compile(HPCCDriverInformation.getDriverProtocol()+"//\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}(:\\d{2,4})?(/)?");
+    	Pattern urlNameRegex = Pattern.compile(HPCCDriverInformation.getDriverProtocol()+"//[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
     	return ((url != null) && ((ipAddressRegex.matcher(url).matches()) || (urlNameRegex.matcher(url).matches())));
 	}
 	
@@ -121,6 +124,13 @@ public class HPCCDriver implements Driver{
 
 	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
 		return null;
+	}
+	
+	private String[] parseURL(String url){
+		String[] parsedURL = new String[2];
+		parsedURL[URI] 	= urlParser.getUri(url);
+		parsedURL[PORT] = urlParser.getPort(url);
+		return parsedURL;
 	}
 	
 	private static void traceOutLine(String infoMessage){
