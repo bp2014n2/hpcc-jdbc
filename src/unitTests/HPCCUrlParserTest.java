@@ -21,13 +21,29 @@ public class HPCCUrlParserTest {
 	}
 	
 	@Test
-	public void testGetUri() {
+	public void testGetUrlWithOutProtocol() {
 		HPCCUrlParser parser = new HPCCUrlParser();
-		assertEquals(parser.getUri("jdbc:hpcc://92.232.93.92"), "//92.232.93.92");
-		assertEquals(parser.getUri("jdbc:hpcc://92.232.93.92:8010"), "//92.232.93.92");
-		assertEquals(parser.getUri("jdbc:hpcc://92.232.93.92:8010/"), "//92.232.93.92");
-		assertEquals(parser.getUri("jdbc:hpcc://92.232.93.92:"), "//92.232.93.92");
-		assertEquals(parser.getUri("jdbc:hpcc://92.232.93.92:/"), "//92.232.93.92");
-		assertEquals(parser.getUri("jdbc:hpcc://92.232.93.92/"), "//92.232.93.92");
+		assertEquals(parser.getUrlWithOutProtocol("jdbc:hpcc://92.232.93.92"), "//92.232.93.92");
+		assertEquals(parser.getUrlWithOutProtocol("jdbc:hpcc://92.232.93.92:8010"), "//92.232.93.92");
+		assertEquals(parser.getUrlWithOutProtocol("jdbc:hpcc://92.232.93.92:8010/"), "//92.232.93.92");
+		assertEquals(parser.getUrlWithOutProtocol("jdbc:hpcc://92.232.93.92:"), "//92.232.93.92");
+		assertEquals(parser.getUrlWithOutProtocol("jdbc:hpcc://92.232.93.92:/"), "//92.232.93.92");
+		assertEquals(parser.getUrlWithOutProtocol("jdbc:hpcc://92.232.93.92/"), "//92.232.93.92");
+	}
+	
+	@Test
+	public void testIsValidUrl() {
+		HPCCUrlParser parser = new HPCCUrlParser();
+		assertTrue(parser.isValidUrl("http://www.test.de"));
+		assertTrue(parser.isValidUrl("https://www.test.de"));
+		assertTrue(parser.isValidUrl("jdbc:hpcc://www.test.de"));
+		assertTrue(parser.isValidUrl("http://92.10.11.20"));
+		assertTrue(parser.isValidUrl("http://92.10.11.20:8000"));
+		assertTrue(parser.isValidUrl("http://92.10.11.20/"));
+		assertTrue(parser.isValidUrl("http://92.10.11.20:8000/"));
+		assertTrue(parser.isValidUrl("http://92.10.11.20/asdas/"));
+		assertTrue(parser.isValidUrl("http://92.10.11.20:8000/ysxasda"));
+		assertFalse(parser.isValidUrl("http:/www.test.de"));
+		assertFalse(parser.isValidUrl(null));
 	}
 }

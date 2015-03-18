@@ -1,11 +1,10 @@
 package connectionManagement;
 
+import java.util.regex.Pattern;
+
 public class HPCCUrlParser {
-	public String getSource(String url){
-		return url.replaceFirst(HPCCDriverInformation.getDriverProtocol(), "");
-	}
-	public String getUri(String url) {
-		String source = getSource(url);
+	public String getUrlWithOutProtocol(String url) {
+		String source = this.removeProtocol(url);
 		String sourceWithoutRoot = source.replaceFirst("//", "");
 		int portIndex = getPortIndex(source);
 		if(portIndex > 0){
@@ -18,7 +17,7 @@ public class HPCCUrlParser {
 	}
 
 	public String getPort(String url) {
-		String source = getSource(url);
+		String source = this.removeProtocol(url);
 		int portIndex = getPortIndex(source);
 		if(portIndex < 0 ){
 			return null;
@@ -39,6 +38,21 @@ public class HPCCUrlParser {
 		return null;		
 	}
 	
+	public boolean isValidUrl(String url){
+		if((url == null) || !this.hasValidProtocol(url)){
+			return false;
+		}
+		url = this.removeProtocol(url);
+    	Pattern urlNameRegex = Pattern.compile("//[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
+    	return urlNameRegex.matcher(url).matches();
+	}
+	
+	private boolean hasValidProtocol(String url) {
+		return (!url.startsWith(":") && url.contains("://"));
+	}
+	private String removeProtocol(String url) {
+		return url.substring(url.indexOf("://")+1, url.length());
+	}
 	private int getPortIndex(String source){
 		return source.indexOf(":");
 	}

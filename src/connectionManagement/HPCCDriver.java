@@ -9,7 +9,6 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 public class HPCCDriver implements Driver{
     
@@ -97,9 +96,7 @@ public class HPCCDriver implements Driver{
     }
 
 	public boolean acceptsURL(String url) {
-		Pattern ipAddressRegex = Pattern.compile(HPCCDriverInformation.getDriverProtocol()+"//\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}(:\\d{2,4})?(/)?");
-    	Pattern urlNameRegex = Pattern.compile(HPCCDriverInformation.getDriverProtocol()+"//[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
-    	return ((url != null) && ((ipAddressRegex.matcher(url).matches()) || (urlNameRegex.matcher(url).matches())));
+		return (url.startsWith(HPCCDriverInformation.getDriverProtocol()) && urlParser.isValidUrl(url));
 	}
 	
 	public void resetProperties(){
@@ -128,7 +125,7 @@ public class HPCCDriver implements Driver{
 	
 	private String[] parseURL(String url){
 		String[] parsedURL = new String[2];
-		parsedURL[URI] 	= urlParser.getUri(url);
+		parsedURL[URI] 	= urlParser.getUrlWithOutProtocol(url);
 		parsedURL[PORT] = urlParser.getPort(url);
 		return parsedURL;
 	}
