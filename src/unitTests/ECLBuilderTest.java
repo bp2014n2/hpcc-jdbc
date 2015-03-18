@@ -51,7 +51,7 @@ public class ECLBuilderTest {
 		assertEquals("TABLE(SORT(TABLE(myTable, {myColumn, myColumnA, myColumnB}), myColumn), {myColumn, myColumnA, myColumnB})", eclBuilder.generateECL("select * from mySchema.myTable order by myColumn"));
 		assertEquals("TABLE(SORT(TABLE(myTable, {myColumn}), myColumn), {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable order by myColumn"));
 		assertEquals("DEDUP(TABLE(SORT(TABLE(myTable, {myColumn}), myColumn), {myColumn}), All)", eclBuilder.generateECL("select distinct myColumn from mySchema.myTable order by myColumn"));
-		assertEquals("TABLE(SORT(TABLE(myTable, {count_ := count(group), myColumn}, myColumn), count_), {myColumn})", eclBuilder.generateECL("select myColumn from myTable group by myColumn order by count(*)"));
+		assertEquals("TABLE(SORT(TABLE(myTable, {count_ := COUNT(GROUP), myColumn}, myColumn), count_), {myColumn})", eclBuilder.generateECL("select myColumn from myTable group by myColumn order by count(*)"));
 		
 	}
 	
@@ -65,8 +65,8 @@ public class ECLBuilderTest {
 	
 	@Test
 	public void shouldTranslateSelectWithCount() {
-		assertEquals("TABLE(myTable, {count_ := count(group)})", eclBuilder.generateECL("select count(*) from mySchema.myTable"));
-		assertEquals("TABLE(myTable, {count_myColumn := count(group)})", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable"));
+		assertEquals("COUNT(myTable)", eclBuilder.generateECL("select count(*) from mySchema.myTable"));
+		assertEquals("COUNT(myTable)", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable"));
 	}
 		
 	@Test
