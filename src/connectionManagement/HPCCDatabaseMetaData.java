@@ -104,12 +104,12 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     public HPCCDatabaseMetaData(Properties props)
     {
         super();
+        String protocol = props.getProperty("Protocol");
         this.serverAddress = props.getProperty("ServerAddress");
-        this.serverAddress = this.serverAddress.replaceFirst("jdbc:hpcc:", "http:");
         this.targetcluster = props.getProperty("TargetCluster");
         this.queryset = props.getProperty("QuerySet");
 
-        this.basewseclwatchurl = (props.getProperty("WsECLWatchAddress") + ":" + props.getProperty("WsECLWatchPort")).replaceFirst("jdbc:hpcc:", "http:");
+        this.basewseclwatchurl = protocol+(props.getProperty("WsECLWatchAddress") + ":" + props.getProperty("WsECLWatchPort"));
         this.UserName = props.getProperty("username");
         this.basicAuth = props.getProperty("BasicAuth",HPCCConnection.createBasicAuth(this.UserName, props.getProperty("password", "")));
         this.lazyLoad = Boolean.parseBoolean(props.getProperty("LazyLoad"));
@@ -118,7 +118,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         this.connectTimoutMillis = Integer.parseInt(props.getProperty("ConnectTimeoutMilli"));
         this.readTimoutMillis = Integer.parseInt(props.getProperty("ReadTimeoutMilli"));
 
-        HPCCJDBCUtils.traceoutln(Level.INFO, "HPCCDatabaseMetaData ServerAddress: " + serverAddress
+        HPCCJDBCUtils.traceoutln(Level.INFO, "HPCCDatabaseMetaData ServerAddress: " + protocol + serverAddress
                 + " TargetCluster: " + targetcluster + " eclwatch: " + basewseclwatchurl);
 
         targetclusters = new ArrayList<String>();
