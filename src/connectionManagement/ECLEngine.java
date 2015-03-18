@@ -92,11 +92,10 @@ public class ECLEngine
     private String convertToAppropriateSQL(String sql) {
 		if(sql.toLowerCase().contains("substring")){
 			String substring = sql.substring(sql.indexOf("substring"), sql.indexOf("substring")+52).toLowerCase();
-			substring = substring.replace("substring(", "");
-			substring = substring.replace(" from ", "[");
-			substring = substring.replace(" for ", "..");
-			substring = substring.replaceAll(Pattern.quote(")")+".*", "]");
+			substring = substring.replace("substring(", "").replace(" from ", "[").replace(" for ", "..").replace(")", "]");
 			setSubstring(substring);
+			String subRange = substring.substring(substring.indexOf("["), substring.indexOf("]")+1);
+			substring = substring.replace(subRange,"");
 			sql = sql.replace(sql.substring(sql.indexOf("substring"), sql.indexOf("substring")+52),substring);
 		}
 		return sql;
@@ -214,13 +213,13 @@ public class ECLEngine
 
    		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	
-//    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-//    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserUpdate) sqlParser).getName());
-//    	int i=0;
-//    	for (String column : columns) {
-//    		i++;
-//    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
-//    	}  	
+    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
+    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserUpdate) sqlParser).getName());
+    	int i=0;
+    	for (String column : columns) {
+    		i++;
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
+    	}  	
         generateSelectURL();
 	}
 
@@ -242,14 +241,14 @@ public class ECLEngine
    			} else {
    				eclCode.append("Std.File.DeleteLogicalFile('~"+tablePath+"');\n");
    			}
+   	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
+   	    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
+   	    	int i=0;
+   	    	for (String column : columns) {
+   	    		i++;
+   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
+   	    	}  	
    		}
-//    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-//    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
-//    	int i=0;
-//    	for (String column : columns) {
-//    		i++;
-//    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
-//    	}  	
         generateSelectURL();
         
 	}
@@ -287,9 +286,11 @@ public class ECLEngine
     			tableName = "i2b2demodata::"+table;
     		}
     		DFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
-    		addFileColsToAvailableCols(hpccQueryFile, availablecols);
+    		if(hpccQueryFile != null) {
+        		addFileColsToAvailableCols(hpccQueryFile, availablecols);
+    		}
     	}
-    	
+
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
     	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserInsert) sqlParser).getTable().getName());
     	int i=0;
@@ -301,7 +302,7 @@ public class ECLEngine
 		
 	}
 
-	public void generateSelectECL() throws SQLException
+	private void generateSelectECL() throws SQLException
     {
     	ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append("#OPTION('name', 'java select');\n");
@@ -534,7 +535,10 @@ public class ECLEngine
                     throw new Exception("Insufficient number of parameters provided");
             }*/
             if(sub != null) {
-            	String correctedEclCode = eclCode.toString().replace("[1..7] := concept_cd", "concept_cd_sub := concept_cd[1..7]");
+            	String subRange = sub.substring(sub.indexOf("["), sub.indexOf("]")+1);
+            	String subOf = sub.substring(0, sub.indexOf("["));
+            	String subName = sub.substring(sub.indexOf("as") + 3, sub.length());
+            	String correctedEclCode = eclCode.toString().replace(subName+" := "+subOf, subName+" := "+subOf+subRange);
             	eclCode.delete(0, eclCode.length());
             	eclCode.append(correctedEclCode);
             }
