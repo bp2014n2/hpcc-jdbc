@@ -63,7 +63,7 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         this.sqlQuery = query;
 
         if (sqlQuery != null)
-            processQuery();
+            processQuery(sqlQuery);
     }
 
     public ResultSet executeQuery() throws SQLException

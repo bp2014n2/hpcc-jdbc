@@ -1,21 +1,3 @@
-/*##############################################################################
-
-Copyright (C) 2011 HPCC Systems.
-
-All rights reserved. This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
-############################################################################## */
-
 package connectionManagement;
 
 import java.sql.Connection;
@@ -28,11 +10,6 @@ import java.util.logging.Level;
 
 import org.w3c.dom.NodeList;
 
-/**
- *
- * @author ChalaAX, rpastrana
- */
-
 public class HPCCStatement implements Statement
 {
     protected boolean                  closed        = false;
@@ -44,84 +21,52 @@ public class HPCCStatement implements Statement
 
     protected HPCCDatabaseMetaData     dbMetadata;
     protected ECLEngine                eclQuery = null;
-    //protected SQLParser                parser = new SQLParser();
-    protected static final String      className = "HPCCStatement";
     public static final String         hpccResultSetName = "HPCC Result";
 
-    public HPCCStatement(Connection conn)
-    {
-        HPCCJDBCUtils.traceoutln(Level.INFO,   className + "Constructor(conn)");
+    public HPCCStatement(Connection conn){
+        traceOutLine("Constructor(conn)");
         this.hpccConnection = (HPCCConnection)conn;
         this.dbMetadata = hpccConnection.getDatabaseMetaData();
     }
 
-    protected void processQuery()
-    {
-        try
-        {
-            HPCCJDBCUtils.traceoutln(Level.INFO,  className + "Attempting to process sql query: " + sqlQuery);
-            if (!this.closed)
-            {
-                /*if (parser != null)
-                    parser.process(sqlQuery);
-                else
-                    throw new SQLException("Error parser is not ready, cannot execute query");*/
-
-                eclQuery = new ECLEngine(dbMetadata, hpccConnection.getProperties(), sqlQuery);
-
+    protected void processQuery(String query){
+        try{
+        	traceOutLine("Attempting to process sql query: " + query);
+            if (!this.closed){
+                eclQuery = new ECLEngine(dbMetadata, hpccConnection.getProperties(), query);
                 eclQuery.generateECL();
                 resultMetadata = new HPCCResultSetMetadata(eclQuery.getExpectedRetCols(), hpccResultSetName);
-            }
-            else
+            } else {
                 throw new SQLException("HPCCPreparedStatement closed, cannot execute query");
+            }
         }
-        catch (SQLException e)
-        {
-            HPCCJDBCUtils.traceoutln(Level.SEVERE,   e.getLocalizedMessage());
-            if (warnings == null)
+        catch (SQLException e){
+            HPCCJDBCUtils.traceoutln(Level.SEVERE, e.getLocalizedMessage());
+            if (warnings == null){
                 warnings = new SQLWarning();
+            }
             warnings.setNextException(e);
-
             eclQuery = null;
-            //parser = null;
         }
     }
 
-    protected ResultSet executeHPCCQuery(HashMap<Integer, Object> params) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.INFO,  className + ": executeQuery()");
-        HPCCJDBCUtils.traceoutln(Level.INFO,  "\tAttempting to process sql query: " + sqlQuery);
+    protected ResultSet executeHPCCQuery(HashMap<Integer, Object> params) throws SQLException{
+        traceOutLine("executeQuery()");
+        traceOutLine("\tAttempting to process sql query: " + sqlQuery);
         result = null;
-
-        try
-        {
-            if (!this.closed)
-            {
-                if (eclQuery == null)
-                {
-                    String message = className + ":  Cannot execute SQL command";
-
-//                    if (warnings != null)
-//                    {
-//                        SQLException  we = warnings.getNextException();
-//                        if(we != null)
-//                            message += "\n\t" + we.getLocalizedMessage();
-//                    }
-//                    throw new SQLException(message);
-                }
-
+        try{
+        	if (!this.closed){
                 NodeList rowList = eclQuery.execute(params);
-                if (rowList != null)
+                if (rowList != null){
                     result = new HPCCResultSet(this, rowList, resultMetadata);
+                }
+            } else {
+            	traceOutLine(Level.SEVERE, "Statement is closed, cannot execute query");
+            	throw new SQLException();
             }
-            else
-                throw new SQLException(className + "is closed, cannot execute query");
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e){
             throw convertToSQLExceptionAndAddWarn(e);
         }
-
         return result;
     }
 
@@ -138,281 +83,245 @@ public class HPCCStatement implements Statement
         return sqlexcept;
     }
 
-    public ResultSet executeQuery(String sql) throws SQLException
-    {
-        sqlQuery = sql;
-
-        HPCCJDBCUtils.traceoutln(Level.INFO,  className + ": executeQuery(" + sql + ")");
-
-        processQuery();
-
+    public ResultSet executeQuery(String sql) throws SQLException{
+        traceOutLine("executeQuery(" + sql + ")");
+        processQuery(sql);
         return executeHPCCQuery(null);
     }
 
-    public int executeUpdate(String sql) throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": executeUpdate(String sql) Not supported yet.");
-    }
-
-    public void close() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": close( )");
-        if (!closed)
-        {
+	public void close() throws SQLException{
+        traceOutLine("close( )");
+        if (!closed){
             closed = true;
             hpccConnection = null;
             result = null;
             sqlQuery = null;
             dbMetadata = null;
-            //parser = null;
             eclQuery = null;
         }
     }
 
-    public int getMaxFieldSize() throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": getMaxFieldSize() Not supported yet.");
-    }
-
-    public void setMaxFieldSize(int max) throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": setMaxFieldSize(int max) Not supported yet.");
-    }
-
-    public int getMaxRows() throws SQLException
-    {
-        try
-        {
-            HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": getMaxRows()");
+    public int getMaxRows() throws SQLException{
+        try{
+            traceOutLine("getMaxRows()");
             return Integer.parseInt(this.hpccConnection.getProperty("EclLimit"));
-        }
-        catch (Exception e)
-        {
+        }catch (Exception e){
             throw new SQLException("Could not determine MaxRows");
         }
     }
 
-    public void setMaxRows(int max) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setMaxRows(int max) Not supported yet.");
+    public int getQueryTimeout() throws SQLException{
+    	return 0;
     }
 
-    public void setEscapeProcessing(boolean enable) throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": setEscapeProcessing(boolean enable) Not supported yet.");
+    public void setQueryTimeout(int seconds) throws SQLException{}
+
+    public void cancel() throws SQLException{
+    	handleUnsupportedMethod("cancel()");
     }
 
-    public int getQueryTimeout() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": getQueryTimeout()");
-        return 0;
-    }
-
-    public void setQueryTimeout(int seconds) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setQueryTimeout()");
-    }
-
-    public void cancel() throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": cancel()  Not supported yet.");
-    }
-
-    public SQLWarning getWarnings() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": getWarnings()");
+    public SQLWarning getWarnings() throws SQLException{
+        traceOutLine("getWarnings()");
         return warnings;
     }
 
-    public void clearWarnings() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": clearWarnings()");
+    public void clearWarnings() throws SQLException{
+        traceOutLine("clearWarnings()");
         warnings = null;
     }
 
-    public void setCursorName(String name) throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ":  setCursorName(String name) Not supported yet.");
-    }
-
-    public boolean execute(String sql) throws SQLException
-    {
+    public boolean execute(String sql) throws SQLException{
         sqlQuery = sql;
-
-        processQuery();
-
+        processQuery(sql);
         return execute();
     }
 
-    public boolean execute() throws SQLException
-    {
+    public boolean execute() throws SQLException{
         result = null;
-        HPCCJDBCUtils.traceoutln(Level.INFO,  className + ": execute()");
-        HPCCJDBCUtils.traceoutln(Level.INFO,  "\tAttempting to process sql query: " + sqlQuery);
-        try
-        {
+        traceOutLine(": execute()");
+        traceOutLine("\tAttempting to process sql query: " + sqlQuery);
+        try{
             result = (HPCCResultSet) executeHPCCQuery(null);
-        }
-        catch (Exception e)
-        {
+        }catch (Exception e){
             //Unlikely to occur, but if it does, should report in sqlwarnings
             throw convertToSQLExceptionAndAddWarn(e);
         }
         return result != null;
     }
 
-    public ResultSet getResultSet() throws SQLException
-    {
+    public ResultSet getResultSet() throws SQLException{
         return result;
     }
 
-    public int getUpdateCount() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.INFO, className + ":getUpdateCount: -1");
+    public int getUpdateCount() throws SQLException{
+        traceOutLine("getUpdateCount: -1");
         return -1;
     }
 
-    public boolean getMoreResults() throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": getMoreResults Not supported yet.");
-    }
-
-    public void setFetchDirection(int direction) throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": only ResultSet.FETCH_FORWARD supported");
-    }
-
-    public int getFetchDirection() throws SQLException
-    {
+    public int getFetchDirection() throws SQLException{
         return ResultSet.FETCH_FORWARD;
     }
-
-    public void setFetchSize(int rows) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.INFO, className + ": setFetchSize Not supported yet.");
+    
+    public int executeUpdate(String sql) throws SQLException{
+    	handleUnsupportedMethod("executeUpdate(String sql)");
+    	return 0;
+    }
+    
+    public int getMaxFieldSize() throws SQLException{
+    	handleUnsupportedMethod("getMaxFieldSize()");
+    	return 0;
     }
 
-    public int getFetchSize() throws SQLException
-    {
+    public void setMaxFieldSize(int max) throws SQLException{
+    	handleUnsupportedMethod("setMaxFieldSize(int max)");
+    }
+    
+    public void setMaxRows(int max) throws SQLException{
+		handleUnsupportedMethod("setMaxRows(int max)");
+    }
+
+    public void setEscapeProcessing(boolean enable) throws SQLException{
+    	handleUnsupportedMethod("setEscapeProcessing(boolean enable)");
+    }
+    
+    public void setCursorName(String name) throws SQLException{
+    	handleUnsupportedMethod("setCursorName(String name)");
+    }
+    
+    public boolean getMoreResults() throws SQLException{
+		handleUnsupportedMethod("getMoreResults()");
+		return false;
+    }
+
+    public void setFetchDirection(int direction) throws SQLException{
+    	handleUnsupportedMethod("setFetchDirection(int direction)");
+    }
+
+    public void setFetchSize(int rows) throws SQLException{
+    	handleUnsupportedMethod("setFetchSize(int rows)");
+    }
+
+    public int getFetchSize() throws SQLException{
         return -1;
     }
 
-    public int getResultSetConcurrency() throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": getResultSetConcurrency() Not supported yet.");
+    public int getResultSetConcurrency() throws SQLException{
+    	handleUnsupportedMethod("getResultSetConcurrency()");
+    	return 0;
     }
 
-    public int getResultSetType() throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ":  getResultSetType() Not supported yet.");
+    public int getResultSetType() throws SQLException{
+    	handleUnsupportedMethod("getResultSetType()");
+    	return 0;
     }
 
-    public void addBatch(String sql) throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": addBatch(String sql) Not supported yet.");
+    public void addBatch(String sql) throws SQLException{
+    	handleUnsupportedMethod("addBatch(String sql)");
     }
 
-    public void clearBatch() throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": clearBatch() Not supported yet.");
+    public void clearBatch() throws SQLException{
+    	handleUnsupportedMethod("clearBatch()");
     }
 
-    public int[] executeBatch() throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": executeBatch() Not supported yet.");
+    public int[] executeBatch() throws SQLException{
+    	handleUnsupportedMethod("executeBatch()");
+    	return null;
     }
 
-    public Connection getConnection() throws SQLException
-    {
+    public Connection getConnection() throws SQLException{
         return hpccConnection;
     }
 
-    public boolean getMoreResults(int current) throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": getMoreResults(int current) Not supported yet.");
+    public boolean getMoreResults(int current) throws SQLException{
+    	handleUnsupportedMethod("getMoreResults(int current)");
+    	return false;
     }
 
-    public ResultSet getGeneratedKeys() throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": getGeneratedKeys() Not supported yet.");
+    public ResultSet getGeneratedKeys() throws SQLException{
+    	handleUnsupportedMethod("getGeneratedKeys()");
+    	return null;
     }
 
-    public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException
-    {
-        throw new UnsupportedOperationException(
-                className + ": executeUpdate(String sql, int autoGeneratedKeys) Not supported yet.");
+    public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException{
+    	handleUnsupportedMethod("executeUpdate(String sql, int autoGeneratedKeys)");
+    	return 0;
     }
 
-    public int executeUpdate(String sql, int[] columnIndexes) throws SQLException
-    {
-        throw new UnsupportedOperationException(
-                className + ":  executeUpdate(String sql, int[] columnIndexes) Not supported yet.");
+    public int executeUpdate(String sql, int[] columnIndexes) throws SQLException{
+    	handleUnsupportedMethod("executeUpdate(String sql, int[] columnIndexes)");
+    	return 0;
     }
 
-    public int executeUpdate(String sql, String[] columnNames) throws SQLException
-    {
-        throw new UnsupportedOperationException(
-                className + ": executeUpdate(String sql, String[] columnNames) Not supported yet.");
+    public int executeUpdate(String sql, String[] columnNames) throws SQLException{
+    	handleUnsupportedMethod("executeUpdate(String sql, String[] columnNames)");
+    	return 0;
     }
 
-    public boolean execute(String sql, int autoGeneratedKeys) throws SQLException
-    {
-        throw new UnsupportedOperationException(
-                className + ": execute(String sql, int autoGeneratedKeys) Not supported yet.");
+    public boolean execute(String sql, int autoGeneratedKeys) throws SQLException{
+    	handleUnsupportedMethod("execute(String sql, int autoGeneratedKeys)");
+    	return false;
     }
 
-    public boolean execute(String sql, int[] columnIndexes) throws SQLException
-    {
-        throw new UnsupportedOperationException(
-                className + ":  execute(String sql, int[] columnIndexes) Not supported yet.");
+    public boolean execute(String sql, int[] columnIndexes) throws SQLException{
+    	handleUnsupportedMethod("execute(String sql, int[] columnIndexes)");
+    	return false;
     }
 
-    public boolean execute(String sql, String[] columnNames) throws SQLException
-    {
-        throw new UnsupportedOperationException(
-                className + ": execute(String sql, String[] columnNames) Not supported yet.");
+    public boolean execute(String sql, String[] columnNames) throws SQLException{
+    	handleUnsupportedMethod("execute(String sql, String[] columnNames)");
+    	return false;
     }
 
-    public int getResultSetHoldability() throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": getResultSetHoldability Not supported yet.");
+    public int getResultSetHoldability() throws SQLException{
+    	handleUnsupportedMethod("getResultSetHoldability()");
+    	return 0;
     }
 
-    public boolean isClosed() throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": isClosed() Not supported yet.");
+    public boolean isClosed() throws SQLException{
+    	handleUnsupportedMethod("isClosed()");
+    	return false;
     }
 
-    public void setPoolable(boolean poolable) throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": Not supported yet.");
+    public void setPoolable(boolean poolable) throws SQLException{
+    	handleUnsupportedMethod("setPoolable(boolean poolable)");
     }
 
-    public boolean isPoolable() throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": Not supported yet.");
+    public boolean isPoolable() throws SQLException{
+    	handleUnsupportedMethod("isPoolable()");
+    	return false;
     }
 
-    public <T> T unwrap(Class<T> iface) throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": Not supported yet.");
+    public <T> T unwrap(Class<T> iface) throws SQLException{
+    	handleUnsupportedMethod("unwrap(Class<T> iface)");
+    	return null;
     }
 
-    public boolean isWrapperFor(Class<?> iface) throws SQLException
-    {
-        throw new UnsupportedOperationException(className + ": Not supported yet.");
+    public boolean isWrapperFor(Class<?> iface) throws SQLException{
+    	handleUnsupportedMethod("isWrapperFor(Class<?> iface)");
+    	return false;
     }
 
 	@Override
 	public void closeOnCompletion() throws SQLException {
-		// TODO Auto-generated method stub
-		
+		handleUnsupportedMethod("closeOnCompletion()");
 	}
 
 	@Override
 	public boolean isCloseOnCompletion() throws SQLException {
-		// TODO Auto-generated method stub
+		handleUnsupportedMethod("isCloseOnCompletion()");
 		return false;
 	}
-
+	
+	private static void traceOutLine(String infoMessage){
+		HPCCJDBCUtils.traceoutln(Level.INFO, HPCCDriver.class.getSimpleName()+": "+infoMessage);
+	}
+	
+	private static void traceOutLine(Level loggingLevel, String infoMessage){
+		HPCCJDBCUtils.traceoutln(loggingLevel, HPCCDriver.class.getSimpleName()+": "+infoMessage);
+	}
+	
+	private void handleUnsupportedMethod(String methodSignature) throws SQLException {
+    	traceOutLine(Level.SEVERE, methodSignature+" is not supported yet.");
+        throw new UnsupportedOperationException();
+	}
 }

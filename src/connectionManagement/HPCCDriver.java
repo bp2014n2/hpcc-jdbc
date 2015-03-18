@@ -41,7 +41,7 @@ public class HPCCDriver implements Driver{
     public Connection connect(String url, Properties properties){
     	if(acceptsURL(url)){
     		for(String property : driverProperties.getAllPropertiesUsingServerAddress()){
-    			driverProperties.setProperty(property, url);
+    			driverProperties.setProperty(property, url.substring(0, url.lastIndexOf(":")));
     		}
     	}else{
     		traceOutLine(url +" has the wrong format (e.g. missing protocol)");
@@ -123,11 +123,11 @@ public class HPCCDriver implements Driver{
 		return null;
 	}
 	
-	private static void traceOutLine(String errorMessage){
-		HPCCJDBCUtils.traceoutln(Level.INFO, HPCCDriver.class.getSimpleName()+": "+errorMessage);
+	private static void traceOutLine(String infoMessage){
+		HPCCJDBCUtils.traceoutln(Level.INFO, HPCCDriver.class.getSimpleName()+": "+infoMessage);
 	}
 	
-	private static void traceOutLine(String errorMessage, String defaultProperty){
-		traceOutLine(errorMessage+" (now using: "+defaultProperty+")");
+	private static void traceOutLine(String infoMessage, String defaultProperty){
+		traceOutLine(infoMessage+" (now using: "+defaultProperty+")");
 	}
 }
