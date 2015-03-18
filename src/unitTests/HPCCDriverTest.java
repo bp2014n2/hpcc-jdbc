@@ -53,7 +53,10 @@ public class HPCCDriverTest {
 	public void testURLAccepting() throws SQLException{
 		assertNotNull(DriverManager.getDriver(acceptedURL));
 		assertNotNull(DriverManager.getDriver("jdbc:hpcc://localhost:8010"));
+		assertNotNull(DriverManager.getDriver("jdbc:hpcc://localhost:8010/"));
 		assertNotNull(DriverManager.getDriver("jdbc:hpcc://92.232.93.92"));
+		assertNotNull(DriverManager.getDriver("jdbc:hpcc://92.232.93.92:8010"));
+		assertNotNull(DriverManager.getDriver("jdbc:hpcc://92.232.93.92:8010/"));
 		assertNotNull(DriverManager.getDriver("jdbc:hpcc://google.com"));	
 	}
 	
@@ -68,10 +71,10 @@ public class HPCCDriverTest {
 	public void testDefaultProperties() throws SQLException{
 		((HPCCDriver) DriverManager.getDriver(acceptedURL)).resetProperties();
 		HPCCConnection connection = (HPCCConnection) DriverManager.getConnection("", null);
-		assertTrue(connection.getProperties().getProperty("ServerAddress").equals("jdbc:hpcc://localhost"));
-		assertTrue(connection.getProperties().getProperty("WsECLWatchAddress").equals("jdbc:hpcc://localhost"));
-		assertTrue(connection.getProperties().getProperty("WsECLAddress").equals("jdbc:hpcc://localhost"));
-		assertTrue(connection.getProperties().getProperty("WsECLDirectAddress").equals("jdbc:hpcc://localhost"));
+		assertTrue(connection.getProperties().getProperty("ServerAddress").equals("//localhost"));
+		assertTrue(connection.getProperties().getProperty("WsECLWatchAddress").equals("//localhost"));
+		assertTrue(connection.getProperties().getProperty("WsECLAddress").equals("//localhost"));
+		assertTrue(connection.getProperties().getProperty("WsECLDirectAddress").equals("//localhost"));
 		assertTrue(connection.getProperties().getProperty("username").equals("hpccdemo"));
 		assertTrue(connection.getProperties().getProperty("password").equals("hpccdemo"));
 		assertTrue(connection.getProperties().getProperty("ConnectTimeoutMilli").equals("5000"));
@@ -105,9 +108,9 @@ public class HPCCDriverTest {
 		connectionProperties.put("EclResultLimit", "asdadsa");
 		
 		HPCCConnection connection = (HPCCConnection) DriverManager.getConnection("", connectionProperties);
-		assertTrue(connection.getProperties().getProperty("WsECLWatchAddress").equals("jdbc:hpcc://localhost"));
-		assertTrue(connection.getProperties().getProperty("WsECLAddress").equals("jdbc:hpcc://localhost"));
-		assertTrue(connection.getProperties().getProperty("WsECLDirectAddress").equals("jdbc:hpcc://localhost"));
+		assertTrue(connection.getProperties().getProperty("WsECLWatchAddress").equals("//localhost"));
+		assertTrue(connection.getProperties().getProperty("WsECLAddress").equals("//localhost"));
+		assertTrue(connection.getProperties().getProperty("WsECLDirectAddress").equals("//localhost"));
 		assertTrue(connection.getProperties().getProperty("PageSize").equals("100"));
 		assertTrue(connection.getProperties().getProperty("PageOffset").equals("0"));
 		assertTrue(connection.getProperties().getProperty("ConnectTimeoutMilli").equals("5000"));
@@ -121,7 +124,7 @@ public class HPCCDriverTest {
 	public void testGetConnectionWithCredentials() throws SQLException {
 		((HPCCDriver) DriverManager.getDriver(acceptedURL)).resetProperties();
 		HPCCConnection connection = (HPCCConnection) DriverManager.getConnection("jdbc:hpcc://192.168.56.101", "test", "test");
-		assertTrue(connection.getProperties().getProperty("ServerAddress").equals("jdbc:hpcc://192.168.56.101"));
+		assertTrue(connection.getProperties().getProperty("ServerAddress").equals("//192.168.56.101"));
 		assertTrue(connection.getProperties().getProperty("username").equals("test"));
 		assertTrue(connection.getProperties().getProperty("password").equals("test"));
 		connection.close();
@@ -168,10 +171,10 @@ public class HPCCDriverTest {
 		
 		connection = (HPCCConnection) DriverManager.getDriver("jdbc:hpcc://mytest.de").connect("jdbc:hpcc://mytest.de", connectionProperties);
 		
-		assertTrue(connection.getProperties().getProperty("ServerAddress").equals("jdbc:hpcc://mytest.de"));
-		assertTrue(connection.getProperties().getProperty("WsECLWatchAddress").equals("jdbc:hpcc://mytest.de"));
-		assertTrue(connection.getProperties().getProperty("WsECLAddress").equals("jdbc:hpcc://mytest.de"));
-		assertTrue(connection.getProperties().getProperty("WsECLDirectAddress").equals("jdbc:hpcc://mytest.de"));
+		assertTrue(connection.getProperties().getProperty("ServerAddress").equals("//mytest.de"));
+		assertTrue(connection.getProperties().getProperty("WsECLWatchAddress").equals("//mytest.de"));
+		assertTrue(connection.getProperties().getProperty("WsECLAddress").equals("//mytest.de"));
+		assertTrue(connection.getProperties().getProperty("WsECLDirectAddress").equals("//mytest.de"));
 		assertTrue(connection.getProperties().getProperty("username").equals("test"));
 		assertTrue(connection.getProperties().getProperty("password").equals("test"));
 		assertTrue(connection.getProperties().getProperty("ConnectTimeoutMilli").equals("50"));
