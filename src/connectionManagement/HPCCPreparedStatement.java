@@ -55,7 +55,7 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     private HashMap<Integer, Object> parameters    = new HashMap<Integer, Object>();
     protected static final String      className = "HPCCPreparedStatement";
 
-    public HPCCPreparedStatement(Connection connection, String query)
+    public HPCCPreparedStatement(HPCCConnection connection, String query)
     {
         super(connection);
 

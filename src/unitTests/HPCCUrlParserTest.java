@@ -23,12 +23,12 @@ public class HPCCUrlParserTest {
 	@Test
 	public void testGetUrlWithOutProtocol() {
 		HPCCUrlParser parser = new HPCCUrlParser();
-		assertEquals(parser.getUrlWithOutProtocol("jdbc:hpcc://92.232.93.92"), "//92.232.93.92");
-		assertEquals(parser.getUrlWithOutProtocol("jdbc:hpcc://92.232.93.92:8010"), "//92.232.93.92");
-		assertEquals(parser.getUrlWithOutProtocol("jdbc:hpcc://92.232.93.92:8010/"), "//92.232.93.92");
-		assertEquals(parser.getUrlWithOutProtocol("jdbc:hpcc://92.232.93.92:"), "//92.232.93.92");
-		assertEquals(parser.getUrlWithOutProtocol("jdbc:hpcc://92.232.93.92:/"), "//92.232.93.92");
-		assertEquals(parser.getUrlWithOutProtocol("jdbc:hpcc://92.232.93.92/"), "//92.232.93.92");
+		assertEquals(parser.getFileLocation("jdbc:hpcc://92.232.93.92"), "//92.232.93.92");
+		assertEquals(parser.getFileLocation("jdbc:hpcc://92.232.93.92:8010"), "//92.232.93.92");
+		assertEquals(parser.getFileLocation("jdbc:hpcc://92.232.93.92:8010/"), "//92.232.93.92");
+		assertEquals(parser.getFileLocation("jdbc:hpcc://92.232.93.92:"), "//92.232.93.92");
+		assertEquals(parser.getFileLocation("jdbc:hpcc://92.232.93.92:/"), "//92.232.93.92");
+		assertEquals(parser.getFileLocation("jdbc:hpcc://92.232.93.92/"), "//92.232.93.92");
 	}
 	
 	@Test
