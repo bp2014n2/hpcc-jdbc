@@ -14,6 +14,7 @@ public class HPCCDriver implements Driver{
     
     private HPCCDriverProperties driverProperties;
     private HPCCUrlParser urlParser;
+    private static Logger logger = HPCCLogger.getLogger();
     private static final int URI 		= 0;
     private static final int PORT 		= 1;
     
@@ -21,7 +22,7 @@ public class HPCCDriver implements Driver{
     	try{
     		HPCCDriver driver = new HPCCDriver();
             DriverManager.registerDriver(driver);
-            traceOutLine("Driver registered");
+            log("Driver built and registered");
         }
         catch (SQLException sqlException){
         	sqlException.printStackTrace();
@@ -29,6 +30,7 @@ public class HPCCDriver implements Driver{
     }
     
     public HPCCDriver(){
+    	HPCCLogger.initializeLogging();
     	this.driverProperties = new HPCCDriverProperties();
     	this.urlParser = new HPCCUrlParser();
     }
@@ -46,7 +48,7 @@ public class HPCCDriver implements Driver{
     			}
     		}
     	}else{
-    		traceOutLine(url +" has the wrong format (e.g. missing protocol)");
+    		log(url +" has the wrong format (e.g. missing protocol)");
     	}
         
     	if(properties != null){
@@ -59,7 +61,7 @@ public class HPCCDriver implements Driver{
 	    				case "WsECLAddress":
 	    				case "WsECLDirectAddress":
 	    					if(!acceptsURL(propertyValue)){
-	    						traceOutLine(propertyValue +" is not a valid URL for "+propertyKey, defaultValue);
+	    						log(propertyValue +" is not a valid URL for "+propertyKey, defaultValue);
 	    						continue;
 	    					}
 	    					propertyValue = this.parseURL(propertyValue)[URI];
@@ -69,13 +71,13 @@ public class HPCCDriver implements Driver{
 	    				case "ConnectTimeoutMilli":
 	    				case "ReadTimeoutMilli":
 	    					if(!HPCCJDBCUtils.isNumeric(propertyValue)){
-	    						traceOutLine(propertyValue +" is not a number and not valid for "+propertyKey, defaultValue);
+	    						log(propertyValue +" is not a number and not valid for "+propertyKey, defaultValue);
 	    						continue;
 	    					}
 	    					break;
 	    				case "EclResultLimit":
 	    					if(!HPCCJDBCUtils.isNumeric(propertyValue) && !propertyValue.equals("ALL")){
-	    						traceOutLine(propertyValue +" is not a valid value for "+propertyKey, defaultValue);
+	    						log(propertyValue +" is not a valid value for "+propertyKey, defaultValue);
 	    						continue;
 	    					}
 	    					break;
@@ -83,7 +85,7 @@ public class HPCCDriver implements Driver{
 	    					propertyKey += "name";
 	    					break;
 	    				case "TraceLevel":
-	    					HPCCJDBCUtils.initTracing(propertyValue, Boolean.parseBoolean(properties.getProperty("TraceToFile")));
+	    					//TODO: isLevelTest
 	       			}
 	    			driverProperties.setProperty((String) propertyKey, propertyValue);
 	    		}
@@ -91,7 +93,7 @@ public class HPCCDriver implements Driver{
     	}
 		driverProperties.setProperty("Basic Auth", HPCCConnection.createBasicAuth(driverProperties.getProperty("username"), driverProperties.getProperty("password")));
 
-		traceOutLine("Connecting to " + driverProperties.getProperty("Protocol") + driverProperties.getProperty("ServerAddress"));
+		log(Level.CONFIG, "Connecting to " + driverProperties.getProperty("Protocol") + driverProperties.getProperty("ServerAddress")+"/");
         return new HPCCConnection(driverProperties);
     }
 
@@ -125,16 +127,20 @@ public class HPCCDriver implements Driver{
 	
 	private String[] parseURL(String url){
 		String[] parsedURL = new String[2];
-		parsedURL[URI] 	= urlParser.getUrlWithOutProtocol(url);
+		parsedURL[URI] 	= urlParser.getFileLocation(url);
 		parsedURL[PORT] = urlParser.getPort(url);
 		return parsedURL;
 	}
 	
-	private static void traceOutLine(String infoMessage){
-		HPCCJDBCUtils.traceoutln(Level.INFO, HPCCDriver.class.getSimpleName()+": "+infoMessage);
+	private static void log(String infoMessage){
+		logger.log(HPCCLogger.getDefaultLogLevel(), HPCCDriver.class.getSimpleName()+": "+infoMessage);
 	}
 	
-	private static void traceOutLine(String infoMessage, String defaultProperty){
-		traceOutLine(infoMessage+" (now using: "+defaultProperty+")");
+	private static void log(Level level, String infoMessage){
+		logger.log(level, HPCCDriver.class.getSimpleName()+": "+infoMessage);
+	}
+	
+	private static void log(String infoMessage, String defaultProperty){
+		log(Level.WARNING, infoMessage+" (now using: "+defaultProperty+")");
 	}
 }

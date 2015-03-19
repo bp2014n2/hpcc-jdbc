@@ -1,29 +1,8 @@
-/*##############################################################################
-
-Copyright (C) 2011 HPCC Systems.
-
-All rights reserved. This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
-############################################################################## */
-
 package connectionManagement;
 
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.Date;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,63 +19,18 @@ import java.util.regex.Pattern;
 
 public class HPCCJDBCUtils
 {
-    public static final String defaultprotocol = "http";
-    public static final String protocolsep = "://";
-
     public static final String DOTSEPERATORREGEX = "\\.";
 
     public static String newLine = System.getProperty("line.separator");
     public static String fileSep = System.getProperty("file.separator");;
     public static final String HPCCCATALOGNAME = "HPCC System";
-    private static String [] values;
 
-    public static final Level defaultLogLevel = Level.INFO;
     public final static String traceFileName = "HPCCJDBC.log";
     public final static String workingDir = System.getProperty("user.dir") + fileSep;
     private static ConsoleHandler cHandler = null;
     private static FileHandler fHandler = null;
 
-    private static HPCCJDBCLogFormatter formatter = new HPCCJDBCLogFormatter();
-    private final static Logger logger = Logger.getLogger("org.hpccsystems.jdbcdriver");
-
-    static
-    {
-        try
-        {
-            logger.setUseParentHandlers(false);
-
-            cHandler = new HPCCJDBCStdOutConsoleHandler();
-            cHandler.setFormatter(formatter);
-
-            fHandler = new FileHandler(traceFileName);
-            fHandler.setFormatter(formatter);
-            fHandler.setLevel(Level.OFF);
-
-            logger.addHandler(fHandler);
-            logger.addHandler(cHandler);
-
-        }
-        catch (Exception e)
-        {
-            System.err.println(e.getStackTrace());
-        }
-    }
-
-    static
-    {
-        values = new String [6];
-        values[0] = Level.ALL.getName();
-        values[1] = Level.SEVERE.getName();
-        values[2] = Level.WARNING.getName();
-        values[3] = Level.INFO.getName();
-        values[4] = Level.FINEST.getName();
-        values[5] = Level.OFF.getName();
-    }
-
-    public static String [] getTraceLevelStrOptions()
-    {
-        return values;
-    }
+    private final static Logger logger = HPCCLogger.getLogger();
 
     public static void initTracing(String level, boolean tofile)
     {
@@ -107,8 +41,8 @@ public class HPCCJDBCUtils
         }
         catch (Exception e)
         {
-            logger.log(Level.INFO, "Couldn't determine log level, will log at default level: " + defaultLogLevel.getName());
-            lev =  defaultLogLevel;
+            logger.log(Level.INFO, "Couldn't determine log level, will log at default level: " + HPCCLogger.getDefaultLogLevel());
+            lev =  HPCCLogger.getDefaultLogLevel();
         }
 
         for (Handler handler : logger.getHandlers())
@@ -118,10 +52,10 @@ public class HPCCJDBCUtils
             else if (!tofile && handler.equals(fHandler))
                 handler.setLevel(Level.OFF);
             else
-                handler.setLevel(lev);
+                handler.setLevel(Level.ALL);
         }
 
-        logger.setLevel(lev);
+        logger.setLevel(Level.ALL);
     }
 
     public static void traceoutln(Level level, String message)
@@ -789,7 +723,7 @@ public class HPCCJDBCUtils
     {
         if (!URLPROTPATTERN.matcher(urlstr).matches())
         {
-            return defaultprotocol + protocolsep + urlstr;
+            return "http://" + urlstr;
         }
         else
             return urlstr;
