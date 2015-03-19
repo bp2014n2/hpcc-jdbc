@@ -27,6 +27,7 @@ import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParser{
 	
+	public static final String parameterizedPrefix = "var";
 	static CCJSqlParserManager parserManager = new CCJSqlParserManager();
 	Statement statement;
 	Expression expression;
@@ -92,6 +93,10 @@ public class SQLParser{
 
 	public boolean hasWhereOf(String table, String column) {
 		return statement.toString().contains(table) && statement.toString().contains(column);
+	}
+
+	public int getParameterizedCount() {
+		return statement.toString().length() - statement.toString().replace("?", "").length();
 	}
 	
 	

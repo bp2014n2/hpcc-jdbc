@@ -12,6 +12,7 @@ import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.expression.JdbcParameter;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.StringValue;
@@ -482,7 +483,9 @@ public class ECLBuilder {
 			expression.append(", "+joinColumn+")");
 		} else if (expressionItem instanceof Parenthesis) {
 			expression.append("("+parseExpressionECL(((Parenthesis) expressionItem).getExpression())+")");
-		}
+		} else if (expressionItem instanceof JdbcParameter) {
+		expression.append("?");
+	}
 		return expression.toString();
 	}
 	

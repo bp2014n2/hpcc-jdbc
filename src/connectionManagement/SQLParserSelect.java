@@ -76,12 +76,16 @@ public class SQLParserSelect extends SQLParser {
 		ArrayList<String> allSelects = new ArrayList<String>();
 		for (SelectItem selectItem : getSelectItems()) {
 			if (selectItem instanceof SelectExpressionItem) {
-				Expression expression = ((SelectExpressionItem) selectItem).getExpression();
-				if (expression instanceof Column) {
-					allSelects.add(expression.toString());
-				} else if (expression instanceof Function) {
-					String function = expression.toString().replace("(", "_").replace(")", "").toLowerCase();
-					allSelects.add(function);
+				if (((SelectExpressionItem) selectItem).getAlias() != null) {
+					allSelects.add(((SelectExpressionItem) selectItem).getAlias().getName());
+				} else {
+					Expression expression = ((SelectExpressionItem) selectItem).getExpression();
+					if (expression instanceof Column) {
+						allSelects.add(expression.toString());
+					} else if (expression instanceof Function) {
+						String function = expression.toString().replace("(", "_").replace(")", "").toLowerCase();
+						allSelects.add(function);
+					}
 				}
 			}
 			else if (selectItem instanceof AllColumns) {
