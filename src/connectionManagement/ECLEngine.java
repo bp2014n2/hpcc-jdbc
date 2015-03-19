@@ -21,9 +21,12 @@ package connectionManagement;
 
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -177,13 +180,15 @@ public class ECLEngine
 		ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append(generateImports());
 		String tablePath = ((SQLParserCreate) sqlParser).getFullName();
-		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
-		eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
-		eclCode.append("\nSEQUENTIAL(Std.File.CreateSuperFile('~"+tablePath+"'),\n");
-		eclCode.append("Std.File.StartSuperFileTransaction(),\n");
-		eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
-		eclCode.append("Std.File.FinishSuperFileTransaction());");
-        generateSelectURL();
+		if(dbMetadata.getDFUFile(tablePath) == null) {
+			String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
+			eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
+			eclCode.append("\nSEQUENTIAL(Std.File.CreateSuperFile('~"+tablePath+"'),\n");
+			eclCode.append("Std.File.StartSuperFileTransaction(),\n");
+			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
+			eclCode.append("Std.File.FinishSuperFileTransaction());");
+	        generateSelectURL();
+		}
 	}
 
 	private void generateUpdateECL() throws SQLException{
@@ -430,7 +435,7 @@ public class ECLEngine
 
             sb.append("&eclText=\n");
 
-            /*int expectedParamCount = sqlParser.getParameterizedCount();
+            int expectedParamCount = sqlParser.getParameterizedCount();
             if (expectedParamCount > 0 && inParameters != null)
             {
                 if (expectedParamCount <= inParameters.size())
@@ -527,13 +532,18 @@ public class ECLEngine
                         }
                         else
                             throw new SQLException("Could not bind parameter (null)");
-
-                        sb.append(SQLParser.parameterizedPrefix).append(paramIndex).append(" := ").append(value).append(";\n");
+                        String varName = SQLParser.parameterizedPrefix+paramIndex;
+                        int charIndex;
+                        int occurenceNum = 1;
+                        for(charIndex = 0; charIndex <= eclCode.length(); charIndex++)
+                        	if (eclCode.charAt(charIndex) == '?') if (occurenceNum == paramIndex) break; else occurenceNum++;
+                        eclCode.deleteCharAt(charIndex).insert(charIndex, varName);
+                        sb.append(varName).append(" := ").append(value).append(";\n");
                     }
                 }
                 else
                     throw new Exception("Insufficient number of parameters provided");
-            }*/
+            }
             if(sub != null) {
             	String subRange = sub.substring(sub.indexOf("["), sub.indexOf("]")+1);
             	String subOf = sub.substring(0, sub.indexOf("["));
@@ -550,7 +560,7 @@ public class ECLEngine
             
             HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + sb.toString());
             
-//          replace "+" in http request body since it is a reserved character representing a space character
+//          replace "+" and "?" in http request body since it is a reserved character representing a space character
             String body = sb.toString().replace("+", "%2B");
             OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
             wr.write(body);
