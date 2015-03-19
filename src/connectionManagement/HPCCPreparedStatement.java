@@ -63,11 +63,10 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         this.sqlQuery = query;
 
         if (sqlQuery != null)
-            processQuery(sqlQuery);
+            executeQuery(sqlQuery);
     }
 
-    public ResultSet executeQuery() throws SQLException
-    {
+    public ResultSet executeQuery(){
         HPCCJDBCUtils.traceoutln(Level.INFO, className + ":executeQuery()");
         executeHPCCQuery(parameters);
 
@@ -245,8 +244,7 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         }
     }
 
-    public boolean execute() throws SQLException
-    {
+    public boolean execute(){
         HPCCJDBCUtils.traceoutln(Level.INFO,  className + ":execute()");
         HPCCJDBCUtils.traceoutln(Level.INFO,  "Attempting to process sql query: " + sqlQuery);
         return executeQuery() != null;
