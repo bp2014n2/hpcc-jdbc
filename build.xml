@@ -35,9 +35,9 @@
 	</target>
 
 	<target name="makejar" depends="compile" description="Make jar">
-		<jar jarfile="${destination}/jdbc-hpcc-${DSTAMP}-${TSTAMP}.jar" basedir="${build}">
+		<jar jarfile="${destination}/jdbc-hpcc-${DSTAMP}-${TSTAMP}.jar" basedir="${build}" duplicate="preserve">
 			<fileset dir="${build}" includes="**/*.class" />
-			<zipfileset dir="lib/" includes="${sqlParser}" />
+			<zipfileset dir="lib" includes="${sqlParser}" />
 			<metainf dir="${extra}" includes="**/java.sql.Driver"/>
 		</jar>
 	</target>
