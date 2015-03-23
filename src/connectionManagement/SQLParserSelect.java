@@ -74,6 +74,10 @@ public class SQLParserSelect extends SQLParser {
 	
 	protected List<String> getAllSelectItemsInQuery() {
 		ArrayList<String> allSelects = new ArrayList<String>();
+		if (isCount()) {
+			allSelects.add("Result_1");
+			return allSelects;
+		}
 		for (SelectItem selectItem : getSelectItems()) {
 			if (selectItem instanceof SelectExpressionItem) {
 				if (((SelectExpressionItem) selectItem).getAlias() != null) {

@@ -981,8 +981,9 @@ public class HPCCResultSet implements ResultSet
 
     public void beforeFirst() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet beforeFirst");
-        throw new UnsupportedOperationException("Not supported");
+    	index = -1;
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet beforeFirst");
+//        throw new UnsupportedOperationException("Not supported");
     }
 
     public void afterLast() throws SQLException
