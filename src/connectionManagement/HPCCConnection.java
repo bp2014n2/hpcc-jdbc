@@ -18,6 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package connectionManagement;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -46,6 +51,7 @@ public class HPCCConnection implements Connection
     private Properties           clientInfo;
     private SQLWarning           warnings = null;
     private String               catalog = HPCCJDBCUtils.HPCCCATALOGNAME;
+    private HttpURLConnection httpConnection;
 
     public HPCCConnection(HPCCDriverProperties props)
     {
@@ -58,11 +64,38 @@ public class HPCCConnection implements Connection
 
         if (metadata != null && metadata.hasHPCCTargetBeenReached())
         {
+        	try {
+				httpConnection = metadata.createHPCCESPConnection(generateUrl());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
             closed = false;
             HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection initialized - server: " + this.connectionProps.getProperty("ServerAddress"));
         }
         else
             HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection not initialized - server: " + this.connectionProps.getProperty("ServerAddress"));
+    }
+    
+    public URL generateUrl(){
+    	String urlString = connectionProps.getProperty("Protocol")+(connectionProps.getProperty("WsECLDirectAddress") + ":"
+                + connectionProps.getProperty("WsECLDirectPort") + "/EclDirect/RunEcl?Submit")+"&cluster=" + connectionProps.getProperty("TargetCluster");
+
+        URL hpccRequestUrl = HPCCJDBCUtils.makeURL(urlString);
+        
+        return hpccRequestUrl;
+    }
+    
+    public void sendRequest(String body){
+		try {
+			OutputStreamWriter wr = new OutputStreamWriter(httpConnection.getOutputStream());
+			wr.write(body);
+	        wr.flush();
+	        int responseCode = httpConnection.getResponseCode();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
     public static String createBasicAuth(String username, String passwd)
@@ -410,5 +443,15 @@ public class HPCCConnection implements Connection
 	public void setSchema(String arg0) throws SQLException {
 		// TODO Auto-generated method stub
 		
+	}
+
+	public InputStream getInputStream() {
+		try {
+			return httpConnection.getInputStream();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 }

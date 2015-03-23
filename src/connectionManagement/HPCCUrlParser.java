@@ -3,26 +3,26 @@ package connectionManagement;
 import java.util.regex.Pattern;
 
 public class HPCCUrlParser {
-	public String getUrlWithOutProtocol(String url) {
-		String source = this.removeProtocol(url);
-		String sourceWithoutRoot = source.replaceFirst("//", "");
-		int portIndex = getPortIndex(source);
+	public String getFileLocation(String url) {
+		String fileLocation = this.removeProtocol(url);
+		String fileLocationWithoutRoot = fileLocation.replaceFirst("//", "");
+		int portIndex = getPortIndex(fileLocation);
 		if(portIndex > 0){
-			return source.substring(0, portIndex);
+			return fileLocation.substring(0, portIndex);
 		}
-		if(sourceWithoutRoot.indexOf("/") < 0){
-			return source;
+		if(fileLocationWithoutRoot.indexOf("/") < 0){
+			return fileLocation;
 		}
-		return "//"+sourceWithoutRoot.substring(0, sourceWithoutRoot.indexOf("/"));
+		return "//"+fileLocationWithoutRoot.substring(0, fileLocationWithoutRoot.indexOf("/"));
 	}
 
 	public String getPort(String url) {
-		String source = this.removeProtocol(url);
-		int portIndex = getPortIndex(source);
+		String fileLocation = this.removeProtocol(url);
+		int portIndex = getPortIndex(fileLocation);
 		if(portIndex < 0 ){
 			return null;
 		}
-		String urlAfterPortColon = source.substring(portIndex+1, source.length());
+		String urlAfterPortColon = fileLocation.substring(portIndex+1, fileLocation.length());
 		if(urlAfterPortColon.equals("")){
 			return null;
 		}
@@ -53,7 +53,7 @@ public class HPCCUrlParser {
 	private String removeProtocol(String url) {
 		return url.substring(url.indexOf("://")+1, url.length());
 	}
-	private int getPortIndex(String source){
-		return source.indexOf(":");
+	private int getPortIndex(String fileLocation){
+		return fileLocation.indexOf(":");
 	}
 }

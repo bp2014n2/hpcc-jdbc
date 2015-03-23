@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
-public class HPCCJDBCLogFormatter  extends Formatter
+public class HPCCLogFormatter  extends Formatter
 {
     private static final ThreadLocal<DateFormat> DF =
             new ThreadLocal<DateFormat>()

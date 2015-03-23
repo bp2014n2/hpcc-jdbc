@@ -63,6 +63,7 @@ public class ECLEngine
     private StringBuilder           eclCode = new StringBuilder();
     
 	private URL                     hpccRequestUrl;
+	private HPCCConnection			conn;
 //    private ArrayList<HPCCColumnMetaData> storeProcInParams = null;
 //    private String[]                    procInParamValues = null;
     private List<HPCCColumnMetaData>    expectedretcolumns = null;
@@ -85,11 +86,12 @@ public class ECLEngine
     
     private String sub = null;
 
-    public ECLEngine(HPCCDatabaseMetaData dbmetadata, Properties props, String sql)
+    public ECLEngine(HPCCDatabaseMetaData dbmetadata, Properties props, String sql, HPCCConnection conn)
     {
         this.hpccConnProps = props;
         this.dbMetadata = dbmetadata;
         this.sqlQuery = convertToAppropriateSQL(sql);
+        this.conn = conn;
     }
 
     private String convertToAppropriateSQL(String sql) {
@@ -398,34 +400,17 @@ public class ECLEngine
     	return datasetsString.toString() + indicesString.toString();
     }
 
-    private void generateSelectURL() throws SQLException
+    public void generateSelectURL() throws SQLException
     {
-        try
-        {
-            String urlString = hpccConnProps.getProperty("Protocol")+(hpccConnProps.getProperty("WsECLDirectAddress") + ":"
-                    + hpccConnProps.getProperty("WsECLDirectPort") + "/EclDirect/RunEcl?Submit");
-
-            if (hpccConnProps.containsKey("TargetCluster"))
-                urlString += "&cluster=" + hpccConnProps.getProperty("TargetCluster");
-            else
-                HPCCJDBCUtils.traceoutln(Level.INFO,  "No cluster property found, executing query on EclDirect default cluster");
-
-            hpccRequestUrl = HPCCJDBCUtils.makeURL(urlString);
-
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCC URL created: " + urlString);
-        }
-        catch (Exception e)
-        {
-            throw new SQLException(e.getMessage());
-        }
+        hpccRequestUrl = conn.generateUrl();
     }
 
-    public NodeList execute(Map inParameters) throws Exception
+    public String execute(Map inParameters) throws Exception
     {
         return executeSelect(inParameters);
     }
 
-    public NodeList executeSelect(Map inParameters)
+    public String executeSelect(Map inParameters)
     {
         int responseCode = -1;
 
@@ -556,19 +541,19 @@ public class ECLEngine
             sb.append("\n");
 
             long startTime = System.currentTimeMillis();
-            HttpURLConnection conn = dbMetadata.createHPCCESPConnection(hpccRequestUrl);
+//          HttpURLConnection conn = dbMetadata.createHPCCESPConnection(hpccRequestUrl);
             
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + sb.toString());
+//          HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + sb.toString());
             
 //          replace "+" and "?" in http request body since it is a reserved character representing a space character
             String body = sb.toString().replace("+", "%2B");
-            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-            wr.write(body);
-            wr.flush();
+//            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+//            wr.write(body);
+//            wr.flush();
+//
+//            responseCode = conn.getResponseCode();
 
-            responseCode = conn.getResponseCode();
-
-            return parseDataset(conn.getInputStream(), startTime);
+            return body;
         }
         catch (Exception e)
         {

@@ -21,7 +21,7 @@ public class HPCCDriverProperties extends Properties{
 			put("ReadTimeoutMilli", 	new String[]{"15000","HPCC requests connection read time out value in milliseconds."});
 			put("LazyLoad", 			new String[]{"true","If disabled, all HPCC metadata loaded and cached at connect time; otherwise HPCC file, and published query info is loaded on-demand."});
 			put("EclResultLimit", 		new String[]{"100","Default limit on number of result records returned."});
-			put("TraceLevel", 			new String[]{HPCCJDBCUtils.defaultLogLevel.getName(),	"Logging level (java.util.logging.level)."});
+			put("TraceLevel", 			new String[]{HPCCLogger.getDefaultLogLevel().getName(),	"Logging level (java.util.logging.level)."});
 			put("TraceToFile", 			new String[]{"false","false -> System.out, true -> " + HPCCJDBCUtils.workingDir +  HPCCJDBCUtils.traceFileName});
 			put("TargetCluster", 		new String[]{"hthor","Target cluster on which to execute ECL code."});
 			put("QuerySet", 			new String[]{"hthor","Queryset from which published query (Stored Procedure) is chosen."});
