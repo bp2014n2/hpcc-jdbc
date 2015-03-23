@@ -182,7 +182,8 @@ public class ECLEngine
 		ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append(generateImports());
 		String tablePath = ((SQLParserCreate) sqlParser).getFullName();
-		if(dbMetadata.getDFUFile(tablePath) == null) {
+		DFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
+		if(dfuFile == null) {
 			String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
 			eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
 			eclCode.append("\nSEQUENTIAL(Std.File.CreateSuperFile('~"+tablePath+"'),\n");
