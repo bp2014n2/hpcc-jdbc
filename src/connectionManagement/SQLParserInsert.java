@@ -47,7 +47,7 @@ public class SQLParserInsert extends SQLParser {
 	
 	protected Boolean isAllColumns() {
 		if (((Insert) statement).getColumns() == null) return true;
-		return false;
+		return ((Insert) statement).getColumns().size() == ECLLayouts.getAllColumns(getTable().getName()).size();
 	}
 	
 	protected Table getTable() {
@@ -93,7 +93,8 @@ public class SQLParserInsert extends SQLParser {
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
 		List<String> tableList = new ArrayList<String>();
 		tableList = tablesNamesFinder.getTableList((Insert) statement);
-		tableList.addAll(tablesNamesFinder.getTableList(getSelect()));
+		if (getSelect() != null)
+			tableList.addAll(tablesNamesFinder.getTableList(getSelect()));
 		List<String> lowerTableList = new ArrayList<String>();
 		for (String table : tableList) {
 			if (table.contains(".")) table = table.substring(table.indexOf(".")+1);

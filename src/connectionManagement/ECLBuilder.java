@@ -14,6 +14,7 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.JdbcParameter;
 import net.sf.jsqlparser.expression.LongValue;
+import net.sf.jsqlparser.expression.NullValue;
 import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -484,7 +485,9 @@ public class ECLBuilder {
 		} else if (expressionItem instanceof Parenthesis) {
 			expression.append("("+parseExpressionECL(((Parenthesis) expressionItem).getExpression())+")");
 		} else if (expressionItem instanceof JdbcParameter) {
-		expression.append("?");
+			expression.append("?");
+		} else if (expressionItem instanceof NullValue) {
+				expression.append("''");
 	}
 		return expression.toString();
 	}

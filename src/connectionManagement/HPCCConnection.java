@@ -18,8 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package connectionManagement;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -64,12 +67,6 @@ public class HPCCConnection implements Connection
 
         if (metadata != null && metadata.hasHPCCTargetBeenReached())
         {
-        	try {
-				httpConnection = metadata.createHPCCESPConnection(generateUrl());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
             closed = false;
             HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection initialized - server: " + this.connectionProps.getProperty("ServerAddress"));
         }
@@ -89,11 +86,14 @@ public class HPCCConnection implements Connection
     public void sendRequest(String body){
     	int responseCode = -1;
 		try {
+			httpConnection = metadata.createHPCCESPConnection(generateUrl());
 			OutputStreamWriter wr = new OutputStreamWriter(httpConnection.getOutputStream());
 			wr.write(body);
-	        wr.flush();
-	        responseCode = httpConnection.getResponseCode();
+			wr.flush();
+			wr.close();
+			responseCode = httpConnection.getResponseCode();
 		} catch (IOException e) {
+			System.out.println(e.getMessage());
 			if (responseCode != 200){
 	                throw new RuntimeException("HTTP Connection Response code: " + responseCode
 	                        + "\nVerify access to WsECLDirect: " + httpConnection, e);

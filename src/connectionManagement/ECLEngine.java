@@ -190,6 +190,18 @@ public class ECLEngine
 			eclCode.append("Std.File.StartSuperFileTransaction(),\n");
 			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
+			String recordString = ECLLayouts.getLayouts().get(((SQLParserCreate) sqlParser).getTableName().toLowerCase());
+			if(recordString == null) {
+				recordString = ((SQLParserCreate) sqlParser).getRecord();
+			} else {
+				recordString = recordString.substring(7, recordString.length() - 6).replace(";", ",");
+			}
+	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
+	    	int i=0;
+	    	for (String column : recordString.split(",")) {
+	    		i++;
+	    		expectedretcolumns.add(new HPCCColumnMetaData(column.split(" ")[1], i, null));
+	    	}  	
 	        generateSelectURL();
 		} else System.out.println("Table '"+tablePath+"' already exists. Query aborted.");
 	}
@@ -250,12 +262,6 @@ public class ECLEngine
    				eclCode.append("Std.File.DeleteLogicalFile('~"+tablePath+"');\n");
    			}
    	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-   	    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
-   	    	int i=0;
-   	    	for (String column : columns) {
-   	    		i++;
-   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
-   	    	}  	
    		}
         generateSelectURL();
         
