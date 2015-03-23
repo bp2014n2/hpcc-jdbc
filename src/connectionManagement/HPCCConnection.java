@@ -87,14 +87,21 @@ public class HPCCConnection implements Connection
     }
     
     public void sendRequest(String body){
+    	int responseCode = -1;
 		try {
 			OutputStreamWriter wr = new OutputStreamWriter(httpConnection.getOutputStream());
 			wr.write(body);
 	        wr.flush();
-	        int responseCode = httpConnection.getResponseCode();
+	        responseCode = httpConnection.getResponseCode();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			if (responseCode != 200){
+	                throw new RuntimeException("HTTP Connection Response code: " + responseCode
+	                        + "\nVerify access to WsECLDirect: " + httpConnection, e);
+			} else if(e.getMessage().contains("Error in response:")) {
+	            		System.out.println("Server response: "+e.getMessage().substring(e.getMessage().indexOf("'")+1,e.getMessage().length() - 1));
+	        } else {
+	        	throw new RuntimeException(e);	
+	        }
 		}
     }
 

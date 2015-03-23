@@ -410,9 +410,7 @@ public class ECLEngine
         return executeSelect(inParameters);
     }
 
-    public String executeSelect(Map inParameters)
-    {
-        int responseCode = -1;
+    public String executeSelect(Map inParameters){
 
         try
         {
@@ -539,36 +537,14 @@ public class ECLEngine
             }
             sb.append(eclCode.toString());
             sb.append("\n");
-
-            long startTime = System.currentTimeMillis();
-//          HttpURLConnection conn = dbMetadata.createHPCCESPConnection(hpccRequestUrl);
-            
-//          HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing ECL: " + sb.toString());
-            
+            System.out.println("\n\n\n"+sb+"\n\n\n");
+            System.out.println("\n\n\n"+eclCode+"\n\n\n");
 //          replace "+" and "?" in http request body since it is a reserved character representing a space character
             String body = sb.toString().replace("+", "%2B");
-//            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-//            wr.write(body);
-//            wr.flush();
-//
-//            responseCode = conn.getResponseCode();
 
             return body;
         }
-        catch (Exception e)
-        {
-            if (responseCode != 200)
-            {
-                throw new RuntimeException("HTTP Connection Response code: " + responseCode
-                        + "\nVerify access to WsECLDirect: " + hpccRequestUrl, e);
-            }
-            else
-            	if(e.getMessage().contains("Error in response:")) {
-            		System.out.println("Server response: "+e.getMessage().substring(e.getMessage().indexOf("'")+1,e.getMessage().length() - 1)+" and Philipp stinks");
-            	} else {
-            		throw new RuntimeException(e);	
-            	}
-        }
+        catch (Exception e){}
 		return null;
     }
 
