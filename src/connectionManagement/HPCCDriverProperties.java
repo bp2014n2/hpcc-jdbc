@@ -27,8 +27,8 @@ public class HPCCDriverProperties extends Properties{
 			put("QuerySet", 			new String[]{"hthor","Queryset from which published query (Stored Procedure) is chosen."});
 			put("PageSize", 			new String[]{"100","Number of HPCC data files (DB tables) or HPCC published queries (DB Stored Procs) displayed."});
 			put("PageOffset", 			new String[]{"0","Starting HPCC data file or HPCC published queries displayed."});
-			put("password", 			new String[]{"hpccdemo","HPCC password (*Use JDBC client secure interface if available*)."});
-			put("username", 			new String[]{"hpccdemo","HPCC username (*Use JDBC client secure interface if available*)."});
+			put("password", 			new String[]{"eha","HPCC password (*Use JDBC client secure interface if available*)."});
+			put("username", 			new String[]{"eha","HPCC username (*Use JDBC client secure interface if available*)."});
 			put("Protocol", 			new String[]{"http:","Protocol used to establish the connection to the HPCC Server."});
 			put("WsECLDirectPort", 		new String[]{DEFAULT_PORT,"WsECLDirect port (required if HPCC configuration does not use default port)."});
 			put("WsECLPort", 			new String[]{"8002","WsECL port (required if HPCC configuration does not use default port)."});

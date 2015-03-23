@@ -96,12 +96,12 @@ public class ECLEngine
 
     private String convertToAppropriateSQL(String sql) {
 		if(sql.toLowerCase().contains("substring")){
-			String substring = sql.substring(sql.indexOf("substring"), sql.indexOf("substring")+52).toLowerCase();
+			String substring = sql.toLowerCase().substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52);
 			substring = substring.replace("substring(", "").replace(" from ", "[").replace(" for ", "..").replace(")", "]");
 			setSubstring(substring);
 			String subRange = substring.substring(substring.indexOf("["), substring.indexOf("]")+1);
 			substring = substring.replace(subRange,"");
-			sql = sql.replace(sql.substring(sql.indexOf("substring"), sql.indexOf("substring")+52),substring);
+			sql = sql.replace(sql.substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52),substring);
 		}
 		return sql;
 	}
@@ -126,12 +126,12 @@ public class ECLEngine
 
     private void addFileColsToAvailableCols(DFUFile dfufile, HashMap<String, HPCCColumnMetaData> availablecols)
     {
-        Enumeration<?> fields = dfufile.getAllFields();
-        while (fields.hasMoreElements())
-        {
-            HPCCColumnMetaData col = (HPCCColumnMetaData) fields.nextElement();
-            availablecols.put(col.getTableName().toUpperCase() + "." + col.getColumnName().toUpperCase(), col);
-        }
+    	Enumeration<?> fields = dfufile.getAllFields();
+	    while (fields.hasMoreElements())
+	    {
+	        HPCCColumnMetaData col = (HPCCColumnMetaData) fields.nextElement();
+	        availablecols.put(col.getTableName().toUpperCase() + "." + col.getColumnName().toUpperCase(), col);
+	    }
     }
 
     public NodeList executeSelectConstant()
@@ -190,7 +190,7 @@ public class ECLEngine
 			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
 	        generateSelectURL();
-		}
+		} else System.out.println("Table '"+tablePath+"' already exists. Query aborted.");
 	}
 
 	private void generateUpdateECL() throws SQLException{
@@ -321,8 +321,7 @@ public class ECLEngine
 		if (!((SQLParserSelect) sqlParser).isCount()) eclCode.append("OUTPUT(");
     	eclCode.append(eclBuilder.generateECL(sqlQuery));
     	if (!((SQLParserSelect) sqlParser).isCount()) eclCode.append(");");
-    
-    	System.out.println(eclCode.toString());
+
     	availablecols = new HashMap<String, HPCCColumnMetaData>();
     	
     	for (String table : sqlParser.getAllTables()) {
@@ -375,8 +374,8 @@ public class ECLEngine
 			switch(tableName) {
 			case "observation_fact":
 				usingIndices = true;
-				indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd, start_date, patient_num},{}, '~i2b2demodata::observation_fact_idx_r_query');");
-//				if(sqlParser.hasWhereOf("observation_fact","concept_cd")) {
+				indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd,encounter_num,patient_num,provider_id,start_date,modifier_cd,instance_num,valtype_cd,tval_char,valueflag_cd,vunits_cd,end_date,location_cd,update_date,download_date,import_date,sourcesystem_cd,upload_id}, {}, '~i2b2demodata::observation_fact_idx_all');\n");
+//				if(sqlParser.hasWhereOf("observation_fact","concept_cd") && !sqlParser.hasWhereOf("observation_fact","provider_id")) {
 //					indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd}, {patient_num, modifier_cd, valtype_cd, tval_char, start_date}, '~i2b2demodata::observation_fact_idx_inverted_concept_cd');\n");
 //				} else if(sqlParser.hasWhereOf("observation_fact","provider_id")) {
 //					indicesString.append("observation_fact := INDEX(observation_fact_table, {provider_id}, {modifier_cd, valtype_cd, tval_char, start_date, patient_num}, '~i2b2demodata::observation_fact_idx_inverted_provider_id_all');\n");
@@ -389,6 +388,7 @@ public class ECLEngine
 				break;
 			case "concept_dimension": 
 				usingIndices = true;
+//				indicesString.append("concept_dimension := INDEX(concept_dimension_table, {concept_cd}, {}, '~i2b2demodata::concept_dimension_idx_concept_cd');\n");
 				indicesString.append("concept_dimension := INDEX(concept_dimension_table, {concept_path}, {concept_cd}, '~i2b2demodata::concept_dimension_idx_inverted');\n");
 				break;
 			default: break; 
@@ -547,17 +547,6 @@ public class ECLEngine
         catch (Exception e){}
 		return null;
     }
-
-    /*private void addFilterClause(StringBuilder sb)
-    {
-        String whereclause = sqlParser.getWhereClauseString();
-        if (whereclause != null && whereclause.length() > 0)
-        {
-            sb.append("( ");
-            sb.append(whereclause);
-            sb.append(" )");
-        }
-    }*/
 
     /*private boolean appendTranslatedHavingClause(StringBuilder sb, String latesDSName)
     {

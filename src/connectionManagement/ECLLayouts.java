@@ -7,6 +7,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
+import net.sf.jsqlparser.expression.Expression;
+
 public class ECLLayouts {
 	private static final String			Layout_ConceptDimension = "RECORD STRING700 concept_path;  STRING50 concept_cd;  STRING2000 name_char;  STRING concept_blob;  STRING25 update_date;  STRING25 download_date;  STRING25 import_date;  STRING50 sourcesystem_cd;  UNSIGNED5 upload_id;END;";
     private static final String			Layout_PatientDimension = "RECORD UNSIGNED5 patient_num;STRING50 vital_status_cd;STRING25 birth_date;STRING25 death_date;STRING50 sex_cd;UNSIGNED2 age_in_years_num;STRING50 language_cd;STRING50 race_cd;STRING50 marital_status_cd;STRING50 religion_cd;STRING10 zip_cd;STRING700 statecityzip_path;STRING50 income_cd;STRING patient_blob;STRING25 update_date;STRING25 download_date;STRING25 import_date;STRING50 sourcesystem_cd;UNSIGNED5 upload_id;END;";
@@ -20,7 +22,7 @@ public class ECLLayouts {
     private static final String			Layout_EncounterMapping = "RECORD STRING200 encounter_ide; STRING50 encounter_ide_source; STRING50 project_id; UNSIGNED5 encounter_num; STRING200 patient_ide; STRING50 patient_ide_source; STRING50 encounter_ide_status; STRING25 upload_date; STRING25 update_date; STRING25 download_date; STRING25 import_date; STRING50 sourcesystem_cd; UNSIGNED5 upload_id; END;";
     private static final String			Layout_ModifierDimension = "RECORD STRING700 modifier_path; STRING50 modifier_cd; STRING2000 name_char; STRING modifier_blob; STRING25 update_date; STRING25 download_date; STRING25 import_date; STRING50 sourcesystem_cd; UNSIGNED5 upload_id; END;";
     private static final String			Layout_QtAnalysisPlugin = "RECORD UNSIGNED5 plugin_id; STRING2000 plugin_name; STRING2000 description; STRING50 version_cd; STRING parameter_info; STRING parameter_info_xsd; STRING command_line; STRING working_folder; STRING commandoption_cd; STRING plugin_icon; STRING50 status_cd; STRING50 user_id; STRING50 group_id; STRING25 create_date; STRING25 update_date; END;";
-    private static final String			Layout_QtAnalysisPluginResultType = "qt_analysis_plugin_result_type := RECORD UNSIGNED5 plugin_id; UNSIGNED5 result_type_id; END;";
+    private static final String			Layout_QtAnalysisPluginResultType = "RECORD UNSIGNED5 plugin_id; UNSIGNED5 result_type_id; END;";
     private static final String			Layout_QtBreakdownPath = "RECORD STRING100 name; STRING2000 value; STRING25 create_date; STRING25 update_date; STRING50 user_id; END;";
     private static final String			Layout_QtPatientEncCollection = "RECORD UNSIGNED5 patient_enc_coll_id; UNSIGNED5 result_instance_id; UNSIGNED5 set_index; UNSIGNED5 patient_num; UNSIGNED5 encounter_num; END;";
     private static final String			Layout_QtPatientSetCollection = "RECORD UNSIGNED patient_set_coll_id; UNSIGNED5 result_instance_id; UNSIGNED5 set_index; UNSIGNED5 patient_num; END;";
@@ -105,13 +107,24 @@ public class ECLLayouts {
 	
 	public static LinkedHashSet<String> getAllColumns(String table) {
 		LinkedHashSet<String> allColumns = new LinkedHashSet<String>();
-		String[] columns = layouts.get(table.toLowerCase()).split(";");
+		String[] columns = getLayouts().get(table.toLowerCase()).split(";");
 		for (String l : columns) {
 			if (l.matches(".*END")) continue;
 			String[] entries = l.split(" ");
 			allColumns.add(entries[entries.length-1]);
 		}	
 		return allColumns;
+	}
+
+	public static boolean isInt(String column) {
+		for (String layout : getLayouts().values()) {
+			if (layout.contains(column))
+				if (layout.toLowerCase().matches(".*(unsigned.? "+column+"|integer.? "+column+").*"))
+					return true;
+				else
+					break;
+		}
+		return false;
 	}
 
 }

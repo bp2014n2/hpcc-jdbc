@@ -458,7 +458,7 @@ public class ECLBuilder {
 			expression.append(((LongValue) expressionItem).getValue());
 		} else if (expressionItem instanceof IsNullExpression) {
 			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
-			expression.append(" = ''");
+			expression.append(" = "+((ECLLayouts.isInt(((Column)((IsNullExpression) expressionItem).getLeftExpression()).getColumnName()))?"0":"''"));
 		} else if (expressionItem instanceof ExistsExpression) {		
 			SQLParserSelect subParser = new SQLParserSelect(((SubSelect)((ExistsExpression) expressionItem).getRightExpression()).getSelectBody().toString());	
 			Expression where = subParser.getWhere();
