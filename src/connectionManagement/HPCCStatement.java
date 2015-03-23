@@ -12,42 +12,40 @@ import java.util.logging.Logger;
 import org.w3c.dom.NodeList;
 
 public class HPCCStatement implements Statement{
-	private static final Logger logger = HPCCLogger.getLogger();
+	private static final Logger	logger = HPCCLogger.getLogger();
+	private HPCCConnection connection;
+	private ECLEngine eclEngine;
 	
     protected boolean                  closed        = false;
-    protected HPCCConnection           connection;
+    
     protected SQLWarning               warnings;
     protected HPCCResultSet            result        = null;
     protected HPCCResultSetMetadata    resultMetadata = null;
 
-    protected HPCCDatabaseMetaData     databaseMetadata;
-    protected ECLEngine                eclEngine;
+    
     public static final String         resultSetName = "HPCC Result";
 
     public HPCCStatement(HPCCConnection connection){
         this.connection = (HPCCConnection) connection;
-        this.databaseMetadata = connection.getDatabaseMetaData();
-        log(Level.FINE, "Statement and DatabaseMetaData created");
+        this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
+        log(Level.FINE, "Statement created");
     }
 	
     public boolean execute(){
     	result = (HPCCResultSet) executeHPCCQuery(null);
 	    return result != null;
-	}    
+	}
 
 	public boolean execute(String sqlStatement){
 		try{
         	log("Attempting to process sql query: " + sqlStatement);
             if (!this.closed){
-                eclEngine = new ECLEngine(databaseMetadata, connection.getProperties(), sqlStatement, connection);
-                eclEngine.generateECL();
-                resultMetadata = new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(), resultSetName);
+            	eclEngine.generateECL(sqlStatement);
             } else {
                 throw new SQLException("HPCCPreparedStatement closed, cannot execute query");
             }
         }
         catch (SQLException e){
-            HPCCJDBCUtils.traceoutln(Level.SEVERE, e.getLocalizedMessage()+"BLA");
             convertToSQLExceptionAndAddWarn(e);
             eclEngine = null;
         }
@@ -63,11 +61,11 @@ public class HPCCStatement implements Statement{
         result = null;
         try{
         	if (!this.closed){
-                String eclCode = eclEngine.execute(params);
+                String eclCode = eclEngine.parseEclCode(params);
                 connection.sendRequest(eclCode);
                 NodeList rowList = eclEngine.parseDataset(connection.getInputStream(), System.currentTimeMillis());
                 if (rowList != null){
-                    result = new HPCCResultSet(this, rowList, resultMetadata);
+                    result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(), resultSetName));
                 }
             } else {
             	log(Level.SEVERE, "Statement is closed, cannot execute query");
@@ -84,7 +82,6 @@ public class HPCCStatement implements Statement{
             closed = true;
             connection = null;
             result = null;
-            databaseMetadata = null;
             eclEngine = null;
         }
         log(Level.FINE, "Statement closed");

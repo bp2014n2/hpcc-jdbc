@@ -53,16 +53,16 @@ public class ECLEngine
 //    private HPCCQuery               hpccPublishedQuery = null;
     private String                  expectedDSName = null;
     private NodeList                resultSchema = null;
-    private final Properties        hpccConnProps;
+//    private final Properties        hpccConnProps;
 
     private SQLParser               sqlParser;
-    private String					sqlQuery;
+//    private String					sqlQuery;
 
     private HPCCDatabaseMetaData    dbMetadata;
 
     private StringBuilder           eclCode = new StringBuilder();
     
-	private URL                     hpccRequestUrl;
+//	private URL                     hpccRequestUrl;
 	private HPCCConnection			conn;
 //    private ArrayList<HPCCColumnMetaData> storeProcInParams = null;
 //    private String[]                    procInParamValues = null;
@@ -86,29 +86,27 @@ public class ECLEngine
     
     private String sub = null;
 
-    public ECLEngine(HPCCDatabaseMetaData dbmetadata, Properties props, String sql, HPCCConnection conn)
+    public ECLEngine(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata)
     {
-        this.hpccConnProps = props;
         this.dbMetadata = dbmetadata;
-        this.sqlQuery = convertToAppropriateSQL(sql);
         this.conn = conn;
     }
 
-    private String convertToAppropriateSQL(String sql) {
-		if(sql.toLowerCase().contains("substring")){
-			String substring = sql.toLowerCase().substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52);
-			substring = substring.replace("substring(", "").replace(" from ", "[").replace(" for ", "..").replace(")", "]");
-			setSubstring(substring);
-			String subRange = substring.substring(substring.indexOf("["), substring.indexOf("]")+1);
-			substring = substring.replace(subRange,"");
-			sql = sql.replace(sql.substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52),substring);
-		}
-		return sql;
-	}
+//    private String convertToAppropriateSQL(String sql) {
+//		if(sql.toLowerCase().contains("substring")){
+//			String substring = sql.toLowerCase().substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52);
+//			substring = substring.replace("substring(", "").replace(" from ", "[").replace(" for ", "..").replace(")", "]");
+//			setSubstring(substring);
+//			String subRange = substring.substring(substring.indexOf("["), substring.indexOf("]")+1);
+//			substring = substring.replace(subRange,"");
+//			sql = sql.replace(sql.substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52),substring);
+//		}
+//		return sql;
+//	}
 
-	private void setSubstring(String substring) {
-		sub = substring;
-	}
+//	private void setSubstring(String substring) {
+//		sub = substring;
+//	}
 
 	public List<HPCCColumnMetaData> getExpectedRetCols()
     {
@@ -140,7 +138,7 @@ public class ECLEngine
         {
             long startTime = System.currentTimeMillis();
 
-            HttpURLConnection conn = dbMetadata.createHPCCESPConnection(hpccRequestUrl);
+            HttpURLConnection conn = dbMetadata.createHPCCESPConnection(this.conn.generateUrl());
 
             return parseDataset(conn.getInputStream(), startTime);
         }
@@ -150,35 +148,35 @@ public class ECLEngine
         }
     }
     
-    public void generateECL() throws SQLException 
+    public void generateECL(String sqlQuery) throws SQLException 
     {
     	switch(SQLParser.sqlIsInstanceOf(sqlQuery)) {
     	case "Select":
     		this.sqlParser = new SQLParserSelect(sqlQuery);
-    		generateSelectECL();
+    		generateSelectECL(sqlQuery);
     		break;
     	case "Insert":
     		this.sqlParser = new SQLParserInsert(sqlQuery);
-    		generateInsertECL();
+    		generateInsertECL(sqlQuery);
     		break;
     	case "Update":
     		this.sqlParser = new SQLParserUpdate(sqlQuery);
-    		generateUpdateECL();
+    		generateUpdateECL(sqlQuery);
     		break;
     	case "Drop":
     		this.sqlParser = new SQLParserDrop(sqlQuery);
-    		generateDropECL();
+    		generateDropECL(sqlQuery);
     		break;
     	case "Create":
     		this.sqlParser = new SQLParserCreate(sqlQuery);
-    		generateCreateECL();
+    		generateCreateECL(sqlQuery);
     		break;
     	default:
     		System.out.println("type of sql not recognized"+SQLParser.sqlIsInstanceOf(sqlQuery));
     	}
     }
     	
-    private void generateCreateECL() throws SQLException {
+    private void generateCreateECL(String sqlQuery) throws SQLException {
 		ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append(generateImports());
 		String tablePath = ((SQLParserCreate) sqlParser).getFullName();
@@ -189,11 +187,10 @@ public class ECLEngine
 			eclCode.append("Std.File.StartSuperFileTransaction(),\n");
 			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
-	        generateSelectURL();
 		} else System.out.println("Table '"+tablePath+"' already exists. Query aborted.");
 	}
 
-	private void generateUpdateECL() throws SQLException{
+	private void generateUpdateECL(String sqlQuery) throws SQLException{
 		ECLBuilder eclBuilder = new ECLBuilder();
 		eclCode.append("#OPTION('name', 'java update');\n");
     	eclCode.append(generateImports());
@@ -227,10 +224,9 @@ public class ECLEngine
     		i++;
     		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
     	}  	
-        generateSelectURL();
 	}
 
-	private void generateDropECL() throws SQLException {
+	private void generateDropECL(String sqlQuery) throws SQLException {
     	ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append("#OPTION('name', 'java drop');\n");
     	eclCode.append(generateImports());
@@ -255,12 +251,10 @@ public class ECLEngine
    	    		i++;
    	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
    	    	}  	
-   		}
-        generateSelectURL();
-        
+   		}        
 	}
 
-	private void generateInsertECL() throws SQLException{
+	private void generateInsertECL(String sqlQuery) throws SQLException{
     	ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append("#option('name', 'java insert');\n");
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
@@ -304,12 +298,10 @@ public class ECLEngine
     	for (String column : columns) {
     		i++;
     		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
-    	}  	
-        generateSelectURL();
-		
+    	}  			
 	}
 
-	private void generateSelectECL() throws SQLException
+	private void generateSelectECL(String sqlQuery) throws SQLException
     {
     	ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append("#OPTION('name', 'java select');\n");
@@ -336,7 +328,6 @@ public class ECLEngine
     		String column = selectItems.get(i);
     		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
     	}  	
-        generateSelectURL();
     }
     
     private String generateImports() {
@@ -399,152 +390,116 @@ public class ECLEngine
 		}
     	return datasetsString.toString() + indicesString.toString();
     }
+    
+    public String parseEclCode(Map inParameters){
 
-    public void generateSelectURL() throws SQLException
-    {
-        hpccRequestUrl = conn.generateUrl();
-    }
+		try {
+			StringBuilder sb = new StringBuilder();
 
-    public String execute(Map inParameters) throws Exception
-    {
-        return executeSelect(inParameters);
-    }
+			sb.append("&eclText=\n");
 
-    public String executeSelect(Map inParameters){
+			int expectedParamCount = sqlParser.getParameterizedCount();
+			if (expectedParamCount > 0 && inParameters != null) {
+				if (expectedParamCount <= inParameters.size()) {
+					for (int paramIndex = 1; paramIndex <= inParameters.size(); paramIndex++) {
+						Object invalue = inParameters.get(paramIndex);
+						String value = null;
 
-        try
-        {
-            StringBuilder sb = new StringBuilder();
+						if (invalue != null) {
+							try {
+								if (invalue instanceof String) {
+									sb.append("STRING ");
+									value = (String) invalue;
+									if (value.isEmpty())
+										value = "''";
+								} else if (invalue instanceof Boolean) {
+									sb.append("BOOLEAN ");
+									value = ((Boolean) invalue).toString();
+								} else if (invalue instanceof Byte) {
+									value = ((Byte) invalue).toString();
+								} else if (invalue instanceof Short) {
+									value = ((Short) invalue).toString();
+								} else if (invalue instanceof Integer) {
+									sb.append("INTEGER ");
+									value = ((Integer) invalue).toString();
+								} else if (invalue instanceof Long) {
+									sb.append("INTEGER ");
+									value = ((Long) invalue).toString();
+								} else if (invalue instanceof Float) {
+									sb.append("REAL ");
+									value = ((Float) invalue).toString();
+								} else if (invalue instanceof Double) {
+									sb.append("DECIMAL");
+									value = ((Double) invalue).toString();
+								} else if (invalue instanceof BigDecimal) {
+									sb.append("DECIMAL");
+									value = ((BigDecimal) invalue).toString();
+								} else if (invalue instanceof byte[]) {
+									sb.append("STRING ");
+									value = ((byte[]) invalue).toString();
+								} else if (invalue instanceof Time) {
+									sb.append("STRING ");
+									value = ((Time) invalue).toString();
+								} else if (invalue instanceof java.sql.Date) {
+									sb.append("STRING ");
+									value = ((java.sql.Date) invalue)
+											.toString();
+								} else if (invalue instanceof Timestamp) {
+									sb.append("STRING ");
+									value = ((Timestamp) invalue).toString();
+								} else if (invalue instanceof InputStream) {
+									sb.append("STRING ");
+									value = ((InputStream) invalue).toString();
+								} else {
+									sb.append("STRING ");
+									value = invalue.toString();
+								}
+							} catch (Exception e) {
+								throw new SQLException(
+										"Error while converting input parameter("
+												+ paramIndex
+												+ ") to string representation.");
+							}
+						} else
+							throw new SQLException(
+									"Could not bind parameter (null)");
+						String varName = SQLParser.parameterizedPrefix
+								+ paramIndex;
+						int charIndex;
+						int occurenceNum = 1;
+						for (charIndex = 0; charIndex <= eclCode.length(); charIndex++)
+							if (eclCode.charAt(charIndex) == '?')
+								if (occurenceNum == paramIndex)
+									break;
+								else
+									occurenceNum++;
+						eclCode.deleteCharAt(charIndex).insert(charIndex,
+								varName);
+						sb.append(varName).append(" := ").append(value)
+								.append(";\n");
+					}
+				} else
+					throw new Exception(
+							"Insufficient number of parameters provided");
+			}
+			if (sub != null) {
+				String subRange = sub.substring(sub.indexOf("["),
+						sub.indexOf("]") + 1);
+				String subOf = sub.substring(0, sub.indexOf("["));
+				String subName = sub.substring(sub.indexOf("as") + 3,
+						sub.length());
+				String correctedEclCode = eclCode.toString().replace(
+						subName + " := " + subOf,
+						subName + " := " + subOf + subRange);
+				eclCode.delete(0, eclCode.length());
+				eclCode.append(correctedEclCode);
+			}
+			sb.append(eclCode.toString());
+			sb.append("\n");
 
-            sb.append("&eclText=\n");
-
-            int expectedParamCount = sqlParser.getParameterizedCount();
-            if (expectedParamCount > 0 && inParameters != null)
-            {
-                if (expectedParamCount <= inParameters.size())
-                {
-                    for (int paramIndex = 1; paramIndex <= inParameters.size(); paramIndex++)
-                    {
-                        Object invalue = inParameters.get(paramIndex);
-                        String value = null;
-
-                        if (invalue != null)
-                        {
-                            try
-                            {
-                                if (invalue instanceof String)
-                                {
-                                    sb.append("STRING ");
-                                    value = (String)invalue;
-                                    if (value.isEmpty())
-                                        value = "''";
-                                }
-                                else if (invalue instanceof Boolean)
-                                {
-                                    sb.append("BOOLEAN ");
-                                    value = ((Boolean) invalue).toString();
-                                }
-                                else if (invalue instanceof Byte)
-                                {
-                                    value = ((Byte) invalue).toString();
-                                }
-                                else if (invalue instanceof Short)
-                                {
-                                    value = ((Short) invalue).toString();
-                                }
-                                else if (invalue instanceof Integer)
-                                {
-                                    sb.append("INTEGER ");
-                                    value = ((Integer) invalue).toString();
-                                }
-                                else if (invalue instanceof Long)
-                                {
-                                    sb.append("INTEGER ");
-                                    value = ((Long) invalue).toString();
-                                }
-                                else if (invalue instanceof Float)
-                                {
-                                    sb.append("REAL ");
-                                    value = ((Float) invalue).toString();
-                                }
-                                else if (invalue instanceof Double)
-                                {
-                                    sb.append("DECIMAL");
-                                    value = ((Double) invalue).toString();
-                                }
-                                else if (invalue instanceof BigDecimal)
-                                {
-                                    sb.append("DECIMAL");
-                                    value = ((BigDecimal)invalue).toString();
-                                }
-                                else if (invalue instanceof byte[])
-                                {
-                                    sb.append("STRING ");
-                                    value = ((byte[]) invalue).toString();
-                                }
-                                else if (invalue instanceof Time)
-                                {
-                                    sb.append("STRING ");
-                                    value = ((Time) invalue).toString();
-                                }
-                                else if (invalue instanceof java.sql.Date)
-                                {
-                                    sb.append("STRING ");
-                                    value = ((java.sql.Date) invalue).toString();
-                                }
-                                else if (invalue instanceof Timestamp)
-                                {
-                                    sb.append("STRING ");
-                                    value = ((Timestamp) invalue).toString();
-                                }
-                                else if (invalue instanceof InputStream)
-                                {
-                                    sb.append("STRING ");
-                                    value = ((InputStream) invalue).toString();
-                                }
-                                else
-                                {
-                                    sb.append("STRING ");
-                                    value = invalue.toString();
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                throw new SQLException("Error while converting input parameter(" + paramIndex + ") to string representation.");
-                            }
-                        }
-                        else
-                            throw new SQLException("Could not bind parameter (null)");
-                        String varName = SQLParser.parameterizedPrefix+paramIndex;
-                        int charIndex;
-                        int occurenceNum = 1;
-                        for(charIndex = 0; charIndex <= eclCode.length(); charIndex++)
-                        	if (eclCode.charAt(charIndex) == '?') if (occurenceNum == paramIndex) break; else occurenceNum++;
-                        eclCode.deleteCharAt(charIndex).insert(charIndex, varName);
-                        sb.append(varName).append(" := ").append(value).append(";\n");
-                    }
-                }
-                else
-                    throw new Exception("Insufficient number of parameters provided");
-            }
-            if(sub != null) {
-            	String subRange = sub.substring(sub.indexOf("["), sub.indexOf("]")+1);
-            	String subOf = sub.substring(0, sub.indexOf("["));
-            	String subName = sub.substring(sub.indexOf("as") + 3, sub.length());
-            	String correctedEclCode = eclCode.toString().replace(subName+" := "+subOf, subName+" := "+subOf+subRange);
-            	eclCode.delete(0, eclCode.length());
-            	eclCode.append(correctedEclCode);
-            }
-            sb.append(eclCode.toString());
-            sb.append("\n");
-            System.out.println("\n\n\n"+sb+"\n\n\n");
-            System.out.println("\n\n\n"+eclCode+"\n\n\n");
-//          replace "+" and "?" in http request body since it is a reserved character representing a space character
-            String body = sb.toString().replace("+", "%2B");
-
-            return body;
-        }
-        catch (Exception e){}
+			return sb.toString();
+		} catch (Exception e) {
+		}
 		return null;
     }
 
