@@ -15,7 +15,6 @@ public class HPCCStatement implements Statement{
 	private static final Logger logger = HPCCLogger.getLogger();
 	
     protected boolean                  closed        = false;
-    protected String                   sqlQuery;
     protected HPCCConnection           connection;
     protected SQLWarning               warnings;
     protected HPCCResultSet            result        = null;
@@ -30,13 +29,43 @@ public class HPCCStatement implements Statement{
         this.databaseMetadata = connection.getDatabaseMetaData();
         log(Level.FINE, "Statement and DatabaseMetaData created");
     }
+	
+    public boolean execute(){
+    	result = (HPCCResultSet) executeHPCCQuery(null);
+	    return result != null;
+	}    
 
+	public boolean execute(String sqlStatement){
+		try{
+        	log("Attempting to process sql query: " + sqlStatement);
+            if (!this.closed){
+                eclEngine = new ECLEngine(databaseMetadata, connection.getProperties(), sqlStatement, connection);
+                eclEngine.generateECL();
+                resultMetadata = new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(), resultSetName);
+            } else {
+                throw new SQLException("HPCCPreparedStatement closed, cannot execute query");
+            }
+        }
+        catch (SQLException e){
+            HPCCJDBCUtils.traceoutln(Level.SEVERE, e.getLocalizedMessage()+"BLA");
+            convertToSQLExceptionAndAddWarn(e);
+            eclEngine = null;
+        }
+		return execute();
+	}    
+	
+    public ResultSet executeQuery(String query){
+    	execute(query);
+        return result;
+    }
+	
     protected ResultSet executeHPCCQuery(HashMap<Integer, Object> params){
-        log("Attempting to process sql query: " + sqlQuery);
         result = null;
         try{
         	if (!this.closed){
-                NodeList rowList = eclEngine.execute(params);
+                String eclCode = eclEngine.execute(params);
+                connection.sendRequest(eclCode);
+                NodeList rowList = eclEngine.parseDataset(connection.getInputStream(), System.currentTimeMillis());
                 if (rowList != null){
                     result = new HPCCResultSet(this, rowList, resultMetadata);
                 }
@@ -50,6 +79,30 @@ public class HPCCStatement implements Statement{
         return result;
     }
 
+	public void close() throws SQLException{
+        if (!closed){
+            closed = true;
+            connection = null;
+            result = null;
+            databaseMetadata = null;
+            eclEngine = null;
+        }
+        log(Level.FINE, "Statement closed");
+    }
+
+	public ResultSet getResultSet() throws SQLException{
+	    return this.result;
+	}
+
+	 
+	public int getFetchDirection() throws SQLException{
+		return ResultSet.FETCH_FORWARD;
+	}
+	    
+	public Connection getConnection() throws SQLException{
+		return this.connection;
+	}
+
     private void convertToSQLExceptionAndAddWarn(Exception e){
         SQLException sqlexcept = new SQLException(e.getLocalizedMessage());
         sqlexcept.setStackTrace(e.getStackTrace());
@@ -59,39 +112,7 @@ public class HPCCStatement implements Statement{
 
         warnings.setNextException(sqlexcept);
     }
-
-    public ResultSet executeQuery(String query){
-    	try{
-        	log("Attempting to process sql query: " + query);
-            if (!this.closed){
-                eclEngine = new ECLEngine(databaseMetadata, connection.getProperties(), query);
-                eclEngine.generateECL();
-                resultMetadata = new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(), resultSetName);
-            } else {
-                throw new SQLException("HPCCPreparedStatement closed, cannot execute query");
-            }
-        }
-        catch (SQLException e){
-            HPCCJDBCUtils.traceoutln(Level.SEVERE, e.getLocalizedMessage()+"BLA");
-            convertToSQLExceptionAndAddWarn(e);
-            eclEngine = null;
-        }
-    	execute();
-        return result;
-    }
-
-	public void close() throws SQLException{
-        if (!closed){
-            closed = true;
-            connection = null;
-            result = null;
-            sqlQuery = null;
-            databaseMetadata = null;
-            eclEngine = null;
-        }
-        log(Level.FINE, "Statement closed");
-    }
-
+	
     public int getMaxRows() throws SQLException{
         try{
             log("getMaxRows()");
@@ -102,45 +123,29 @@ public class HPCCStatement implements Statement{
     }
 
     public SQLWarning getWarnings() throws SQLException{
-        log("getWarnings()");
+    	log(Level.FINE, "Returning warnings");
         return warnings;
     }
 
     public void clearWarnings() throws SQLException{
-        log("clearWarnings()");
+    	log(Level.FINE, "Clearing warnings");
         warnings = null;
     }
-
-    public boolean execute(String sql) throws SQLException{
-        executeQuery(sql);
-        return execute();
-    }
-
-    public boolean execute(){
-        result = null;
-        log("execute()");
-        log("Attempting to process sql query: " + sqlQuery);
-        try{
-            result = (HPCCResultSet) executeHPCCQuery(null);
-        }catch (Exception e){
-            convertToSQLExceptionAndAddWarn(e);
-        }
-        return result != null;
-    }
-
-    public ResultSet getResultSet() throws SQLException{
-        return result;
-    }
-
- 
-    public int getFetchDirection() throws SQLException{
-        return ResultSet.FETCH_FORWARD;
-    }
     
-    public Connection getConnection() throws SQLException{
-        return connection;
-    }
+	private static void log(String infoMessage){
+		log(Level.INFO, infoMessage);
+	}
+	
+	private static void log(Level loggingLevel, String infoMessage){
+		logger.log(loggingLevel, HPCCStatement.class.getSimpleName()+": "+infoMessage);
+	}
+	
+	private void handleUnsupportedMethod(String methodSignature) throws SQLException {
+		logger.log(Level.SEVERE, methodSignature+" is not supported yet.");
+        throw new UnsupportedOperationException();
+	}    
     
+	//Unsupported Methods!!
     public int getQueryTimeout() throws SQLException{
     	handleUnsupportedMethod("getQueryTimeout()");
     	return 0;
@@ -304,18 +309,5 @@ public class HPCCStatement implements Statement{
 	public boolean isCloseOnCompletion() throws SQLException {
 		handleUnsupportedMethod("isCloseOnCompletion()");
 		return false;
-	}
-	
-	private static void log(String infoMessage){
-		log(Level.INFO, infoMessage);
-	}
-	
-	private static void log(Level loggingLevel, String infoMessage){
-		logger.log(loggingLevel, HPCCStatement.class.getSimpleName()+": "+infoMessage);
-	}
-	
-	private void handleUnsupportedMethod(String methodSignature) throws SQLException {
-		logger.log(Level.SEVERE, methodSignature+" is not supported yet.");
-        throw new UnsupportedOperationException();
 	}
 }

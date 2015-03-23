@@ -45,6 +45,7 @@ import java.util.Set;
 import java.util.logging.Level;
 
 
+
 /**
  *
  * @author rpastrana
@@ -52,6 +53,7 @@ import java.util.logging.Level;
 
 public class HPCCPreparedStatement extends HPCCStatement implements PreparedStatement
 {
+	private static String sqlQuery;
     private HashMap<Integer, Object> parameters    = new HashMap<Integer, Object>();
     protected static final String      className = "HPCCPreparedStatement";
 
