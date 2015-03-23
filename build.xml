@@ -1,33 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="hpcc-jdbc.makejar" default="clean" basedir=".">
+<project name="hpcc-jdbc_makejar" default="clean" basedir=".">
+	<property name="driverName" value="connectionManagement.HPCCDriver"/>
+	
 	<property name="src" location="src/connectionManagement"/>
 	<property name="build" location="build"/>
-	<property name="lib" location="lib"/>
+	<property name="extra" location="build_extra"/>
 	<property name="destination" location="built_jars"/>
-	<property name="sqlParser_version" value="0.9.1"/>
-
+	
+	<property name="libLocation" location="lib"/>
+	
+	<property name="sqlParserVersion" value="0.9.1"/>
+	<property name="sqlParser" value="jsqlparser-${sqlParserVersion}.jar"/>
+	
+	
 	<target name="init">
 		<tstamp/>
-		<mkdir dir="${build}"/>
+		<mkdir dir="${build}" />
+		<mkdir dir="${extra}" />
 		<mkdir dir="${destination}"/>
 	</target>
+	
+	<target name="initDriverFile" depends="init">
+		<mkdir dir="${extra}/services" />
+		<touch file="${extra}/services/java.sql.Driver" />
+		<echo file="${extra}/services/java.sql.Driver" append="false">${driverName}</echo>
+	</target>
 
-	<target name="compile" depends="init" description="Compile the source" >
+	<target name="compile" depends="initDriverFile" description="Compile the source" >
 		<javac includeantruntime="false" srcdir="${src}" destdir="${build}">
-		    <classpath>
-		        <pathelement path="lib/jsqlparser-${sqlParser_version}.jar"/>
-		    </classpath>
+			<classpath>
+				<pathelement path="${libLocation}/${sqlParser}"/>
+			</classpath>
 		</javac>
 	</target>
 
 	<target name="makejar" depends="compile" description="Make jar">
-		<jar jarfile="${destination}/jdbc-hpcc-${DSTAMP}.jar" basedir="${build}">
+		<jar jarfile="${destination}/jdbc-hpcc-${DSTAMP}-${TSTAMP}.jar" basedir="${build}">
 			<fileset dir="${build}" includes="**/*.class" />
-			<zipfileset dir="${lib}" includes="**/*.jar" />
+			<zipfileset dir="lib/" includes="${sqlParser}" />
+			<metainf dir="${extra}" includes="**/java.sql.Driver"/>
 		</jar>
 	</target>
 
 	<target name="clean" depends="makejar" description="Clean up">
 		<delete dir="${build}" />
+		<delete dir="${extra}" />
 	</target>
 </project>
