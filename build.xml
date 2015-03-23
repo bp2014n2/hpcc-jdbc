@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="hpcc-jdbc.makejar" default="makejar" basedir=".">
-  <target name ="makejar" description="Create a jar for the hpcc-jdbc project">
-    <jar jarfile="jdbc-hpcc.jar" includes="*.class" basedir="bin"/>
-  </target>
+<project name="hpcc-jdbc.makejar" default="clean" basedir=".">
+	<property name="src" location="src/connectionManagement"/>
+	<property name="build" location="build"/>
+	<property name="lib" location="lib"/>
+	<property name="destination" location="built_jars"/>
+	<property name="sqlParser_version" value="0.9.1"/>
+
+	<target name="init">
+		<tstamp/>
+		<mkdir dir="${build}"/>
+		<mkdir dir="${destination}"/>
+	</target>
+
+	<target name="compile" depends="init" description="Compile the source" >
+		<javac includeantruntime="false" srcdir="${src}" destdir="${build}">
+		    <classpath>
+		        <pathelement path="lib/jsqlparser-${sqlParser_version}.jar"/>
+		    </classpath>
+		</javac>
+	</target>
+
+	<target name="makejar" depends="compile" description="Make jar">
+		<jar jarfile="${destination}/jdbc-hpcc-${DSTAMP}.jar" basedir="${build}">
+			<fileset dir="${build}" includes="**/*.class" />
+			<zipfileset dir="${lib}" includes="**/*.jar" />
+		</jar>
+	</target>
+
+	<target name="clean" depends="makejar" description="Clean up">
+		<delete dir="${build}" />
+	</target>
 </project>
