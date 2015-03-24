@@ -18,11 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package connectionManagement;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -50,17 +47,15 @@ public class HPCCConnection implements Connection
 {
     private boolean              closed;
     private HPCCDatabaseMetaData metadata;
-    private Properties           connectionProps;
+    private Properties           driverProperties;
     private Properties           clientInfo;
     private SQLWarning           warnings = null;
     private String               catalog = HPCCJDBCUtils.HPCCCATALOGNAME;
     private HttpURLConnection httpConnection;
 
-    public HPCCConnection(HPCCDriverProperties props)
-    {
-        this.connectionProps = props;
-
-        metadata = new HPCCDatabaseMetaData(props);
+    public HPCCConnection(HPCCDriverProperties driverProperties){
+        this.driverProperties = driverProperties;
+        metadata = new HPCCDatabaseMetaData(driverProperties, this);
 
         // TODO not doing anything w/ this yet, just exposing it to comply w/ API definition...
         clientInfo = new Properties();
@@ -68,15 +63,15 @@ public class HPCCConnection implements Connection
         if (metadata != null && metadata.hasHPCCTargetBeenReached())
         {
             closed = false;
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection initialized - server: " + this.connectionProps.getProperty("ServerAddress"));
+            HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection initialized - server: " + this.driverProperties.getProperty("ServerAddress"));
         }
         else
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection not initialized - server: " + this.connectionProps.getProperty("ServerAddress"));
+            HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection not initialized - server: " + this.driverProperties.getProperty("ServerAddress"));
     }
     
     public URL generateUrl(){
-    	String urlString = connectionProps.getProperty("Protocol")+(connectionProps.getProperty("WsECLDirectAddress") + ":"
-                + connectionProps.getProperty("WsECLDirectPort") + "/EclDirect/RunEcl?Submit")+"&cluster=" + connectionProps.getProperty("TargetCluster");
+    	String urlString = driverProperties.getProperty("Protocol")+(driverProperties.getProperty("WsECLDirectAddress") + ":"
+                + driverProperties.getProperty("WsECLDirectPort") + "/EclDirect/RunEcl?Submit")+"&cluster=" + driverProperties.getProperty("TargetCluster");
 
         URL hpccRequestUrl = HPCCJDBCUtils.makeURL(urlString);
         
@@ -88,7 +83,7 @@ public class HPCCConnection implements Connection
 //      replace "+" and "?" in http request body since it is a reserved character representing a space character
     	String body = eclCode.replace("+", "%2B");
 		try {
-			httpConnection = metadata.createHPCCESPConnection(generateUrl());
+			httpConnection = createHPCCESPConnection(generateUrl());
 			OutputStreamWriter wr = new OutputStreamWriter(httpConnection.getOutputStream());
 			wr.write(body);
 	        wr.flush();
@@ -107,21 +102,38 @@ public class HPCCConnection implements Connection
 		}
     }
 
-    public static String createBasicAuth(String username, String passwd)
-    {
+    protected HttpURLConnection createHPCCESPConnection(URL theurl) throws IOException{
+    	return createHPCCESPConnection(theurl, Integer.parseInt(driverProperties.getProperty("ConnectTimeoutMilli")));
+    }
+    
+    protected HttpURLConnection createHPCCESPConnection(URL theurl, int connectionTimeout) throws IOException{
+//    	driverProperties.getProperty("ConnectTimeoutMilli"), driverProperties.getProperty("ReadTimeoutMilli")
+        HttpURLConnection conn = (HttpURLConnection) theurl.openConnection();
+        conn.setInstanceFollowRedirects(false);
+        conn.setRequestProperty("Authorization", createBasicAuth(driverProperties.getProperty("username"), driverProperties.getProperty("password")));
+        conn.setRequestMethod("GET");
+        conn.setDoOutput(true);
+        conn.setDoInput(true);
+        conn.setConnectTimeout(connectionTimeout);
+        conn.setReadTimeout(Integer.parseInt(driverProperties.getProperty("ReadTimeoutMilli")));
+
+        return conn;
+    }
+
+    public static String createBasicAuth(String username, String passwd){
         return "Basic " + HPCCJDBCUtils.Base64Encode((username + ":" + passwd).getBytes(), false);
     }
 
     public Properties getProperties()
     {
         HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: getProperties(  )");
-        return connectionProps;
+        return driverProperties;
     }
 
     public String getProperty(String propname)
     {
         HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: getProperty( " + propname + " )");
-        return connectionProps.getProperty(propname, "");
+        return driverProperties.getProperty(propname, "");
     }
 
     public HPCCDatabaseMetaData getDatabaseMetaData()

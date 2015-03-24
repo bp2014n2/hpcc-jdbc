@@ -59,6 +59,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 {
     private HPCCQueries                 eclqueries;
     private HPCCLogicalFiles            dfufiles;
+    private HPCCConnection connection;
     private List<String>                targetclusters;
     private List<String>                querysets;
 
@@ -101,9 +102,12 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     @SuppressWarnings("unused")
     private static final String         FILEFETCHTYPE_NOT_IN_SUPER    = "Not in Superfiles";
 
-    public HPCCDatabaseMetaData(Properties props)
+    public HPCCDatabaseMetaData(Properties props, HPCCConnection connection)
     {
         super();
+        
+        this.connection = connection;
+        
         String protocol = props.getProperty("Protocol");
         this.serverAddress = props.getProperty("ServerAddress");
         this.targetcluster = props.getProperty("TargetCluster");
@@ -111,7 +115,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
         this.basewseclwatchurl = protocol+(props.getProperty("WsECLWatchAddress") + ":" + props.getProperty("WsECLWatchPort"));
         this.UserName = props.getProperty("username");
-        this.basicAuth = props.getProperty("BasicAuth",HPCCConnection.createBasicAuth(this.UserName, props.getProperty("password", "")));
+//        this.basicAuth = props.getProperty("BasicAuth",HPCCConnection.createBasicAuth(this.UserName, props.getProperty("password", "")));
         this.lazyLoad = Boolean.parseBoolean(props.getProperty("LazyLoad"));
         this.pageSize = Integer.parseInt(props.getProperty("PageSize"));
         this.pageOffset = Integer.parseInt(props.getProperty("PageOffset"));
@@ -2047,7 +2051,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
                 // now request the schema for this file.
                 URL queryschema = HPCCJDBCUtils.makeURL(filedetailUrl);
-                HttpURLConnection queryschemaconnection = createHPCCESPConnection(queryschema);
+                HttpURLConnection queryschemaconnection = connection.createHPCCESPConnection(queryschema);
 
                 InputStream schema = queryschemaconnection.getInputStream();
                 Document dom2 = db.parse(schema);
@@ -2244,10 +2248,11 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         {
             urlString = basewseclwatchurl + "/WsDfu/DFUQuery?LogicalName=" + filename + "&rawxml_&filetype=" + FILEFETCHTYPE_ALL;
             URL dfuLogicalFilesURL = HPCCJDBCUtils.makeURL(urlString);
-            HttpURLConnection dfulogfilesConn = createHPCCESPConnection(dfuLogicalFilesURL);
+            HttpURLConnection dfulogfilesConn = connection.createHPCCESPConnection(dfuLogicalFilesURL);
 
             HPCCJDBCUtils.traceoutln(Level.INFO, "Fetching file information: " + urlString);
-            isSuccess = parseDFULogicalFiles(dfulogfilesConn.getInputStream(), false) > 0 ? true : false;
+            InputStream is = dfulogfilesConn.getInputStream();
+            isSuccess = parseDFULogicalFiles(is, false) > 0 ? true : false;
         }
         catch (SocketTimeoutException e)
         {
@@ -2289,7 +2294,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             urlString = basewseclwatchurl + "/WsDfu/DFUQuery?LogicalName=*&PageSize=" + pageSize + "&PageStartFrom=" + pageOffset + "&rawxml_&filetype=" + FILEFETCHTYPE_ALL;
             HPCCJDBCUtils.traceoutln(Level.INFO, "Fetching tables: " + urlString);
             URL dfuLogicalFilesURL = HPCCJDBCUtils.makeURL(urlString);
-            HttpURLConnection dfulogfilesConn = createHPCCESPConnection(dfuLogicalFilesURL);
+            HttpURLConnection dfulogfilesConn = connection.createHPCCESPConnection(dfuLogicalFilesURL);
 
             isSuccess = parseDFULogicalFiles(dfulogfilesConn.getInputStream(), true) > 0 ? true : false;
 
@@ -2380,7 +2385,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
                 // now request the schema for each hpcc query
                 URL queryschema = HPCCJDBCUtils.makeURL(queryinfourl);
-                HttpURLConnection queryschemaconnection = createHPCCESPConnection(queryschema);
+                HttpURLConnection queryschemaconnection = connection.createHPCCESPConnection(queryschema);
 
                 InputStream schema = queryschemaconnection.getInputStream();
 
@@ -2454,7 +2459,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
                     + "&FilterType=Name" + "&rawxml_";
 
             URL querysetURL = new URL(urlString);
-            HttpURLConnection querysetconnection = createHPCCESPConnection(querysetURL);
+            HttpURLConnection querysetconnection = connection.createHPCCESPConnection(querysetURL);
 
             InputStream xml = querysetconnection.getInputStream();
 
@@ -2496,7 +2501,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
                         + "/WsWorkunits/WUQuerysetDetails?QuerySetName=" + querysets.get(z) + "&rawxml_";
 
                 URL querysetURL = HPCCJDBCUtils.makeURL(urlString);
-                HttpURLConnection querysetconnection = createHPCCESPConnection(querysetURL);
+                HttpURLConnection querysetconnection = connection.createHPCCESPConnection(querysetURL);
 
                 InputStream xml = querysetconnection.getInputStream();
 
@@ -2527,7 +2532,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             String urlString = basewseclwatchurl + "/WsWorkunits/WUQuerysets?rawxml_";
 
             URL clusterInfoURL = HPCCJDBCUtils.makeURL(urlString);
-            HttpURLConnection clusterInfoConnection = createHPCCESPConnection(clusterInfoURL);
+            HttpURLConnection clusterInfoConnection = connection.createHPCCESPConnection(clusterInfoURL);
 
             InputStream xml = clusterInfoConnection.getInputStream();
 
@@ -2568,7 +2573,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
                     + "/WsTopology/TpTargetClusterQuery?Type=ROOT&rawxml_&ShowDetails=0";
 
             URL clusterInfoURL = HPCCJDBCUtils.makeURL(urlString);
-            HttpURLConnection clusterInfoConnection = createHPCCESPConnection(clusterInfoURL);
+            HttpURLConnection clusterInfoConnection = connection.createHPCCESPConnection(clusterInfoURL);
 
             InputStream xml = clusterInfoConnection.getInputStream();
 
@@ -2612,7 +2617,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             HPCCJDBCUtils.traceoutln(Level.INFO, "HPCCDatabaseMetaData Fetching HPCC INFO: " + urlString);
 
             URL querysetURL = new URL(urlString);
-            HttpURLConnection querysetconnection = createHPCCESPConnection(querysetURL);
+            HttpURLConnection querysetconnection = connection.createHPCCESPConnection(querysetURL);
 
             InputStream xml = querysetconnection.getInputStream();
 
@@ -2891,7 +2896,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             DocumentBuilder db = dbf.newDocumentBuilder();
 
             URL queryfiledata = HPCCJDBCUtils.makeURL(openfiledetailUrl);
-            HttpURLConnection queryfiledataconnection = createHPCCESPConnection(queryfiledata);
+            HttpURLConnection queryfiledataconnection = connection.createHPCCESPConnection(queryfiledata);
 
             InputStream filesearchinfo = queryfiledataconnection.getInputStream();
             Document dom3 = db.parse(filesearchinfo);
@@ -2954,24 +2959,6 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         }
     }
 
-    protected HttpURLConnection createHPCCESPConnection(URL theurl) throws IOException
-    {
-        return createHPCCESPConnection(theurl, connectTimoutMillis, readTimoutMillis);
-    }
-
-    protected HttpURLConnection createHPCCESPConnection(URL theurl, int connecttimeout, int readtimeout) throws IOException
-    {
-        HttpURLConnection conn = (HttpURLConnection) theurl.openConnection();
-        conn.setInstanceFollowRedirects(false);
-        conn.setRequestProperty("Authorization", basicAuth);
-        conn.setRequestMethod("GET");
-        conn.setDoOutput(true);
-        conn.setDoInput(true);
-        conn.setConnectTimeout(connecttimeout);
-        conn.setReadTimeout(readtimeout);
-
-        return conn;
-    }
 
     public boolean isTargetHPCCReachable()
     {
@@ -2991,7 +2978,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         try
         {
             URL querysetURL = new URL(urlString);
-            testconnection = createHPCCESPConnection(querysetURL, timeout, readTimoutMillis);
+            testconnection = connection.createHPCCESPConnection(querysetURL, timeout);
             testconnection.connect();
         }
         catch (Exception e)
