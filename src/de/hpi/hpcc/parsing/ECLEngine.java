@@ -339,7 +339,7 @@ public class ECLEngine
     		String column = selectItems.get(i);
 //    		int type = availablecols.get(column).getSqlType();
     		expectedretcolumns.add(new HPCCColumnMetaData(column, i, java.sql.Types.VARCHAR));
-    	}  	
+    	}
     }
     
     private String generateImports() {
