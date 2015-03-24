@@ -15,7 +15,7 @@ public class HPCCLogger extends Logger{
 		HPCCLogFormatter formatter = new HPCCLogFormatter();
 		logger.setUseParentHandlers(false);
 		try {
-			HPCCJDBCStdOutConsoleHandler handler = new HPCCJDBCStdOutConsoleHandler(formatter);
+			HPCCConsoleHandler handler = new HPCCConsoleHandler(formatter);
 			logger.addHandler(handler);
 		} catch (Exception exception){}
 		setLoggingLevel(getDefaultLogLevel());
@@ -31,7 +31,7 @@ public class HPCCLogger extends Logger{
 	}
 	
 	public static Logger getLogger(){
-		return Logger.getLogger("org.hpccsystems.jdbcdriver");
+		return Logger.getLogger("jdbc-hpcc-driver-logger");
 	}
 	
 	public static String[] getTraceLevels(){
