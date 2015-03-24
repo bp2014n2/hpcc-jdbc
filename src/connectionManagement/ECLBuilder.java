@@ -49,7 +49,7 @@ import net.sf.jsqlparser.statement.select.WithItem;
 import net.sf.jsqlparser.statement.update.Update;
 
 public class ECLBuilder {
-	private boolean hasAlias;
+	private boolean hasAlias = false;
 	/**
 	 * This method generates ECL code from a given SQL code. 
 	 * Therefore it delegates the generation to the appropriate method, 
@@ -352,7 +352,7 @@ public class ECLBuilder {
 	 */
 	
 	private void generateSelects(SQLParserSelect sqlParser, StringBuilder select, Boolean inner) { 
-		if (sqlParser.isCount()) {
+		if (sqlParser.isCount() && sqlParser.getGroupBys() == null) {
 			select.insert(0, "COUNT(");
 			select.append(")");
 		} else {
@@ -488,7 +488,8 @@ public class ECLBuilder {
 			expression.append("?");
 		} else if (expressionItem instanceof NullValue) {
 				expression.append("''");
-	}
+		}
+		hasAlias();
 		return expression.toString();
 	}
 	
@@ -496,8 +497,8 @@ public class ECLBuilder {
 		if(hasAlias) {
 			setHasAlias(false);
 			return true;
-		} else
-			return false;
+		}
+		return false;
 	}
 
 

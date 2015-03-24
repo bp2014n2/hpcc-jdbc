@@ -92,21 +92,21 @@ public class ECLEngine
         this.conn = conn;
     }
 
-//    private String convertToAppropriateSQL(String sql) {
-//		if(sql.toLowerCase().contains("substring")){
-//			String substring = sql.toLowerCase().substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52);
-//			substring = substring.replace("substring(", "").replace(" from ", "[").replace(" for ", "..").replace(")", "]");
-//			setSubstring(substring);
-//			String subRange = substring.substring(substring.indexOf("["), substring.indexOf("]")+1);
-//			substring = substring.replace(subRange,"");
-//			sql = sql.replace(sql.substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52),substring);
-//		}
-//		return sql;
-//	}
+    private String convertToAppropriateSQL(String sql) {
+		if(sql.toLowerCase().contains("substring")){
+			String substring = sql.toLowerCase().substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52);
+			substring = substring.replace("substring(", "").replace(" from ", "[").replace(" for ", "..").replace(")", "]");
+			setSubstring(substring);
+			String subRange = substring.substring(substring.indexOf("["), substring.indexOf("]")+1);
+			substring = substring.replace(subRange,"");
+			sql = sql.replace(sql.substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52),substring);
+		}
+		return sql;
+	}
 
-//	private void setSubstring(String substring) {
-//		sub = substring;
-//	}
+	private void setSubstring(String substring) {
+		sub = substring;
+	}
 
 	public List<HPCCColumnMetaData> getExpectedRetCols()
     {
@@ -150,6 +150,7 @@ public class ECLEngine
     
     public void generateECL(String sqlQuery) throws SQLException 
     {
+    	sqlQuery = convertToAppropriateSQL(sqlQuery);
     	switch(SQLParser.sqlIsInstanceOf(sqlQuery)) {
     	case "Select":
     		this.sqlParser = new SQLParserSelect(sqlQuery);
@@ -177,11 +178,12 @@ public class ECLEngine
     }
     	
     private void generateCreateECL(String sqlQuery) throws SQLException {
-		ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append(generateImports());
 		String tablePath = ((SQLParserCreate) sqlParser).getFullName();
 		DFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
 		if(dfuFile == null) {
+			ECLBuilder eclBuilder = new ECLBuilder();
+			eclCode.append("#WORKUNIT('name', 'i2b2: create');\n");
+	    	eclCode.append(generateImports());
 			String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
 			eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
 			eclCode.append("\nSEQUENTIAL(Std.File.CreateSuperFile('~"+tablePath+"'),\n");
@@ -205,7 +207,7 @@ public class ECLEngine
 
 	private void generateUpdateECL(String sqlQuery) throws SQLException{
 		ECLBuilder eclBuilder = new ECLBuilder();
-		eclCode.append("#OPTION('name', 'java update');\n");
+		eclCode.append("#WORKUNIT('name', 'i2b2: update');\n");
     	eclCode.append(generateImports());
     	eclCode.append(generateLayouts(eclBuilder));
 		eclCode.append(generateTables());
@@ -241,7 +243,7 @@ public class ECLEngine
 
 	private void generateDropECL(String sqlQuery) throws SQLException {
     	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#OPTION('name', 'java drop');\n");
+    	eclCode.append("#OPTION('name', 'i2b2: drop');\n");
     	eclCode.append(generateImports());
 //		eclCode.append(eclBuilder.generateECL(sqlQuery));
     	
@@ -269,7 +271,7 @@ public class ECLEngine
 
 	private void generateInsertECL(String sqlQuery) throws SQLException{
     	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#option('name', 'java insert');\n");
+    	eclCode.append("#option('name', 'i2b2: insert');\n");
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'thor');\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
