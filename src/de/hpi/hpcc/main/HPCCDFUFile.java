@@ -28,7 +28,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DFUFile
+public class HPCCDFUFile
 {
     private String              prefix = null;
     private String              clusterName = null;
@@ -84,7 +84,7 @@ public class DFUFile
         CSV;
     }
 
-    public DFUFile(String prefix, String clusterName, String filename)
+    public HPCCDFUFile(String prefix, String clusterName, String filename)
     {
         super();
         this.prefix = prefix;
@@ -93,7 +93,7 @@ public class DFUFile
         this.fullyQualifiedName = filename;
     }
 
-    public DFUFile(String prefix, String clusterName, String directory, String description, int parts, String filename,
+    public HPCCDFUFile(String prefix, String clusterName, String directory, String description, int parts, String filename,
             String fullyqualifiedname, String owner, long totalSize, long recordCount, String modified, long longSize,
             long longRecordCount, boolean isSuperFile, boolean isZipFile, boolean isDirectory, int replicate,
             int intSize, int intRecordCount, boolean fromRoxieCluster, boolean browseData, boolean isKeyFile,
@@ -133,7 +133,7 @@ public class DFUFile
         }
     }
 
-    public DFUFile() {}
+    public HPCCDFUFile() {}
 
     public String getFileName()
     {

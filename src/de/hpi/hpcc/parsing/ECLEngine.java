@@ -118,7 +118,7 @@ public class ECLEngine
 		return eclCode.toString();
 	}
 
-    private void addFileColsToAvailableCols(DFUFile dfufile, HashMap<String, HPCCColumnMetaData> availablecols)
+    private void addFileColsToAvailableCols(HPCCDFUFile dfufile, HashMap<String, HPCCColumnMetaData> availablecols)
     {
     	Enumeration<?> fields = dfufile.getAllFields();
 	    while (fields.hasMoreElements())
@@ -175,7 +175,7 @@ public class ECLEngine
     	
     private void generateCreateECL(String sqlQuery) throws SQLException {
 		String tablePath = ((SQLParserCreate) sqlParser).getFullName();
-		DFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
+		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
 		if(dfuFile == null) {
 			ECLBuilder eclBuilder = new ECLBuilder();
 			eclCode.append("#WORKUNIT('name', 'i2b2: create');\n");
@@ -213,7 +213,7 @@ public class ECLEngine
     	
 		eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
 		
-   		DFUFile hpccQueryFile = dbMetadata.getDFUFile(((SQLParserUpdate) sqlParser).getFullName());
+   		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(((SQLParserUpdate) sqlParser).getFullName());
 		
 		eclCode.append("SEQUENTIAL(\nStd.File.StartSuperFileTransaction(),\n Std.File.ClearSuperFile('~"+tablePath+"'),\n");
 		for(String subfile : hpccQueryFile.getSubfiles()) {
@@ -247,7 +247,7 @@ public class ECLEngine
 		
 		availablecols = new HashMap<String, HPCCColumnMetaData>();
 
-   		DFUFile hpccQueryFile = dbMetadata.getDFUFile(tablePath);
+   		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(tablePath);
 //   		addFileColsToAvailableCols(hpccQueryFile, availablecols);
    		if(hpccQueryFile != null) {
    			if(hpccQueryFile.isSuperFile()) {
@@ -297,7 +297,7 @@ public class ECLEngine
     		} else {
     			tableName = "i2b2demodata::"+table;
     		}
-    		DFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
+    		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
     		if(hpccQueryFile != null) {
         		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     		}
@@ -329,7 +329,7 @@ public class ECLEngine
     	
     	for (String table : sqlParser.getAllTables()) {
     		String tableName = table.contains(".")?table.replace(".", "::"):"i2b2demodata::"+table;
-    		DFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
+    		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
     		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	}
     	
@@ -748,7 +748,7 @@ public class ECLEngine
         for (int indexcounter = 0; indexcounter < relindexes.size(); indexcounter++)
         {
             String indexname = relindexes.get(indexcounter);
-            DFUFile indexfile = dbMetadata.getDFUFile(indexname);
+            HPCCDFUFile indexfile = dbMetadata.getDFUFile(indexname);
             if (indexfile != null && indexfile.isKeyFile() && indexfile.hasValidIdxFilePosField())
             {
                 for (int j = 0; j < expectedretcolumns.size(); j++)

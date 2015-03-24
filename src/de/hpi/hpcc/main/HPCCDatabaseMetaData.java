@@ -48,7 +48,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import de.hpi.hpcc.main.DFUFile.FileFormat;
+import de.hpi.hpcc.main.HPCCDFUFile.FileFormat;
 import de.hpi.hpcc.main.HPCCJDBCUtils.EclTypes;
 
 /**
@@ -59,7 +59,7 @@ import de.hpi.hpcc.main.HPCCJDBCUtils.EclTypes;
 public class HPCCDatabaseMetaData implements DatabaseMetaData
 {
     private HPCCQueries                 eclqueries;
-    private HPCCLogicalFiles            dfufiles;
+    private HPCCLogicalFiles            dfuFiles;
     private HPCCConnection connection;
     private List<String>                targetclusters;
     private List<String>                querysets;
@@ -88,7 +88,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     private int                         pageSize;
     private int                         pageOffset;
     private int                         connectTimoutMillis;
-    private int                         readTimoutMillis;
+//    private int                         readTimoutMillis;
 
     private DocumentBuilderFactory      dbf;
 
@@ -121,14 +121,14 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         this.pageSize = Integer.parseInt(props.getProperty("PageSize"));
         this.pageOffset = Integer.parseInt(props.getProperty("PageOffset"));
         this.connectTimoutMillis = Integer.parseInt(props.getProperty("ConnectTimeoutMilli"));
-        this.readTimoutMillis = Integer.parseInt(props.getProperty("ReadTimeoutMilli"));
+//        this.readTimoutMillis = Integer.parseInt(props.getProperty("ReadTimeoutMilli"));
 
         HPCCJDBCUtils.traceoutln(Level.INFO, "HPCCDatabaseMetaData ServerAddress: " + protocol + serverAddress
                 + " TargetCluster: " + targetcluster + " eclwatch: " + basewseclwatchurl);
 
         targetclusters = new ArrayList<String>();
         querysets = new ArrayList<String>();
-        dfufiles = new HPCCLogicalFiles();
+        dfuFiles = new HPCCLogicalFiles();
         eclqueries = new HPCCQueries();
 
         dbf = DocumentBuilderFactory.newInstance();
@@ -209,10 +209,10 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             if (isDFUMetaDataCached())
             {
                 HPCCJDBCUtils.traceoutln(Level.INFO, "Tables' Metadata fetched: ");
-                Enumeration<Object> em = dfufiles.getFiles();
+                Enumeration<Object> em = dfuFiles.getFiles();
                 while (em.hasMoreElements())
                 {
-                    DFUFile file = (DFUFile) em.nextElement();
+                	HPCCDFUFile file = (HPCCDFUFile) em.nextElement();
                     HPCCJDBCUtils.traceoutln(Level.INFO,"\t"+file.getClusterName()+"."+file.getFileName()+"("+file.getFullyQualifiedName()+")");
                 }
             }
@@ -240,7 +240,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         return isSuccess;
     }
 
-    private int registerFileDetails(Element node, DFUFile file)
+    private int registerFileDetails(Element node, HPCCDFUFile file)
     {
         if (file.isSuperFile())
             HPCCJDBCUtils.traceoutln(Level.INFO, "Found super file: " + file.getFullyQualifiedName());
@@ -1458,24 +1458,24 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             if (!isDFUMetaDataCached())
                 setDFUMetaDataCached(fetchHPCCFilesInfo());
 
-            Enumeration<Object> files = dfufiles.getFiles();
+            Enumeration<Object> files = dfuFiles.getFiles();
             while (files.hasMoreElements())
             {
-                DFUFile file = (DFUFile) files.nextElement();
+            	HPCCDFUFile file = (HPCCDFUFile) files.nextElement();
                 if (file.hasFileRecDef())
                     tables.add(populateTableInfo(file));
             }
         }
         else
         {
-            DFUFile file = getDFUFile(tableNamePattern);
+        	HPCCDFUFile file = getDFUFile(tableNamePattern);
             if (file != null && file.hasFileRecDef())
                 tables.add(populateTableInfo(file));
         }
         return new HPCCResultSet(tables, metacols, "HPCC Tables");
     }
 
-    private ArrayList<String> populateTableInfo(DFUFile table)
+    private ArrayList<String> populateTableInfo(HPCCDFUFile table)
     {
         ArrayList<String> rowValues = new ArrayList<String>();
         if (table != null)
@@ -1547,7 +1547,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
     public String[] getAllTableFields(String dbname, String tablename)
     {
-        DFUFile file = getDFUFile(tablename);
+    	HPCCDFUFile file = getDFUFile(tablename);
 
         if (file != null)
             return file.getAllTableFieldsStringArray();
@@ -1595,7 +1595,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
         while (tables.next())
         {
-            DFUFile file = getDFUFile(tables.getString(TABLE_NAME));
+        	HPCCDFUFile file = getDFUFile(tables.getString(TABLE_NAME));
 
             Enumeration<Object> e = file.getAllFields();
             while (e.hasMoreElements())
@@ -2034,7 +2034,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         return (int) HPCCBuildMinor;
     }
 
-    private boolean fetchHPCCFileColumnInfo(DFUFile file, DocumentBuilder db)
+    private boolean fetchHPCCFileColumnInfo(HPCCDFUFile file, DocumentBuilder db)
     {
         boolean isSuccess = true;
 
@@ -2068,7 +2068,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
                 }
 
                 // Add this file name to files structure
-                dfufiles.putFile(file.getFullyQualifiedName(), file);
+                dfuFiles.putFile(file.getFullyQualifiedName(), file);
             }
             else
             {
@@ -2087,7 +2087,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
     private int parseDFULogicalFiles(InputStream xml, boolean setReportedFileCount)
     {
-        int dfuFileParsedCount = 0;
+        int HPCCDFUFileParsedCount = 0;
 
         try
         {
@@ -2102,9 +2102,9 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
                     if (NumFilesCount.getLength() > 0)
                     {
-                        dfufiles.setReportedFileCount(NumFilesCount.item(0).getTextContent());
+                        dfuFiles.setReportedFileCount(NumFilesCount.item(0).getTextContent());
                         HPCCJDBCUtils.traceoutln(Level.INFO, "Fetching " + pageSize + " files (tables) out of "
-                                + dfufiles.getReportedFileCount() + " reported files.");
+                                + dfuFiles.getReportedFileCount() + " reported files.");
                     }
                 }
                 catch (Exception e)
@@ -2124,7 +2124,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
                     {
                         NodeList querysetquerychildren = currentNode.getChildNodes();
 
-                        DFUFile file = new DFUFile();
+                        HPCCDFUFile file = new HPCCDFUFile();
                         String currentTextCont = "";
 
                         for (int j = 0; j < querysetquerychildren.getLength(); j++)
@@ -2205,7 +2205,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
                             if (file.getIntRecordCount() >= 0)
                             {
                                 if (fetchHPCCFileColumnInfo(file, db))
-                                    dfuFileParsedCount++;
+                                    HPCCDFUFileParsedCount++;
                             }
                             else
                                 HPCCJDBCUtils.traceoutln(Level.INFO, file.getFullyQualifiedName()
@@ -2234,7 +2234,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             e.printStackTrace();
         }
 
-        return dfuFileParsedCount;
+        return HPCCDFUFileParsedCount;
     }
 
     private boolean fetchHPCCFileInfo(String filename)
@@ -2282,7 +2282,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
         if (isDFUMetaDataCached())
         {
-            HPCCJDBCUtils.traceoutln(Level.INFO, "HPCC dfufile info already present (reconnect to force fetch)");
+            HPCCJDBCUtils.traceoutln(Level.INFO, "HPCC HPCCDFUFile info already present (reconnect to force fetch)");
             return true;
         }
 
@@ -2303,7 +2303,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             {
                 try
                 {
-                    dfufiles.updateSuperFiles();
+                    dfuFiles.updateSuperFiles();
                 }
                 catch (Exception e)
                 {
@@ -2794,7 +2794,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
     public boolean tableExists(String clustername, String filename)
     {
-        boolean found = dfufiles.containsFileName(filename);
+        boolean found = dfuFiles.containsFileName(filename);
 
         if (!found)
             found = fetchHPCCFileInfo(filename);
@@ -2836,7 +2836,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         return found;
     }
 
-    private boolean fetchSuperFileSubfile(DFUFile file)
+    private boolean fetchSuperFileSubfile(HPCCDFUFile file)
     {
         boolean isSuccess = false;
 
@@ -2845,7 +2845,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         {
             if (tableExists("", subfilename) && !isSuccess)
             {
-                DFUFile subfile = dfufiles.getFile(subfilename);
+                HPCCDFUFile subfile = dfuFiles.getFile(subfilename);
                 if (subfile.hasFileRecDef())
                 {
                     isSuccess = true;
@@ -2862,18 +2862,18 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         return isSuccess;
     }
 
-    public DFUFile getDFUFile(String hpccfilename)
+    public HPCCDFUFile getDFUFile(String hpccfilename)
     {
-        DFUFile file = null;
+        HPCCDFUFile file = null;
         if (tableExists("", hpccfilename))
         {
-            file = dfufiles.getFile(hpccfilename);
+            file = dfuFiles.getFile(hpccfilename);
             if (file.isSuperFile() && !file.hasFileRecDef())
             {
                 if (file.containsSubfiles())
                 {
                     if (fetchSuperFileSubfile(file))
-                        dfufiles.updateSuperFile(hpccfilename);
+                        dfuFiles.updateSuperFile(hpccfilename);
                 }
             }
             if (file.isKeyFile() && !file.hasKeyedFieldInfoBeenSet())
@@ -2885,7 +2885,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         return file;
     }
 
-    private void getKeyedFieldInfo(DFUFile file)
+    private void getKeyedFieldInfo(HPCCDFUFile file)
     {
         String openfiledetailUrl;
         try

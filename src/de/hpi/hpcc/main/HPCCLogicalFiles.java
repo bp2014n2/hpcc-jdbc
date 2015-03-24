@@ -38,14 +38,14 @@ public class HPCCLogicalFiles
         reportedFileCount = 0;
     }
 
-    public void putFile(String fullyQualifiedName, DFUFile file)
+    public void putFile(String fullyQualifiedName, HPCCDFUFile file)
     {
         files.put(fullyQualifiedName.toUpperCase(), file);
         if (file.isSuperFile())
             superfiles.add(fullyQualifiedName);
     }
 
-    public void putFile(DFUFile file)
+    public void putFile(HPCCDFUFile file)
     {
         files.put(file.getFullyQualifiedName().toUpperCase(), file);
         if (file.isSuperFile())
@@ -57,9 +57,9 @@ public class HPCCLogicalFiles
         return files.containsKey(filename.toUpperCase());
     }
 
-    public DFUFile getFile(String filename)
+    public HPCCDFUFile getFile(String filename)
     {
-        return (DFUFile) files.get(filename.toUpperCase());
+        return (HPCCDFUFile) files.get(filename.toUpperCase());
     }
 
     public Enumeration<Object> getFiles()
@@ -67,14 +67,14 @@ public class HPCCLogicalFiles
         return files.elements();
     }
 
-    private String getSubfileRecDef(DFUFile superfile)
+    private String getSubfileRecDef(HPCCDFUFile superfile)
     {
         String eclrecdef = "";
 
         List<String> subfiles = superfile.getSubfiles();
         for (int y = 0; y < subfiles.size(); y++)
         {
-            DFUFile subfile = ((DFUFile) files.get(subfiles.get(y).toUpperCase()));
+            HPCCDFUFile subfile = ((HPCCDFUFile) files.get(subfiles.get(y).toUpperCase()));
             if (subfile != null)
             {
                 if (subfile.hasFileRecDef())
@@ -96,7 +96,7 @@ public class HPCCLogicalFiles
 
     public void updateSuperFile(String superfilename)
     {
-        DFUFile superfile = (DFUFile) files.get(superfilename.toUpperCase());
+        HPCCDFUFile superfile = (HPCCDFUFile) files.get(superfilename.toUpperCase());
         if (!superfile.hasFileRecDef())
         {
             if (superfile.containsSubfiles())
@@ -115,7 +115,7 @@ public class HPCCLogicalFiles
 
         for (int i = 0; i < superfilescount; i++)
         {
-            DFUFile superfile = (DFUFile) files.get(superfiles.get(i).toUpperCase());
+            HPCCDFUFile superfile = (HPCCDFUFile) files.get(superfiles.get(i).toUpperCase());
             if (!superfile.hasFileRecDef())
             {
                 if (superfile.containsSubfiles())
