@@ -125,7 +125,7 @@ public class HPCCDriver implements Driver{
     }
 
 	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-		return null;
+		return logger;
 	}
 	
 	private String[] parseURL(String url){
