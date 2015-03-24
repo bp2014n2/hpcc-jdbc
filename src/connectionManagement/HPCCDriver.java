@@ -49,6 +49,7 @@ public class HPCCDriver implements Driver{
     		}
     	}else{
     		log(url +" has the wrong format (e.g. missing protocol)");
+    		return null;
     	}
         
     	if(properties != null){
