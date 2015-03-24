@@ -20,13 +20,13 @@ public class HPCCDriverProperties extends Properties{
 	private static HashMap<String, String[]> defaultProperties = new HashMap<String, String[]>(){
 		private static final long serialVersionUID = 1L;
 		{
-			put("ConnectTimeoutMilli", 	new String[]{"5000","HPCC requests connection time out value in milliseconds."});
-			put("ReadTimeoutMilli", 	new String[]{"15000","HPCC requests connection read time out value in milliseconds."});
+			put("ConnectTimeoutMilli", 	new String[]{"120000","HPCC requests connection time out value in milliseconds."});
+			put("ReadTimeoutMilli", 	new String[]{"120000","HPCC requests connection read time out value in milliseconds."});
 			put("LazyLoad", 			new String[]{"true","If disabled, all HPCC metadata loaded and cached at connect time; otherwise HPCC file, and published query info is loaded on-demand."});
 			put("EclResultLimit", 		new String[]{"100","Default limit on number of result records returned."});
 			put("TraceLevel", 			new String[]{HPCCLogger.getDefaultLogLevel().getName(),	"Logging level (java.util.logging.level)."});
 			put("TraceToFile", 			new String[]{"false","false -> System.out, true -> " + HPCCJDBCUtils.workingDir +  HPCCJDBCUtils.traceFileName});
-			put("TargetCluster", 		new String[]{"hthor","Target cluster on which to execute ECL code."});
+			put("TargetCluster", 		new String[]{"thor","Target cluster on which to execute ECL code."});
 			put("QuerySet", 			new String[]{"hthor","Queryset from which published query (Stored Procedure) is chosen."});
 			put("PageSize", 			new String[]{"100","Number of HPCC data files (DB tables) or HPCC published queries (DB Stored Procs) displayed."});
 			put("PageOffset", 			new String[]{"0","Starting HPCC data file or HPCC published queries displayed."});
