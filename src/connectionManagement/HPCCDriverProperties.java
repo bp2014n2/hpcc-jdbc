@@ -14,6 +14,9 @@ public class HPCCDriverProperties extends Properties{
 	private static final String DEFAULT_SERVER_ADDRESS = "//localhost";
 	private static final String DEFAULT_PORT = "8010";
 	
+	private static final String DEFAULT_USERNAME = "eha";
+	private static final String DEFAULT_PASSWORD = "eha";
+	
 	private static HashMap<String, String[]> defaultProperties = new HashMap<String, String[]>(){
 		private static final long serialVersionUID = 1L;
 		{
@@ -27,8 +30,8 @@ public class HPCCDriverProperties extends Properties{
 			put("QuerySet", 			new String[]{"hthor","Queryset from which published query (Stored Procedure) is chosen."});
 			put("PageSize", 			new String[]{"100","Number of HPCC data files (DB tables) or HPCC published queries (DB Stored Procs) displayed."});
 			put("PageOffset", 			new String[]{"0","Starting HPCC data file or HPCC published queries displayed."});
-			put("password", 			new String[]{"eha","HPCC password (*Use JDBC client secure interface if available*)."});
-			put("username", 			new String[]{"eha","HPCC username (*Use JDBC client secure interface if available*)."});
+			put("password", 			new String[]{DEFAULT_PASSWORD,"HPCC password (*Use JDBC client secure interface if available*)."});
+			put("username", 			new String[]{DEFAULT_USERNAME,"HPCC username (*Use JDBC client secure interface if available*)."});
 			put("Protocol", 			new String[]{"http:","Protocol used to establish the connection to the HPCC Server."});
 			put("WsECLDirectPort", 		new String[]{DEFAULT_PORT,"WsECLDirect port (required if HPCC configuration does not use default port)."});
 			put("WsECLPort", 			new String[]{"8002","WsECL port (required if HPCC configuration does not use default port)."});
@@ -37,7 +40,6 @@ public class HPCCDriverProperties extends Properties{
 			put("WsECLWatchAddress", 	new String[]{DEFAULT_SERVER_ADDRESS, "WsECLWatch address (required if different than ServerAddress)."});
 			put("WsECLAddress", 		new String[]{DEFAULT_SERVER_ADDRESS, "WsECLAddress Address (required if different than ServerAddress)."});
 			put("WsECLDirectAddress", 	new String[]{DEFAULT_SERVER_ADDRESS, "WsECLDirect Address (required if different than ServerAddress)."});
-			put("Basic Auth", 			new String[]{"This property is set in either case by the connect method!", "Basic Authentication is created at run-time level (from username and password)"});
 		}
 	};
 	

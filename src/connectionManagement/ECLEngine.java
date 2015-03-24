@@ -138,7 +138,7 @@ public class ECLEngine
         {
             long startTime = System.currentTimeMillis();
 
-            HttpURLConnection conn = dbMetadata.createHPCCESPConnection(this.conn.generateUrl());
+            HttpURLConnection conn = this.conn.createHPCCESPConnection(this.conn.generateUrl());
 
             return parseDataset(conn.getInputStream(), startTime);
         }

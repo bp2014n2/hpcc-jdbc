@@ -2,9 +2,9 @@ package connectionManagement;
 
 import java.util.logging.ConsoleHandler;
 
-public class HPCCJDBCStdOutConsoleHandler extends ConsoleHandler
+public class HPCCConsoleHandler extends ConsoleHandler
 {
-    public HPCCJDBCStdOutConsoleHandler(HPCCLogFormatter formatter) {
+    public HPCCConsoleHandler(HPCCLogFormatter formatter) {
 		this.setFormatter(formatter);
 		this.setOutputStream();
 	}
