@@ -1071,7 +1071,8 @@ public class HPCCResultSet implements ResultSet
     }
 
     public void setFetchSize(int rows) throws SQLException{
-        handleUnsupportedMethod("setFetchSize(int rows)");
+    	return;
+//        handleUnsupportedMethod("setFetchSize(int rows)");
     }
 
     public int getFetchSize() throws SQLException{
