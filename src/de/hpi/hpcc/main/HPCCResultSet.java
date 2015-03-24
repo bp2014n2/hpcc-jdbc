@@ -51,6 +51,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.logging.HPCCLogger;
+import de.hpi.hpcc.parsing.ECLLayouts;
 
 /**
  *
@@ -113,7 +114,15 @@ public class HPCCResultSet implements ResultSet
                     if (resultMetadata.containsColByNameOrAlias(resultRowElementName))
                     {
                         HPCCColumnMetaData col = resultMetadata.getColByNameOrAlias(resultRowElementName);
-                        rowValues.set(col.getIndex(), resultRowElement.getTextContent());
+                        String content = resultRowElement.getTextContent().trim();
+                      
+                       	int type = col.getSqlType();
+						if (type == java.sql.Types.VARCHAR) {
+							content = "\"" + content + "\"";
+						}
+						 
+                        	
+                        rowValues.set(col.getIndex(), content);
                     }
                 }
             }

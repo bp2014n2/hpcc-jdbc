@@ -124,7 +124,7 @@ public class ECLEngine
 	    while (fields.hasMoreElements())
 	    {
 	        HPCCColumnMetaData col = (HPCCColumnMetaData) fields.nextElement();
-	        availablecols.put(col.getTableName().toUpperCase() + "." + col.getColumnName().toUpperCase(), col);
+	        availablecols.put(col.getTableName().toLowerCase() + "." + col.getColumnName().toLowerCase(), col);
 	    }
     }
 
@@ -337,7 +337,8 @@ public class ECLEngine
     	ArrayList<String> selectItems = (ArrayList<String>) ((SQLParserSelect) sqlParser).getAllSelectItemsInQuery();
     	for (int i=0; i<selectItems.size(); i++) {
     		String column = selectItems.get(i);
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
+//    		int type = availablecols.get(column).getSqlType();
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, java.sql.Types.VARCHAR));
     	}  	
     }
     

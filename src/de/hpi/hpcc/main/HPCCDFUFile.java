@@ -448,8 +448,13 @@ public class HPCCDFUFile
                                 if (i + 1 < spacesplit.length - 1)
                                     type.append(" ");
                             }
-
-                            HPCCColumnMetaData columnmeta = new HPCCColumnMetaData(name, index,java.sql.Types.OTHER);
+                            HPCCColumnMetaData columnmeta;
+                            if (type.toString().contains("string")) {
+                            	columnmeta = new HPCCColumnMetaData(name, index,java.sql.Types.VARCHAR);
+                            } else {
+                            	columnmeta = new HPCCColumnMetaData(name, index,java.sql.Types.OTHER);
+                            }
+                            
 
                             columnmeta.setEclType(type.toString());
                             columnmeta.setTableName(this.fullyQualifiedName);
