@@ -44,6 +44,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -63,10 +64,11 @@ public class HPCCResultSet implements ResultSet
     private Statement                           statement = null;
     private Object                              lastResult;
     private SQLWarning                          warnings = null;
+    private static final Logger	logger = HPCCLogger.getLogger();
 
     public HPCCResultSet(List recrows, ArrayList<HPCCColumnMetaData> metadatacols, String tablename) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: HPCCResultSet(recrows, metadatacols, " + tablename +")");
+        log(Level.FINEST, "HPCCResultSet: HPCCResultSet(recrows, metadatacols, " + tablename +")");
         resultMetadata = new HPCCResultSetMetadata(metadatacols, tablename);
         rows = new ArrayList<List>(recrows);
         lastResult = new Object();
@@ -74,7 +76,7 @@ public class HPCCResultSet implements ResultSet
 
     public HPCCResultSet(Statement statement, NodeList rowList, HPCCResultSetMetadata resultMetadata)
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: HPCCResultSet(statement, rowList, resultMetadata)");
+        log(Level.FINEST, "HPCCResultSet: HPCCResultSet(statement, rowList, resultMetadata)");
         this.resultMetadata = resultMetadata;
         rows = new ArrayList();
         lastResult = new Object();
@@ -86,11 +88,11 @@ public class HPCCResultSet implements ResultSet
 
     public void encapsulateDataSet(NodeList rowList)
     {
-        HPCCJDBCUtils.traceoutln(Level.INFO, "HPCCResultSet encapsulateDataSet");
+        log("HPCCResultSet encapsulateDataSet");
         int rowCount = 0;
         if (rowList != null && (rowCount = rowList.getLength()) > 0)
         {
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "Results rows found: " + rowCount);
+            log("Results rows found: " + rowCount);
 
             for (int j = 0; j < rowCount; j++)
             {
@@ -118,13 +120,13 @@ public class HPCCResultSet implements ResultSet
 
     public int getRowCount()
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getRowCount");
+        log(Level.FINEST, "HPCCResultSet getRowCount");
         return rows.size();
     }
 
     public boolean next() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet next");
+        log(Level.FINEST, "HPCCResultSet next");
         index++;
         if (index >= rows.size())
         {
@@ -139,29 +141,29 @@ public class HPCCResultSet implements ResultSet
 
     public void close() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet close");
+        log(Level.FINEST, "HPCCResultSet close");
         closed = true;
     }
 
     public boolean wasNull() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet wasNull: " + String.valueOf(lastResult == null).toString());
+        log(Level.FINEST, "HPCCResultSet wasNull: " + String.valueOf(lastResult == null).toString());
         return lastResult == null;
     }
 
     public String getString(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet:getString(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet:getString(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
                 lastResult = rows.get(index).get(columnIndex - 1);
                 if (lastResult == null)
                 {
-                    HPCCJDBCUtils.traceoutln(Level.FINEST, "....Returned: null");
+                    log(Level.FINEST, "....Returned: null");
                     return null;
                 }
-                HPCCJDBCUtils.traceoutln(Level.FINEST, "....Returned: "+ lastResult.toString());
+                log(Level.FINEST, "....Returned: "+ lastResult.toString());
                 return lastResult.toString();
             }
             else
@@ -172,7 +174,7 @@ public class HPCCResultSet implements ResultSet
 
     public boolean getBoolean(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getBoolean(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getBoolean(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -191,7 +193,7 @@ public class HPCCResultSet implements ResultSet
 
     public byte getByte(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getByte(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getByte(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -208,7 +210,7 @@ public class HPCCResultSet implements ResultSet
 
     public short getShort(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getShort(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getShort(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -227,7 +229,7 @@ public class HPCCResultSet implements ResultSet
 
     public int getInt(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getInt(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getInt(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -246,7 +248,7 @@ public class HPCCResultSet implements ResultSet
 
     public long getLong(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getLong(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getLong(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -265,7 +267,7 @@ public class HPCCResultSet implements ResultSet
 
     public float getFloat(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getFloat(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getFloat(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -284,7 +286,7 @@ public class HPCCResultSet implements ResultSet
 
     public double getDouble(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getDouble(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getDouble(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -303,7 +305,7 @@ public class HPCCResultSet implements ResultSet
 
     public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getBigDecimal(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getBigDecimal(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -323,7 +325,7 @@ public class HPCCResultSet implements ResultSet
 
     public byte[] getBytes(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getBytes(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getBytes(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -340,7 +342,7 @@ public class HPCCResultSet implements ResultSet
 
     public Date getDate(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getDate(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getDate(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -359,7 +361,7 @@ public class HPCCResultSet implements ResultSet
 
     public Time getTime(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getTime(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getTime(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -378,7 +380,7 @@ public class HPCCResultSet implements ResultSet
 
     public Timestamp getTimestamp(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getTimestamp(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getTimestamp(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -397,7 +399,7 @@ public class HPCCResultSet implements ResultSet
 
     public InputStream getAsciiStream(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getAsciiStream(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getAsciiStream(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -414,7 +416,7 @@ public class HPCCResultSet implements ResultSet
 
     public InputStream getUnicodeStream(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getUnicodeStream(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getUnicodeStream(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -431,7 +433,7 @@ public class HPCCResultSet implements ResultSet
 
     public InputStream getBinaryStream(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getBinaryStream(" + columnIndex + ")");
+        log(Level.FINEST, "HPCCResultSet: getBinaryStream(" + columnIndex + ")");
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -448,7 +450,7 @@ public class HPCCResultSet implements ResultSet
 
     public String getString(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet:getString(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet:getString(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int column = resultMetadata.getColumnIndex(columnLabel);
@@ -472,7 +474,7 @@ public class HPCCResultSet implements ResultSet
 
     public boolean getBoolean(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getBoolean(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getBoolean(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int column = resultMetadata.getColumnIndex(columnLabel);
@@ -495,7 +497,7 @@ public class HPCCResultSet implements ResultSet
 
     public byte getByte(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getByte(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getByte(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int column = resultMetadata.getColumnIndex(columnLabel);
@@ -518,7 +520,7 @@ public class HPCCResultSet implements ResultSet
 
     public short getShort(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet:getShort(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet:getShort(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int column = resultMetadata.getColumnIndex(columnLabel);
@@ -543,7 +545,7 @@ public class HPCCResultSet implements ResultSet
 
     public int getInt(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getInt(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getInt(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int column = resultMetadata.getColumnIndex(columnLabel);
@@ -568,7 +570,7 @@ public class HPCCResultSet implements ResultSet
 
     public long getLong(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getLong(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getLong(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int column = resultMetadata.getColumnIndex(columnLabel);
@@ -593,7 +595,7 @@ public class HPCCResultSet implements ResultSet
 
     public float getFloat(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getFloat(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getFloat(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int column = resultMetadata.getColumnIndex(columnLabel);
@@ -618,7 +620,7 @@ public class HPCCResultSet implements ResultSet
 
     public double getDouble(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getDouble(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getDouble(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int column = resultMetadata.getColumnIndex(columnLabel);
@@ -643,7 +645,7 @@ public class HPCCResultSet implements ResultSet
 
     public BigDecimal getBigDecimal(String columnLabel, int scale) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getBigDecimal(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getBigDecimal(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int columnIndex = resultMetadata.getColumnIndex(columnLabel);
@@ -669,7 +671,7 @@ public class HPCCResultSet implements ResultSet
 
     public byte[] getBytes(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getBytes(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getBytes(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int columnIndex = resultMetadata.getColumnIndex(columnLabel);
@@ -692,7 +694,7 @@ public class HPCCResultSet implements ResultSet
 
     public Date getDate(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getDate(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getDate(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int columnIndex = resultMetadata.getColumnIndex(columnLabel);
@@ -717,7 +719,7 @@ public class HPCCResultSet implements ResultSet
 
     public Time getTime(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getTime(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getTime(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int columnIndex = resultMetadata.getColumnIndex(columnLabel);
@@ -742,7 +744,7 @@ public class HPCCResultSet implements ResultSet
 
     public Timestamp getTimestamp(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getTimestamp(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getTimestamp(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int columnIndex = resultMetadata.getColumnIndex(columnLabel);
@@ -767,7 +769,7 @@ public class HPCCResultSet implements ResultSet
 
     public InputStream getAsciiStream(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getAsciiStream(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getAsciiStream(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int columnIndex = resultMetadata.getColumnIndex(columnLabel);
@@ -790,7 +792,7 @@ public class HPCCResultSet implements ResultSet
 
     public InputStream getUnicodeStream(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getUnicodeStream(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getUnicodeStream(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int columnIndex = resultMetadata.getColumnIndex(columnLabel);
@@ -813,7 +815,7 @@ public class HPCCResultSet implements ResultSet
 
     public InputStream getBinaryStream(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet: getBinaryStream(" + columnLabel + ")");
+        log(Level.FINEST, "HPCCResultSet: getBinaryStream(" + columnLabel + ")");
         if (index >= 0 && index <= rows.size())
         {
             int columnIndex = resultMetadata.getColumnIndex(columnLabel);
@@ -836,31 +838,30 @@ public class HPCCResultSet implements ResultSet
 
     public SQLWarning getWarnings() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getWarnings");
+        log(Level.FINEST, "HPCCResultSet getWarnings");
         return warnings;
     }
 
     public void clearWarnings() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet clearWarnings");
+        log(Level.FINEST, "HPCCResultSet clearWarnings");
         warnings = null;
     }
 
-    public String getCursorName() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getCursorName");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public String getCursorName() throws SQLException{
+        handleUnsupportedMethod("getCursorName()");
+        return null;
     }
 
     public ResultSetMetaData getMetaData() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getMetaData");
+        log(Level.FINEST, "HPCCResultSet getMetaData");
         return resultMetadata;
     }
 
     public Object getObject(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getObject( " + columnIndex + " )" );
+        log(Level.FINEST, "HPCCResultSet getObject( " + columnIndex + " )" );
         if (index >= 0 && index <= rows.size())
         {
             lastResult = HPCCJDBCUtils.createSqlTypeObjFromStringObj(resultMetadata.getColumnType(columnIndex), rows.get(index).get(columnIndex - 1));
@@ -872,7 +873,7 @@ public class HPCCResultSet implements ResultSet
 
     public Object getObject(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getObject( " + columnLabel + " )" );
+        log(Level.FINEST, "HPCCResultSet getObject( " + columnLabel + " )" );
         if (index >= 0 && index <= rows.size())
         {
             int columnIndex = resultMetadata.getColumnIndex(columnLabel);
@@ -893,27 +894,24 @@ public class HPCCResultSet implements ResultSet
             throw new SQLException("Invalid Row Index");
     }
 
-    public int findColumn(String columnLabel) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet findColumn( " + columnLabel + " )" );
+    public int findColumn(String columnLabel) throws SQLException{
+        log(Level.FINEST, "HPCCResultSet findColumn( " + columnLabel + " )" );
         return resultMetadata.getColumnIndex(columnLabel);
     }
 
-    public Reader getCharacterStream(int columnIndex) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getCharacterStream( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Reader getCharacterStream(int columnIndex) throws SQLException{
+        handleUnsupportedMethod("getCharacterStream(int columnIndex)");
+        return null;
     }
 
-    public Reader getCharacterStream(String columnLabel) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getCharacterStream( " + columnLabel + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Reader getCharacterStream(String columnLabel) throws SQLException{
+        handleUnsupportedMethod("getCharacterStream(String columnLabel)");
+        return null;
     }
 
     public BigDecimal getBigDecimal(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getBigDecimal( " + columnIndex + " )" );
+        log(Level.FINEST, "HPCCResultSet getBigDecimal( " + columnIndex + " )" );
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
@@ -932,7 +930,7 @@ public class HPCCResultSet implements ResultSet
 
     public BigDecimal getBigDecimal(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getBigDecimal( " + columnLabel + " )" );
+        log(Level.FINEST, "HPCCResultSet getBigDecimal( " + columnLabel + " )" );
         if (index >= 0 && index <= rows.size())
         {
             int columnIndex = resultMetadata.getColumnIndex(columnLabel);
@@ -957,44 +955,42 @@ public class HPCCResultSet implements ResultSet
 
     public boolean isBeforeFirst() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet isBeforeFirst");
+        log(Level.FINEST, "HPCCResultSet isBeforeFirst");
         return (index < 0) ? true : false;
     }
 
     public boolean isAfterLast() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet isAfterLast");
+        log(Level.FINEST, "HPCCResultSet isAfterLast");
         return (index > rows.size() - 1) ? true : false;
     }
 
     public boolean isFirst() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet isFirst");
+        log(Level.FINEST, "HPCCResultSet isFirst");
         return index == 0 ? true : false;
     }
 
     public boolean isLast() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet isLast");
+        log(Level.FINEST, "HPCCResultSet isLast");
         return (index == rows.size() - 1) ? true : false;
     }
 
     public void beforeFirst() throws SQLException
     {
     	index = -1;
-//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet beforeFirst");
-//        throw new UnsupportedOperationException("Not supported");
+//        log(Level.FINEST, "HPCCResultSet beforeFirst");
+//        handleUnsupportedMethod(("Not supported");
     }
 
-    public void afterLast() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet afterLast");
-        throw new UnsupportedOperationException("Not supported");
+    public void afterLast() throws SQLException{
+        handleUnsupportedMethod("afterLast()");
     }
 
     public boolean first() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet first");
+        log(Level.FINEST, "HPCCResultSet first");
         if (rows.size() > 0)
         {
             index = 0;
@@ -1006,7 +1002,7 @@ public class HPCCResultSet implements ResultSet
 
     public boolean last() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet last");
+        log(Level.FINEST, "HPCCResultSet last");
         if (rows.size() > 0)
         {
             index = rows.size() - 1;
@@ -1018,13 +1014,13 @@ public class HPCCResultSet implements ResultSet
 
     public int getRow() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getRow");
+        log(Level.FINEST, "HPCCResultSet getRow");
         return index + 1;
     }
 
     public boolean absolute(int row) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet absolute");
+        log(Level.FINEST, "HPCCResultSet absolute");
         if (row > 0 && row <= rows.size())
         {
             index = row - 1;
@@ -1038,7 +1034,7 @@ public class HPCCResultSet implements ResultSet
 
     public boolean relative(int rows) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet relative");
+        log(Level.FINEST, "HPCCResultSet relative");
         int tmpindex = index + rows;
         if (tmpindex > 0 && tmpindex <= this.rows.size())
         {
@@ -1053,7 +1049,7 @@ public class HPCCResultSet implements ResultSet
 
     public boolean previous() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet previous");
+        log(Level.FINEST, "HPCCResultSet previous");
         if (index > 1)
         {
             index--;
@@ -1065,435 +1061,317 @@ public class HPCCResultSet implements ResultSet
         }
     }
 
-    public void setFetchDirection(int direction) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet setFetchDirection");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void setFetchDirection(int direction) throws SQLException{
+        handleUnsupportedMethod("setFetchDirection(int direction)");
     }
 
-    public int getFetchDirection() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getFetchDirection");
+    public int getFetchDirection() throws SQLException{
+        log(Level.FINEST, "HPCCResultSet getFetchDirection");
         return ResultSet.FETCH_FORWARD;
     }
 
-    public void setFetchSize(int rows) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet setFetchSize");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void setFetchSize(int rows) throws SQLException{
+        handleUnsupportedMethod("setFetchSize(int rows)");
     }
 
-    public int getFetchSize() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getFetchSize");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public int getFetchSize() throws SQLException{
+        handleUnsupportedMethod("getFetchSize()");
+        return 0;
     }
 
-    public int getType() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getType");
+    public int getType() throws SQLException{
+        log(Level.FINEST, "HPCCResultSet getType");
         return ResultSet.TYPE_SCROLL_INSENSITIVE;
     }
 
-    public int getConcurrency() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getConcurrency");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public int getConcurrency() throws SQLException{
+        handleUnsupportedMethod("getConcurrency()");
+        return 0;
     }
 
-    public boolean rowUpdated() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet rowUpdated");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public boolean rowUpdated() throws SQLException{
+        handleUnsupportedMethod("rowUpdated()");
+        return false;
     }
 
-    public boolean rowInserted() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet rowInserted");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public boolean rowInserted() throws SQLException{
+        handleUnsupportedMethod("rowInserted()");
+        return false;
     }
 
-    public boolean rowDeleted() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet rowDeleted");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public boolean rowDeleted() throws SQLException{
+        handleUnsupportedMethod("rowDeleted()");
+        return false;
     }
 
-    public void updateNull(int columnIndex) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNull( " + columnIndex + " )" );;
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateNull(int columnIndex) throws SQLException{
+        handleUnsupportedMethod("updateNull(int columnIndex)");
     }
 
-    public void updateBoolean(int columnIndex, boolean x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBoolean( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateBoolean(int columnIndex, boolean x) throws SQLException{
+        handleUnsupportedMethod("updateBoolean(int columnIndex, boolean x)");
     }
 
-    public void updateByte(int columnIndex, byte x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateByte( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateByte(int columnIndex, byte x) throws SQLException{
+        handleUnsupportedMethod("updateByte(int columnIndex, byte x)");
     }
 
-    public void updateShort(int columnIndex, short x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateShort(int columnIndex, short x) throws SQLException{
+        handleUnsupportedMethod("updateShort(int columnIndex, short x)");
     }
 
-    public void updateInt(int columnIndex, int x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateInt(int columnIndex, int x) throws SQLException{
+        handleUnsupportedMethod("updateInt(int columnIndex, int x)");
     }
 
-    public void updateLong(int columnIndex, long x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateLong(int columnIndex, long x) throws SQLException{
+        handleUnsupportedMethod("updateLong(int columnIndex, long x)");
     }
 
-    public void updateFloat(int columnIndex, float x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateFloat(int columnIndex, float x) throws SQLException{
+        handleUnsupportedMethod("updateFloat(int columnIndex, float x)");
     }
 
-    public void updateDouble(int columnIndex, double x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateDouble");
-        throw new UnsupportedOperationException("HPCCResultSet: updateDouble Not supported yet.");
+    public void updateDouble(int columnIndex, double x) throws SQLException{
+        handleUnsupportedMethod("updateDouble(int columnIndex, double x)");
     }
 
-    public void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: updateShort Not supported yet.");
+    public void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException{
+        handleUnsupportedMethod("updateBigDecimal(int columnIndex, BigDecimal x)");
     }
 
-    public void updateString(int columnIndex, String x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateString(int columnIndex, String x) throws SQLException{
+        handleUnsupportedMethod("updateString(int columnIndex, String x)");
     }
 
-    public void updateBytes(int columnIndex, byte[] x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: updateShort Not supported yet.");
+    public void updateBytes(int columnIndex, byte[] x) throws SQLException{
+        handleUnsupportedMethod("updateBytes(int columnIndex, byte[] x)");
     }
 
-    public void updateDate(int columnIndex, Date x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateDate");
-        throw new UnsupportedOperationException("HPCCResultSet: updateDate Not supported yet.");
+    public void updateDate(int columnIndex, Date x) throws SQLException{
+        handleUnsupportedMethod("updateDate(int columnIndex, Date x)");
     }
 
-    public void updateTime(int columnIndex, Time x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateTime(int columnIndex, Time x) throws SQLException{
+        handleUnsupportedMethod("updateTime(int columnIndex, Time x)");
     }
 
-    public void updateTimestamp(int columnIndex, Timestamp x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateTimestamp(int columnIndex, Timestamp x) throws SQLException{
+        handleUnsupportedMethod("updateTimestamp(int columnIndex, Timestamp x)");
     }
 
-    public void updateAsciiStream(int columnIndex, InputStream x, int length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateAsciiStream(int columnIndex, InputStream x, int length) throws SQLException{
+        handleUnsupportedMethod("updateAsciiStream(int columnIndex, InputStream x, int length)");
     }
 
-    public void updateBinaryStream(int columnIndex, InputStream x, int length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateBinaryStream(int columnIndex, InputStream x, int length) throws SQLException{
+        handleUnsupportedMethod("updateBinaryStream(int columnIndex, InputStream x, int length)");
     }
 
-    public void updateCharacterStream(int columnIndex, Reader x, int length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateCharacterStream(int columnIndex, Reader x, int length) throws SQLException{
+        handleUnsupportedMethod("updateCharacterStream(int columnIndex, Reader x, int length)");
     }
 
-    public void updateObject(int columnIndex, Object x, int scaleOrLength) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateObject(int columnIndex, Object x, int scaleOrLength) throws SQLException{
+        handleUnsupportedMethod("updateObject(int columnIndex, Object x, int scaleOrLength)");
     }
 
-    public void updateObject(int columnIndex, Object x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnIndex + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateObject(int columnIndex, Object x) throws SQLException{
+        handleUnsupportedMethod("updateObject(int columnIndex, Object x)");
     }
 
-    public void updateNull(String columnLabel) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNull( " + columnLabel + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateNull(String columnLabel) throws SQLException{
+        handleUnsupportedMethod("updateNull(String columnLabel)");
     }
 
-    public void updateBoolean(String columnLabel, boolean x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBoolean( " + columnLabel + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateBoolean(String columnLabel, boolean x) throws SQLException{
+        handleUnsupportedMethod("updateBoolean(String columnLabel, boolean x)");
     }
 
-    public void updateByte(String columnLabel, byte x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateByte( " + columnLabel + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateByte(String columnLabel, byte x) throws SQLException{
+        handleUnsupportedMethod("updateByte(String columnLabel, byte x)");
     }
 
-    public void updateShort(String columnLabel, short x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateShort( " + columnLabel + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateShort(String columnLabel, short x) throws SQLException{
+        handleUnsupportedMethod("updateShort(String columnLabel, short x)");
     }
 
-    public void updateInt(String columnLabel, int x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateInt( " + columnLabel + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateInt(String columnLabel, int x) throws SQLException{
+        handleUnsupportedMethod("updateInt(String columnLabel, int x)");
     }
 
-    public void updateLong(String columnLabel, long x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateLong( " + columnLabel + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateLong(String columnLabel, long x) throws SQLException{
+        handleUnsupportedMethod("updateLong(String columnLabel, long x)");
     }
 
-    public void updateFloat(String columnLabel, float x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateFloat( " + columnLabel + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateFloat(String columnLabel, float x) throws SQLException{
+        handleUnsupportedMethod("updateFloat(String columnLabel, float x)");
     }
 
-    public void updateDouble(String columnLabel, double x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateDouble( " + columnLabel + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateDouble(String columnLabel, double x) throws SQLException{
+        handleUnsupportedMethod("updateDouble(String columnLabel, double x)");
     }
 
-    public void updateBigDecimal(String columnLabel, BigDecimal x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBigDecimal( " + columnLabel + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateBigDecimal(String columnLabel, BigDecimal x) throws SQLException{
+        handleUnsupportedMethod("updateBigDecimal(String columnLabel, BigDecimal x)");
     }
 
-    public void updateString(String columnLabel, String x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateString( " + columnLabel + " )" );
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateString(String columnLabel, String x) throws SQLException{
+        handleUnsupportedMethod("updateString(String columnLabel, String x)");
     }
 
-    public void updateBytes(String columnLabel, byte[] x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBytes");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateBytes(String columnLabel, byte[] x) throws SQLException{
+        handleUnsupportedMethod("updateBytes(String columnLabel, byte[] x)");
     }
 
-    public void updateDate(String columnLabel, Date x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateDate");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateDate(String columnLabel, Date x) throws SQLException{
+    	handleUnsupportedMethod("updateDate(String columnLabel, Date x)");
     }
 
-    public void updateTime(String columnLabel, Time x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateTime");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateTime(String columnLabel, Time x) throws SQLException{
+        handleUnsupportedMethod("updateTime(String columnLabel, Time x)");
     }
 
-    public void updateTimestamp(String columnLabel, Timestamp x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateTimestamp");
-        throw new UnsupportedOperationException("HPCCResultSet: updateTimestamp Not supported yet.");
+    public void updateTimestamp(String columnLabel, Timestamp x) throws SQLException{
+        handleUnsupportedMethod("updateTimestamp(String columnLabel, Timestamp x)");
     }
 
-    public void updateAsciiStream(String columnLabel, InputStream x, int length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateAsciiStream");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateAsciiStream(String columnLabel, InputStream x, int length) throws SQLException{
+        handleUnsupportedMethod("updateAsciiStream(String columnLabel, InputStream x, int length)");
     }
 
-    public void updateBinaryStream(String columnLabel, InputStream x, int length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBinaryStream");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateBinaryStream(String columnLabel, InputStream x, int length) throws SQLException{
+        handleUnsupportedMethod("updateBinaryStream(String columnLabel, InputStream x, int length)");
     }
 
-    public void updateCharacterStream(String columnLabel, Reader reader, int length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateCharacterStream");
-        throw new UnsupportedOperationException("HPCCResultSet: updateCharacterStream Not supported yet.");
+    public void updateCharacterStream(String columnLabel, Reader reader, int length) throws SQLException{
+        handleUnsupportedMethod("updateCharacterStream(String columnLabel, Reader reader, int length)");
     }
 
-    public void updateObject(String columnLabel, Object x, int scaleOrLength) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateObject");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateObject(String columnLabel, Object x, int scaleOrLength) throws SQLException{
+        handleUnsupportedMethod("updateObject(String columnLabel, Object x, int scaleOrLength)");
     }
 
-    public void updateObject(String columnLabel, Object x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateObject");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateObject(String columnLabel, Object x) throws SQLException{
+        handleUnsupportedMethod("updateObject(String columnLabel, Object x)");
     }
 
-    public void insertRow() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet insertRow");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void insertRow() throws SQLException{
+        handleUnsupportedMethod("insertRow()");
     }
 
-    public void updateRow() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateRow");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateRow() throws SQLException{
+        handleUnsupportedMethod("updateRow()");
     }
 
-    public void deleteRow() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet deleteRow");
-        throw new UnsupportedOperationException("HPCCResultSet: deleteRow Not supported yet.");
+    public void deleteRow() throws SQLException{
+        handleUnsupportedMethod("deleteRow()");
     }
 
-    public void refreshRow() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet refreshRow");
-        throw new UnsupportedOperationException("HPCCResultSet: refreshRow Not supported yet.");
+    public void refreshRow() throws SQLException{
+        handleUnsupportedMethod("refreshRow()");
     }
 
-    public void cancelRowUpdates() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet cancelRowUpdates");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void cancelRowUpdates() throws SQLException{
+        handleUnsupportedMethod("cancelRowUpdates()");
     }
 
-    public void moveToInsertRow() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet moveToInsertRow");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void moveToInsertRow() throws SQLException{
+        handleUnsupportedMethod("moveToInsertRow()");
     }
 
-    public void moveToCurrentRow() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet moveToCurrentRow");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void moveToCurrentRow() throws SQLException{
+        handleUnsupportedMethod("moveToCurrentRow()");
     }
 
-    public Statement getStatement() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getStatement");
+    public Statement getStatement() throws SQLException{
+        log(Level.FINEST, "HPCCResultSet getStatement");
         return statement;
     }
 
-    public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getObject");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException{
+        handleUnsupportedMethod("getObject(int columnIndex, Map<String, Class<?>> map)");
+        return null;
     }
 
-    public Ref getRef(int columnIndex) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getRef");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Ref getRef(int columnIndex) throws SQLException{
+        handleUnsupportedMethod("getRef(int columnIndex)");
+        return null;
     }
 
-    public Blob getBlob(int columnIndex) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getBlob");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Blob getBlob(int columnIndex) throws SQLException{
+        handleUnsupportedMethod("getBlob(int columnIndex)");
+        return null;
     }
 
-    public Clob getClob(int columnIndex) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getClob");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Clob getClob(int columnIndex) throws SQLException{
+        handleUnsupportedMethod("getClob(int columnIndex)");
+        return null;
     }
 
-    public Array getArray(int columnIndex) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getArray");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Array getArray(int columnIndex) throws SQLException{
+        handleUnsupportedMethod("getArray(int columnIndex)");
+        return null;
     }
 
-    public Object getObject(String columnLabel, Map<String, Class<?>> map) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getObject");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Object getObject(String columnLabel, Map<String, Class<?>> map) throws SQLException{
+        handleUnsupportedMethod("getObject(String columnLabel, Map<String, Class<?>> map)");
+        return null;
     }
 
-    public Ref getRef(String columnLabel) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getRef");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Ref getRef(String columnLabel) throws SQLException{
+        handleUnsupportedMethod("getRef(String columnLabel)");
+        return null;
     }
 
-    public Blob getBlob(String columnLabel) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getBlob");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Blob getBlob(String columnLabel) throws SQLException{
+        handleUnsupportedMethod("getBlob(String columnLabel)");
+        return null;
     }
 
-    public Clob getClob(String columnLabel) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getClob");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Clob getClob(String columnLabel) throws SQLException{
+        handleUnsupportedMethod("getClob(String columnLabel)");
+        return null;
     }
 
-    public Array getArray(String columnLabel) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getArray");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Array getArray(String columnLabel) throws SQLException{
+        handleUnsupportedMethod("getArray(String columnLabel)");
+        return null;
     }
 
-    public Date getDate(int columnIndex, Calendar cal) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getDate");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Date getDate(int columnIndex, Calendar cal) throws SQLException{
+        handleUnsupportedMethod("getDate(int columnIndex, Calendar cal)");
+        return null;
     }
 
-    public Date getDate(String columnLabel, Calendar cal) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getDate");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Date getDate(String columnLabel, Calendar cal) throws SQLException{
+        handleUnsupportedMethod("getDate(String columnLabel, Calendar cal)");
+        return null;
     }
 
-    public Time getTime(int columnIndex, Calendar cal) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getTime");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Time getTime(int columnIndex, Calendar cal) throws SQLException{
+        handleUnsupportedMethod("getTime(int columnIndex, Calendar cal)");
+        return null;
     }
 
-    public Time getTime(String columnLabel, Calendar cal) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getTime");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Time getTime(String columnLabel, Calendar cal) throws SQLException{
+        handleUnsupportedMethod("getTime(String columnLabel, Calendar cal)");
+        return null;
     }
 
-    public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getTimestamp");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException{
+        handleUnsupportedMethod("getTimestamp(int columnIndex, Calendar cal)");
+        return null;
     }
 
-    public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getTimestamp");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException{
+        handleUnsupportedMethod("getTimestamp(String columnLabel, Calendar cal)");
+        return null;
     }
 
     public URL getURL(int columnIndex) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getURL");
+        log(Level.FINEST, "HPCCResultSet getURL");
         try
         {
             if (index >= 0 && index <= rows.size())
@@ -1519,7 +1397,7 @@ public class HPCCResultSet implements ResultSet
 
     public URL getURL(String columnLabel) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getURL");
+        log(Level.FINEST, "HPCCResultSet getURL");
         if (index >= 0 && index <= rows.size())
         {
             int columnIndex = resultMetadata.getColumnIndex(columnLabel);
@@ -1547,385 +1425,250 @@ public class HPCCResultSet implements ResultSet
             throw new SQLException("Invalid Row Index");
     }
 
-    public void updateRef(int columnIndex, Ref x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateRef");
-        throw new UnsupportedOperationException("HPCCResultSet: updateRef(int columnIndex, Ref x) Not supported yet.");
+    public void updateRef(int columnIndex, Ref x) throws SQLException{
+        handleUnsupportedMethod("updateRef(int columnIndex, Ref x)");
     }
 
-    public void updateRef(String columnLabel, Ref x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateRef");
-        throw new UnsupportedOperationException("HPCCResultSet: updateRef(String columnLabel, Ref x) Not supported yet.");
+    public void updateRef(String columnLabel, Ref x) throws SQLException{
+        handleUnsupportedMethod("updateRef(String columnLabel, Ref x)");
     }
 
-    public void updateBlob(int columnIndex, Blob x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBlob");
-        throw new UnsupportedOperationException("HPCCResultSet: updateBlob(int columnIndex, Blob x)  Not supported yet.");
+    public void updateBlob(int columnIndex, Blob x) throws SQLException{
+        handleUnsupportedMethod("updateBlob(int columnIndex, Blob x)");
     }
 
-    public void updateBlob(String columnLabel, Blob x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBlob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateBlob(String columnLabel, Blob x) Not supported yet.");
+    public void updateBlob(String columnLabel, Blob x) throws SQLException{
+        handleUnsupportedMethod("updateBlob(String columnLabel, Blob x)");
     }
 
-    public void updateClob(int columnIndex, Clob x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateClob");
-        throw new UnsupportedOperationException("HPCCResultSet: updateClob(int columnIndex, Clob x) Not supported yet.");
+    public void updateClob(int columnIndex, Clob x) throws SQLException{
+        handleUnsupportedMethod("updateClob(int columnIndex, Clob x)");
     }
 
-    public void updateClob(String columnLabel, Clob x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateClob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateClob(String columnLabel, Clob x) Not supported yet.");
+    public void updateClob(String columnLabel, Clob x) throws SQLException{
+        handleUnsupportedMethod("updateClob(String columnLabel, Clob x)");
     }
 
-    public void updateArray(int columnIndex, Array x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateArray");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateArray(int columnIndex, Array x) Not supported yet.");
+    public void updateArray(int columnIndex, Array x) throws SQLException{
+        handleUnsupportedMethod("updateArray(int columnIndex, Array x)");
     }
 
-    public void updateArray(String columnLabel, Array x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateArray");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateArray(String columnLabel, Array x)  Not supported yet.");
+    public void updateArray(String columnLabel, Array x) throws SQLException{
+        handleUnsupportedMethod("updateArray(String columnLabel, Array x)");
     }
 
-    public RowId getRowId(int columnIndex) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getRowId");
-        throw new UnsupportedOperationException("HPCCResultSet: getRowId(int columnIndex) Not supported yet.");
+    public RowId getRowId(int columnIndex) throws SQLException{
+        handleUnsupportedMethod("getRowId(int columnIndex)");
+        return null;
     }
 
-    public RowId getRowId(String columnLabel) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getRowId");
-        throw new UnsupportedOperationException("HPCCResultSet: getRowId(String columnLabel) Not supported yet.");
+    public RowId getRowId(String columnLabel) throws SQLException{
+        handleUnsupportedMethod("getRowId(String columnLabel)");
+        return null;
     }
 
-    public void updateRowId(int columnIndex, RowId x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateRowId");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateRowId(int columnIndex, RowId x) Not supported yet.");
+    public void updateRowId(int columnIndex, RowId x) throws SQLException{
+        handleUnsupportedMethod("updateRowId(int columnIndex, RowId x)");
     }
 
-    public void updateRowId(String columnLabel, RowId x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateRowId");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateRowId(String columnLabel, RowId x) Not supported yet.");
+    public void updateRowId(String columnLabel, RowId x) throws SQLException{
+        handleUnsupportedMethod("updateRowId(String columnLabel, RowId x)");
     }
 
-    public int getHoldability() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getHoldability");
-        throw new UnsupportedOperationException("HPCCResultSet: getHoldability() Not supported yet.");
+    public int getHoldability() throws SQLException{
+        handleUnsupportedMethod("getHoldability()");
+        return 0;
     }
 
-    public boolean isClosed() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet isClosed");
+    public boolean isClosed() throws SQLException{
+        log(Level.FINEST, "HPCCResultSet isClosed");
         return closed;
     }
 
-    public void updateNString(int columnIndex, String nString) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNString");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateNString(int columnIndex, String nString) Not supported yet.");
+    public void updateNString(int columnIndex, String nString) throws SQLException{
+        handleUnsupportedMethod("updateNString(int columnIndex, String nString)");
     }
 
-    public void updateNString(String columnLabel, String nString) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNString");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateNString(String columnLabel, String nString) Not supported yet.");
+    public void updateNString(String columnLabel, String nString) throws SQLException{
+        handleUnsupportedMethod("updateNString(String columnLabel, String nString)");
     }
 
-    public void updateNClob(int columnIndex, NClob nClob) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNClob");
-        throw new UnsupportedOperationException("HPCCResultSet: Not supported yet.");
+    public void updateNClob(int columnIndex, NClob nClob) throws SQLException{
+        handleUnsupportedMethod("Not supported yet.");
     }
 
-    public void updateNClob(String columnLabel, NClob nClob) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNClob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateNClob(String columnLabel, NClob nClob) Not supported yet.");
+    public void updateNClob(String columnLabel, NClob nClob) throws SQLException{
+        handleUnsupportedMethod("updateNClob(String columnLabel, NClob nClob)");
     }
 
-    public NClob getNClob(int columnIndex) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getNClob");
-        throw new UnsupportedOperationException("HPCCResultSet: getNClob(int columnIndex) Not supported yet.");
+    public NClob getNClob(int columnIndex) throws SQLException{
+        handleUnsupportedMethod("getNClob(int columnIndex)");
+        return null;
     }
 
-    public NClob getNClob(String columnLabel) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getNClob");
-        throw new UnsupportedOperationException("HPCCResultSet: getNClob(String columnLabel) Not supported yet.");
+    public NClob getNClob(String columnLabel) throws SQLException{
+        handleUnsupportedMethod("getNClob(String columnLabel)");
+        return null;
     }
 
-    public SQLXML getSQLXML(int columnIndex) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getSQLXML");
-        throw new UnsupportedOperationException("HPCCResultSet: getSQLXML(int columnIndex) Not supported yet.");
+    public SQLXML getSQLXML(int columnIndex) throws SQLException{
+        handleUnsupportedMethod("getSQLXML(int columnIndex)");
+        return null;
     }
 
-    public SQLXML getSQLXML(String columnLabel) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getSQLXML");
-        throw new UnsupportedOperationException("HPCCResultSet: getSQLXML(String columnLabel) Not supported yet.");
+    public SQLXML getSQLXML(String columnLabel) throws SQLException{
+        handleUnsupportedMethod("getSQLXML(String columnLabel)");
+        return null;
     }
 
-    public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateSQLXML");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateSQLXML(int columnIndex, SQLXML xmlObject) Not supported yet.");
+    public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException{
+        handleUnsupportedMethod("updateSQLXML(int columnIndex, SQLXML xmlObject)");
     }
 
-    public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateSQLXML");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateSQLXML(String columnLabel, SQLXML xmlObject) Not supported yet.");
+    public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException{
+        handleUnsupportedMethod("updateSQLXML(String columnLabel, SQLXML xmlObject)");
     }
 
-    public String getNString(int columnIndex) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getNString");
-        throw new UnsupportedOperationException("HPCCResultSet: getNString(int columnIndex) Not supported yet.");
+    public String getNString(int columnIndex) throws SQLException{
+        handleUnsupportedMethod("getNString(int columnIndex)");
+        return null;
     }
 
-    public String getNString(String columnLabel) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getNString");
-        throw new UnsupportedOperationException("HPCCResultSet: getNString(String columnLabel) Not supported yet.");
+    public String getNString(String columnLabel) throws SQLException{
+        handleUnsupportedMethod("getNString(String columnLabel)");
+        return null;
     }
 
-    public Reader getNCharacterStream(int columnIndex) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getNCharacterStream");
-        throw new UnsupportedOperationException("HPCCResultSet: getNCharacterStream(int columnIndex) Not supported yet.");
+    public Reader getNCharacterStream(int columnIndex) throws SQLException{
+        handleUnsupportedMethod("getNCharacterStream(int columnIndex)");
+        return null;
     }
 
-    public Reader getNCharacterStream(String columnLabel) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet getNCharacterStream");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: getNCharacterStream(String columnLabel) Not supported yet.");
+    public Reader getNCharacterStream(String columnLabel) throws SQLException{
+        handleUnsupportedMethod("getNCharacterStream(String columnLabel)");
+        return null;
     }
 
-    public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNCharacterStream");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateNCharacterStream(int columnIndex, Reader x, long length) Not supported yet.");
+    public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException{
+        handleUnsupportedMethod("updateNCharacterStream(int columnIndex, Reader x, long length)");
     }
 
-    public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNCharacterStream");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateNCharacterStream(String columnLabel, Reader reader, long length) Not supported yet.");
+    public void updateNCharacterStream(String columnLabel, Reader reader, long length) throws SQLException{
+        handleUnsupportedMethod("updateNCharacterStream(String columnLabel, Reader reader, long length)");
     }
 
-    public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateAsciiStream");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateAsciiStream(int columnIndex, InputStream x, long length) Not supported yet.");
+    public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException{
+        handleUnsupportedMethod("updateAsciiStream(int columnIndex, InputStream x, long length)");
     }
 
-    public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBinaryStream");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateBinaryStream(int columnIndex, InputStream x, long length) Not supported yet.");
+    public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException{
+        handleUnsupportedMethod("updateBinaryStream(int columnIndex, InputStream x, long length)");
     }
 
-    public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateCharacterStream");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateCharacterStream(int columnIndex, Reader x, long length) Not supported yet.");
+    public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException{
+        handleUnsupportedMethod("updateCharacterStream(int columnIndex, Reader x, long length)");
     }
 
-    public void updateAsciiStream(String columnLabel, InputStream x, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateAsciiStream");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateAsciiStream(String columnLabel, InputStream x, long length) Not supported yet.");
+    public void updateAsciiStream(String columnLabel, InputStream x, long length) throws SQLException{
+        handleUnsupportedMethod("updateAsciiStream(String columnLabel, InputStream x, long length)");
     }
 
-    public void updateBinaryStream(String columnLabel, InputStream x, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBinaryStream");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateBinaryStream(String columnLabel, InputStream x, long length) Not supported yet.");
+    public void updateBinaryStream(String columnLabel, InputStream x, long length) throws SQLException{
+        handleUnsupportedMethod("updateBinaryStream(String columnLabel, InputStream x, long length)");
     }
 
-    public void updateCharacterStream(String columnLabel, Reader reader, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateCharacterStream");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateCharacterStream(String columnLabel, Reader reader, long length) Not supported yet.");
+    public void updateCharacterStream(String columnLabel, Reader reader, long length) throws SQLException{
+        handleUnsupportedMethod("updateCharacterStream(String columnLabel, Reader reader, long length)");
     }
 
-    public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBlob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateBlob(int columnIndex, InputStream inputStream, long length) Not supported yet.");
+    public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException{
+        handleUnsupportedMethod("updateBlob(int columnIndex, InputStream inputStream, long length)");
     }
 
-    public void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBlob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateBlob(String columnLabel, InputStream inputStream,    long length) Not supported yet.");
+    public void updateBlob(String columnLabel, InputStream inputStream, long length) throws SQLException{
+        handleUnsupportedMethod("updateBlob(String columnLabel, InputStream inputStream, long length)");
     }
 
-    public void updateClob(int columnIndex, Reader reader, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateClob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateClob(int columnIndex, Reader reader, long length) Not supported yet.");
+    public void updateClob(int columnIndex, Reader reader, long length) throws SQLException{
+        handleUnsupportedMethod("updateClob(int columnIndex, Reader reader, long length)");
     }
 
-    public void updateClob(String columnLabel, Reader reader, long length) throws SQLException
-    {
-    HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateClob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateClob(String columnLabel, Reader reader, long length) Not supported yet.");
+    public void updateClob(String columnLabel, Reader reader, long length) throws SQLException{
+        handleUnsupportedMethod("updateClob(String columnLabel, Reader reader, long length)");
     }
 
-    public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNClob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateNClob(int columnIndex, Reader reader, long length) Not supported yet.");
+    public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException{
+        handleUnsupportedMethod("updateNClob(int columnIndex, Reader reader, long length)");
     }
 
-    public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNClob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateNClob(String columnLabel, Reader reader, long length) Not supported yet.");
+    public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException{
+        handleUnsupportedMethod("updateNClob(String columnLabel, Reader reader, long length)");
     }
 
-    public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNCharacterStream");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateNCharacterStream(int columnIndex, Reader x) Not supported yet.");
+    public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException{
+        handleUnsupportedMethod("updateNCharacterStream(int columnIndex, Reader x)");
     }
 
-    public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNCharacterStream");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateNCharacterStream(String columnLabel, Reader reader) Not supported yet.");
+    public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException{
+        handleUnsupportedMethod("updateNCharacterStream(String columnLabel, Reader reader)");
     }
 
-    public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateAsciiStream");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateAsciiStream(int columnIndex, InputStream x)Not supported yet.");
+    public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException{
+        handleUnsupportedMethod("updateAsciiStream(int columnIndex, InputStream x)");
     }
 
-    public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBinaryStream");
-        throw new UnsupportedOperationException("HPCCResultSet: updateBinaryStream Not supported yet.");
+    public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException{
+        handleUnsupportedMethod("updateBinaryStream(int columnIndex, InputStream x)");
     }
 
-    public void updateCharacterStream(int columnIndex, Reader x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateCharacterStream");
-        throw new UnsupportedOperationException("HPCCResultSet: updateCharacterStream Not supported yet.");
+    public void updateCharacterStream(int columnIndex, Reader x) throws SQLException{
+        handleUnsupportedMethod("updateCharacterStream(int columnIndex, Reader x)");
     }
 
-    public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateAsciiStream");
-        throw new UnsupportedOperationException("HPCCResultSet: updateAsciiStream Not supported yet.");
+    public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException{
+        handleUnsupportedMethod("updateAsciiStream(String columnLabel, InputStream x)");
     }
 
-    public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBinaryStream");
-        throw new UnsupportedOperationException("HPCCResultSet: updateBinaryStream Not supported yet.");
+    public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException{
+        handleUnsupportedMethod("updateBinaryStream(String columnLabel, InputStream x)");
     }
 
-    public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateCharacterStream");
-        throw new UnsupportedOperationException("HPCCResultSet: updateCharacterStream Not supported yet.");
+    public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException{
+        handleUnsupportedMethod("updateCharacterStream(String columnLabel, Reader reader)");
     }
 
-    public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBlob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateBlob(int columnIndex, InputStream inputStream) Not supported yet.");
+    public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException{
+        handleUnsupportedMethod("updateBlob(int columnIndex, InputStream inputStream)");
     }
 
-    public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateBlob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateBlob(String columnLabel, InputStream inputStream) Not supported yet.");
+    public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException{
+        handleUnsupportedMethod("updateBlob(String columnLabel, InputStream inputStream)");
     }
 
-    public void updateClob(int columnIndex, Reader reader) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateClob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateClob(int columnIndex, Reader reader) Not supported yet.");
+    public void updateClob(int columnIndex, Reader reader) throws SQLException{
+        handleUnsupportedMethod("updateClob(int columnIndex, Reader reader)");
     }
 
-    public void updateClob(String columnLabel, Reader reader) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateClob");
-        throw new UnsupportedOperationException(
-                "HPCCResultSet: updateClob(String columnLabel, Reader reader)  Not supported yet.");
+    public void updateClob(String columnLabel, Reader reader) throws SQLException{
+        handleUnsupportedMethod("updateClob(String columnLabel, Reader reader)");
     }
 
-    public void updateNClob(int columnIndex, Reader reader) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNClob");
-        throw new UnsupportedOperationException("HPCCResultSet: updateNClob Not supported yet.");
+    public void updateNClob(int columnIndex, Reader reader) throws SQLException{
+        handleUnsupportedMethod("updateNClob(int columnIndex, Reader reader)");
     }
 
-    public void updateNClob(String columnLabel, Reader reader) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet updateNClob");
-        throw new UnsupportedOperationException("HPCCResultSet: updateNClob Not supported yet.");
+    public void updateNClob(String columnLabel, Reader reader) throws SQLException{
+        handleUnsupportedMethod("updateNClob(String columnLabel, Reader reader)");
     }
 
-    public <T> T unwrap(Class<T> iface) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet unwrap");
-        throw new UnsupportedOperationException("HPCCResultSet: unwrap Not supported yet.");
+    public <T> T unwrap(Class<T> iface) throws SQLException{
+        handleUnsupportedMethod("unwrap(Class<T> iface)");
+        return null;
     }
 
-    public boolean isWrapperFor(Class<?> iface) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCResultSet isWrapperFor");
-        throw new UnsupportedOperationException("HPCCResultSet: isWrapperFor Not supported yet.");
+    public boolean isWrapperFor(Class<?> iface) throws SQLException{
+        handleUnsupportedMethod("isWrapperFor(Class<?> iface)");
+        return false;
     }
 
 	@Override
@@ -1939,4 +1682,17 @@ public class HPCCResultSet implements ResultSet
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	private static void log(String infoMessage){
+		log(Level.INFO, infoMessage);
+	}
+	
+	private static void log(Level loggingLevel, String infoMessage){
+		logger.log(loggingLevel, HPCCStatement.class.getSimpleName()+": "+infoMessage);
+	}
+	
+	private void handleUnsupportedMethod(String methodSignature) throws SQLException {
+		logger.log(Level.SEVERE, methodSignature+" is not supported yet.");
+        throw new UnsupportedOperationException();
+	}    
 }

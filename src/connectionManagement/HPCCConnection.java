@@ -106,9 +106,8 @@ public class HPCCConnection implements Connection
     	return createHPCCESPConnection(theurl, Integer.parseInt(driverProperties.getProperty("ConnectTimeoutMilli")));
     }
     
-    protected HttpURLConnection createHPCCESPConnection(URL theurl, int connectionTimeout) throws IOException{
-//    	driverProperties.getProperty("ConnectTimeoutMilli"), driverProperties.getProperty("ReadTimeoutMilli")
-        HttpURLConnection conn = (HttpURLConnection) theurl.openConnection();
+    protected HttpURLConnection createHPCCESPConnection(URL url, int connectionTimeout) throws IOException{
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setInstanceFollowRedirects(false);
         conn.setRequestProperty("Authorization", createBasicAuth(driverProperties.getProperty("username"), driverProperties.getProperty("password")));
         conn.setRequestMethod("GET");
