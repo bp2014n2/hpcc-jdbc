@@ -81,6 +81,7 @@ public class ECLEngine
     private DocumentBuilderFactory      dbf = DocumentBuilderFactory.newInstance();
     
     private String sub = null;
+	private String sql;
 
     public ECLEngine(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata)
     {
@@ -146,6 +147,7 @@ public class ECLEngine
     
     public void generateECL(String sqlQuery) throws SQLException 
     {
+    	sql = sqlQuery;
     	sqlQuery = convertToAppropriateSQL(sqlQuery);
     	switch(SQLParser.sqlIsInstanceOf(sqlQuery)) {
     	case "Select":
@@ -409,91 +411,7 @@ public class ECLEngine
 			StringBuilder sb = new StringBuilder();
 
 			sb.append("&eclText=\n");
-//
-//			int expectedParamCount = sqlParser.getParameterizedCount();
-//			if (expectedParamCount > 0 && inParameters != null) {
-//				if (expectedParamCount <= inParameters.size()) {
-//					for (int paramIndex = 1; paramIndex <= inParameters.size(); paramIndex++) {
-//						Object invalue = inParameters.get(paramIndex);
-//						String value = null;
-//
-//						if (invalue != null) {
-//							try {
-//								if (invalue instanceof String) {
-//									sb.append("STRING ");
-//									value = (String) invalue;
-//									if (value.isEmpty())
-//										value = "''";
-//								} else if (invalue instanceof Boolean) {
-//									sb.append("BOOLEAN ");
-//									value = ((Boolean) invalue).toString();
-//								} else if (invalue instanceof Byte) {
-//									value = ((Byte) invalue).toString();
-//								} else if (invalue instanceof Short) {
-//									value = ((Short) invalue).toString();
-//								} else if (invalue instanceof Integer) {
-//									sb.append("INTEGER ");
-//									value = ((Integer) invalue).toString();
-//								} else if (invalue instanceof Long) {
-//									sb.append("INTEGER ");
-//									value = ((Long) invalue).toString();
-//								} else if (invalue instanceof Float) {
-//									sb.append("REAL ");
-//									value = ((Float) invalue).toString();
-//								} else if (invalue instanceof Double) {
-//									sb.append("DECIMAL");
-//									value = ((Double) invalue).toString();
-//								} else if (invalue instanceof BigDecimal) {
-//									sb.append("DECIMAL");
-//									value = ((BigDecimal) invalue).toString();
-//								} else if (invalue instanceof byte[]) {
-//									sb.append("STRING ");
-//									value = ((byte[]) invalue).toString();
-//								} else if (invalue instanceof Time) {
-//									sb.append("STRING ");
-//									value = ((Time) invalue).toString();
-//								} else if (invalue instanceof java.sql.Date) {
-//									sb.append("STRING ");
-//									value = ((java.sql.Date) invalue)
-//											.toString();
-//								} else if (invalue instanceof Timestamp) {
-//									sb.append("STRING ");
-//									value = ((Timestamp) invalue).toString();
-//								} else if (invalue instanceof InputStream) {
-//									sb.append("STRING ");
-//									value = ((InputStream) invalue).toString();
-//								} else {
-//									sb.append("STRING ");
-//									value = invalue.toString();
-//								}
-//							} catch (Exception e) {
-//								throw new SQLException(
-//										"Error while converting input parameter("
-//												+ paramIndex
-//												+ ") to string representation.");
-//							}
-//						} else
-//							throw new SQLException(
-//									"Could not bind parameter (null)");
-//						String varName = SQLParser.parameterizedPrefix
-//								+ paramIndex;
-//						int charIndex;
-//						int occurenceNum = 1;
-//						for (charIndex = 0; charIndex <= eclCode.length(); charIndex++)
-//							if (eclCode.charAt(charIndex) == '?')
-//								if (occurenceNum == paramIndex)
-//									break;
-//								else
-//									occurenceNum++;
-//						eclCode.deleteCharAt(charIndex).insert(charIndex,
-//								varName);
-//						sb.append(varName).append(" := ").append(value)
-//								.append(";\n");
-//					}
-//				} else
-//					throw new Exception(
-//							"Insufficient number of parameters provided");
-//			}
+			
 			if (sub != null) {
 				String subRange = sub.substring(sub.indexOf("["),
 						sub.indexOf("]") + 1);
@@ -508,6 +426,7 @@ public class ECLEngine
 			}
 			sb.append(eclCode.toString());
 			sb.append("\n");
+			sb.append("\n\n\n//"+sql);
 
 			return sb.toString();
 		} catch (Exception e) {
