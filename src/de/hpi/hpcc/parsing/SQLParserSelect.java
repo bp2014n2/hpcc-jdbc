@@ -187,6 +187,6 @@ public class SQLParserSelect extends SQLParser {
 	}
 
 	public boolean isCount() {
-		return (getSelectItems().size() == 1 && getSelectItems().get(0).toString().toLowerCase().contains("count"));
+		return (getSelectItems().size() == 1 && getSelectItems().get(0).toString().toLowerCase().contains("count") && getGroupBys() == null);
 	}
 }

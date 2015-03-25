@@ -58,8 +58,8 @@ public class ECLBuilderTest {
 	public void shouldTranslateSelectWithGroupBy() {
 		assertEquals("TABLE(myTable, {myColumn}, myColumn)", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn"));
 		assertEquals("TABLE(myTable, {myColumn}, myColumnA, myColumnB)", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumnA, myColumnB"));
-		assertEquals("TABLE(myTable, {count_myColumn := count(group)}, myColumn)", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable group by myColumn"));
-		assertEquals("TABLE(SORT(TABLE(myTable, {count_ := count(group), myColumn}, myColumn), count_), {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn order by count(*)"));
+		assertEquals("TABLE(myTable, {count_myColumn := COUNT(GROUP)}, myColumn)", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable group by myColumn"));
+		assertEquals("TABLE(SORT(TABLE(myTable, {count_ := COUNT(GROUP), myColumn}, myColumn), count_), {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn order by count(*)"));
 	}
 	
 	@Test
