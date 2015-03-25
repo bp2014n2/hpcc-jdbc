@@ -17,15 +17,17 @@ import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLEngine;
 
 public class HPCCStatement implements Statement{
-	private static final Logger	logger = HPCCLogger.getLogger();
-	private HPCCConnection connection;
-	private ECLEngine eclEngine;
+	protected static final Logger	logger = HPCCLogger.getLogger();
+	protected HPCCConnection connection;
+	protected ECLEngine eclEngine;
 	
     protected boolean                  closed        = false;
     
     protected SQLWarning               warnings;
     protected HPCCResultSet            result        = null;
     protected HPCCResultSetMetadata    resultMetadata = null;
+    
+    protected HashMap<Integer, Object> parameters    = new HashMap<Integer, Object>();
 
     
     public static final String         resultSetName = "HPCC Result";
@@ -120,6 +122,7 @@ public class HPCCStatement implements Statement{
             connection = null;
             result = null;
             eclEngine = null;
+            parameters = null;
         }
         log(Level.FINE, "Statement closed");
     }
@@ -166,20 +169,31 @@ public class HPCCStatement implements Statement{
         warnings = null;
     }
     
-	private static void log(String infoMessage){
+    //Methods for subclasses
+	protected static void log(String infoMessage){
 		log(Level.INFO, infoMessage);
 	}
 	
-	private static void log(Level loggingLevel, String infoMessage){
+	protected static void log(Level loggingLevel, String infoMessage){
 		logger.log(loggingLevel, HPCCStatement.class.getSimpleName()+": "+infoMessage);
 	}
 	
-	private void handleUnsupportedMethod(String methodSignature) throws SQLException {
+	protected void handleUnsupportedMethod(String methodSignature) throws SQLException {
 		logger.log(Level.SEVERE, methodSignature+" is not supported yet.");
         throw new UnsupportedOperationException();
 	}    
+	
+	//Unsupported methods!!
+	public int getFetchSize() throws SQLException{
+    	log("getFetchSize: -1");
+        return -1;
+    }
     
-	//Unsupported Methods!!
+    public int getUpdateCount() throws SQLException{
+        log("getUpdateCount: -1");
+        return -1;
+    }
+    
     public int getQueryTimeout() throws SQLException{
     	handleUnsupportedMethod("getQueryTimeout()");
     	return 0;
@@ -191,16 +205,6 @@ public class HPCCStatement implements Statement{
     
     public void setQueryTimeout(int seconds) throws SQLException{
     	handleUnsupportedMethod("setQueryTimeout(int seconds)");
-    }
-    
-    public int getFetchSize() throws SQLException{
-    	log("getFetchSize: -1");
-        return -1;
-    }
-    
-    public int getUpdateCount() throws SQLException{
-        log("getUpdateCount: -1");
-        return -1;
     }
     
     public int executeUpdate(String sql) throws SQLException{

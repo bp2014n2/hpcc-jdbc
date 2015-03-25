@@ -1,21 +1,3 @@
-/*##############################################################################
-
-Copyright (C) 2011 HPCC Systems.
-
-All rights reserved. This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
-############################################################################## */
-
 package de.hpi.hpcc.main;
 
 import java.io.InputStream;
@@ -38,49 +20,32 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.logging.Level;
 
+public class HPCCPreparedStatement extends HPCCStatement implements PreparedStatement{
 
-
-/**
- *
- * @author rpastrana
- */
-
-public class HPCCPreparedStatement extends HPCCStatement implements PreparedStatement
-{
-	private static String sqlQuery;
-    private HashMap<Integer, Object> parameters    = new HashMap<Integer, Object>();
     protected static final String      className = "HPCCPreparedStatement";
 
     public HPCCPreparedStatement(HPCCConnection connection, String query)
     {
         super(connection);
 
-        HPCCJDBCUtils.traceoutln(Level.INFO, className + " Constructor: Sqlquery: " + query);
-        this.sqlQuery = query;
+        log("Constructor: Sqlquery: " + query);
 
-        if (sqlQuery != null)
-            executeQuery(sqlQuery);
+        if (query != null)
+            executeQuery(query);
     }
 
     public ResultSet executeQuery(){
-        HPCCJDBCUtils.traceoutln(Level.INFO, className + ":executeQuery()");
+        log("executeQuery()");
         executeHPCCQuery(parameters);
 
         return result;
     }
-
-    public int executeUpdate() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ":  executeUpdate Not supported yet.");
-        throw new UnsupportedOperationException(className + ":  executeUpdate Not supported yet.");
-    }
-
+    
     public void setNull(int parameterIndex, int sqlType) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setNull(" + parameterIndex + ", " + sqlType + " )");
+        log(Level.FINEST, "setNull(" + parameterIndex + ", " + sqlType + " )");
 
         /*if( this.eclQuery.getQueryType() == SQLType.CALL)
             parameters.put(parameterIndex, "");
@@ -88,57 +53,54 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
             throw new SQLException("NULL cannot be represented in ECL.");*/
     }
 
-    public void setBoolean(int parameterIndex, boolean x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setBoolean(" + parameterIndex + ", " + x + " )");
+    public void setBoolean(int parameterIndex, boolean x) throws SQLException{
+        log(Level.FINEST,"setBoolean(" + parameterIndex + ", " + x + ")");
         parameters.put(parameterIndex, x);
     }
 
-    public void setByte(int parameterIndex, byte x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setByte(" + parameterIndex + ", " + x + " )");
+    public void setByte(int parameterIndex, byte x) throws SQLException{
+        log(Level.FINEST, "setByte(" + parameterIndex + ", " + x + ")");
         parameters.put(parameterIndex, x);
     }
 
-    public void setShort(int parameterIndex, short x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setShort(" + parameterIndex + ", " + x + " )");
+    public void setShort(int parameterIndex, short x) throws SQLException{
+        log(Level.FINEST,"setShort(" + parameterIndex + ", " + x + ")");
         parameters.put(parameterIndex, x);
     }
 
     public void setInt(int parameterIndex, int x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setInt(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setInt(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
     }
 
     public void setLong(int parameterIndex, long x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setLong(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setLong(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
     }
 
     public void setFloat(int parameterIndex, float x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setFloat(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setFloat(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
     }
 
     public void setDouble(int parameterIndex, double x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setDouble(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setDouble(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
     }
 
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setBigDecimal(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setBigDecimal(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
     }
 
     public void setString(int parameterIndex, String x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setString(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setString(" + parameterIndex + ", " + x + " )");
         try
         {
             /*if( this.eclQuery.getQueryType() == SQLType.CALL)
@@ -154,55 +116,36 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
 
     public void setBytes(int parameterIndex, byte[] x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setBytes(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setBytes(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
     }
 
     public void setDate(int parameterIndex, Date x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setDate(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setDate(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
     }
 
-    public void setTime(int parameterIndex, Time x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setTime(" + parameterIndex + ", " + x + " )");
+    public void setTime(int parameterIndex, Time x) {
+        log(Level.FINEST, "setTime(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
     }
 
     public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setTimestamp(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setTimestamp(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
-    }
-
-    public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setAsciiStream(" + parameterIndex + ", " + x + " )");
-        throw new UnsupportedOperationException(className + ":  setAsciiStream Not supported yet.");
-    }
-
-    public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setUnicodeStream(" + parameterIndex + ", " + x + " )");
-        throw new UnsupportedOperationException(className + ":  setUnicodeStream Not supported yet.");
-    }
-
-    public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setBinaryStream(" + parameterIndex + ", " + x + " )");
-        throw new UnsupportedOperationException(className + ":  setBinaryStream Not supported yet.");
     }
 
     public void clearParameters() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": clearParameters( )");
+        log(Level.FINEST, "clearParameters( )");
         parameters.clear();
     }
 
     public void setObject(int parameterIndex, Object x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setObject(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setObject(" + parameterIndex + ", " + x + " )");
 
         if (x != null)
         {
@@ -243,141 +186,81 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         }
     }
 
-    public boolean execute(){
-        HPCCJDBCUtils.traceoutln(Level.INFO,  className + ":execute()");
-        HPCCJDBCUtils.traceoutln(Level.INFO,  "Attempting to process sql query: " + sqlQuery);
-        return executeQuery() != null;
-    }
-
     public void addBatch() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": addBatch(  )");
-        throw new UnsupportedOperationException(className + ":  addBatch Not supported yet.");
+        log(Level.FINEST, "addBatch(  )");
+        handleUnsupportedMethod("addBatch Not supported yet.");
     }
 
     public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setCharacterStream(" + parameterIndex + ", " + reader + " )");
-        throw new UnsupportedOperationException(className + ": setCharacterStream Not supported yet.");
+        log(Level.FINEST, "setCharacterStream(" + parameterIndex + ", " + reader + " )");
+        handleUnsupportedMethod("setCharacterStream Not supported yet.");
     }
 
     public void setRef(int parameterIndex, Ref x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setRef(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setRef(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
     }
 
     public void setBlob(int parameterIndex, Blob x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setBlob(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setBlob(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
     }
 
     public void setClob(int parameterIndex, Clob x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setClob(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setClob(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
     }
 
     public void setArray(int parameterIndex, Array x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setArray(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setArray(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
     }
 
     public ResultSetMetaData getMetaData() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": getMetaData( )");
+        log(Level.FINEST, "getMetaData( )");
         return result != null ? result.getMetaData() : null;
-    }
-
-    public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setDate(" + parameterIndex + ", " + x + " )");
-        throw new UnsupportedOperationException(className + ": setDate Not supported yet.");
-    }
-
-    public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setTime(" + parameterIndex + ", " + x + " )");
-        throw new UnsupportedOperationException(className + ": setTime Not supported yet.");
-    }
-
-    public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setTimestamp(" + parameterIndex + ", " + x + " )");
-        throw new UnsupportedOperationException(className + ": setTimestamp Not supported yet.");
     }
 
     public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setNull(" + parameterIndex + ", " + sqlType + " )");
+        log(Level.FINEST, "setNull(" + parameterIndex + ", " + sqlType + " )");
         setNull(parameterIndex, sqlType);
     }
 
     public void setURL(int parameterIndex, URL x) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setURL(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setURL(" + parameterIndex + ", " + x + " )");
         parameters.put(parameterIndex, x);
-    }
-
-    public ParameterMetaData getParameterMetaData() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCPREPSTATEMENT getParameterMetaData");
-        throw new UnsupportedOperationException(className + ": getParameterMetaData Not supported yet.");
-    }
-
-    public void setRowId(int parameterIndex, RowId x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setRowId(" + parameterIndex + ", " + x + " )");
-        throw new UnsupportedOperationException(className + ": setRowId Not supported yet.");
     }
 
     public void setNString(int parameterIndex, String value) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setNString(" + parameterIndex + ", " + value + " )");
+        log(Level.FINEST, "setNString(" + parameterIndex + ", " + value + " )");
         parameters.put(parameterIndex, value);
-    }
-
-    public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setNCharacterStream(" + parameterIndex + ", " + value + " )");
-        throw new UnsupportedOperationException(className + ": setNCharacterStream Not supported yet.");
     }
 
     public void setNClob(int parameterIndex, NClob value) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setNClob(" + parameterIndex + ", " + value + " )");
+        log(Level.FINEST, "setNClob(" + parameterIndex + ", " + value + " )");
         parameters.put(parameterIndex, value);
-    }
-
-    public void setClob(int parameterIndex, Reader reader, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setClob(" + parameterIndex + ", " + reader + " )");
-        throw new UnsupportedOperationException(className + ": setClob Not supported yet.");
-    }
-
-    public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setBlob(" + parameterIndex + ", " + inputStream + " )");
-        throw new UnsupportedOperationException(className + ": setBlob Not supported yet.");
-    }
-
-    public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setNClob(" + parameterIndex + ", " + reader + " )");
-        throw new UnsupportedOperationException(className + ": setNClob Not supported yet.");
     }
 
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setSQLXML(" + parameterIndex + ", " + xmlObject + " )");
+        log(Level.FINEST, "setSQLXML(" + parameterIndex + ", " + xmlObject + " )");
         parameters.put(parameterIndex, xmlObject);
     }
 
     public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setObject(" + parameterIndex + ", " + x + ", " + targetSqlType + " )");
+        log(Level.FINEST, "setObject(" + parameterIndex + ", " + x + ", " + targetSqlType + " )");
         if (x != null)
         {
             setObject(parameterIndex, x, targetSqlType, 0);
@@ -390,7 +273,7 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
 
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setObject(" + parameterIndex + ", " + x + " )");
+        log(Level.FINEST, "setObject(" + parameterIndex + ", " + x + " )");
 
         String targetSqlTypeName = null;
         try
@@ -713,74 +596,104 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
             setNull(parameterIndex, targetSqlType);
         }
     }
-
-    public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setAsciiStream(" + parameterIndex + ", " + x + " )");
-        throw new UnsupportedOperationException(className + ": setAsciiStream Not supported yet.");
+    
+    //Override super method
+    protected static void log(Level loggingLevel, String infoMessage){
+		logger.log(loggingLevel, HPCCPreparedStatement.class.getSimpleName()+": "+infoMessage);
+	}
+    
+    //Unsuppported methods!!
+    public int executeUpdate() throws SQLException{
+        handleUnsupportedMethod("executeUpdate()");
+		return 0;
+    }
+    
+    public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
+        handleUnsupportedMethod("setAsciiStream(int parameterIndex, InputStream x, int length)");
     }
 
-    public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setBinaryStream(" + parameterIndex + ", " + x + " )");
-        throw new UnsupportedOperationException(className + ": setBinaryStream Not supported yet.");
+    public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
+        handleUnsupportedMethod("setUnicodeStream(int parameterIndex, InputStream x, int length)");
     }
 
-    public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setCharacterStream(" + parameterIndex + ", " + reader + " )");
-        throw new UnsupportedOperationException(className + ": setCharacterStream Not supported yet.");
+    public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
+        handleUnsupportedMethod("setBinaryStream(int parameterIndex, InputStream x, int length)");
+    }
+    
+    public void setDate(int parameterIndex, Date x, Calendar calendar) throws SQLException {
+        handleUnsupportedMethod("setDate(int parameterIndex, Date x, Calendar calendar)");
     }
 
-    public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setAsciiStream(" + parameterIndex + ", " + x + " )");
-        throw new UnsupportedOperationException(className + ": setAsciiStream Not supported yet.");
+    public void setTime(int parameterIndex, Time x, Calendar calendar) throws SQLException {
+        handleUnsupportedMethod("setTime(int parameterIndex, Time x, Calendar calendar)");
     }
 
-    public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setBinaryStream(" + parameterIndex + ", " + x + " )");
-        throw new UnsupportedOperationException(className + ": setBinaryStream Not supported yet.");
+    public void setTimestamp(int parameterIndex, Timestamp x, Calendar calendar) throws SQLException {
+        handleUnsupportedMethod("setTimestamp(int parameterIndex, Timestamp x, Calendar calendar)");
+    }
+    
+    public ParameterMetaData getParameterMetaData() throws SQLException {
+        handleUnsupportedMethod("getParameterMetaData()");
+		return null;
     }
 
-    public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setCharacterStream(" + parameterIndex + ", " + reader + " )");
-        throw new UnsupportedOperationException(className + ": setCharacterStream Not supported yet.");
+    public void setRowId(int parameterIndex, RowId x) throws SQLException {
+        handleUnsupportedMethod("setRowId(int parameterIndex, RowId x)");
+    }
+    
+    public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
+        handleUnsupportedMethod("setNCharacterStream(int parameterIndex, Reader value, long length)");
+    }
+    
+    public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
+        handleUnsupportedMethod("setClob(int parameterIndex, Reader reader, long length)");
     }
 
-    public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setNCharacterStream(" + parameterIndex + ", " + value + " )");
-        throw new UnsupportedOperationException(className + ": setNCharacterStream Not supported yet.");
+    public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
+        handleUnsupportedMethod("setBlob(int parameterIndex, InputStream inputStream, long length)");
     }
 
-    public void setClob(int parameterIndex, Reader reader) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setClob(" + parameterIndex + ", " + reader + " )");
-        throw new UnsupportedOperationException(className + ": setClob Not supported yet.");
+    public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
+        handleUnsupportedMethod("setNClob(int parameterIndex, Reader reader, long length)");
+    }
+    
+    public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
+        handleUnsupportedMethod("setAsciiStream(int parameterIndex, InputStream x, long length)");
     }
 
-    public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setBlob(" + parameterIndex + ", " + inputStream + " )");
-        throw new UnsupportedOperationException(className + ": setBlob Not supported yet.");
+    public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
+        handleUnsupportedMethod("setBinaryStream(int parameterIndex, InputStream x, long length)");
     }
 
-    public void setNClob(int parameterIndex, Reader reader) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": setNClob(" + parameterIndex + ", " + reader + " )");
-        throw new UnsupportedOperationException(className + ": setNClob Not supported yet.");
+    public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
+        handleUnsupportedMethod("setCharacterStream(int parameterIndex, Reader reader, long length)");
     }
 
-    public void close() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  className + ": close( )");
-        if (!closed)
-        {
-            super.close();
-            parameters = null;
-        }
+    public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
+        handleUnsupportedMethod("setAsciiStream(int parameterIndex, InputStream x)");
+    }
+
+    public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
+        handleUnsupportedMethod("setBinaryStream(int parameterIndex, InputStream x)");
+    }
+
+    public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
+        handleUnsupportedMethod("setCharacterStream(int parameterIndex, Reader reader)");
+    }
+
+    public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
+        handleUnsupportedMethod("setNCharacterStream(int parameterIndex, Reader value)");
+    }
+
+    public void setClob(int parameterIndex, Reader reader) throws SQLException {
+        handleUnsupportedMethod("setClob Not supported yet.");
+    }
+
+    public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
+        handleUnsupportedMethod("setBlob Not supported yet.");
+    }
+
+    public void setNClob(int parameterIndex, Reader reader) throws SQLException {
+        handleUnsupportedMethod("setNClob Not supported yet.");
     }
 }
