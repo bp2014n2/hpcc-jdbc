@@ -35,27 +35,32 @@ public class HPCCStatement implements Statement{
     public HPCCStatement(HPCCConnection connection){
         this.connection = (HPCCConnection) connection;
         this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
-        log(Level.FINE, "Statement created");
+        log(Level.INFO, "Statement created");
     }
 
 	public boolean execute(String sqlStatement){
 		result = null;
         try{
         	if (!this.closed){
-        		eclEngine.generateECL(sqlStatement);
-                String eclCode = eclEngine.parseEclCode(null);
+                String eclCode = eclEngine.parseEclCode(sqlStatement);
                 connection.sendRequest(eclCode);
-                NodeList rowList = eclEngine.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+                NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
                 if (rowList != null){
                     result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(), resultSetName));
                 }
-            } else {        	
+            } else {
+            	log(Level.SEVERE, "Statement is closed! Cannot execute query!");
             	throw new SQLException();
             }
         } catch (Exception e){
-        	log(Level.SEVERE, "Statement is closed! Cannot execute query!");
         	eclEngine = null;
-            convertToSQLExceptionAndAddWarn(e);
+        	SQLException sqlexcept = new SQLException(e.getLocalizedMessage());
+            sqlexcept.setStackTrace(e.getStackTrace());
+
+            if (warnings == null)
+                warnings = new SQLWarning();
+
+            warnings.setNextException(sqlexcept);
         }
 	    return result != null;
 	}    
@@ -64,11 +69,12 @@ public class HPCCStatement implements Statement{
     	String query = sql.toLowerCase();
 
 		ArrayList<String> blacklist = new ArrayList<String>();
-		blacklist.add("qt_query_master");
-		blacklist.add("qt_query_result_type");
-		blacklist.add("qt_query_status_type");
-		blacklist.add("qt_patient_set_collection");
+//		blacklist.add("qt_query_master");
+//		blacklist.add("qt_query_result_type");
+//		blacklist.add("qt_query_status_type");
+//		blacklist.add("qt_patient_set_collection");
 
+		blacklist.add("nextval");
 		/*
 		 * Could be dangerous if there is a query that contains the table names
 		 * in a string etc
@@ -106,16 +112,6 @@ public class HPCCStatement implements Statement{
             parameters = null;
         }
         log(Level.INFO, "Statement closed");
-    }
-
-    private void convertToSQLExceptionAndAddWarn(Exception e){
-        SQLException sqlexcept = new SQLException(e.getLocalizedMessage());
-        sqlexcept.setStackTrace(e.getStackTrace());
-
-        if (warnings == null)
-            warnings = new SQLWarning();
-
-        warnings.setNextException(sqlexcept);
     }
 	
 	public ResultSet getResultSet() throws SQLException{

@@ -47,7 +47,7 @@ import de.hpi.hpcc.main.*;
 public class ECLEngine
 {
 //    private HPCCQuery               hpccPublishedQuery = null;
-    private String                  expectedDSName = null;
+//    private String                  expectedDSName = null;
     private NodeList                resultSchema = null;
 //    private final Properties        hpccConnProps;
 
@@ -78,7 +78,7 @@ public class ECLEngine
 //    private static final String         SELECTOUTPUTNAME = "JDBCSelectQueryResult";
     private static final String			HPCCEngine = "THOR";
 
-    private DocumentBuilderFactory      dbf = DocumentBuilderFactory.newInstance();
+//    private DocumentBuilderFactory      dbf = DocumentBuilderFactory.newInstance();
     
     private String sub = null;
 	private String sql;
@@ -136,8 +136,7 @@ public class ECLEngine
             long startTime = System.currentTimeMillis();
 
             HttpURLConnection conn = this.conn.createHPCCESPConnection(this.conn.generateUrl());
-
-            return parseDataset(conn.getInputStream(), startTime);
+            return this.conn.parseDataset(conn.getInputStream(), startTime);
         }
         catch (Exception e)
         {
@@ -405,9 +404,9 @@ public class ECLEngine
     	return datasetsString.toString() + indicesString.toString();
     }
     
-    public String parseEclCode(Map inParameters){
-
+    public String parseEclCode(String sqlQuery){
 		try {
+			generateECL(sqlQuery);
 			StringBuilder sb = new StringBuilder();
 
 			sb.append("&eclText=\n");
@@ -553,77 +552,7 @@ public class ECLEngine
         }
     }*/
 
-    public NodeList parseDataset(InputStream xml, long startTime) throws Exception
-    {
-        NodeList rowList = null;
-
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        Document dom = db.parse(xml);
-
-        long elapsedTime = System.currentTimeMillis() - startTime;
-
-        HPCCJDBCUtils.traceoutln(Level.INFO, "Total elapsed http request/response time in milliseconds: " + elapsedTime);
-
-        Element docElement = dom.getDocumentElement();
-
-        NodeList dsList = docElement.getElementsByTagName("Dataset");
-
-        HPCCJDBCUtils.traceoutln(Level.INFO, "Parsing results...");
-
-        int dsCount = 0;
-        if (dsList != null && (dsCount = dsList.getLength()) > 0)
-        {
-            HPCCJDBCUtils.traceoutln(Level.INFO, "Results datsets found: " + dsList.getLength());
-
-            // The dataset element is encapsulated within a Result element
-            // need to fetch appropriate resulst dataset
-
-            for (int i = 0; i < dsCount; i++)
-            {
-                Element ds = (Element) dsList.item(i);
-                String currentdatsetname = ds.getAttribute("name");
-                if (expectedDSName == null || expectedDSName.length() == 0
-                        || currentdatsetname.equalsIgnoreCase(expectedDSName))
-                {
-                    rowList = ds.getElementsByTagName("Row");
-                    break;
-                }
-            }
-        }
-        else if (docElement.getElementsByTagName("Exception").getLength() > 0)
-        {
-            NodeList exceptionlist = docElement.getElementsByTagName("Exception");
-
-            if (exceptionlist.getLength() > 0)
-            {
-                Exception resexception = null;
-                NodeList currexceptionelements = exceptionlist.item(0).getChildNodes();
-
-                for (int j = 0; j < currexceptionelements.getLength(); j++)
-                {
-                    Node exceptionelement = currexceptionelements.item(j);
-                    if (exceptionelement.getNodeName().equals("Message"))
-                    {
-                        resexception = new Exception("HPCCJDBC: Error in response: \'"
-                                + exceptionelement.getTextContent() + "\'");
-                    }
-                }
-                if (dsList == null || dsList.getLength() <= 0)
-                    throw resexception;
-            }
-        }
-        else
-        {
-            // The root element is itself the Dataset element
-            if (dsCount == 0)
-            {
-                rowList = docElement.getElementsByTagName("Row");
-            }
-        }
-        HPCCJDBCUtils.traceoutln(Level.INFO,  "Finished Parsing results.");
-
-        return rowList;
-    }
+   
 
     public boolean hasResultSchema()
     {

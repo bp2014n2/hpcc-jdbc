@@ -15,7 +15,8 @@
 	<property name="libLocation" location="lib"/>
 	<property name="sqlParserVersion" value="0.9.1"/>
 	<property name="sqlParser" value="jsqlparser-${sqlParserVersion}.jar"/>
-
+	
+	<property name="postgres" value="postgresql-9.3-1102.jdbc4.jar"/>
 	
 	<target name="init">
 		<tstamp/>
@@ -48,6 +49,7 @@
 			<fileset dir="${build}" includes="${parsing}/*.class" />
 			<fileset dir="${build}" includes="${logging}/*.class" />
 			<zipgroupfileset dir="lib" includes="${sqlParser}" />
+			<zipgroupfileset dir="lib" includes="${postgres}" />
 			<metainf dir="${extra}" includes="**/java.sql.Driver"/>
 		</jar>
 	</target>
