@@ -340,7 +340,7 @@ public class ECLBuilder {
 	 */
 	
 	private void generateSelects(SQLParserSelect sqlParser, StringBuilder select, Boolean inner) { 
-		if (sqlParser.isCount() && sqlParser.getGroupBys() == null) {
+		if (sqlParser.isCount()) {
 			select.insert(0, "COUNT(");
 			select.append(")");
 		} else {

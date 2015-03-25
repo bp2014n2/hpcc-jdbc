@@ -27,7 +27,7 @@ public class HPCCDriverProperties extends Properties{
 			put("EclResultLimit", 		new String[]{"100","Default limit on number of result records returned."});
 			put("TraceLevel", 			new String[]{HPCCLogger.getDefaultLogLevel().getName(),	"Logging level (java.util.logging.level)."});
 			put("TraceToFile", 			new String[]{"false","false -> System.out, true -> " + HPCCJDBCUtils.workingDir +  HPCCJDBCUtils.traceFileName});
-			put("TargetCluster", 		new String[]{"hthor","Target cluster on which to execute ECL code."});
+			put("TargetCluster", 		new String[]{"thor","Target cluster on which to execute ECL code."});
 			put("QuerySet", 			new String[]{"hthor","Queryset from which published query (Stored Procedure) is chosen."});
 			put("PageSize", 			new String[]{"100","Number of HPCC data files (DB tables) or HPCC published queries (DB Stored Procs) displayed."});
 			put("PageOffset", 			new String[]{"0","Starting HPCC data file or HPCC published queries displayed."});
