@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="hpcc-jdbc_makejar" default="clean" basedir=".">
-	<property name="driverName" value="connectionManagement.HPCCDriver"/>
+	<property name="driverName" value="de.hpi.hpcc.main.HPCCDriver"/>
 	
-	<property name="src" location="src/connectionManagement"/>
+	<property name="src" location="src/de/hpi/hpcc"/>
+	
+	<property name="main" location="${src}/main"/>
+	<property name="parsing" location="${src}/parsing"/>
+	<property name="logging" location="${src}/logging"/>
+	
 	<property name="build" location="build"/>
 	<property name="extra" location="build_extra"/>
 	<property name="destination" location="built_jars"/>
 	
 	<property name="libLocation" location="lib"/>
-	
 	<property name="sqlParserVersion" value="0.9.1"/>
 	<property name="sqlParser" value="jsqlparser-${sqlParserVersion}.jar"/>
-	
+
 	
 	<target name="init">
 		<tstamp/>
@@ -27,16 +31,22 @@
 	</target>
 
 	<target name="compile" depends="initDriverFile" description="Compile the source" >
-		<javac includeantruntime="false" srcdir="${src}" destdir="${build}">
+		<javac includeantruntime="false" destdir="${build}">
+			<src path="${main}"/>
+			<src path="${parsing}"/>
+			<src path="${logging}"/>
 			<classpath>
 				<pathelement path="${libLocation}/${sqlParser}"/>
+				<pathelement path="${libLocation}/${junit}"/>
 			</classpath>
 		</javac>
 	</target>
 
 	<target name="makejar" depends="compile" description="Make jar">
 		<jar jarfile="${destination}/jdbc-hpcc-${DSTAMP}-${TSTAMP}.jar" basedir="${build}" duplicate="preserve">
-			<fileset dir="${build}" includes="**/*.class" />
+			<fileset dir="${build}" includes="${main}/*.class" />
+			<fileset dir="${build}" includes="${parsing}/*.class" />
+			<fileset dir="${build}" includes="${logging}/*.class" />
 			<zipgroupfileset dir="lib" includes="${sqlParser}" />
 			<metainf dir="${extra}" includes="**/java.sql.Driver"/>
 		</jar>
