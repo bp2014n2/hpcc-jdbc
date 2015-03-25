@@ -48,7 +48,6 @@ public class HPCCStatement implements Statement{
         	log("Attempting to process sql query: " + sqlStatement);
             if (!this.closed){
             	eclEngine.generateECL(sqlStatement);
-            } else {
                 throw new SQLException("HPCCPreparedStatement closed, cannot execute query");
             }
         }

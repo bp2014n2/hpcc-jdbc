@@ -25,16 +25,18 @@ import java.util.logging.Level;
 public class HPCCPreparedStatement extends HPCCStatement implements PreparedStatement{
 
     protected static final String      className = "HPCCPreparedStatement";
+    private static String sqlQuery;
 
     public HPCCPreparedStatement(HPCCConnection connection, String query)
     {
         super(connection);
 
         log("Constructor: Sqlquery: " + query);
+        this.sqlQuery = query;
     }
 
     public ResultSet executeQuery(){
-        execute();
+        execute(sqlQuery);
         return result;
     }
 
