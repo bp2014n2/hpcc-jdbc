@@ -316,7 +316,7 @@ public class ECLEngine
 	private void generateSelectECL(String sqlQuery) throws SQLException
     {
     	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#OPTION('name', 'java select');\n");
+    	eclCode.append("#WORKUNIT('name', 'java select');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
         eclCode.append(generateLayouts(eclBuilder));
