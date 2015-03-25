@@ -2,3 +2,4 @@
 *.log*
 *.settings*
 .idea*
+/built_jars/
