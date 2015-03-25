@@ -43,7 +43,7 @@
 	</target>
 
 	<target name="makejar" depends="compile" description="Make jar">
-		<jar jarfile="${destination}/jdbc-hpcc-${DSTAMP}-${TSTAMP}.jar" basedir="${build}" duplicate="preserve">
+		<jar jarfile="${destination}/jdbc-hpcc.jar" basedir="${build}" duplicate="preserve">
 			<fileset dir="${build}" includes="${main}/*.class" />
 			<fileset dir="${build}" includes="${parsing}/*.class" />
 			<fileset dir="${build}" includes="${logging}/*.class" />
