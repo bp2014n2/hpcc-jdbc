@@ -246,12 +246,12 @@ public class ECLBuilder {
     		if (!((SQLParserSelect) sqlParser).isCount()) convertToTable(eclCode);
     	}
     	generateOrderBys(sqlParser, eclCode);
-    	if(sqlParser.getOrderBys() != null) {
-    		generateSelects(sqlParser, eclCode, false);
-    		if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
-        		convertToTable(eclCode);
-        	}
-    	}
+//    	if(sqlParser.getOrderBys() != null) {
+//    		generateSelects(sqlParser, eclCode, false);
+//    		if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
+//        		convertToTable(eclCode);
+//        	}
+//    	}
     	generateDistinct(sqlParser, eclCode);
     	generateLimit(sqlParser, eclCode);
     	
@@ -377,9 +377,10 @@ public class ECLBuilder {
 						StringBuilder selectItemString = new StringBuilder();
 						if (((SelectExpressionItem) selectItem).getAlias() != null) {
 							setHasAlias(true);
-							if ((Expression) ((SelectExpressionItem) selectItem).getExpression() instanceof LongValue) {
-			   					selectItemString.append("INTEGER1 "); //necessary when parsing  for example "0 as panel_count"
-			   				}
+							if (sqlParser.getAllColumns().contains(((SelectExpressionItem) selectItem).getAlias().getName())) {
+								String dataType = ECLLayouts.getECLDataType(sqlParser.getAllTables().get(0), ((SelectExpressionItem) selectItem).getAlias().getName());
+			   					selectItemString.append(dataType+" ");
+							}			   						
 			   				selectItemString.append(((SelectExpressionItem) selectItem).getAlias().getName());
 		   					selectItemString.append(" := ");
 		   				}
