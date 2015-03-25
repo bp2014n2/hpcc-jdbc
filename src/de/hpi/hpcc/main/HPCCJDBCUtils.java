@@ -339,7 +339,7 @@ public class HPCCJDBCUtils
             return quotedString;
     }
 
-    public static String ensureECLString(String instr) throws Exception
+    public static String ensureECLString(String instr) 
     {
         if (instr == null)
             return "''";
@@ -391,7 +391,7 @@ public class HPCCJDBCUtils
     public final static Pattern SQLESCAPEDPATTERN = Pattern.compile(
             "(.*)(\'\')(.*)(\'\')(.*)",Pattern.DOTALL);
 
-    public static String replaceSQLwithECLEscapeChar(String quotedString) throws Exception
+    public static String replaceSQLwithECLEscapeChar(String quotedString) 
     {
         if (quotedString == null)
             return "";
