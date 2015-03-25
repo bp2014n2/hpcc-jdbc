@@ -99,7 +99,7 @@ public class HPCCResultSet implements ResultSet
 
             for (int j = 0; j < rowCount; j++)
             {
-                ArrayList rowValues = resultMetadata.createDefaultResultRow();
+                ArrayList<String> rowValues = resultMetadata.createDefaultResultRow();
                 rows.add(rowValues);
 
                 Element row = (Element) rowList.item(j);
@@ -118,7 +118,7 @@ public class HPCCResultSet implements ResultSet
                       
                        	int type = col.getSqlType();
 						if (type == java.sql.Types.VARCHAR) {
-							content = "\"" + content + "\"";
+							content = content;
 						}
 						 
                         	

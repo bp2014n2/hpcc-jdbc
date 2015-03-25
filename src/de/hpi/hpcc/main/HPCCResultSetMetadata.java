@@ -73,10 +73,9 @@ public class HPCCResultSetMetadata implements ResultSetMetaData
        return  columnListHash.get(nameOrAlias.toUpperCase());
     }
 
-    @SuppressWarnings("rawtypes")
-    public ArrayList createDefaultResultRow()
+    public ArrayList<String> createDefaultResultRow()
     {
-        ArrayList rowValues = new ArrayList();
+        ArrayList<String> rowValues = new ArrayList<String>();
 
         for (int i = 0; i < columnList.size(); i++)
         {
