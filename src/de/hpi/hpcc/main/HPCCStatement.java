@@ -24,7 +24,7 @@ public class HPCCStatement implements Statement{
     protected boolean                  closed        = false;
     
     protected SQLWarning               warnings;
-    protected HPCCResultSet            result        = null;
+    protected ResultSet            result        = null;
     protected HPCCResultSetMetadata    resultMetadata = null;
     
     protected HashMap<Integer, Object> parameters    = new HashMap<Integer, Object>();
@@ -35,75 +35,47 @@ public class HPCCStatement implements Statement{
     public HPCCStatement(HPCCConnection connection){
         this.connection = (HPCCConnection) connection;
         this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
-        log(Level.INFO, "Statement created");
+        log("Statement created");
     }
 
-	public boolean execute(String sqlStatement){
-		result = null;
-        try{
-        	if (!this.closed){
-                String eclCode = eclEngine.parseEclCode(sqlStatement);
-                connection.sendRequest(eclCode);
-                NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
-                if (rowList != null){
-                    result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(), resultSetName));
-                }
-            } else {
-            	log(Level.SEVERE, "Statement is closed! Cannot execute query!");
-            	throw new SQLException();
-            }
-        } catch (Exception e){
-        	eclEngine = null;
-        	SQLException sqlexcept = new SQLException(e.getLocalizedMessage());
-            sqlexcept.setStackTrace(e.getStackTrace());
-
-            if (warnings == null)
+	public boolean execute(String sqlStatement) {
+		if (this.closed){
+			log(Level.SEVERE, "Statement is closed! Cannot execute query!");
+			if (warnings == null){
                 warnings = new SQLWarning();
-
-            warnings.setNextException(sqlexcept);
-        }
-	    return result != null;
-	}    
-	
-    public ResultSet executeQuery(String sql){
-    	String query = sql.toLowerCase();
-
-		ArrayList<String> blacklist = new ArrayList<String>();
-//		blacklist.add("qt_query_master");
-//		blacklist.add("qt_query_result_type");
-//		blacklist.add("qt_query_status_type");
-//		blacklist.add("qt_patient_set_collection");
-
-		blacklist.add("nextval");
-		/*
-		 * Could be dangerous if there is a query that contains the table names
-		 * in a string etc
-		 */
-		for (String psqlQuery : blacklist) {
-			if (query.contains(psqlQuery)) {
-				try {
-					Class.forName("org.postgresql.Driver");
-					Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
-					/*
-					 * create HPCCStatement object for single use SQL query
-					 * execution
-					 */
-					Statement stmt = connection.createStatement();
-					return stmt.executeQuery(sql);
-				} catch (SQLException sqlException) {
-					sqlException.printStackTrace();
-				} catch (ClassNotFoundException classNotFoundException) {
-					classNotFoundException.printStackTrace();
-				}
-				break;
 			}
+            warnings.setNextException(new SQLException());
 		}
-    	        
-    	execute(sql);
+		
+		result = null;
+		try {
+			if (queryContainsPostgresTable(sqlStatement)) {
+				Class.forName("org.postgresql.Driver");
+				Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
+				Statement statement = connection.createStatement();
+				result = statement.executeQuery(sqlStatement);
+			} else {
+				String eclCode = eclEngine.parseEclCode(sqlStatement);
+				connection.sendRequest(eclCode);
+				NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+				if (rowList != null) {
+					result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	resultSetName));
+				}
+			}
+		} catch (Exception exception) {
+			exception.printStackTrace();
+			this.close();
+		}
+
+		return result != null;
+	}    
+
+	public ResultSet executeQuery(String sqlQuery) {      
+    	execute(sqlQuery);
         return result;
     }
 
-	public void close() throws SQLException{
+	public void close() {
         if (!closed){
             closed = true;
             connection = null;
@@ -111,7 +83,7 @@ public class HPCCStatement implements Statement{
             eclEngine = null;
             parameters = null;
         }
-        log(Level.INFO, "Statement closed");
+        log("Statement closed");
     }
 	
 	public ResultSet getResultSet() throws SQLException{
@@ -139,6 +111,27 @@ public class HPCCStatement implements Statement{
         warnings = null;
         log(Level.FINEST, "Warnings cleared");
     }
+
+    private boolean queryContainsPostgresTable(String sqlStatement) {
+    	String sqlStatementInLowerCase = sqlStatement.toLowerCase();
+		ArrayList<String> blacklist = new ArrayList<String>();
+//		blacklist.add("qt_query_master");
+//		blacklist.add("qt_query_result_type");
+//		blacklist.add("qt_query_status_type");
+//		blacklist.add("qt_patient_set_collection");
+		blacklist.add("nextval");
+		
+		/*
+		 * Could be dangerous if there is a query that contains the table names
+		 * in a string etc
+		 */
+		for (String psqlQuery : blacklist) {
+			if (sqlStatementInLowerCase.contains(psqlQuery)) {
+				return true;
+			}
+		}
+		return false;
+	}
     
     //Methods for subclasses
 	protected static void log(String infoMessage){
