@@ -36,13 +36,21 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     }
 
     public ResultSet executeQuery(){
+    	replaceJdbcParameters();
         execute(sqlQuery);
         return result;
     }
 
+
+    private void replaceJdbcParameters() {
+    	for (int i = 1; i <= parameters.size(); i++) {
+        	String param = (String) parameters.get(i);
+        	sqlQuery = sqlQuery.replaceFirst("\\?", param);
+    	}
+	}
+
     public boolean execute(){
-    	result = (HPCCResultSet) executeQuery(sqlQuery);
-	    return result != null;
+    	return execute(sqlQuery);
 	}
     
     public void setBoolean(int parameterIndex, boolean x) throws SQLException{
@@ -95,10 +103,7 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         log(Level.FINEST, "setString(" + parameterIndex + ", " + x + " )");
         try
         {
-            /*if( this.eclQuery.getQueryType() == SQLType.CALL)
-                parameters.put(parameterIndex, x);
-            else*/
-                parameters.put(parameterIndex, HPCCJDBCUtils.ensureECLString(x));
+        	parameters.put(parameterIndex, HPCCJDBCUtils.ensureECLString(x));
         }
         catch (Exception e)
         {
