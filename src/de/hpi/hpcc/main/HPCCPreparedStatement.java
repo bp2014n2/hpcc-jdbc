@@ -41,6 +41,7 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     	for (int i = 1; i <= parameters.size(); i++) {
         	Object param = parameters.get(i);
         	sqlStatement = sqlStatement.replaceFirst("\\?", param.toString());
+
     	}
 	}
 
