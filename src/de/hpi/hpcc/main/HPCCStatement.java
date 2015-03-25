@@ -64,11 +64,12 @@ public class HPCCStatement implements Statement{
     	String query = sql.toLowerCase();
 
 		ArrayList<String> blacklist = new ArrayList<String>();
-		blacklist.add("qt_query_master");
-		blacklist.add("qt_query_result_type");
-		blacklist.add("qt_query_status_type");
-		blacklist.add("qt_patient_set_collection");
+//		blacklist.add("qt_query_master");
+//		blacklist.add("qt_query_result_type");
+//		blacklist.add("qt_query_status_type");
+//		blacklist.add("qt_patient_set_collection");
 
+		blacklist.add("nextval");
 		/*
 		 * Could be dangerous if there is a query that contains the table names
 		 * in a string etc
