@@ -25,14 +25,11 @@ import java.util.logging.Level;
 public class HPCCPreparedStatement extends HPCCStatement implements PreparedStatement{
 
     protected static final String      className = "HPCCPreparedStatement";
-    private String sqlQuery;
+    private String sqlStatement;
 
-    public HPCCPreparedStatement(HPCCConnection connection, String query)
-    {
+    public HPCCPreparedStatement(HPCCConnection connection, String sqlStatement) {
         super(connection);
-
-        log("Constructor: Sqlquery: " + query);
-        this.sqlQuery = query;
+        this.sqlStatement = sqlStatement;
     }
 
     public ResultSet executeQuery(){
@@ -40,17 +37,16 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         return result;
     }
 
-
     private void replaceJdbcParameters() {
     	for (int i = 1; i <= parameters.size(); i++) {
         	Object param = parameters.get(i);
-        	sqlQuery = sqlQuery.replaceFirst("\\?", param.toString());
+        	sqlStatement = sqlStatement.replaceFirst("\\?", param.toString());
     	}
 	}
 
     public boolean execute(){
     	replaceJdbcParameters();
-    	return execute(sqlQuery);
+    	return execute(sqlStatement);
 	}
     
     public void setBoolean(int parameterIndex, boolean x) throws SQLException{

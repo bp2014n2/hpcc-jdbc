@@ -39,33 +39,22 @@ public class HPCCStatement implements Statement{
     }
 
 	public boolean execute(String sqlStatement){
-		try{
-        	log("Attempting to process sql query: " + sqlStatement);
-            if (!this.closed){
-            	eclEngine.generateECL(sqlStatement);
-            } else {
-                throw new SQLException("HPCCPreparedStatement closed, cannot execute query");
-            }
-        }
-        catch (SQLException e){
-            convertToSQLExceptionAndAddWarn(e);
-            eclEngine = null;
-        }
-		
 		result = null;
         try{
         	if (!this.closed){
+        		eclEngine.generateECL(sqlStatement);
                 String eclCode = eclEngine.parseEclCode(null);
                 connection.sendRequest(eclCode);
                 NodeList rowList = eclEngine.parseDataset(connection.getInputStream(), System.currentTimeMillis());
                 if (rowList != null){
                     result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(), resultSetName));
                 }
-            } else {
-            	log(Level.SEVERE, "Statement is closed! Cannot execute query!");
+            } else {        	
             	throw new SQLException();
             }
         } catch (Exception e){
+        	log(Level.SEVERE, "Statement is closed! Cannot execute query!");
+        	eclEngine = null;
             convertToSQLExceptionAndAddWarn(e);
         }
 	    return result != null;
