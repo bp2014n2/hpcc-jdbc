@@ -16,7 +16,7 @@
 	<property name="sqlParserVersion" value="0.9.1"/>
 	<property name="sqlParser" value="jsqlparser-${sqlParserVersion}.jar"/>
 	
-	<property name="postgres" value="postgres.jar"/>
+	<property name="postgres" value="postgresql-9.3-1102.jdbc4.jar"/>
 	
 	<target name="init">
 		<tstamp/>
