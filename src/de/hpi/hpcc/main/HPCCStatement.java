@@ -104,7 +104,7 @@ public class HPCCStatement implements Statement{
 			}
 		}
     	        
-    	execute(query);
+    	execute(sql);
         return result;
     }
 
