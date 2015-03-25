@@ -37,11 +37,6 @@ public class HPCCStatement implements Statement{
         this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
         log(Level.FINE, "Statement created");
     }
-	
-    public boolean execute(){
-    	result = (HPCCResultSet) executeHPCCQuery(null);
-	    return result != null;
-	}
 
 	public boolean execute(String sqlStatement){
 		try{
@@ -56,7 +51,24 @@ public class HPCCStatement implements Statement{
             convertToSQLExceptionAndAddWarn(e);
             eclEngine = null;
         }
-		return execute();
+		
+		result = null;
+        try{
+        	if (!this.closed){
+                String eclCode = eclEngine.parseEclCode(null);
+                connection.sendRequest(eclCode);
+                NodeList rowList = eclEngine.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+                if (rowList != null){
+                    result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(), resultSetName));
+                }
+            } else {
+            	log(Level.SEVERE, "Statement is closed! Cannot execute query!");
+            	throw new SQLException();
+            }
+        } catch (Exception e){
+            convertToSQLExceptionAndAddWarn(e);
+        }
+	    return result != null;
 	}    
 	
     public ResultSet executeQuery(String sql){
@@ -95,26 +107,6 @@ public class HPCCStatement implements Statement{
     	execute(query);
         return result;
     }
-	
-    protected ResultSet executeHPCCQuery(HashMap<Integer, Object> params){
-        result = null;
-        try{
-        	if (!this.closed){
-                String eclCode = eclEngine.parseEclCode(params);
-                connection.sendRequest(eclCode);
-                NodeList rowList = eclEngine.parseDataset(connection.getInputStream(), System.currentTimeMillis());
-                if (rowList != null){
-                    result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(), resultSetName));
-                }
-            } else {
-            	log(Level.SEVERE, "Statement is closed, cannot execute query");
-            	throw new SQLException();
-            }
-        } catch (Exception e){
-            convertToSQLExceptionAndAddWarn(e);
-        }
-        return result;
-    }
 
 	public void close() throws SQLException{
         if (!closed){
@@ -124,9 +116,19 @@ public class HPCCStatement implements Statement{
             eclEngine = null;
             parameters = null;
         }
-        log(Level.FINE, "Statement closed");
+        log(Level.INFO, "Statement closed");
     }
 
+    private void convertToSQLExceptionAndAddWarn(Exception e){
+        SQLException sqlexcept = new SQLException(e.getLocalizedMessage());
+        sqlexcept.setStackTrace(e.getStackTrace());
+
+        if (warnings == null)
+            warnings = new SQLWarning();
+
+        warnings.setNextException(sqlexcept);
+    }
+	
 	public ResultSet getResultSet() throws SQLException{
 	    return this.result;
 	}
@@ -139,34 +141,18 @@ public class HPCCStatement implements Statement{
 	public Connection getConnection() throws SQLException{
 		return this.connection;
 	}
-
-    private void convertToSQLExceptionAndAddWarn(Exception e){
-        SQLException sqlexcept = new SQLException(e.getLocalizedMessage());
-        sqlexcept.setStackTrace(e.getStackTrace());
-
-        if (warnings == null)
-            warnings = new SQLWarning();
-
-        warnings.setNextException(sqlexcept);
-    }
 	
-    public int getMaxRows() throws SQLException{
-        try{
-            log("getMaxRows()");
-            return Integer.parseInt(this.connection.getProperty("EclLimit"));
-        }catch (Exception e){
-            throw new SQLException("Could not determine MaxRows");
-        }
+    public int getMaxRows() {
+		return Integer.parseInt(this.connection.getProperty("EclLimit"));
     }
 
-    public SQLWarning getWarnings() throws SQLException{
-    	log(Level.FINE, "Returning warnings");
+    public SQLWarning getWarnings() {
         return warnings;
     }
 
-    public void clearWarnings() throws SQLException{
-    	log(Level.FINE, "Clearing warnings");
+    public void clearWarnings() {
         warnings = null;
+        log(Level.FINEST, "Warnings cleared");
     }
     
     //Methods for subclasses

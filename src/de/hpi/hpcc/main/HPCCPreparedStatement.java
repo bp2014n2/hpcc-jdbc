@@ -41,7 +41,7 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     }
 
     public boolean execute(){
-    	result = (HPCCResultSet) executeHPCCQuery(parameters);
+    	result = (HPCCResultSet) executeQuery(sqlQuery);
 	    return result != null;
 	}
     
