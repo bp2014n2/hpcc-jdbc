@@ -30,12 +30,12 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         this.sqlStatement = sqlStatement;
     }
 
-    public ResultSet executeQuery(){
+    public ResultSet executeQuery() {
     	execute();
         return result;
     }
 
-    public boolean execute(){
+    public boolean execute() {
     	replaceJdbcParameters();
     	return execute(sqlStatement);
 	}
