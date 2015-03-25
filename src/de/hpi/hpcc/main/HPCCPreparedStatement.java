@@ -186,18 +186,6 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         }
     }
 
-    public void addBatch() throws SQLException
-    {
-        log(Level.FINEST, "addBatch(  )");
-        handleUnsupportedMethod("addBatch Not supported yet.");
-    }
-
-    public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException
-    {
-        log(Level.FINEST, "setCharacterStream(" + parameterIndex + ", " + reader + " )");
-        handleUnsupportedMethod("setCharacterStream Not supported yet.");
-    }
-
     public void setRef(int parameterIndex, Ref x) throws SQLException
     {
         log(Level.FINEST, "setRef(" + parameterIndex + ", " + x + " )");
@@ -603,6 +591,14 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
 	}
     
     //Unsuppported methods!!
+    public void addBatch() throws SQLException {
+        handleUnsupportedMethod("addBatch()");
+    }
+
+    public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
+        handleUnsupportedMethod("setCharacterStream(int parameterIndex, Reader reader, int length)");
+    }
+    
     public int executeUpdate() throws SQLException{
         handleUnsupportedMethod("executeUpdate()");
 		return 0;
