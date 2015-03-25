@@ -23,8 +23,6 @@ import java.util.Calendar;
 import java.util.logging.Level;
 
 public class HPCCPreparedStatement extends HPCCStatement implements PreparedStatement{
-
-    protected static final String      className = "HPCCPreparedStatement";
     private String sqlStatement;
 
     public HPCCPreparedStatement(HPCCConnection connection, String sqlStatement) {
@@ -37,117 +35,24 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         return result;
     }
 
-    private void replaceJdbcParameters() {
-    	for (int i = 1; i <= parameters.size(); i++) {
-        	Object param = parameters.get(i);
-        	sqlStatement = sqlStatement.replaceFirst("\\?", param.toString());
-
-    	}
-	}
-
     public boolean execute(){
     	replaceJdbcParameters();
     	return execute(sqlStatement);
 	}
     
-    public void setBoolean(int parameterIndex, boolean x) throws SQLException{
-        log(Level.FINEST,"setBoolean(" + parameterIndex + ", " + x + ")");
-        parameters.put(parameterIndex, x);
-    }
-
-    public void setByte(int parameterIndex, byte x) throws SQLException{
-        log(Level.FINEST, "setByte(" + parameterIndex + ", " + x + ")");
-        parameters.put(parameterIndex, x);
-    }
-
-    public void setShort(int parameterIndex, short x) throws SQLException{
-        log(Level.FINEST,"setShort(" + parameterIndex + ", " + x + ")");
-        parameters.put(parameterIndex, x);
-    }
-
-    public void setInt(int parameterIndex, int x) throws SQLException
-    {
-        log(Level.FINEST, "setInt(" + parameterIndex + ", " + x + " )");
-        parameters.put(parameterIndex, x);
-    }
-
-    public void setLong(int parameterIndex, long x) throws SQLException
-    {
-        log(Level.FINEST, "setLong(" + parameterIndex + ", " + x + " )");
-        parameters.put(parameterIndex, x);
-    }
-
-    public void setFloat(int parameterIndex, float x) throws SQLException
-    {
-        log(Level.FINEST, "setFloat(" + parameterIndex + ", " + x + " )");
-        parameters.put(parameterIndex, x);
-    }
-
-    public void setDouble(int parameterIndex, double x) throws SQLException
-    {
-        log(Level.FINEST, "setDouble(" + parameterIndex + ", " + x + " )");
-        parameters.put(parameterIndex, x);
-    }
-
-    public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException
-    {
-        log(Level.FINEST, "setBigDecimal(" + parameterIndex + ", " + x + " )");
-        parameters.put(parameterIndex, x);
-    }
-
-    public void setString(int parameterIndex, String x) throws SQLException
-    {
-        log(Level.FINEST, "setString(" + parameterIndex + ", " + x + " )");
-        try
-        {
-        	parameters.put(parameterIndex, HPCCJDBCUtils.ensureECLString(x));
-        }
-        catch (Exception e)
-        {
-            throw new SQLException("Cannot setString: " + e.getLocalizedMessage());
-        }
-    }
-
-    public void setBytes(int parameterIndex, byte[] x) throws SQLException
-    {
-        log(Level.FINEST, "setBytes(" + parameterIndex + ", " + x + " )");
-        parameters.put(parameterIndex, x);
-    }
-
-    public void setDate(int parameterIndex, Date x) throws SQLException
-    {
-        log(Level.FINEST, "setDate(" + parameterIndex + ", " + x + " )");
-        parameters.put(parameterIndex, x);
-    }
-
-    public void setTime(int parameterIndex, Time x) {
-        log(Level.FINEST, "setTime(" + parameterIndex + ", " + x + " )");
-        parameters.put(parameterIndex, x);
-    }
-
-	public void setTimestamp(int parameterIndex, Timestamp x)throws SQLException {
-		parameters.put(parameterIndex, x);
+    private void replaceJdbcParameters() {
+    	for (int i = 1; i <= parameters.size(); i++) {
+        	Object param = parameters.get(i);
+        	sqlStatement = sqlStatement.replaceFirst("\\?", param.toString());
+    	}
 	}
 
-    public void clearParameters() throws SQLException {
-        parameters.clear();
-    }
-
-    public void setNull(int parameterIndex, int sqlType) throws SQLException {
-        log(Level.FINEST, "setNull(" + parameterIndex + ", " + sqlType + " )");
-
-        /*if( this.eclQuery.getQueryType() == SQLType.CALL)
-            parameters.put(parameterIndex, "");
-        else
-            throw new SQLException("NULL cannot be represented in ECL.");*/
+    public void setString(int parameterIndex, String x) {
+        parameters.put(parameterIndex, HPCCJDBCUtils.ensureECLString(x));
     }
     
 	public void setObject(int parameterIndex, Object x) throws SQLException {
-		if (x != null) {
-			parameters.put(parameterIndex, x);
-		} else {
-			setNull(parameterIndex, java.sql.Types.OTHER);
-		}
+		parameters.put(parameterIndex, x);
 	}
     
     public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException{
@@ -157,71 +62,102 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) throws SQLException{
     	setObject(parameterIndex, x);
     }
-
-    public void setRef(int parameterIndex, Ref x) throws SQLException
-    {
-        log(Level.FINEST, "setRef(" + parameterIndex + ", " + x + " )");
-        parameters.put(parameterIndex, x);
+    
+    public void setNull(int parameterIndex, int sqlType) throws SQLException {
+    	parameters.put(parameterIndex, null);
     }
-
-    public void setBlob(int parameterIndex, Blob x) throws SQLException
-    {
-        log(Level.FINEST, "setBlob(" + parameterIndex + ", " + x + " )");
-        parameters.put(parameterIndex, x);
-    }
-
-    public void setClob(int parameterIndex, Clob x) throws SQLException
-    {
-        log(Level.FINEST, "setClob(" + parameterIndex + ", " + x + " )");
-        parameters.put(parameterIndex, x);
-    }
-
-    public void setArray(int parameterIndex, Array x) throws SQLException
-    {
-        log(Level.FINEST, "setArray(" + parameterIndex + ", " + x + " )");
-        parameters.put(parameterIndex, x);
-    }
-
-    public ResultSetMetaData getMetaData() throws SQLException
-    {
-        log(Level.FINEST, "getMetaData( )");
-        return result != null ? result.getMetaData() : null;
-    }
-
-    public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException
-    {
-        log(Level.FINEST, "setNull(" + parameterIndex + ", " + sqlType + " )");
+    public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
         setNull(parameterIndex, sqlType);
     }
-
-    public void setURL(int parameterIndex, URL x) throws SQLException
-    {
-        log(Level.FINEST, "setURL(" + parameterIndex + ", " + x + " )");
+    
+    //Standard setter doing all the same stuff
+    public void setBoolean(int parameterIndex, boolean x) throws SQLException {
         parameters.put(parameterIndex, x);
     }
 
-    public void setNString(int parameterIndex, String value) throws SQLException
-    {
-        log(Level.FINEST, "setNString(" + parameterIndex + ", " + value + " )");
+    public void setByte(int parameterIndex, byte x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+
+    public void setShort(int parameterIndex, short x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+
+    public void setInt(int parameterIndex, int x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+
+    public void setLong(int parameterIndex, long x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+
+    public void setFloat(int parameterIndex, float x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+
+    public void setDouble(int parameterIndex, double x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+
+    public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+    
+    public void setBytes(int parameterIndex, byte[] x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+
+    public void setDate(int parameterIndex, Date x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+
+    public void setTime(int parameterIndex, Time x) {
+        parameters.put(parameterIndex, x);
+    }
+
+	public void setTimestamp(int parameterIndex, Timestamp x)throws SQLException {
+		parameters.put(parameterIndex, x);
+	}
+
+    public void setRef(int parameterIndex, Ref x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+
+    public void setBlob(int parameterIndex, Blob x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+
+    public void setClob(int parameterIndex, Clob x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+    
+    public void setArray(int parameterIndex, Array x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+
+    public void setURL(int parameterIndex, URL x) throws SQLException {
+        parameters.put(parameterIndex, x);
+    }
+
+    public void setNString(int parameterIndex, String value) throws SQLException {
         parameters.put(parameterIndex, value);
     }
 
-    public void setNClob(int parameterIndex, NClob value) throws SQLException
-    {
-        log(Level.FINEST, "setNClob(" + parameterIndex + ", " + value + " )");
+    public void setNClob(int parameterIndex, NClob value) throws SQLException {
         parameters.put(parameterIndex, value);
     }
 
-    public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException
-    {
-        log(Level.FINEST, "setSQLXML(" + parameterIndex + ", " + xmlObject + " )");
+    public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
         parameters.put(parameterIndex, xmlObject);
     }
     
-    //Override super method
-    protected static void log(Level loggingLevel, String infoMessage){
-		logger.log(loggingLevel, HPCCPreparedStatement.class.getSimpleName()+": "+infoMessage);
-	}
+    public void clearParameters() throws SQLException {
+        parameters.clear();
+    }
+    
+    public ResultSetMetaData getMetaData() throws SQLException {
+        return result != null ? result.getMetaData() : null;
+    }
     
     //Unsuppported methods!!
     public void addBatch() throws SQLException {
@@ -325,4 +261,9 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     public void setNClob(int parameterIndex, Reader reader) throws SQLException {
         handleUnsupportedMethod("setNClob Not supported yet.");
     }
+    
+    //Override super method
+    protected static void log(Level loggingLevel, String infoMessage){
+		logger.log(loggingLevel, HPCCPreparedStatement.class.getSimpleName()+": "+infoMessage);
+	}
 }
