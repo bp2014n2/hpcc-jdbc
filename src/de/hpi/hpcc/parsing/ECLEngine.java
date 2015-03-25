@@ -152,7 +152,7 @@ public class ECLEngine
     	case "Select":
     		this.sqlParser = new SQLParserSelect(sqlQuery);
     		generateSelectECL(sqlQuery);
-    		break;
+    		break;    		
     	case "Insert":
     		this.sqlParser = new SQLParserInsert(sqlQuery);
     		generateInsertECL(sqlQuery);
@@ -426,7 +426,7 @@ public class ECLEngine
 			sb.append(eclCode.toString());
 			sb.append("\n");
 			sb.append("\n\n\n//"+sql);
-
+			System.out.println(sb.toString());
 			return sb.toString();
 		} catch (Exception e) {
 		}
