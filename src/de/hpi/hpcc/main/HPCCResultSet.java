@@ -114,15 +114,7 @@ public class HPCCResultSet implements ResultSet
                     if (resultMetadata.containsColByNameOrAlias(resultRowElementName))
                     {
                         HPCCColumnMetaData col = resultMetadata.getColByNameOrAlias(resultRowElementName);
-                        String content = resultRowElement.getTextContent().trim();
-                      
-                       	int type = col.getSqlType();
-						if (type == java.sql.Types.VARCHAR) {
-							content = content;
-						}
-						 
-                        	
-                        rowValues.set(col.getIndex(), content);
+                        rowValues.set(col.getIndex(), resultRowElement.getTextContent().trim());
                     }
                 }
             }
