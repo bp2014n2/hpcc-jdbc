@@ -36,8 +36,7 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     }
 
     public ResultSet executeQuery(){
-    	replaceJdbcParameters();
-        execute(sqlQuery);
+    	execute();
         return result;
     }
 
@@ -50,7 +49,9 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
 	}
 
     public boolean execute(){
-    	return execute(sqlQuery);
+    	replaceJdbcParameters();
+        boolean statementExecutionWorked = execute(sqlQuery);
+    	return statementExecutionWorked;
 	}
     
     public void setBoolean(int parameterIndex, boolean x) throws SQLException{
