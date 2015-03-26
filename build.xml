@@ -13,7 +13,7 @@
 	<property name="destination" location="built_jars"/>
 	
 	<property name="libLocation" location="lib"/>
-	<property name="sqlParserVersion" value="0.9.1"/>
+	<property name="sqlParserVersion" value="0.9.3-SNAPSHOT"/>
 	<property name="sqlParser" value="jsqlparser-${sqlParserVersion}.jar"/>
 	
 	<property name="postgres" value="postgresql-9.3-1102.jdbc4.jar"/>

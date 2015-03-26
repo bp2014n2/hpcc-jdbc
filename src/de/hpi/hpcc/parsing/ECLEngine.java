@@ -152,7 +152,7 @@ public class ECLEngine
     	case "Select":
     		this.sqlParser = new SQLParserSelect(sqlQuery);
     		generateSelectECL(sqlQuery);
-    		break;
+    		break;    		
     	case "Insert":
     		this.sqlParser = new SQLParserInsert(sqlQuery);
     		generateInsertECL(sqlQuery);
@@ -240,7 +240,7 @@ public class ECLEngine
 
 	private void generateDropECL(String sqlQuery) throws SQLException {
     	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#OPTION('name', 'i2b2: drop');\n");
+    	eclCode.append("#WORKUNIT('name', 'i2b2: drop');\n");
     	eclCode.append(generateImports());
 //		eclCode.append(eclBuilder.generateECL(sqlQuery));
     	
@@ -268,7 +268,7 @@ public class ECLEngine
 
 	private void generateInsertECL(String sqlQuery) throws SQLException{
     	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#option('name', 'i2b2: insert');\n");
+    	eclCode.append("#WORKUNIT('name', 'i2b2: insert');\n");
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'thor');\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
@@ -316,7 +316,7 @@ public class ECLEngine
 	private void generateSelectECL(String sqlQuery) throws SQLException
     {
     	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#WORKUNIT('name', 'java select');\n");
+    	eclCode.append("#WORKUNIT('name', 'i2b2: select');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
         eclCode.append(generateLayouts(eclBuilder));
@@ -375,28 +375,7 @@ public class ECLEngine
 //				tableName = table;
 				table = "i2b2demodata::"+tableName;
 			}
-			switch(tableName) {
-			case "observation_fact":
-				usingIndices = true;
-				indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd,encounter_num,patient_num,provider_id,start_date,modifier_cd,instance_num,valtype_cd,tval_char,valueflag_cd,vunits_cd,end_date,location_cd,update_date,download_date,import_date,sourcesystem_cd,upload_id}, {}, '~i2b2demodata::observation_fact_idx_all');\n");
-//				if(sqlParser.hasWhereOf("observation_fact","concept_cd") && !sqlParser.hasWhereOf("observation_fact","provider_id")) {
-//					indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd}, {patient_num, modifier_cd, valtype_cd, tval_char, start_date}, '~i2b2demodata::observation_fact_idx_inverted_concept_cd');\n");
-//				} else if(sqlParser.hasWhereOf("observation_fact","provider_id")) {
-//					indicesString.append("observation_fact := INDEX(observation_fact_table, {provider_id}, {modifier_cd, valtype_cd, tval_char, start_date, patient_num}, '~i2b2demodata::observation_fact_idx_inverted_provider_id_all');\n");
-//				} else
-//					indicesString.append("observation_fact := INDEX(observation_fact_table, {start_date,concept_cd, modifier_cd,valtype_cd,tval_char,patient_num},{}, '~i2b2demodata::observation_fact_idx_start_date');\n");
-				break;
-			case "provider_dimension": 
-				usingIndices = true;
-				indicesString.append("provider_dimension := INDEX(provider_dimension_table, {provider_path}, {provider_id}, '~i2b2demodata::provider_dimension_idx_inverted');\n");
-				break;
-			case "concept_dimension": 
-				usingIndices = true;
-//				indicesString.append("concept_dimension := INDEX(concept_dimension_table, {concept_cd}, {}, '~i2b2demodata::concept_dimension_idx_concept_cd');\n");
-				indicesString.append("concept_dimension := INDEX(concept_dimension_table, {concept_path}, {concept_cd}, '~i2b2demodata::concept_dimension_idx_inverted');\n");
-				break;
-			default: break; 
-			}
+    		usingIndices = getIndex(tableName, indicesString);
 			datasetsString.append(tableName).append(usingIndices?"_table":"").append(" := ").append("DATASET(");
 			datasetsString.append("'~").append(table.replaceAll("\\.", "::")).append("'");
 			datasetsString.append(", ").append(tableName+"_record").append(",").append(HPCCEngine).append(");\n");			
@@ -404,7 +383,29 @@ public class ECLEngine
     	return datasetsString.toString() + indicesString.toString();
     }
     
-    public String parseEclCode(String sqlQuery){
+    private boolean getIndex(String tableName, StringBuilder indicesString) {
+		switch(tableName) {
+		case "observation_fact":
+			indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd,encounter_num,patient_num,provider_id,start_date,modifier_cd,instance_num,valtype_cd,tval_char,valueflag_cd,vunits_cd,end_date,location_cd,update_date,download_date,import_date,sourcesystem_cd,upload_id}, {}, '~i2b2demodata::observation_fact_idx_all');\n");
+//			if(sqlParser.hasWhereOf("observation_fact","concept_cd") && !sqlParser.hasWhereOf("observation_fact","provider_id")) {
+//				indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd}, {patient_num, modifier_cd, valtype_cd, tval_char, start_date}, '~i2b2demodata::observation_fact_idx_inverted_concept_cd');\n");
+//			} else if(sqlParser.hasWhereOf("observation_fact","provider_id")) {
+//				indicesString.append("observation_fact := INDEX(observation_fact_table, {provider_id}, {modifier_cd, valtype_cd, tval_char, start_date, patient_num}, '~i2b2demodata::observation_fact_idx_inverted_provider_id_all');\n");
+//			} else
+//				indicesString.append("observation_fact := INDEX(observation_fact_table, {start_date,concept_cd, modifier_cd,valtype_cd,tval_char,patient_num},{}, '~i2b2demodata::observation_fact_idx_start_date');\n");
+			return true;
+		case "provider_dimension": 
+			indicesString.append("provider_dimension := INDEX(provider_dimension_table, {provider_path}, {provider_id}, '~i2b2demodata::provider_dimension_idx_inverted');\n");
+			return true;
+		case "concept_dimension": 
+//			indicesString.append("concept_dimension := INDEX(concept_dimension_table, {concept_cd}, {}, '~i2b2demodata::concept_dimension_idx_concept_cd');\n");
+			indicesString.append("concept_dimension := INDEX(concept_dimension_table, {concept_path}, {concept_cd}, '~i2b2demodata::concept_dimension_idx_inverted');\n");
+			return true;
+		default: return false; 
+		}
+	}
+
+	public String parseEclCode(String sqlQuery){
 		try {
 			generateECL(sqlQuery);
 			StringBuilder sb = new StringBuilder();
@@ -426,7 +427,7 @@ public class ECLEngine
 			sb.append(eclCode.toString());
 			sb.append("\n");
 			sb.append("\n\n\n//"+sql);
-
+			System.out.println(sb.toString());
 			return sb.toString();
 		} catch (Exception e) {
 		}
