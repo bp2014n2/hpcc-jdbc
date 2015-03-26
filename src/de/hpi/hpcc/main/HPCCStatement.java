@@ -1,6 +1,7 @@
 package de.hpi.hpcc.main;
 
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -50,7 +51,6 @@ public class HPCCStatement implements Statement{
 		result = null;
 		try {
 			if (queryContainsPostgresTable(sqlStatement)) {
-				Class.forName("org.postgresql.Driver");
 				Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
 				Statement statement = connection.createStatement();
 				result = statement.executeQuery(sqlStatement);

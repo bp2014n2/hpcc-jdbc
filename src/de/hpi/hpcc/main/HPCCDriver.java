@@ -24,6 +24,7 @@ public class HPCCDriver implements Driver{
     	try{
     		HPCCDriver driver = new HPCCDriver();
             DriverManager.registerDriver(driver);
+			DriverManager.registerDriver(new org.postgresql.Driver());
             log("Driver built and registered");
         }
         catch (SQLException sqlException){
