@@ -38,7 +38,7 @@
 			<src path="${logging}"/>
 			<classpath>
 				<pathelement path="${libLocation}/${sqlParser}"/>
-				<pathelement path="${libLocation}/${junit}"/>
+				<pathelement path="${libLocation}/${postgres}"/>
 			</classpath>
 		</javac>
 	</target>
