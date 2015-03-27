@@ -30,13 +30,12 @@
 	</target>
 
 	<target name="compile" depends="initDriverFile" description="Compile the source" >
-		<javac includeantruntime="false" destdir="${build}">
+		<javac includeantruntime="false" debug="true" destdir="${build}">
 			<src path="${main}"/>
 			<src path="${parsing}"/>
 			<src path="${logging}"/>
 			<classpath>
 				<pathelement path="${libLocation}/${sqlParser}"/>
-				<pathelement path="${libLocation}/${postgres}"/>
 			</classpath>
 		</javac>
 	</target>

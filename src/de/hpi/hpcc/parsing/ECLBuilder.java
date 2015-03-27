@@ -74,10 +74,12 @@ public class ECLBuilder {
 		String tableName = ((SQLParserCreate) sqlParser).getTableName();
 		eclCode.append("OUTPUT(DATASET([],{");
 		//remove "RECORD " at beginning of Layout definition
-		String recordString = ECLLayouts.getLayouts().get(tableName.toLowerCase());
-		if(recordString == null) {
+		ECLRecordDefinition record = ECLLayouts.getLayouts().get(tableName.toLowerCase());
+		String recordString = null;
+		if(record == null) {
 			recordString = ((SQLParserCreate) sqlParser).getRecord();
 		} else {
+			recordString = record.toString();
 			recordString = recordString.substring(7, recordString.length() - 6).replace(";", ",");
 		}
 		eclCode.append(recordString);

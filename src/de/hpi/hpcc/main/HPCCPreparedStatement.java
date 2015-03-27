@@ -42,14 +42,33 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     
     private void replaceJdbcParameters() {
     	int parameterCount = sqlStatement.length() - sqlStatement.replace("?", "").length();
-    	for (int i = 1; i <= parameterCount; i++) {
-    		if (parameters.containsKey(i)) {
-            	Object param = parameters.get(i);
-            	sqlStatement = sqlStatement.replaceFirst("\\?", param.toString());
-    		} else {
-            	sqlStatement = sqlStatement.replaceFirst("\\?", "NULL");
-    		}
+    	if (parameterCount >= parameters.size()) {
+    		
+    		for (int i = sqlStatement.length()-1; i >= 0; i--) {
+    			//TODO: check whether '?' is part of string
+    			if (!sqlStatement.substring(0,i+1).contains("?")) {
+    				break;
+    			}
+        		if (sqlStatement.charAt(i)=='?') {
+        			if (parameters.containsKey(parameterCount)) {
+        				Object param = parameters.get(parameterCount--);
+            			if (param != null) {
+//                    		if (param instanceof String && ((String) param).contains("\\")){
+//                        		param = ((String) param).replace("\\", "\\\\");
+//                        	}
+            				sqlStatement = new StringBuilder(sqlStatement).replace(i, i+1, param.toString()).toString();
+//                        	sqlStatement = sqlStatement.replace("\\?", param.toString());
+                    	} else {
+                    		sqlStatement = new StringBuilder(sqlStatement).replace(i, i+1, "NULL").toString();
+                    	}
+        			} else {
+        				parameterCount--;
+        				sqlStatement = new StringBuilder(sqlStatement).replace(i, i+1, "NULL").toString();
+            		}	
+        		}
+        	}
     	}
+    	
 	}
 
     public void setString(int parameterIndex, String x) {

@@ -192,7 +192,7 @@ public class ECLEngine
 			eclCode.append("Std.File.StartSuperFileTransaction(),\n");
 			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
-			String recordString = ECLLayouts.getLayouts().get(((SQLParserCreate) sqlParser).getTableName().toLowerCase());
+			String recordString = ECLLayouts.getLayouts().get(((SQLParserCreate) sqlParser).getTableName().toLowerCase()).toString();
 			if(recordString == null) {
 				recordString = ((SQLParserCreate) sqlParser).getRecord();
 			} else {

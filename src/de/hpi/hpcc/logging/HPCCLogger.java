@@ -22,7 +22,7 @@ public class HPCCLogger extends Logger{
 	}
 	
 	public static void setLoggingLevel(Level level){
-		level = Level.OFF; //TODO: remove (just for testing purposes)
+		level = Level.ALL; //TODO: remove (just for testing purposes)
 		Logger logger = getLogger();
 		for(Handler handler : logger.getHandlers()){
 			handler.setLevel(level);

@@ -2,6 +2,7 @@ package de.hpi.hpcc.parsing;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import de.hpi.hpcc.parsing.ECLRecordDefinition;
 
 public class ECLLayouts {
 	private static final String			Layout_ConceptDimension = "RECORD STRING700 concept_path;  STRING50 concept_cd;  STRING2000 name_char;  STRING concept_blob;  STRING25 update_date;  STRING25 download_date;  STRING25 import_date;  STRING50 sourcesystem_cd;  UNSIGNED5 upload_id;END;";
@@ -36,45 +37,45 @@ public class ECLLayouts {
     private static final String			Layout_Dx = "RECORD UNSIGNED5 encounter_num; UNSIGNED5 patient_num; UNSIGNED5 instance_num; STRING50 concept_cd; STRING25 start_date; STRING50 provider_id; STRING25 temporal_start_date; STRING25 temporal_end_date; END;";
     private static final String			Layout_Sequences = "RECORD STRING50 name; UNSIGNED8 value; UNSIGNED8 start; END;";
     
-    private static HashMap<String, String> layouts = new HashMap<String, String> ();
+    private static HashMap<String, ECLRecordDefinition> layouts = new HashMap<String, ECLRecordDefinition> ();
      
     /**
 	 * 
 	 * @return returns a HashMap with all layouts from i2b2demodata referenced by the table name
 	 */
-	public static HashMap<String, String> getLayouts() {
+	public static HashMap<String, ECLRecordDefinition> getLayouts() {
 		if (layouts.isEmpty()) {
-			layouts.put("concept_dimension", Layout_ConceptDimension);
-			layouts.put("patient_dimension", Layout_PatientDimension);
-			layouts.put("observation_fact", Layout_ObservationFact);
-			layouts.put("patient_mapping", Layout_PatientMapping);
-			layouts.put("provider_dimension", Layout_ProviderDimension);
-			layouts.put("visit_dimension", Layout_VisitDimension);
-			layouts.put("archive_observation_fact", Layout_ArchiveObservationFact);
-			layouts.put("code_lookup", Layout_CodeLookup);
-			layouts.put("datamart_report", Layout_DatamartReport);
-			layouts.put("encounter_mapping", Layout_EncounterMapping);
-			layouts.put("modifier_dimension", Layout_ModifierDimension);
-			layouts.put("qt_analysis_plugin", Layout_QtAnalysisPlugin);
-			layouts.put("qt_analysis_plugin_result_type", Layout_QtAnalysisPluginResultType);
-			layouts.put("qt_breakdown_path", Layout_QtBreakdownPath);
-			layouts.put("qt_patient_enc_collection", Layout_QtPatientEncCollection);
-			layouts.put("qt_patient_set_collection", Layout_QtPatientSetCollection);
-			layouts.put("qt_pdo_query_master", Layout_QtPdoQueryMaster);
-			layouts.put("qt_privilege", Layout_QtPrivilege);
-			layouts.put("qt_query_instance", Layout_QtQueryInstance);
-			layouts.put("qt_query_master", Layout_QtQueryMaster);
-			layouts.put("qt_query_result_instance", Layout_QtQueryResultInstance);
-			layouts.put("qt_query_result_type", Layout_QtQueryResultType);
-			layouts.put("qt_query_status_type", Layout_QtQueryStatusType);
-			layouts.put("qt_xml_result", Layout_QtXmlResult);
-			layouts.put("set_type", Layout_SetType);
-			layouts.put("set_upload_status", Layout_SetUploadStatus);
-			layouts.put("source_master", Layout_SourceMaster);
-			layouts.put("upload_status", Layout_UploadStatus);
-			layouts.put("query_global_temp", Layout_QueryGlobalTemp);
-			layouts.put("dx", Layout_Dx);
-			layouts.put("sequences", Layout_Sequences);
+			layouts.put("concept_dimension", new ECLRecordDefinition(Layout_ConceptDimension));
+			layouts.put("patient_dimension", new ECLRecordDefinition(Layout_PatientDimension));
+			layouts.put("observation_fact", new ECLRecordDefinition(Layout_ObservationFact));
+			layouts.put("patient_mapping", new ECLRecordDefinition(Layout_PatientMapping));
+			layouts.put("provider_dimension", new ECLRecordDefinition(Layout_ProviderDimension));
+			layouts.put("visit_dimension", new ECLRecordDefinition(Layout_VisitDimension));
+			layouts.put("archive_observation_fact", new ECLRecordDefinition(Layout_ArchiveObservationFact));
+			layouts.put("code_lookup", new ECLRecordDefinition(Layout_CodeLookup));
+			layouts.put("datamart_report", new ECLRecordDefinition(Layout_DatamartReport));
+			layouts.put("encounter_mapping", new ECLRecordDefinition(Layout_EncounterMapping));
+			layouts.put("modifier_dimension", new ECLRecordDefinition(Layout_ModifierDimension));
+			layouts.put("qt_analysis_plugin", new ECLRecordDefinition(Layout_QtAnalysisPlugin));
+			layouts.put("qt_analysis_plugin_result_type", new ECLRecordDefinition(Layout_QtAnalysisPluginResultType));
+			layouts.put("qt_breakdown_path", new ECLRecordDefinition(Layout_QtBreakdownPath));
+			layouts.put("qt_patient_enc_collection", new ECLRecordDefinition(Layout_QtPatientEncCollection));
+			layouts.put("qt_patient_set_collection", new ECLRecordDefinition(Layout_QtPatientSetCollection));
+			layouts.put("qt_pdo_query_master", new ECLRecordDefinition(Layout_QtPdoQueryMaster));
+			layouts.put("qt_privilege", new ECLRecordDefinition(Layout_QtPrivilege));
+			layouts.put("qt_query_instance", new ECLRecordDefinition(Layout_QtQueryInstance));
+			layouts.put("qt_query_master", new ECLRecordDefinition(Layout_QtQueryMaster));
+			layouts.put("qt_query_result_instance", new ECLRecordDefinition(Layout_QtQueryResultInstance));
+			layouts.put("qt_query_result_type", new ECLRecordDefinition(Layout_QtQueryResultType));
+			layouts.put("qt_query_status_type", new ECLRecordDefinition(Layout_QtQueryStatusType));
+			layouts.put("qt_xml_result", new ECLRecordDefinition(Layout_QtXmlResult));
+			layouts.put("set_type", new ECLRecordDefinition(Layout_SetType));
+			layouts.put("set_upload_status", new ECLRecordDefinition(Layout_SetUploadStatus));
+			layouts.put("source_master", new ECLRecordDefinition(Layout_SourceMaster));
+			layouts.put("upload_status", new ECLRecordDefinition(Layout_UploadStatus));
+			layouts.put("query_global_temp", new ECLRecordDefinition(Layout_QueryGlobalTemp));
+			layouts.put("dx", new ECLRecordDefinition(Layout_Dx));
+			layouts.put("sequences", new ECLRecordDefinition(Layout_Sequences));
 		}
 		return layouts;
 	}
@@ -85,40 +86,28 @@ public class ECLLayouts {
 	 * @param value is the layout definition itself
 	 */
 	public static void setLayouts(String key, String value) {
-		layouts.put(key, value);
+		layouts.put(key.toLowerCase(), new ECLRecordDefinition(value));
 	}
 	
 	public static String getECLDataType(String table, String column){
 		String dataType = "unknown";
-	    HashMap<String, String> layouts = getLayouts();
-		String[] columns = layouts.get(table.toLowerCase()).split(";");
-		for(String l : columns) {
-			if (!l.matches(".*"+column.toLowerCase())) continue;
-			String[] entries = l.split(" ");
-			dataType = entries[entries.length-2];
-			break;
-		}
-		return dataType;
+	    
+		ECLRecordDefinition recordDefinition = getLayouts().get(table.toLowerCase());
+		return recordDefinition.findColumn(column).getDataType();
 	}
 	
 	public static LinkedHashSet<String> getAllColumns(String table) {
-		LinkedHashSet<String> allColumns = new LinkedHashSet<String>();
-		String[] columns = getLayouts().get(table.toLowerCase()).split(";");
-		for (String l : columns) {
-			if (l.matches(".*END")) continue;
-			String[] entries = l.split(" ");
-			allColumns.add(entries[entries.length-1]);
-		}	
-		return allColumns;
+		ECLRecordDefinition recordDefinition = getLayouts().get(table.toLowerCase());
+		
+		return recordDefinition.getColumnNames();
 	}
 
+	
 	public static boolean isInt(String column) {
-		for (String layout : getLayouts().values()) {
-			if (layout.contains(column))
-				if (layout.toLowerCase().matches(".*(unsigned.? "+column+"|integer.? "+column+").*"))
-					return true;
-				else
-					break;
+		for (ECLRecordDefinition layout : getLayouts().values()) {
+			if (layout.findColumn(column).getDataType().matches("(unsigned.*|integer.*)")) {
+				return true;
+			}
 		}
 		return false;
 	}
