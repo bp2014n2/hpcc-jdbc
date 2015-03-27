@@ -89,7 +89,7 @@ public class ECLEngine
         this.conn = conn;
     }
 
-    private String convertToAppropriateSQL(String sql) {
+    private String convertToAppropriateSQL() {
 		if(sql.toLowerCase().contains("substring")){
 			String substring = sql.toLowerCase().substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52);
 			substring = substring.replace("substring(", "").replace(" from ", "[").replace(" for ", "..").replace(")", "]");
@@ -97,6 +97,11 @@ public class ECLEngine
 			String subRange = substring.substring(substring.indexOf("["), substring.indexOf("]")+1);
 			substring = substring.replace(subRange,"");
 			sql = sql.replace(sql.substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52),substring);
+		} else if(sql.toLowerCase().contains("nextval")){
+			String sequence = sql.substring(sql.indexOf('(')+2, sql.indexOf(')')-1);
+			ECLEngine updateEngine = new ECLEngine(conn, dbMetadata);
+			conn.sendRequest(updateEngine.parseEclCode("update sequences set value = value + 1 where name = '"+sequence+"'"));
+			sql = "select value as nextval from sequences where name = '"+sequence+"'";
 		}
 		return sql;
 	}
@@ -147,7 +152,7 @@ public class ECLEngine
     public void generateECL(String sqlQuery) throws SQLException 
     {
     	sql = sqlQuery;
-    	sqlQuery = convertToAppropriateSQL(sqlQuery);
+    	sqlQuery = convertToAppropriateSQL();
     	switch(SQLParser.sqlIsInstanceOf(sqlQuery)) {
     	case "Select":
     		this.sqlParser = new SQLParserSelect(sqlQuery);
@@ -425,9 +430,8 @@ public class ECLEngine
 				eclCode.append(correctedEclCode);
 			}
 			sb.append(eclCode.toString());
-			sb.append("\n");
-			sb.append("\n\n\n//"+sql);
-			System.out.println(sb.toString());
+			sb.append("\n\n//"+sql);
+//			System.out.println(sb.toString());
 			return sb.toString();
 		} catch (Exception e) {
 		}

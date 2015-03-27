@@ -13,16 +13,16 @@ public class HPCCLogger extends Logger{
 	public static void initializeLogging(){
 		Logger logger = getLogger();
 		HPCCLogFormatter formatter = new HPCCLogFormatter();
-		logger.setUseParentHandlers(true);
-//		try {
-//			HPCCConsoleHandler handler = new HPCCConsoleHandler(formatter);
-//			logger.addHandler(handler);
-//		} catch (Exception exception){}
+		logger.setUseParentHandlers(false);
+		try {
+			HPCCConsoleHandler handler = new HPCCConsoleHandler(formatter);
+			logger.addHandler(handler);
+		} catch (Exception exception){}
 		setLoggingLevel(getDefaultLogLevel());
 	}
 	
 	public static void setLoggingLevel(Level level){
-		level = Level.ALL; //TODO: remove (just for testing purposes)
+		level = Level.OFF; //TODO: remove (just for testing purposes)
 		Logger logger = getLogger();
 		for(Handler handler : logger.getHandlers()){
 			handler.setLevel(level);

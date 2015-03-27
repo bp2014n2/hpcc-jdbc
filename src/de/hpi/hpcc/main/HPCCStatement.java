@@ -50,17 +50,11 @@ public class HPCCStatement implements Statement{
 		
 		result = null;
 		try {
-			if (queryContainsPostgresTable(sqlStatement)) {
-				Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
-				Statement statement = connection.createStatement();
-				result = statement.executeQuery(sqlStatement);
-			} else {
-				String eclCode = eclEngine.parseEclCode(sqlStatement);
-				connection.sendRequest(eclCode);
-				NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
-				if (rowList != null) {
-					result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	resultSetName));
-				}
+			String eclCode = eclEngine.parseEclCode(sqlStatement);
+			connection.sendRequest(eclCode);
+			NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+			if (rowList != null) {
+				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	resultSetName));
 			}
 		} catch (Exception exception) {
 			exception.printStackTrace();

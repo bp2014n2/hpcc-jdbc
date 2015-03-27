@@ -108,7 +108,7 @@ public class ECLBuilder {
 		LinkedHashSet<String> allColumns = sqlParser.getAllCoumns();
 		String selectString = "";
 		for(String column : allColumns){
-			if (!columns.contains(column)) {
+			if (!columns.contains(column) || sqlParser.isIncrement()) {
 				selectString += (selectString=="" ? "":", ");
 				selectString += column;
 			}

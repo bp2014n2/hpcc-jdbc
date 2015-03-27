@@ -41,9 +41,14 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
 	}
     
     private void replaceJdbcParameters() {
-    	for (int i = 1; i <= parameters.size(); i++) {
-        	Object param = parameters.get(i);
-        	sqlStatement = sqlStatement.replaceFirst("\\?", param.toString());
+    	int parameterCount = sqlStatement.length() - sqlStatement.replace("?", "").length();
+    	for (int i = 1; i <= parameterCount; i++) {
+    		if (parameters.containsKey(i)) {
+            	Object param = parameters.get(i);
+            	sqlStatement = sqlStatement.replaceFirst("\\?", param.toString());
+    		} else {
+            	sqlStatement = sqlStatement.replaceFirst("\\?", "NULL");
+    		}
     	}
 	}
 
@@ -169,8 +174,9 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     }
     
     public int executeUpdate() throws SQLException{
-        handleUnsupportedMethod("executeUpdate()");
-		return 0;
+		ResultSet rs = executeQuery();
+		rs.last();
+		return rs.getRow();
     }
     
     public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {

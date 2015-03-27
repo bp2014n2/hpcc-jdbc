@@ -57,6 +57,10 @@ public class SQLParserUpdate extends SQLParser {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	public boolean isIncrement() {
+		return getExpressions().get(0).toString().contains(getColumns().get(0));
+	}
 	
 	
 
