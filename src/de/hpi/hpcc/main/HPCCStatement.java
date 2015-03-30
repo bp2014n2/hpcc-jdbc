@@ -71,7 +71,7 @@ public class HPCCStatement implements Statement{
 	
 	public void close() throws SQLException {
         if (!closed){
-        	result.close();
+//        	result.close();
             closed = true;
             connection = null;
             result = null;
