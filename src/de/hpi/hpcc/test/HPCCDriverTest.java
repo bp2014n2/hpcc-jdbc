@@ -1,13 +1,15 @@
 package de.hpi.hpcc.test;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 import java.util.logging.Level;
+
 import org.junit.Before;
 import org.junit.Test;
+
 import de.hpi.hpcc.main.HPCCConnection;
 import de.hpi.hpcc.main.HPCCDriver;
 
@@ -17,7 +19,7 @@ public class HPCCDriverTest {
 	
 	@Test @Before
 	public void testDriverRegistration() throws ClassNotFoundException, SQLException {
-		Class.forName("connectionManagement.HPCCDriver");
+		Class.forName("de.hpi.hpcc.main.HPCCDriver");
 	}
 	
 	@Test
@@ -60,7 +62,7 @@ public class HPCCDriverTest {
 	
 	@Test
 	public void testGetConnection() throws SQLException {
-		HPCCConnection connection = (HPCCConnection) DriverManager.getConnection("", null);
+		HPCCConnection connection = (HPCCConnection) DriverManager.getConnection(acceptedURL, null);
 		assertNotNull(connection);
 		connection.close();
 	}
@@ -68,27 +70,26 @@ public class HPCCDriverTest {
 	@Test
 	public void testDefaultProperties() throws SQLException{
 		((HPCCDriver) DriverManager.getDriver(acceptedURL)).resetProperties();
-		HPCCConnection connection = (HPCCConnection) DriverManager.getConnection("", null);
-		assertTrue(connection.getProperties().getProperty("ServerAddress").equals("//localhost"));
-		assertTrue(connection.getProperties().getProperty("WsECLWatchAddress").equals("//localhost"));
-		assertTrue(connection.getProperties().getProperty("WsECLAddress").equals("//localhost"));
-		assertTrue(connection.getProperties().getProperty("WsECLDirectAddress").equals("//localhost"));
-		assertTrue(connection.getProperties().getProperty("username").equals("hpccdemo"));
-		assertTrue(connection.getProperties().getProperty("password").equals("hpccdemo"));
-		assertTrue(connection.getProperties().getProperty("ConnectTimeoutMilli").equals("5000"));
-		assertTrue(connection.getProperties().getProperty("ReadTimeoutMilli").equals("15000"));
-		assertTrue(connection.getProperties().getProperty("LazyLoad").equals("true"));
-		assertTrue(connection.getProperties().getProperty("EclResultLimit").equals("100"));
-		assertTrue(connection.getProperties().getProperty("TraceLevel").equals(Level.INFO.getName()));
-		assertTrue(connection.getProperties().getProperty("TraceToFile").equals("false"));
-		assertTrue(connection.getProperties().getProperty("TargetCluster").equals("hthor"));
-		assertTrue(connection.getProperties().getProperty("QuerySet").equals("hthor"));
-		assertTrue(connection.getProperties().getProperty("PageSize").equals("100"));
-		assertTrue(connection.getProperties().getProperty("PageOffset").equals("0"));
-		assertTrue(connection.getProperties().getProperty("WsECLDirectPort").equals("8010"));
-		assertTrue(connection.getProperties().getProperty("WsECLPort").equals("8002"));
-		assertTrue(connection.getProperties().getProperty("WsECLWatchPort").equals("8010"));
-		assertTrue(connection.getProperties().getProperty("Basic Auth").equals(HPCCConnection.createBasicAuth("hpccdemo", "hpccdemo")));
+		HPCCConnection connection = (HPCCConnection) DriverManager.getConnection("jdbc:hpcc://localhost", null);
+		assertEquals("//localhost", connection.getClientInfo("ServerAddress"));
+		assertEquals("//localhost", connection.getClientInfo("WsECLWatchAddress"));
+		assertEquals("//localhost", connection.getClientInfo("WsECLAddress"));
+		assertEquals("//localhost", connection.getClientInfo("WsECLDirectAddress"));
+		assertEquals("", connection.getClientInfo("username"));
+		assertEquals("", connection.getClientInfo("password"));
+		assertEquals("5000", connection.getClientInfo("ConnectTimeoutMilli"));
+		assertEquals("15000", connection.getClientInfo("ReadTimeoutMilli"));
+		assertEquals("true", connection.getClientInfo("LazyLoad"));
+		assertEquals("100", connection.getClientInfo("EclResultLimit"));
+		assertEquals(Level.INFO.getName(), connection.getClientInfo("TraceLevel"));
+		assertEquals("false", connection.getClientInfo("TraceToFile"));
+		assertEquals("thor", connection.getClientInfo("TargetCluster"));
+		assertEquals("hthor", connection.getClientInfo("QuerySet"));
+		assertEquals("100", connection.getClientInfo("PageSize"));
+		assertEquals("0", connection.getClientInfo("PageOffset"));
+		assertEquals("8010", connection.getClientInfo("WsECLDirectPort"));
+		assertEquals("8002", connection.getClientInfo("WsECLPort"));
+		assertEquals("8010", connection.getClientInfo("WsECLWatchPort"));
 		connection.close();
 	}
 	
@@ -105,15 +106,15 @@ public class HPCCDriverTest {
 		connectionProperties.put("ReadTimeoutMilli", "asdasda");
 		connectionProperties.put("EclResultLimit", "asdadsa");
 		
-		HPCCConnection connection = (HPCCConnection) DriverManager.getConnection("", connectionProperties);
-		assertTrue(connection.getProperties().getProperty("WsECLWatchAddress").equals("//localhost"));
-		assertTrue(connection.getProperties().getProperty("WsECLAddress").equals("//localhost"));
-		assertTrue(connection.getProperties().getProperty("WsECLDirectAddress").equals("//localhost"));
-		assertTrue(connection.getProperties().getProperty("PageSize").equals("100"));
-		assertTrue(connection.getProperties().getProperty("PageOffset").equals("0"));
-		assertTrue(connection.getProperties().getProperty("ConnectTimeoutMilli").equals("5000"));
-		assertTrue(connection.getProperties().getProperty("ReadTimeoutMilli").equals("15000"));
-		assertTrue(connection.getProperties().getProperty("EclResultLimit").equals("100"));
+		HPCCConnection connection = (HPCCConnection) DriverManager.getConnection("jdbc:hpcc://localhost", connectionProperties);
+		assertEquals("//localhost", connection.getClientInfo("WsECLWatchAddress"));
+		assertEquals("//localhost", connection.getClientInfo("WsECLAddress"));
+		assertEquals("//localhost", connection.getClientInfo("WsECLDirectAddress"));
+		assertEquals("100", connection.getClientInfo("PageSize"));
+		assertEquals("0", connection.getClientInfo("PageOffset"));
+		assertEquals("5000", connection.getClientInfo("ConnectTimeoutMilli"));
+		assertEquals("15000", connection.getClientInfo("ReadTimeoutMilli"));
+		assertEquals("100", connection.getClientInfo("EclResultLimit"));
 		
 		connection.close();
 	}
@@ -122,9 +123,9 @@ public class HPCCDriverTest {
 	public void testGetConnectionWithCredentials() throws SQLException {
 		((HPCCDriver) DriverManager.getDriver(acceptedURL)).resetProperties();
 		HPCCConnection connection = (HPCCConnection) DriverManager.getConnection("jdbc:hpcc://192.168.56.101", "test", "test");
-		assertTrue(connection.getProperties().getProperty("ServerAddress").equals("//192.168.56.101"));
-		assertTrue(connection.getProperties().getProperty("username").equals("test"));
-		assertTrue(connection.getProperties().getProperty("password").equals("test"));
+		assertEquals("//192.168.56.101", connection.getClientInfo("ServerAddress"));
+		assertEquals("test", connection.getClientInfo("username"));
+		assertEquals("test", connection.getClientInfo("password"));
 		connection.close();
 	}
 	
@@ -136,7 +137,7 @@ public class HPCCDriverTest {
 		connectionProperties.put("EclResultLimit", "ALL");
 		connection = (HPCCConnection) DriverManager.getDriver("jdbc:hpcc://mytest.de").connect("jdbc:hpcc://mytest.de", connectionProperties);
 		
-		assertTrue(connection.getProperties().getProperty("EclResultLimit").equals("ALL"));
+		assertEquals("ALL", connection.getClientInfo("EclResultLimit"));
 	}
 	
 	@Test 
@@ -169,26 +170,25 @@ public class HPCCDriverTest {
 		
 		connection = (HPCCConnection) DriverManager.getDriver("jdbc:hpcc://mytest.de").connect("jdbc:hpcc://mytest.de", connectionProperties);
 		
-		assertTrue(connection.getProperties().getProperty("ServerAddress").equals("//mytest.de"));
-		assertTrue(connection.getProperties().getProperty("WsECLWatchAddress").equals("//mytest.de"));
-		assertTrue(connection.getProperties().getProperty("WsECLAddress").equals("//mytest.de"));
-		assertTrue(connection.getProperties().getProperty("WsECLDirectAddress").equals("//mytest.de"));
-		assertTrue(connection.getProperties().getProperty("username").equals("test"));
-		assertTrue(connection.getProperties().getProperty("password").equals("test"));
-		assertTrue(connection.getProperties().getProperty("ConnectTimeoutMilli").equals("50"));
-		assertTrue(connection.getProperties().getProperty("ReadTimeoutMilli").equals("1000"));
-		assertTrue(connection.getProperties().getProperty("LazyLoad").equals("false"));
-		assertTrue(connection.getProperties().getProperty("EclResultLimit").equals("1000"));
-		assertTrue(connection.getProperties().getProperty("TraceLevel").equals(Level.WARNING.getName()));
-		assertTrue(connection.getProperties().getProperty("TraceToFile").equals("true"));
-		assertTrue(connection.getProperties().getProperty("TargetCluster").equals("hthor2"));
-		assertTrue(connection.getProperties().getProperty("QuerySet").equals("hthor2"));
-		assertTrue(connection.getProperties().getProperty("PageSize").equals("1000"));
-		assertTrue(connection.getProperties().getProperty("PageOffset").equals("1000"));
-		assertTrue(connection.getProperties().getProperty("WsECLDirectPort").equals("8011"));
-		assertTrue(connection.getProperties().getProperty("WsECLPort").equals("8012"));
-		assertTrue(connection.getProperties().getProperty("WsECLWatchPort").equals("8013"));
-		assertTrue(connection.getProperties().getProperty("Basic Auth").equals(HPCCConnection.createBasicAuth("test", "test")));
+		assertEquals("//mytest.de", connection.getClientInfo("ServerAddress"));
+		assertEquals("//mytest.de", connection.getClientInfo("WsECLWatchAddress"));
+		assertEquals("//mytest.de", connection.getClientInfo("WsECLAddress"));
+		assertEquals("//mytest.de", connection.getClientInfo("WsECLDirectAddress"));
+		assertEquals("test", connection.getClientInfo("username"));
+		assertEquals("test", connection.getClientInfo("password"));
+		assertEquals("50", connection.getClientInfo("ConnectTimeoutMilli"));
+		assertEquals("1000", connection.getClientInfo("ReadTimeoutMilli"));
+		assertEquals("false", connection.getClientInfo("LazyLoad"));
+		assertEquals("1000", connection.getClientInfo("EclResultLimit"));
+		assertEquals(Level.WARNING.getName(), connection.getClientInfo("TraceLevel"));
+		assertEquals("true", connection.getClientInfo("TraceToFile"));
+		assertEquals("hthor2", connection.getClientInfo("TargetCluster"));
+		assertEquals("hthor2", connection.getClientInfo("QuerySet"));
+		assertEquals("1000", connection.getClientInfo("PageSize"));
+		assertEquals("1000", connection.getClientInfo("PageOffset"));
+		assertEquals("8011", connection.getClientInfo("WsECLDirectPort"));
+		assertEquals("8012", connection.getClientInfo("WsECLPort"));
+		assertEquals("8013", connection.getClientInfo("WsECLWatchPort"));
 		
 		connection.close();
 	}
