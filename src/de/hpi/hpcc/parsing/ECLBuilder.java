@@ -47,10 +47,6 @@ public class ECLBuilder {
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
 	public String generateECL(String sql) {
-		
-	/*  TODO: CHECK FOR:
-	 * 		UPDATE	
-	 */
 		switch(SQLParser.sqlIsInstanceOf(sql)) {
     	case "Select":
     		return generateSelectECL(new SQLParserSelect(sql));
@@ -205,7 +201,7 @@ public class ECLBuilder {
 			if (sqlParser.getSelect() != null) {
 				eclCode.append(generateECL(sqlParser.getSelect().getSelectBody().toString()));
 			} else if (sqlParser.getItemsList() != null) {
-				eclCode.append("(DATASET([{");
+				eclCode.append("DATASET([{");
 				String valueString = "";
 				for (Expression expression : sqlParser.getExpressions()) {
 					valueString += (valueString=="" ? "":", ")+parseExpressionECL(expression);
@@ -401,6 +397,7 @@ public class ECLBuilder {
 		}
 	}
 	
+	
 	/**
 	 * Generates for a given Expression the ECL code by a recursive approach
 	 * Each Expression can be e.g. a BinaryExpression (And, or etc. ), but also a Column or a SubSelect.
@@ -449,9 +446,6 @@ public class ECLBuilder {
 			expression.append("'");
 		} else if (expressionItem instanceof LongValue) {
 			expression.append(((LongValue) expressionItem).getValue());
-		} else if (expressionItem instanceof IsNullExpression) {
-			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
-			expression.append(" = "+((ECLLayouts.isInt(((Column)((IsNullExpression) expressionItem).getLeftExpression()).getColumnName()))?"0":"''"));
 		} else if (expressionItem instanceof ExistsExpression) {		
 			SQLParserSelect subParser = new SQLParserSelect(((SubSelect)((ExistsExpression) expressionItem).getRightExpression()).getSelectBody().toString());	
 			Expression where = subParser.getWhere();
@@ -474,6 +468,9 @@ public class ECLBuilder {
 			} else
 				expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
 			expression.append(", "+joinColumn+")");
+		} else if (expressionItem instanceof IsNullExpression) {
+			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
+			expression.append(" = "+((ECLLayouts.isColumnOfIntInAnyTable(((Column)((IsNullExpression) expressionItem).getLeftExpression()).getColumnName()))?"0":"''"));
 		} else if (expressionItem instanceof Parenthesis) {
 			expression.append("("+parseExpressionECL(((Parenthesis) expressionItem).getExpression())+")");
 		} else if (expressionItem instanceof JdbcParameter) {

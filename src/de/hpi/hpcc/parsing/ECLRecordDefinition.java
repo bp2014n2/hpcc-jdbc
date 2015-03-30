@@ -48,7 +48,9 @@ public class ECLRecordDefinition {
 		StringBuilder recordDefinition = new StringBuilder("RECORD ");
 		for (String column : columnNames) {
 			ECLColumnDefinition matchedDefinition = findColumn(column);
-			recordDefinition.append(matchedDefinition.toString()+"; ");
+			if (matchedDefinition != null) {
+				recordDefinition.append(matchedDefinition.toString()+"; ");
+			}			
 		}
 		recordDefinition.append("END;");
 		return recordDefinition.toString();
@@ -56,7 +58,7 @@ public class ECLRecordDefinition {
 	
 	public ECLColumnDefinition findColumn(String columnName) {
 		for (ECLColumnDefinition definition : columns) {
-			if (definition.getColumnName().equals(columnName)){
+			if (definition.getColumnName().equals(columnName.toLowerCase())){
 				return definition;
 			}
 		}

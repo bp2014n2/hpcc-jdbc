@@ -39,7 +39,7 @@ public class HPCCStatement implements Statement{
         log("Statement created");
     }
 
-	public boolean execute(String sqlStatement) {
+	public boolean execute(String sqlStatement) throws SQLException {
 		if (this.closed){
 			log(Level.SEVERE, "Statement is closed! Cannot execute query!");
 			if (warnings == null){
@@ -64,13 +64,14 @@ public class HPCCStatement implements Statement{
 		return result != null;
 	}    
 
-	public ResultSet executeQuery(String sqlQuery) {      
+	public ResultSet executeQuery(String sqlQuery) throws SQLException {      
     	execute(sqlQuery);
         return result;
-    }
-
-	public void close() {
+	}
+	
+	public void close() throws SQLException {
         if (!closed){
+        	result.close();
             closed = true;
             connection = null;
             result = null;

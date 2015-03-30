@@ -30,12 +30,12 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         this.sqlStatement = sqlStatement;
     }
 
-    public ResultSet executeQuery() {
+    public ResultSet executeQuery() throws SQLException {
     	execute();
         return result;
     }
 
-    public boolean execute() {
+    public boolean execute() throws SQLException {
     	replaceJdbcParameters();
     	return execute(sqlStatement);
 	}
@@ -53,9 +53,19 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         			if (parameters.containsKey(parameterCount)) {
         				Object param = parameters.get(parameterCount--);
             			if (param != null) {
-//                    		if (param instanceof String && ((String) param).contains("\\")){
-//                        		param = ((String) param).replace("\\", "\\\\");
-//                        	}
+            				if (param instanceof String && ((String) param).contains("\n")){
+                        		param = ((String) param).replace("\n", "");
+                        	} 
+            				
+                    		if (param instanceof String && ((String) param).contains("\\")){
+                        		param = ((String) param).replace("\\", "\\\\");
+                        	}
+//            				if (param instanceof String) {
+//            					param = StringEscapeUtils.escapeXml((String) param);
+//            				}
+                    		if (param instanceof Timestamp) {
+                    			param = "'"+param.toString()+"'";
+                    		}
             				sqlStatement = new StringBuilder(sqlStatement).replace(i, i+1, param.toString()).toString();
 //                        	sqlStatement = sqlStatement.replace("\\?", param.toString());
                     	} else {

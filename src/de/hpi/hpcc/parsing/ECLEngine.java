@@ -244,7 +244,6 @@ public class ECLEngine
 	}
 
 	private void generateDropECL(String sqlQuery) throws SQLException {
-    	ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append("#WORKUNIT('name', 'i2b2: drop');\n");
     	eclCode.append(generateImports());
 //		eclCode.append(eclBuilder.generateECL(sqlQuery));
@@ -279,13 +278,13 @@ public class ECLEngine
 //    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
-        eclCode.append(generateLayouts(eclBuilder));
+        eclCode.append(generateLayouts(eclBuilder, ((SQLParserInsert) sqlParser).getColumnNames()));
 		eclCode.append(generateTables());
 		
 		String tablePath = "i2b2demodata::"+ ((SQLParserInsert)sqlParser).getTable().getName();
 		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
 		
-		eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
+		eclCode.append(eclBuilder.generateECL(sqlQuery).replace("%NEWTABLE%",newTablePath));
 		
 
 //		add new subfile to superfile
@@ -366,6 +365,20 @@ public class ECLEngine
 		}
 		return layoutsString.toString();
 	}
+    
+    private String generateLayouts(ECLBuilder eclBuilder, List<String> orderedColumns) {
+    	StringBuilder layoutsString = new StringBuilder();
+    	String table = sqlParser.getAllTables().get(0);
+		if (table.contains(".")) {
+			table = table.split("\\.")[1];
+		}
+			
+		layoutsString.append(table+"_record := ");
+		layoutsString.append(ECLLayouts.getLayouts().get(table).toString(orderedColumns));
+		layoutsString.append("\n");
+		
+		return layoutsString.toString();
+    }
     
     private String generateTables() {
     	StringBuilder datasetsString = new StringBuilder();

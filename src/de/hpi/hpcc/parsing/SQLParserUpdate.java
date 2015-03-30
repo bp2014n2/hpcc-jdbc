@@ -40,13 +40,13 @@ public class SQLParserUpdate extends SQLParser {
 		return ECLLayouts.getAllColumns(table);
 	}
 	
-	protected ArrayList<String> getColumns() {
+	protected List<String> getColumns() {
 		List<Column> columns = ((Update) statement).getColumns();
 		List<String> columnNames = new ArrayList<String>();
 		for (Column column : columns) {
 			columnNames.add(column.getColumnName());
 		}
-		return (ArrayList<String>) columnNames;
+		return columnNames;
 	}
 	
 	protected ArrayList<Expression> getExpressions() {

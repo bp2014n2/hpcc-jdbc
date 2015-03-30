@@ -2,6 +2,8 @@ package de.hpi.hpcc.parsing;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+
 import de.hpi.hpcc.parsing.ECLRecordDefinition;
 
 public class ECLLayouts {
@@ -24,7 +26,7 @@ public class ECLLayouts {
     private static final String			Layout_QtPdoQueryMaster = "RECORD UNSIGNED5 query_master_id; STRING50 user_id; STRING50 group_id; STRING25 create_date; STRING request_xml; STRING i2b2_request_xml; END;";
     private static final String			Layout_QtPrivilege = "RECORD STRING1500 protection_label_cd; STRING1000 dataprot_cd; STRING1000 hivemgmt_cd; UNSIGNED5 plugin_id; END;";
     private static final String			Layout_QtQueryInstance = "RECORD UNSIGNED5 query_instance_id; UNSIGNED5 query_master_id; STRING50 user_id; STRING50 group_id; STRING50 batch_mode; STRING25 start_date; STRING25 end_date; STRING3 delete_flag; UNSIGNED5 status_type_id; STRING message; END;";
-    private static final String			Layout_QtQueryMaster = "RECORD UNSIGNED5 query_master_id; STRING250 name; STRING50 user_id; STRING50 group_id; STRING2000 master_type_cd; UNSIGNED5 plugin_id; STRING25 create_date; STRING25 delete_date; STRING3 delete_flag; STRING request_xml; STRING generated_sql; STRING i2b2_request_xml; STRING pm_xml; END;";
+    private static final String			Layout_QtQueryMaster = "RECORD UNSIGNED5 query_master_id; STRING250 name; STRING50 user_id; STRING50 group_id; STRING2000 master_type_cd; UNSIGNED5 plugin_id; STRING25 create_date; STRING25 delete_date; STRING request_xml; STRING3 delete_flag; STRING generated_sql; STRING i2b2_request_xml; STRING pm_xml; END;";
     private static final String			Layout_QtQueryResultInstance = "RECORD UNSIGNED5 result_instance_id; UNSIGNED5 query_instance_id; UNSIGNED5 result_type_id; UNSIGNED5 set_size; STRING25 start_date; STRING25 end_date; UNSIGNED5 status_type_id; STRING3 delete_flag; STRING message; STRING200 description; UNSIGNED5 real_set_size; STRING500 obfusc_method; END;";
     private static final String			Layout_QtQueryResultType = "RECORD UNSIGNED5 result_type_id; STRING100 name; STRING200 description; STRING500 display_type_id; STRING3 visual_attribute_type_id; END;";
     private static final String			Layout_QtQueryStatusType = "RECORD UNSIGNED5 status_type_id; STRING100 name; STRING200 description; END;";
@@ -103,11 +105,16 @@ public class ECLLayouts {
 	}
 
 	
-	public static boolean isInt(String column) {
-		for (ECLRecordDefinition layout : getLayouts().values()) {
-			if (layout.findColumn(column).getDataType().matches("(unsigned.*|integer.*)")) {
-				return true;
-			}
+	public static boolean isInt(ECLRecordDefinition layout, String column) {	
+		if (layout.findColumn(column) != null && layout.findColumn(column).getDataType().toLowerCase().matches("(unsigned.*|integer.*)")) {
+			return true;
+		}
+		return false;
+	}
+	
+	public static boolean isColumnOfIntInAnyTable(String column) {
+		for (ECLRecordDefinition table : getLayouts().values()) {
+			if (isInt(table, column)) return true;
 		}
 		return false;
 	}
