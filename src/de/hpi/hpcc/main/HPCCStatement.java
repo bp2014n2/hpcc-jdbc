@@ -1,13 +1,10 @@
 package de.hpi.hpcc.main;
 
 import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -94,7 +91,7 @@ public class HPCCStatement implements Statement{
 	}
 	
     public int getMaxRows() {
-		return Integer.parseInt(this.connection.getProperty("EclLimit"));
+		return Integer.parseInt(this.connection.getClientInfo("EclLimit"));
     }
 
     public SQLWarning getWarnings() {
@@ -105,27 +102,6 @@ public class HPCCStatement implements Statement{
         warnings = null;
         log(Level.FINEST, "Warnings cleared");
     }
-
-    private boolean queryContainsPostgresTable(String sqlStatement) {
-    	String sqlStatementInLowerCase = sqlStatement.toLowerCase();
-		ArrayList<String> blacklist = new ArrayList<String>();
-//		blacklist.add("qt_query_master");
-//		blacklist.add("qt_query_result_type");
-//		blacklist.add("qt_query_status_type");
-//		blacklist.add("qt_patient_set_collection");
-		blacklist.add("nextval");
-		
-		/*
-		 * Could be dangerous if there is a query that contains the table names
-		 * in a string etc
-		 */
-		for (String psqlQuery : blacklist) {
-			if (sqlStatementInLowerCase.contains(psqlQuery)) {
-				return true;
-			}
-		}
-		return false;
-	}
     
     //Methods for subclasses
 	protected static void log(String infoMessage){

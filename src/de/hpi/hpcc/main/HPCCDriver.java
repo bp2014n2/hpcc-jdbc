@@ -104,6 +104,7 @@ public class HPCCDriver implements Driver{
 		return (url.startsWith(HPCCDriverInformation.getDriverProtocol()) && urlParser.isValidUrl(url));
 	}
 	
+	//TODO: find alternative ... (just for test classes needed)
 	public void resetProperties(){
 		driverProperties.reset();
 	}

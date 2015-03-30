@@ -164,6 +164,11 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         return result != null ? result.getMetaData() : null;
     }
     
+    //Override super method
+    protected static void log(Level loggingLevel, String infoMessage){
+		logger.log(loggingLevel, HPCCPreparedStatement.class.getSimpleName()+": "+infoMessage);
+	}
+    
     //Unsuppported methods!!
     public void addBatch() throws SQLException {
         handleUnsupportedMethod("addBatch()");
@@ -267,9 +272,4 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     public void setNClob(int parameterIndex, Reader reader) throws SQLException {
         handleUnsupportedMethod("setNClob Not supported yet.");
     }
-    
-    //Override super method
-    protected static void log(Level loggingLevel, String infoMessage){
-		logger.log(loggingLevel, HPCCPreparedStatement.class.getSimpleName()+": "+infoMessage);
-	}
 }
