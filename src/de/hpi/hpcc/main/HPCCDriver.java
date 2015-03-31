@@ -94,7 +94,6 @@ public class HPCCDriver implements Driver{
 	    		}
 	    	}
     	}
-		driverProperties.setProperty("Basic Auth", HPCCConnection.createBasicAuth(driverProperties.getProperty("username"), driverProperties.getProperty("password")));
 
 		log(Level.CONFIG, "Connecting to " + driverProperties.getProperty("Protocol") + driverProperties.getProperty("ServerAddress")+"/");
         return new HPCCConnection(driverProperties);

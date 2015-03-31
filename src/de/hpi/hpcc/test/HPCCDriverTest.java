@@ -166,7 +166,6 @@ public class HPCCDriverTest {
 		connectionProperties.put("WsECLDirectPort", "8011");
 		connectionProperties.put("WsECLPort", "8012");
 		connectionProperties.put("WsECLWatchPort", "8013");
-		connectionProperties.put("Basic Auth", HPCCConnection.createBasicAuth("test", "test"));
 		
 		connection = (HPCCConnection) DriverManager.getDriver("jdbc:hpcc://mytest.de").connect("jdbc:hpcc://mytest.de", connectionProperties);
 		
