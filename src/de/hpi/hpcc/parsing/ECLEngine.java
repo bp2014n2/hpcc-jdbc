@@ -19,30 +19,23 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package de.hpi.hpcc.parsing;
 
 
-import java.io.InputStream;
-import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import de.hpi.hpcc.main.*;
+import de.hpi.hpcc.main.HPCCColumnMetaData;
+import de.hpi.hpcc.main.HPCCConnection;
+import de.hpi.hpcc.main.HPCCDFUFile;
+import de.hpi.hpcc.main.HPCCDatabaseMetaData;
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 
 public class ECLEngine
 {
@@ -244,7 +237,6 @@ public class ECLEngine
 	}
 
 	private void generateDropECL(String sqlQuery) throws SQLException {
-    	ECLBuilder eclBuilder = new ECLBuilder();
     	eclCode.append("#WORKUNIT('name', 'i2b2: drop');\n");
     	eclCode.append(generateImports());
 //		eclCode.append(eclBuilder.generateECL(sqlQuery));
