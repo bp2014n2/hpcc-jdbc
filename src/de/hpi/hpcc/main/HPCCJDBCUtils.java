@@ -9,9 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -29,36 +26,8 @@ public class HPCCJDBCUtils
 
     public final static String traceFileName = "HPCCJDBC.log";
     public final static String workingDir = System.getProperty("user.dir") + fileSep;
-    private static ConsoleHandler cHandler = null;
-    private static FileHandler fHandler = null;
 
     private final static Logger logger = HPCCLogger.getLogger();
-
-    public static void initTracing(String level, boolean tofile)
-    {
-        Level lev = null;
-        try
-        {
-            lev = Level.parse(level.toUpperCase());
-        }
-        catch (Exception e)
-        {
-            logger.log(Level.INFO, "Couldn't determine log level, will log at default level: " + HPCCLogger.getDefaultLogLevel());
-            lev =  HPCCLogger.getDefaultLogLevel();
-        }
-
-        for (Handler handler : logger.getHandlers())
-        {
-            if (tofile && handler.equals(cHandler))
-                handler.setLevel(Level.OFF);
-            else if (!tofile && handler.equals(fHandler))
-                handler.setLevel(Level.OFF);
-            else
-                handler.setLevel(Level.ALL);
-        }
-
-        logger.setLevel(Level.ALL);
-    }
 
     public static void traceoutln(Level level, String message)
     {
@@ -201,17 +170,10 @@ public class HPCCJDBCUtils
         return str.trim().replaceAll("\\r\\n|\\r|\\n", " ");
     }
 
-    public static boolean isLiteralString(String str)
-    {
-        boolean match = QUOTEDSTRPATTERN.matcher(str).matches();
+//    private final static Pattern QUOTEDFULLFIELDPATTERN = Pattern.compile(
+//            "\\s*(\"|\')(.*?){1}(\\.)(.*?){1}(\"|\')\\s*",Pattern.DOTALL);
+    
 
-        if (match)
-        {
-           return !QUOTEDFULLFIELDPATTERN.matcher(str).matches();
-        }
-
-        return match;
-    }
 
     public static boolean isNumeric(String str)
     {
@@ -320,31 +282,9 @@ public class HPCCJDBCUtils
             return result.toString();
     }
 
-    private final static Pattern QUOTEDFULLFIELDPATTERN = Pattern.compile(
-            "\\s*(\"|\')(.*?){1}(\\.)(.*?){1}(\"|\')\\s*",Pattern.DOTALL);
 
-    private final static Pattern QUOTEDSTRPATTERN = Pattern.compile(
-            "\\s*(\"|\')(.*?)(\"|\')\\s*",Pattern.DOTALL);
 
-    public static String handleQuotedString(String quotedString)
-    {
-        if (quotedString == null || quotedString.length() <= 0)
-            return "";
 
-        Matcher matcher = QUOTEDSTRPATTERN.matcher(quotedString);
-
-        if(matcher.matches() )
-            return matcher.group(2).trim();
-        else
-            return quotedString;
-    }
-
-    public static String ensureECLString(String instr) 
-    {
-        if (instr == null)
-            return "''";
-        return '\'' + replaceSQLwithECLEscapeChar(handleQuotedString(instr)) + '\'';
-    }
 
     public static boolean isParameterizedStr(String value)
     {
@@ -375,40 +315,6 @@ public class HPCCJDBCUtils
             throw new Exception("java.sql.Types.class.getFields were not feched, cannot get SQL Type name");
 
         return SQLFieldMapping.get(sqltypecode);
-    }
-
-    public final static String EscapedSingleQuote = "\'\'";
-
-    public static boolean hasPossibleEscapedQuoteLiteral(String quotedString) throws Exception
-    {
-        if (quotedString == null)
-            return false;
-
-        return handleQuotedString(quotedString).contains(EscapedSingleQuote);
-    }
-
-    private final static  String eclescaped = "\\\'";
-    public final static Pattern SQLESCAPEDPATTERN = Pattern.compile(
-            "(.*)(\'\')(.*)(\'\')(.*)",Pattern.DOTALL);
-
-    public static String replaceSQLwithECLEscapeChar(String quotedString) 
-    {
-        if (quotedString == null)
-            return "";
-
-        Matcher m = SQLESCAPEDPATTERN.matcher(quotedString);
-
-        String replaced;
-        if (m.matches())
-        {
-            replaced = m.group(1) + eclescaped + m.group(3) + eclescaped + m.group(5);
-        }
-        else
-        {
-            replaced = quotedString.replace("\'", "\\\'");
-        }
-
-        return replaced;
     }
 
     public final static HashMap<String, Integer> mapECLTypeNameToSQLType = new HashMap<String, Integer>();
@@ -660,9 +566,10 @@ public class HPCCJDBCUtils
      * given enum
      *
      **/
-    public static <T extends Enum<T>> T findEnumValFromString(Class<T> enumclass, String strvalue)
+    @SuppressWarnings("unchecked")
+	public static <T extends Enum<T>> T findEnumValFromString(Class<T> enumclass, String strvalue)
     {
-        for(Enum enumValue : enumclass.getEnumConstants())
+        for(Enum<?> enumValue : enumclass.getEnumConstants())
         {
             if(enumValue.name().equalsIgnoreCase(strvalue))
             {
