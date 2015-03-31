@@ -15,19 +15,15 @@ public class ECLRecordDefinition {
 		this.columns = columns;
 	}
 
-	public ECLRecordDefinition(String recordDefinition) {
-		recordDefinition = recordDefinition.trim().substring(7, recordDefinition.length());
-		int lastIndex = recordDefinition.lastIndexOf("END")-1;
-		recordDefinition = recordDefinition.substring(0, lastIndex);
-		
-		String[] recordStrings = recordDefinition.split(";");
+	public ECLRecordDefinition(String sqlDefinition) {
+		String[] recordStrings = sqlDefinition.split(",");
 		
 				
 		for (String recordString : recordStrings) {
 			recordString = recordString.trim();
-			String dataType = recordString.split(" ")[0];
-			String columnName = recordString.split(" ")[1];
-			this.addColumn(new ECLColumnDefinition(dataType, columnName)); 
+			String sqlDataType = recordString.substring(recordString.indexOf(" "), recordString.length());
+			String columnName = recordString.substring(0, recordString.indexOf(" "));
+			this.addColumn(new ECLColumnDefinition(sqlDataType, columnName)); 
 		}
 	}
 	

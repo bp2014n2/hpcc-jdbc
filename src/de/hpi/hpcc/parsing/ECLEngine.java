@@ -342,8 +342,17 @@ public class ECLEngine
     	ArrayList<String> selectItems = (ArrayList<String>) ((SQLParserSelect) sqlParser).getAllSelectItemsInQuery();
     	for (int i=0; i<selectItems.size(); i++) {
     		String column = selectItems.get(i);
-//    		int type = availablecols.get(column).getSqlType();
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, java.sql.Types.VARCHAR));
+//    		String sqlType = ECLLayouts.getSQLTypeOfColumn(column);
+    		
+    		int sqlType = 0;
+    		
+    		if (ECLLayouts.getSQLTypeOfColumn(column).contains("timestamp")) {
+    			sqlType = java.sql.Types.TIMESTAMP;
+    		} else {
+    			sqlType = java.sql.Types.VARCHAR;
+    		}
+    		
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, sqlType));
     	}
     }
     
@@ -447,6 +456,7 @@ public class ECLEngine
 //			System.out.println(sb.toString());
 			return sb.toString();
 		} catch (Exception e) {
+			System.out.println(e);
 		}
 		return null;
     }

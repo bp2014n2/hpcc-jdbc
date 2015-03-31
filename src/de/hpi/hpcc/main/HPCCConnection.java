@@ -88,7 +88,7 @@ public class HPCCConnection implements Connection
     
     public void sendRequest(String eclCode){
     	int responseCode = -1;
-//      replace "+" and "?" in http request body since it is a reserved character representing a space character
+//      replace "+" in http request body since it is a reserved character representing a space character
     	String body = eclCode.replace("+", "%2B");
 		try {
 			httpConnection = createHPCCESPConnection(generateUrl());
