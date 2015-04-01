@@ -346,7 +346,7 @@ public class ECLEngine
     		
     		int sqlType = 0;
     		
-    		if (ECLLayouts.getSQLTypeOfColumn(column).contains("timestamp")) {
+    		if (ECLLayouts.getTypeOfColumn(column).toLowerCase().equals("timestamp")) {
     			sqlType = java.sql.Types.TIMESTAMP;
     		} else {
     			sqlType = java.sql.Types.VARCHAR;
@@ -361,7 +361,8 @@ public class ECLEngine
     }
     
     private String generateLayouts(ECLBuilder eclBuilder) {
-		StringBuilder layoutsString = new StringBuilder();
+		StringBuilder layoutsString = new StringBuilder("TIMESTAMP := STRING25;\n");
+		
 		for (String table : sqlParser.getAllTables()) {
 			if (table.contains(".")) {
 				table = table.split("\\.")[1];
@@ -376,7 +377,7 @@ public class ECLEngine
 	}
     
     private String generateLayouts(ECLBuilder eclBuilder, List<String> orderedColumns) {
-    	StringBuilder layoutsString = new StringBuilder();
+    	StringBuilder layoutsString = new StringBuilder("TIMESTAMP := STRING25;\n");
     	String table = sqlParser.getAllTables().get(0);
 		if (table.contains(".")) {
 			table = table.split("\\.")[1];
