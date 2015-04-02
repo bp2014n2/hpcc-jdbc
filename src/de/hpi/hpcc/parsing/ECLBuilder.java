@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -106,7 +107,7 @@ public class ECLBuilder {
 		LinkedHashSet<String> allColumns = sqlParser.getAllCoumns();
 		String selectString = "";
 		for(String column : allColumns){
-			if (!columns.contains(column) || sqlParser.isIncrement()) {
+			if (!HPCCJDBCUtils.containsStringCaseInsensitive(columns, column) || sqlParser.isIncrement()) {
 				selectString += (selectString=="" ? "":", ");
 				selectString += column;
 			}
@@ -123,7 +124,12 @@ public class ECLBuilder {
 		for(String column : allColumns){
 			
 			tableColumnString += (tableColumnString=="" ? "":", ");
-			tableColumnString += (columns.contains(column)?ECLLayouts.getECLDataType(sqlParser.getName(), column)+" "+column+" := "+sqlParser.getExpressions().get(sqlParser.getColumns().indexOf(column)):column);
+			if (HPCCJDBCUtils.containsStringCaseInsensitive(columns, column)) {
+				tableColumnString += ECLLayouts.getECLDataType(sqlParser.getName(), column)+" "+column+" := "+sqlParser.getExpressions().get(sqlParser.getColumns().indexOf(column));
+			} else {
+				tableColumnString += column;
+			}
+			
 		}
 		updateTable.append(tableColumnString);
 		updateTable.append("}");
@@ -221,21 +227,12 @@ public class ECLBuilder {
 			LinkedHashSet<String> allColumns = sqlParser.getAllCoumns();
 			String tableColumnString = "";
 			for(String tableColumn : allColumns){
-				String dataType = "";
 				tableColumnString += (tableColumnString=="" ? "":", ");
-				boolean shouldBeDefined = true;
-				for (String queryColumn : sqlParser.getColumnNames()) {
-					if (!queryColumn.toLowerCase().equals(tableColumn.toLowerCase())) {
-						dataType = ECLLayouts.getECLDataType(sqlParser.getTable().getName(), tableColumn);
-					} else {
-						shouldBeDefined = false;
-						break;
-					}
-				}
-				if (shouldBeDefined) {
-					tableColumnString += dataType+" "+tableColumn+" := "+(dataType.startsWith("UNSIGNED")||dataType.startsWith("integer")?"0":"''");
-				} else {
+				if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getColumnNames(), tableColumn)) {
 					tableColumnString += tableColumn;
+				} else {
+					String dataType = ECLLayouts.getECLDataType(sqlParser.getTable().getName(), tableColumn);
+					tableColumnString += dataType+" "+tableColumn+" := "+(dataType.startsWith("UNSIGNED")||dataType.startsWith("integer")?"0":"''");
 				}
 			}
 			eclCode.append(tableColumnString)
@@ -390,7 +387,7 @@ public class ECLBuilder {
 						StringBuilder selectItemString = new StringBuilder();
 						if (((SelectExpressionItem) selectItem).getAlias() != null) {
 							setHasAlias(true);
-							if (sqlParser.getAllColumns().contains(((SelectExpressionItem) selectItem).getAlias().getName())) {
+							if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getAllColumns(), ((SelectExpressionItem) selectItem).getAlias().getName())) {
 								String dataType = ECLLayouts.getECLDataType(sqlParser.getAllTables().get(0), ((SelectExpressionItem) selectItem).getAlias().getName());
 			   					selectItemString.append(dataType+" ");
 							}			   						

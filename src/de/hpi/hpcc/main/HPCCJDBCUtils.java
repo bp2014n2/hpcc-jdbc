@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
@@ -18,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.hpi.hpcc.logging.HPCCLogger;
+import de.hpi.hpcc.parsing.ECLLayouts;
 
 public class HPCCJDBCUtils
 {
@@ -729,5 +731,19 @@ public class HPCCJDBCUtils
         }
         else
             return urlstr;
+    }
+    
+    public static boolean containsStringCaseInsensitive(List<String> list, String string) {
+    	for (String listItem : list) {
+			if (listItem.toLowerCase().equals(string.toLowerCase())) {
+				return true;
+			} 
+		}
+    	return false;
+    }
+    
+    public static boolean containsStringCaseInsensitive(Set<String> set, String string) {
+    	if (set == null) return false;
+    	return containsStringCaseInsensitive(new ArrayList<String>(set), string);
     }
 }
