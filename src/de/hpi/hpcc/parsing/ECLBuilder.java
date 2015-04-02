@@ -1,10 +1,5 @@
 package de.hpi.hpcc.parsing;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-
-import de.hpi.hpcc.main.HPCCJDBCUtils;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -29,14 +24,7 @@ import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.select.FromItem;
-import net.sf.jsqlparser.statement.select.Limit;
-import net.sf.jsqlparser.statement.select.OrderByElement;
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
-import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
-import net.sf.jsqlparser.statement.select.WithItem;
 
 public class ECLBuilder {
 	private boolean hasAlias = false;
@@ -50,364 +38,25 @@ public class ECLBuilder {
 	public String generateECL(String sql) {
 		switch(SQLParser.sqlIsInstanceOf(sql)) {
     	case "Select":
-    		return generateSelectECL(new SQLParserSelect(sql));
+    		return new ECLBuilderSelect().generateECL(sql);
 		case "Insert":
-    		return generateInsertECL(new SQLParserInsert(sql));
+			return new ECLBuilderInsert().generateECL(sql);
     	case "Update":
-    		return generateUpdateECL(new SQLParserUpdate(sql));
+    		return new ECLBuilderUpdate().generateECL(sql);
     	case "Drop":
-    		return generateDropECL(new SQLParserDrop(sql));
+    		return new ECLBuilderDrop().generateECL(sql);
     	case "Create":
-    		return generateCreateECL(new SQLParserCreate(sql));
+    		return new ECLBuilderCreate().generateECL(sql);
 		default:
     		System.out.println("type of sql not recognized "+SQLParser.sqlIsInstanceOf(sql));
     	}
 		return null;
 	}
 	
-	
-	private String generateCreateECL(SQLParserCreate sqlParser) {
-		StringBuilder eclCode = new StringBuilder();
-		String tableName = ((SQLParserCreate) sqlParser).getTableName();
-		eclCode.append("OUTPUT(DATASET([],{");
-		//remove "RECORD " at beginning of Layout definition
-		ECLRecordDefinition record = ECLLayouts.getLayouts().get(tableName.toLowerCase());
-		String recordString = null;
-		if(record == null) {
-			recordString = ((SQLParserCreate) sqlParser).getRecord();
-		} else {
-			recordString = record.toString();
-			recordString = recordString.substring(7, recordString.length() - 6).replace(";", ",");
-		}
-		eclCode.append(recordString);
-		eclCode.append("}),,'~%NEWTABLE%',OVERWRITE);");
-		return eclCode.toString();
-	}
-
-
-	private String generateUpdateECL(SQLParserUpdate sqlParser) {
-		StringBuilder eclCode = new StringBuilder();
-		
-		StringBuilder preSelection = new StringBuilder();
-		if (sqlParser.getWhere() != null) {
-			Expression expression = sqlParser.getWhere();
-			
-			preSelection.append("(");
-			preSelection.append(parseExpressionECL(expression));
-			preSelection.append(")");			
-		}
-		
-		
-		eclCode.append("updates := ");
-		StringBuilder updateTable = new StringBuilder();
-		updateTable.append(sqlParser.getName());
-		updateTable.append(preSelection.toString());
-		updateTable.append(", ");
-		ArrayList<String> columns = (ArrayList<String>) sqlParser.getColumns();
-		LinkedHashSet<String> allColumns = sqlParser.getAllCoumns();
-		String selectString = "";
-		for(String column : allColumns){
-			if (!HPCCJDBCUtils.containsStringCaseInsensitive(columns, column) || sqlParser.isIncrement()) {
-				selectString += (selectString=="" ? "":", ");
-				selectString += column;
-			}
-		}
-		updateTable.append("{");
-		updateTable.append(selectString);
-		updateTable.append("}");
-		
-		convertToTable(updateTable);
-		updateTable.append(", ");
-
-		updateTable.append("{");
-		String tableColumnString = "";
-		for(String column : allColumns){
-			
-			tableColumnString += (tableColumnString=="" ? "":", ");
-			if (HPCCJDBCUtils.containsStringCaseInsensitive(columns, column)) {
-				tableColumnString += ECLLayouts.getECLDataType(sqlParser.getName(), column)+" "+column+" := "+sqlParser.getExpressions().get(sqlParser.getColumns().indexOf(column));
-			} else {
-				tableColumnString += column;
-			}
-			
-		}
-		updateTable.append(tableColumnString);
-		updateTable.append("}");
-		
-		convertToTable(updateTable);
-		updateTable.append(";\n");
-		eclCode.append(updateTable.toString());
-		
-		eclCode.append("OUTPUT(");
-		StringBuilder outputTable = new StringBuilder();
-		if (sqlParser.getWhere() != null) {
-			eclCode.append(sqlParser.getName());
-			Expression expression = sqlParser.getWhere();
-			outputTable.append("(NOT");
-			outputTable.append("(");
-			
-			outputTable.append(parseExpressionECL(expression));
-			outputTable.append("))+");
-		}
-
-		outputTable.append("updates,, '~%NEWTABLE%', overwrite);\n");
-		eclCode.append(outputTable.toString());
-		
-		return eclCode.toString();
-	}
-
-
-	private String generateDropECL(SQLParserDrop sqlParser) {
-		StringBuilder eclCode = new StringBuilder();
-		eclCode.append("Std.File.DeleteLogicalFile('~"+sqlParser.getFullName().replace(".", "::")+"', true)");
-		
-		return eclCode.toString();
-	}
-
-
-	/**
-	 * Generates the ECL code for a insert statement 
-	 * @return returns the ECL code for the given insert statement
-	 */
-	private String generateInsertECL(SQLParserInsert sqlParser) {
-		StringBuilder eclCode = new StringBuilder();
-		
-		if (sqlParser.hasWith()) {
-			for (WithItem withItem : sqlParser.getWithItemsList()) {
-				eclCode.append(withItem.getName()+" := ");
-				eclCode.append(new ECLBuilder().generateECL(withItem.getSelectBody().toString())+";\n");
-			}
-		}
-//		create subfile
-//		"%2B" is +
-		eclCode.append("OUTPUT(");
-		generateNewDataset(sqlParser, eclCode);
-		eclCode.append(",,'~%NEWTABLE%', overwrite);\n");
-		
-		return eclCode.toString();
-	}
-
-	private void generateNewDataset(SQLParserInsert sqlParser, StringBuilder eclCode) {
-		if (sqlParser.isAllColumns()) {
-			if (sqlParser.getItemsList() instanceof SubSelect) {
-			eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
-			} else {
-				eclCode.append("DATASET([{");
-				String valueString = "";
-				for (Expression expression : sqlParser.getExpressions()) {
-					valueString += (valueString=="" ? "":", ")+parseExpressionECL(expression);
-				}
-				eclCode.append(valueString);
-				eclCode.append("}], ");
-				eclCode.append(sqlParser.getTable().getName()+"_record)");
-			}
-		} else {
-			eclCode.append("TABLE(");
-			List<String> columns = sqlParser.getColumnNames();
-			if (sqlParser.getSelect() != null) {
-				eclCode.append(generateECL(sqlParser.getSelect().getSelectBody().toString()));
-			} else if (sqlParser.getItemsList() != null) {
-				eclCode.append("DATASET([{");
-				String valueString = "";
-				for (Expression expression : sqlParser.getExpressions()) {
-					valueString += (valueString=="" ? "":", ")+parseExpressionECL(expression);
-				}
-				eclCode.append(valueString);
-				eclCode.append("}], {");
-				String columnString = "";
-				for(String column : columns){
-					columnString += (columnString=="" ? "":", ");
-					columnString += ECLLayouts.getECLDataType(sqlParser.getTable().getName(), column)+" ";
-					
-					columnString += column;
-				}
-				eclCode.append(columnString + "})");
-			}
-			eclCode.append(",{");
-			LinkedHashSet<String> allColumns = sqlParser.getAllCoumns();
-			String tableColumnString = "";
-			for(String tableColumn : allColumns){
-				tableColumnString += (tableColumnString=="" ? "":", ");
-				if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getColumnNames(), tableColumn)) {
-					tableColumnString += tableColumn;
-				} else {
-					String dataType = ECLLayouts.getECLDataType(sqlParser.getTable().getName(), tableColumn);
-					tableColumnString += dataType+" "+tableColumn+" := "+(dataType.startsWith("UNSIGNED")||dataType.startsWith("integer")?"0":"''");
-				}
-			}
-			eclCode.append(tableColumnString)
-				.append("})");
-		}
-	}
-	/**
-	 * Generates the ECL code for a select statement
-	 * @return returns the ECL code for the given select statement
-	 */
-	
-	private String generateSelectECL(SQLParserSelect sqlParser) {
-		StringBuilder eclCode = new StringBuilder();
-		
-    	generateFrom(sqlParser, eclCode);
-    	generateWhere(sqlParser, eclCode);    	
-    	generateSelects(sqlParser, eclCode, true);
-    	generateGroupBys(sqlParser, eclCode);
-    	 
-    	if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
-    		if (!((SQLParserSelect) sqlParser).isCount()) convertToTable(eclCode);
-    	}
-    	generateOrderBys(sqlParser, eclCode);
-//    	if(sqlParser.getOrderBys() != null) {
-//    		generateSelects(sqlParser, eclCode, false);
-//    		if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
-//        		convertToTable(eclCode);
-//        	}
-//    	}
-    	generateDistinct(sqlParser, eclCode);
-    	generateLimit(sqlParser, eclCode);
-    	
-    	return(eclCode.toString());
-	}
-	
-	private void convertToTable(StringBuilder eclCode) {
+	protected void convertToTable(StringBuilder eclCode) {
    		eclCode.insert(0, "TABLE(");
    		eclCode.append(")");
 	}
-	
-	private void generateLimit(SQLParserSelect sqlParser, StringBuilder eclCode) {
-		Limit limit = sqlParser.getLimit();
-		if (limit != null) {
-			eclCode.insert(0, "CHOOSEN(");
-			eclCode.append(", ");
-			eclCode.append(limit.getRowCount());
-			eclCode.append(")");
-    	}
-	}
-	
-	private void generateDistinct(SQLParserSelect sqlParser, StringBuilder eclCode) {
-		if (sqlParser.isDistinct()) {
-			eclCode.insert(0, "DEDUP(");
-			eclCode.append(", All)");
-    	}
-	}
-	
-	private void generateGroupBys(SQLParserSelect sqlParser, StringBuilder eclCode) {
-		List<Expression> groupBys = sqlParser.getGroupBys(); 
-		if (groupBys != null) {
-			for (Expression expression : groupBys) {
-				eclCode.append(", ");
-				eclCode.append(parseExpressionECL(expression));
-			}
-		}
-	}
-	
-	private void generateOrderBys(SQLParserSelect sqlParser, StringBuilder eclCode) {
-		List<OrderByElement> orderBys = sqlParser.getOrderBys(); 	
-    	if (orderBys != null) {
-    		eclCode.insert(0, "SORT(");
-    		eclCode.append(", ");
-    		for (OrderByElement orderByElement : orderBys) {
-    			/*  
-    			 * TODO: multiple orderByElements
-    			 * TODO: order by expression (e.g. count)
-    			 */
-    			Expression orderBy = orderByElement.getExpression();
-    			if (orderBy instanceof Function) {
-    				eclCode.append(nameFunction((Function) orderBy));
-    			} else {
-    				eclCode.append(parseExpressionECL(orderByElement.getExpression()));
-    			}
-    		}
-    		eclCode.append(")");
-    	}
-	}
-	
-	private void generateFrom(SQLParserSelect sqlParser, StringBuilder from) {
-		FromItem table = sqlParser.getFromItem();
-		if (table instanceof Table) {
-			from.append(((Table) table).getName());
-    	} else if (table instanceof SubSelect){
-    		from.append("(");
-    		String innerStatement = sqlParser.trimInnerStatement(table.toString());
-    		from.append(new ECLBuilder().generateECL(innerStatement));
-    		from.append(")");
-    	}
-	}
-	
-	private void generateWhere(SQLParserSelect sqlParser, StringBuilder where) {
-		Expression whereItems = sqlParser.getWhere();
-    	if (whereItems != null) {
-    		where.append("(");
-    		where.append(parseExpressionECL(whereItems));
-    		where.append(")");
-    	}
-	}
-	
-	/**
-	 * Generates the SelectItems between "SELECT" and "FROM" in a SQL query.
-	 * If a "SELECT * FROM" is used 
-	 * 
-	 * @return
-	 */
-	
-	private void generateSelects(SQLParserSelect sqlParser, StringBuilder select, Boolean inner) { 
-		if (sqlParser.isCount()) {
-			select.insert(0, "COUNT(");
-			select.append(")");
-		} else {
-			LinkedHashSet<String> selectItemsStrings = new LinkedHashSet<String>();
-			select.append(", ");
-			select.append("{");
-			if(inner) {
-				if (sqlParser.getOrderBys() != null) {
-					for (OrderByElement orderByElement : sqlParser.getOrderBys()) {
-						Expression orderBy = orderByElement.getExpression();
-						if (orderBy instanceof Function) {
-							StringBuilder function = new StringBuilder();
-							function.append(nameFunction((Function) orderBy));
-							function.append(" := ");
-							function.append(parseFunction((Function) orderBy));
-							selectItemsStrings.add(function.toString());
-						} else {
-							selectItemsStrings.add(parseExpressionECL(orderByElement.getExpression()));
-						}
-					}
-				}	
-			}
-    	
-			if (sqlParser.isSelectAll()){
-				if(sqlParser.getFromItem() instanceof SubSelect) {
-					selectItemsStrings.addAll(sqlParser.getFromItemColumns());
-				} else {
-					selectItemsStrings.addAll(sqlParser.getAllColumns());
-				}
-			} else {
-				ArrayList<SelectItem> selectItems = (ArrayList<SelectItem>) sqlParser.getSelectItems();
-				for (SelectItem selectItem : selectItems) {
-					if (selectItem instanceof SelectExpressionItem) {
-						StringBuilder selectItemString = new StringBuilder();
-						if (((SelectExpressionItem) selectItem).getAlias() != null) {
-							setHasAlias(true);
-							if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getAllColumns(), ((SelectExpressionItem) selectItem).getAlias().getName())) {
-								String dataType = ECLLayouts.getECLDataType(sqlParser.getAllTables().get(0), ((SelectExpressionItem) selectItem).getAlias().getName());
-			   					selectItemString.append(dataType+" ");
-							}			   						
-			   				selectItemString.append(((SelectExpressionItem) selectItem).getAlias().getName());
-		   					selectItemString.append(" := ");
-		   				}
-		   				selectItemString.append(parseExpressionECL((Expression) ((SelectExpressionItem) selectItem).getExpression()));
-		   				selectItemsStrings.add(selectItemString.toString());
-		   			}
-	    		}
-	    	}
-	    	String selectItemString = "";
-    		for (String selectItem : selectItemsStrings) {
-    			selectItemString += (selectItemString=="" ? "":", ")+selectItem;
-    		}
-    		select.append(selectItemString);
-    		select.append("}");
-		}
-	}
-	
 	
 	/**
 	 * Generates for a given Expression the ECL code by a recursive approach
@@ -416,7 +65,7 @@ public class ECLBuilder {
 	 * @param expressionItem is the Expression under consideration
 	 * @return returns the ECL code for the given expression
 	 */
-	private String parseExpressionECL(Expression expressionItem) {
+	protected String parseExpressionECL(Expression expressionItem) {
 		StringBuilder expression = new StringBuilder();
 		
 		if (expressionItem instanceof LikeExpression) {
@@ -428,10 +77,6 @@ public class ECLBuilder {
 		} else if (expressionItem instanceof InExpression) {
 			expression.append(parseInExpression((InExpression) expressionItem));
 		} else if (expressionItem instanceof Column) {
-			if (((Column) expressionItem).getFullyQualifiedName() != null) {
-//				expression.append(((Column) expressionItem).getTable().getName());
-//				expression.append(".");
-			}
 			expression.append(((Column) expressionItem).getColumnName());
 		} else if (expressionItem instanceof SubSelect) {
 			expression.append("(");
@@ -495,14 +140,11 @@ public class ECLBuilder {
 		return expression.toString();
 	}
 	
-	private boolean hasAlias() {
-		if(hasAlias) {
-			setHasAlias(false);
-			return true;
-		}
-		return false;
+	protected boolean hasAlias() {
+		boolean oldHasAlias = this.hasAlias;
+		setHasAlias(false);
+		return oldHasAlias;	
 	}
-
 
 	private void setHasAlias(boolean b) {
 		hasAlias = b;
@@ -510,7 +152,7 @@ public class ECLBuilder {
 
 
 	private String parseSubSelect(Expression expression) {
-		return new ECLBuilder().generateECL(((SubSelect) expression).getSelectBody().toString());
+		return new ECLBuilderSelect().generateECL(((SubSelect) expression).getSelectBody().toString());
 	}
 	
 	/**
@@ -596,25 +238,6 @@ public class ECLBuilder {
 		} else if (whereItems instanceof NotEqualsTo) {
 			return " != ";
 		} 
-		return null;
-	}
-	
-	private AndExpression findJoinCondition(AndExpression expression) {
-		if (expression.getRightExpression() instanceof Column && expression.getLeftExpression() instanceof Column) return expression;
-		if (expression.getRightExpression() instanceof AndExpression) return findJoinCondition(expression);
-		if (expression.getLeftExpression() instanceof AndExpression) return findJoinCondition(expression);
-		return null;
-	}
-	
-	private Expression parseJoinCondition(SQLParserSelect sqlParser) {
-		Expression where = sqlParser.getWhere();
-		if (where instanceof EqualsTo) {
-			sqlParser.setWhere(null);
-			return where;
-		} else if (where instanceof AndExpression) {
-			
-		}
-		
 		return null;
 	}
 }

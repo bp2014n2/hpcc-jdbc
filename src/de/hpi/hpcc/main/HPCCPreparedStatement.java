@@ -45,7 +45,6 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     	if (parameterCount >= parameters.size()) {
     		
     		for (int i = sqlStatement.length()-1; i >= 0; i--) {
-    			//TODO: check whether '?' is part of string
     			if (!sqlStatement.substring(0,i+1).contains("?")) {
     				break;
     			}
@@ -58,17 +57,10 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
             					param = ((String) param).replace("\\\'", "\"");
             					param = ((String) param).replace("\\", "\\\\");
             				}
-                        	
-                    		
-//            				if (param instanceof String) {
-//            					param = StringEscapeUtils.escapeXml((String) param);
-//            				}
                     		if (param instanceof Timestamp) {
-//                    			param = param.toString().replaceAll("(\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2}:\\d{2}).*", "$1");
                     			param = "'"+param.toString()+"'";
                     		}
             				sqlStatement = new StringBuilder(sqlStatement).replace(i, i+1, param.toString()).toString();
-//                        	sqlStatement = sqlStatement.replace("\\?", param.toString());
                     	} else {
                     		sqlStatement = new StringBuilder(sqlStatement).replace(i, i+1, "NULL").toString();
                     	}
