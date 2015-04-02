@@ -129,7 +129,7 @@ public class HPCCStatement implements Statement{
     }
     
     public int getQueryTimeout() throws SQLException{
-    	handleUnsupportedMethod("getQueryTimeout()");
+//    	handleUnsupportedMethod("getQueryTimeout()");
     	return 0;
     }
     
@@ -138,11 +138,12 @@ public class HPCCStatement implements Statement{
     }
     
     public void setQueryTimeout(int seconds) throws SQLException{
-    	handleUnsupportedMethod("setQueryTimeout(int seconds)");
+    	/*
+    	 * TODO: t.b.a.
+    	 */
     }
     
     public int executeUpdate(String sql) throws SQLException{
-//    	handleUnsupportedMethod("executeUpdate(String sql)");
     	executeQuery(sql);
     	if (result == null) {
     		return 0;
@@ -169,7 +170,7 @@ public class HPCCStatement implements Statement{
     }
     
     public void setCursorName(String name) throws SQLException{
-    	handleUnsupportedMethod("setCursorName(String name)");
+//    	handleUnsupportedMethod("setCursorName(String name)");
     }
     
     public boolean getMoreResults() throws SQLException{
