@@ -26,10 +26,6 @@ public class HPCCStatement implements Statement{
     
     protected SQLWarning               warnings;
     protected ResultSet            result        = null;
-    protected HPCCResultSetMetadata    resultMetadata = null;
-    
-    protected HashMap<Integer, Object> parameters    = new HashMap<Integer, Object>();
-
     
     public static final String         resultSetName = "HPCC Result";
 
@@ -50,6 +46,7 @@ public class HPCCStatement implements Statement{
 		
 		result = null;
 		try {
+			this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
 			String eclCode = eclEngine.parseEclCode(sqlStatement);
 			connection.sendRequest(eclCode);
 			NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
@@ -76,7 +73,6 @@ public class HPCCStatement implements Statement{
             connection = null;
             result = null;
             eclEngine = null;
-            parameters = null;
         }
         log("Statement closed");
     }
@@ -106,27 +102,6 @@ public class HPCCStatement implements Statement{
         warnings = null;
         log(Level.FINEST, "Warnings cleared");
     }
-
-    private boolean queryContainsPostgresTable(String sqlStatement) {
-    	String sqlStatementInLowerCase = sqlStatement.toLowerCase();
-		ArrayList<String> blacklist = new ArrayList<String>();
-//		blacklist.add("qt_query_master");
-//		blacklist.add("qt_query_result_type");
-//		blacklist.add("qt_query_status_type");
-//		blacklist.add("qt_patient_set_collection");
-		blacklist.add("nextval");
-		
-		/*
-		 * Could be dangerous if there is a query that contains the table names
-		 * in a string etc
-		 */
-		for (String psqlQuery : blacklist) {
-			if (sqlStatementInLowerCase.contains(psqlQuery)) {
-				return true;
-			}
-		}
-		return false;
-	}
     
     //Methods for subclasses
 	protected static void log(String infoMessage){
@@ -167,8 +142,13 @@ public class HPCCStatement implements Statement{
     }
     
     public int executeUpdate(String sql) throws SQLException{
-    	handleUnsupportedMethod("executeUpdate(String sql)");
-    	return 0;
+//    	handleUnsupportedMethod("executeUpdate(String sql)");
+    	executeQuery(sql);
+    	if (result == null) {
+    		return 0;
+    	}
+    	result.last();
+    	return result.getRow();
     }
     
     public int getMaxFieldSize() throws SQLException{

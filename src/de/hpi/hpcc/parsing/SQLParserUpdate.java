@@ -61,6 +61,15 @@ public class SQLParserUpdate extends SQLParser {
 	public boolean isIncrement() {
 		return getExpressions().get(0).toString().contains(getColumns().get(0));
 	}
+
+	public List<String> getColumnsToLowerCase() {
+		List<Column> columns = ((Update) statement).getColumns();
+		List<String> columnNames = new ArrayList<String>();
+		for (Column column : columns) {
+			columnNames.add(column.getColumnName().toLowerCase());
+		}
+		return columnNames;
+	}
 	
 	
 

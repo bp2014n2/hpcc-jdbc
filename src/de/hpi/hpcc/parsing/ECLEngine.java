@@ -258,7 +258,12 @@ public class ECLEngine
    	    		i++;
    	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(column)));
    	    	}  	
-   		}        
+   		} else {
+   			/*
+   			 * TODO: replace with much, much, much better solution
+   			 */
+   			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));");
+   		}
 	}
 
 	private void generateInsertECL(String sqlQuery) throws SQLException{

@@ -19,7 +19,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.hpi.hpcc.logging.HPCCLogger;
-import de.hpi.hpcc.parsing.ECLLayouts;
 
 public class HPCCJDBCUtils
 {

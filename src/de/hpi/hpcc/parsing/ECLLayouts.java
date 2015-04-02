@@ -2,7 +2,6 @@ package de.hpi.hpcc.parsing;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 
 import de.hpi.hpcc.parsing.ECLRecordDefinition;
 

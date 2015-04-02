@@ -20,10 +20,14 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.logging.Level;
+
+import de.hpi.hpcc.parsing.ECLEngine;
 
 public class HPCCPreparedStatement extends HPCCStatement implements PreparedStatement{
     private String sqlStatement;
+    private HashMap<Integer, Object> parameters    = new HashMap<Integer, Object>();
 
     public HPCCPreparedStatement(HPCCConnection connection, String sqlStatement) {
         super(connection);

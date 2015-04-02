@@ -53,9 +53,11 @@ public class ECLBuilderUpdate extends ECLBuilder {
 		String tableColumnString = "";
 		for(String column : allColumns){
 			
-			tableColumnString += (tableColumnString=="" ? "":", ");
+			tableColumnString += (tableColumnString.equals("")? "":", ");
 			if (HPCCJDBCUtils.containsStringCaseInsensitive(columns, column)) {
-				tableColumnString += ECLLayouts.getECLDataType(sqlParser.getName(), column)+" "+column+" := "+sqlParser.getExpressions().get(sqlParser.getColumns().indexOf(column));
+				String expr = sqlParser.getExpressions().get(sqlParser.getColumnsToLowerCase().indexOf(column)).toString();
+				expr = expr.equals("NULL")? "''" : expr;
+				tableColumnString += ECLLayouts.getECLDataType(sqlParser.getName(), column)+" "+column+" := "+expr;
 			} else {
 				tableColumnString += column;
 			}
