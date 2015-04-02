@@ -53,17 +53,18 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         			if (parameters.containsKey(parameterCount)) {
         				Object param = parameters.get(parameterCount--);
             			if (param != null) {
-            				if (param instanceof String && ((String) param).contains("\n")){
-                        		param = ((String) param).replace("\n", "");
-                        	} 
-            				
-                    		if (param instanceof String && ((String) param).contains("\\")){
-                        		param = ((String) param).replace("\\", "\\\\");
-                        	}
+            				if (param instanceof String) {
+            					param = ((String) param).replace("\n", "");
+            					param = ((String) param).replace("\\\'", "\"");
+            					param = ((String) param).replace("\\", "\\\\");
+            				}
+                        	
+                    		
 //            				if (param instanceof String) {
 //            					param = StringEscapeUtils.escapeXml((String) param);
 //            				}
                     		if (param instanceof Timestamp) {
+//                    			param = param.toString().replaceAll("(\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2}:\\d{2}).*", "$1");
                     			param = "'"+param.toString()+"'";
                     		}
             				sqlStatement = new StringBuilder(sqlStatement).replace(i, i+1, param.toString()).toString();
@@ -204,6 +205,9 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     
     public int executeUpdate() throws SQLException{
 		ResultSet rs = executeQuery();
+		if (rs == null) {
+			return 0;
+		}
 		rs.last();
 		return rs.getRow();
     }

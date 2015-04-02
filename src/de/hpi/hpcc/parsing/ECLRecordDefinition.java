@@ -58,7 +58,7 @@ public class ECLRecordDefinition {
 	
 	public ECLColumnDefinition findColumn(String columnName) {
 		for (ECLColumnDefinition definition : columns) {
-			if (definition.getColumnName().equals(columnName.toLowerCase())){
+			if (definition.getColumnName().toLowerCase().equals(columnName.toLowerCase())){
 				return definition;
 			}
 		}

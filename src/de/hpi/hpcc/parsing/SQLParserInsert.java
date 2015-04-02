@@ -59,7 +59,7 @@ public class SQLParserInsert extends SQLParser {
 		List<Column> columns = ((Insert) statement).getColumns();
 		List<String> columnNames = new ArrayList<String>();
 		for (Column column : columns) {
-			columnNames.add(column.getColumnName().toLowerCase());
+			columnNames.add(column.getColumnName());
 		}
 		return columnNames;
 	}

@@ -99,9 +99,9 @@ public class ECLBuilderTest {
 	@Test
 	public void shouldTranslateInsertInto() {
 		assertEquals("OUTPUT(DATASET([{valueA, valueB, valueC}], myTable_record),,'~%NEWTABLE%', overwrite);\n",eclBuilder.generateECL("insert into myTable values (valueA, valueB, valueC)"));
-		assertEquals("OUTPUT(TABLE((DATASET([{valueA}], {STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, STRING50 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) values (valueA)"));
-		assertEquals("OUTPUT(TABLE((DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING50 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB)"));
-		assertEquals("OUTPUT(TABLE((DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING50 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB) returning *"));
+		assertEquals("OUTPUT(TABLE(DATASET([{valueA}], {STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, STRING50 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) values (valueA)"));
+		assertEquals("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING50 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB)"));
+		assertEquals("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING50 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB) returning *"));
 		assertEquals("x := TABLE(anotherTable, {myColumnB});\nOUTPUT(TABLE(TABLE(x, {myColumnB}),{STRING50 myColumn := '', myColumnA, STRING50 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) with x as (select myColumnB from anotherTable) select x.myColumnB from x"));
 //		assertEquals("OUTPUT(TABLE(TABLE((TABLE(anotherTable, {myColumnA})), {myColumnA}),{STRING50 myColumn := '', myColumnA, STRING50 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) select * from (select myColumnB from anotherTable)"));
 	}

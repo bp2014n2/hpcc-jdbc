@@ -388,11 +388,15 @@ public class HPCCResultSet implements ResultSet
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
             {
                 lastResult = rows.get(index).get(columnIndex - 1);
-                if (lastResult == null)
+                /*
+                 * TODO: 
+                 * why is it an empty string instead of null?!
+                 */
+                if (lastResult == null || lastResult.equals(""))
                     return null;
                 // content of row field is Object string, need to get value of
                 // string and parse as Timestamp
-                return Timestamp.valueOf(String.valueOf(lastResult));
+                return Timestamp.valueOf(String.valueOf(lastResult).trim());
             }
             else
                 throw new SQLException("Invalid Column Index");
@@ -757,11 +761,15 @@ public class HPCCResultSet implements ResultSet
             if (row != null)
             {
                 lastResult = row.get(columnIndex - 1);
-                if (lastResult == null)
+                /*
+                 * TODO: 
+                 * why is it an empty string instead of null?!
+                 */
+                if (lastResult == null || lastResult.equals(""))
                     return null;
                 // content of row field is Object string, need to get value of
                 // string and parse as Timestamp
-                return Timestamp.valueOf(String.valueOf(lastResult));
+                return Timestamp.valueOf(String.valueOf(lastResult).trim());
             }
             else
                 throw new SQLException("Null Row found");

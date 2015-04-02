@@ -18,28 +18,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package de.hpi.hpcc.parsing;
 
-
-import java.io.InputStream;
-import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
+
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+
 import java.util.logging.Level;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.main.*;
@@ -184,8 +174,9 @@ public class ECLEngine
 		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
 		if(dfuFile == null) {
 			ECLBuilder eclBuilder = new ECLBuilder();
-			eclCode.append("#WORKUNIT('name', 'i2b2: create');\n");
+			eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
 	    	eclCode.append(generateImports());
+	    	eclCode.append("TIMESTAMP := STRING25;\n");
 			String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
 			eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
 			eclCode.append("\nSEQUENTIAL(Std.File.CreateSuperFile('~"+tablePath+"'),\n");
@@ -202,14 +193,14 @@ public class ECLEngine
 	    	int i=0;
 	    	for (String column : recordString.split(",")) {
 	    		i++;
-	    		expectedretcolumns.add(new HPCCColumnMetaData(column.split(" ")[1], i, null));
+	    		expectedretcolumns.add(new HPCCColumnMetaData(column.split(" ")[1], i, ECLLayouts.getSqlTypeOfColumn(column)));
 	    	}  	
 		} else System.out.println("Table '"+tablePath+"' already exists. Query aborted.");
 	}
 
 	private void generateUpdateECL(String sqlQuery) throws SQLException{
 		ECLBuilder eclBuilder = new ECLBuilder();
-		eclCode.append("#WORKUNIT('name', 'i2b2: update');\n");
+		eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append(generateImports());
     	eclCode.append(generateLayouts(eclBuilder));
 		eclCode.append(generateTables());
@@ -239,12 +230,12 @@ public class ECLEngine
     	int i=0;
     	for (String column : columns) {
     		i++;
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(column)));
     	}  	
 	}
 
 	private void generateDropECL(String sqlQuery) throws SQLException {
-    	eclCode.append("#WORKUNIT('name', 'i2b2: drop');\n");
+		eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append(generateImports());
 //		eclCode.append(eclBuilder.generateECL(sqlQuery));
     	
@@ -265,14 +256,14 @@ public class ECLEngine
    	    	int i=0;
    	    	for (String column : columns) {
    	    		i++;
-   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
+   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(column)));
    	    	}  	
    		}        
 	}
 
 	private void generateInsertECL(String sqlQuery) throws SQLException{
     	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#WORKUNIT('name', 'i2b2: insert');\n");
+    	eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'thor');\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
@@ -313,14 +304,19 @@ public class ECLEngine
     	int i=0;
     	for (String column : columns) {
     		i++;
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, null));
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(column)));
+    		
     	}  			
+	}
+	
+	private String eclMetaEscape(String sqlQuery) {
+		return sqlQuery.replace("'", "\\'");
 	}
 
 	private void generateSelectECL(String sqlQuery) throws SQLException
     {
     	ECLBuilder eclBuilder = new ECLBuilder();
-    	eclCode.append("#WORKUNIT('name', 'i2b2: select');\n");
+    	eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
         eclCode.append(generateLayouts(eclBuilder));
@@ -342,17 +338,7 @@ public class ECLEngine
     	ArrayList<String> selectItems = (ArrayList<String>) ((SQLParserSelect) sqlParser).getAllSelectItemsInQuery();
     	for (int i=0; i<selectItems.size(); i++) {
     		String column = selectItems.get(i);
-//    		String sqlType = ECLLayouts.getSQLTypeOfColumn(column);
-    		
-    		int sqlType = 0;
-    		
-    		if (ECLLayouts.getTypeOfColumn(column).toLowerCase().equals("timestamp")) {
-    			sqlType = java.sql.Types.TIMESTAMP;
-    		} else {
-    			sqlType = java.sql.Types.VARCHAR;
-    		}
-    		
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, sqlType));
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(column)));
     	}
     }
     
