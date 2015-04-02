@@ -220,19 +220,23 @@ public class ECLBuilder {
 			eclCode.append(",{");
 			LinkedHashSet<String> allColumns = sqlParser.getAllCoumns();
 			String tableColumnString = "";
-			for(String column : allColumns){
-				/*
-				 * TODO:
-				 * workaround 
-				 */
+			for(String tableColumn : allColumns){
 				String dataType = "";
-				if (!sqlParser.getColumnNames().contains(column.toLowerCase()) && !sqlParser.getColumnNames().contains(column.toUpperCase())) {
-					dataType = ECLLayouts.getECLDataType(sqlParser.getTable().getName(), column);
-				}
-				 
-				
 				tableColumnString += (tableColumnString=="" ? "":", ");
-				tableColumnString += ((columns.contains(column.toLowerCase())||columns.contains(column.toUpperCase()))?column:dataType+" "+column+" := "+(dataType.startsWith("UNSIGNED")||dataType.startsWith("integer")?"0":"''"));
+				boolean shouldBeDefined = true;
+				for (String queryColumn : sqlParser.getColumnNames()) {
+					if (!queryColumn.toLowerCase().equals(tableColumn.toLowerCase())) {
+						dataType = ECLLayouts.getECLDataType(sqlParser.getTable().getName(), tableColumn);
+					} else {
+						shouldBeDefined = false;
+						break;
+					}
+				}
+				if (shouldBeDefined) {
+					tableColumnString += dataType+" "+tableColumn+" := "+(dataType.startsWith("UNSIGNED")||dataType.startsWith("integer")?"0":"''");
+				} else {
+					tableColumnString += tableColumn;
+				}
 			}
 			eclCode.append(tableColumnString)
 				.append("})");
