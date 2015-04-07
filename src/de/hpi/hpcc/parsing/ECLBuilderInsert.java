@@ -32,6 +32,11 @@ public class ECLBuilderInsert extends ECLBuilder {
 		generateNewDataset(sqlParser, eclCode);
 		eclCode.append(",,'~%NEWTABLE%', overwrite);\n");
 		
+		
+		/*
+			 * TODO: replace with much, much, much better solution
+			 */
+		eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
 		return eclCode.toString();
 	}
 

@@ -251,6 +251,13 @@ public class ECLEngine
    			} else {
    				eclCode.append("Std.File.DeleteLogicalFile('~"+tablePath+"');\n");
    			}
+   			
+   			/*
+   			 * TODO: replace with much, much, much better solution
+   			 */
+   			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
+   			
+   			
    	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
    	    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
    	    	int i=0;
@@ -262,7 +269,7 @@ public class ECLEngine
    			/*
    			 * TODO: replace with much, much, much better solution
    			 */
-   			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));");
+   			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
    		}
 	}
 

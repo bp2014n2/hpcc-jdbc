@@ -74,8 +74,7 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
             		}	
         		}
         	}
-    	}
-    	
+    	}  	
 	}
 
     public void setString(int parameterIndex, String x) {
