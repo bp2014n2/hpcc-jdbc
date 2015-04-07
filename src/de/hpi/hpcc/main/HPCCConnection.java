@@ -45,6 +45,7 @@ public class HPCCConnection implements Connection{
     private String catalog = HPCCJDBCUtils.HPCCCATALOGNAME;
     private HttpURLConnection httpConnection;
     private HashSet<String> allStatementNames = new HashSet<String>();
+    private boolean autoCommit = true;
     
     protected static final Logger logger = HPCCLogger.getLogger();
 
@@ -315,6 +316,11 @@ public class HPCCConnection implements Connection{
     public int getTransactionIsolation() throws SQLException {
     	return TRANSACTION_NONE;
     }
+    
+    public void setAutoCommit(boolean autoCommit) throws SQLException {
+    	//TODO: use transactions
+    	this.autoCommit = autoCommit;
+    }
 	
     //Logger methods
 	private static void log(String infoMessage){
@@ -427,10 +433,6 @@ public class HPCCConnection implements Connection{
     public String nativeSQL(String sql) throws SQLException {
     	handleUnsupportedMethod("nativeSQL(String sql)");
         return null;
-    }
-
-    public void setAutoCommit(boolean autoCommit) throws SQLException {
-    	handleUnsupportedMethod("setAutoCommit(boolean autoCommit)");
     }
 
     public void rollback() throws SQLException {
