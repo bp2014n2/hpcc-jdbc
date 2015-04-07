@@ -37,6 +37,7 @@ public class ECLLayouts {
     private static final String			Layout_QueryGlobalTemp = "RECORD UNSIGNED5 encounter_num; UNSIGNED5 patient_num; UNSIGNED5 instance_num; STRING50 concept_cd; TIMESTAMP start_date; STRING50 provider_id; INTEGER1 panel_count; UNSIGNED5 fact_count; UNSIGNED5 fact_panels; END;";
     private static final String			Layout_Dx = "RECORD UNSIGNED5 encounter_num; UNSIGNED5 patient_num; UNSIGNED5 instance_num; STRING50 concept_cd; TIMESTAMP start_date; STRING50 provider_id; TIMESTAMP temporal_start_date; TIMESTAMP temporal_end_date; END;";
     private static final String			Layout_Sequences = "RECORD STRING50 name; UNSIGNED8 value; UNSIGNED8 start; END;";
+    private static final String			Layout_MasterQueryGlobalTemp = "RECORD UNSIGNED5 encouter_num, UNSIGNED5 patient_num, UNSIGNED5 instance_num, STRING50 concept_cd, TIMESTAMP start_date, STRING50 provider_id, STRING50 master_id, UNSIGNED5 level_no, TIMESTAMP temporal_start_date, TIMESTAMP temporal_end_date";
     
     private static HashMap<String, ECLRecordDefinition> layouts = new HashMap<String, ECLRecordDefinition> ();
      
@@ -77,6 +78,7 @@ public class ECLLayouts {
 			layouts.put("query_global_temp", new ECLRecordDefinition(Layout_QueryGlobalTemp));
 			layouts.put("dx", new ECLRecordDefinition(Layout_Dx));
 			layouts.put("sequences", new ECLRecordDefinition(Layout_Sequences));
+			layouts.put("master_query_global_temp", new ECLRecordDefinition(Layout_MasterQueryGlobalTemp));
 		}
 		return layouts;
 	}

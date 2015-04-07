@@ -173,7 +173,7 @@ public class ECLEngine
 		String tablePath = ((SQLParserCreate) sqlParser).getFullName();
 		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
 		if(dfuFile == null) {
-			ECLBuilder eclBuilder = new ECLBuilder();
+			ECLBuilder eclBuilder = new ECLBuilderCreate();
 			eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
 	    	eclCode.append(generateImports());
 	    	eclCode.append("TIMESTAMP := STRING25;\n");
@@ -246,6 +246,7 @@ public class ECLEngine
    		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(tablePath);
 //   		addFileColsToAvailableCols(hpccQueryFile, availablecols);
    		if(hpccQueryFile != null) {
+   			dbMetadata.removeDFUFile(tablePath);
    			if(hpccQueryFile.isSuperFile()) {
    				eclCode.append("Std.File.DeleteSuperFile('~"+tablePath+"', TRUE);\n");
    			} else {

@@ -51,6 +51,11 @@ public class HPCCLogicalFiles
         if (file.isSuperFile())
             superfiles.add(file.getFullyQualifiedName());
     }
+    
+    public void removeFile(String fullyQualifiedName) {
+    	files.remove(fullyQualifiedName);
+    	superfiles.remove(fullyQualifiedName);
+    }
 
     public boolean containsFileName(String filename)
     {
