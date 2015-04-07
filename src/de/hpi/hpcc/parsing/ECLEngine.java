@@ -20,14 +20,12 @@ package de.hpi.hpcc.parsing;
 
 import java.net.HttpURLConnection;
 import java.sql.SQLException;
-
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-
 import java.util.logging.Level;
 
 import org.w3c.dom.NodeList;
@@ -183,7 +181,11 @@ public class ECLEngine
 			eclCode.append("Std.File.StartSuperFileTransaction(),\n");
 			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
-			String recordString = ECLLayouts.getLayouts().get(((SQLParserCreate) sqlParser).getTableName().toLowerCase()).toString();
+			
+			String tableName = ((SQLParserCreate) sqlParser).getTableName().toLowerCase();
+			HashMap<String, ECLRecordDefinition> layouts = ECLLayouts.getLayouts();
+			String recordString = layouts.get(tableName).toString();
+			
 			if(recordString == null) {
 				recordString = ((SQLParserCreate) sqlParser).getRecord();
 			} else {
