@@ -1,13 +1,10 @@
 package de.hpi.hpcc.main;
 
 import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -91,7 +88,7 @@ public class HPCCStatement implements Statement{
 	}
 	
     public int getMaxRows() {
-		return Integer.parseInt(this.connection.getProperty("EclLimit"));
+		return Integer.parseInt(this.connection.getClientInfo("EclLimit"));
     }
 
     public SQLWarning getWarnings() {
