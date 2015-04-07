@@ -246,6 +246,7 @@ public class ECLEngine
    		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(tablePath);
 //   		addFileColsToAvailableCols(hpccQueryFile, availablecols);
    		if(hpccQueryFile != null) {
+//   			dbMetadata.removeDFUFile(tablePath);
    			if(hpccQueryFile.isSuperFile()) {
    				eclCode.append("Std.File.DeleteSuperFile('~"+tablePath+"', TRUE);\n");
    			} else {
