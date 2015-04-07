@@ -3,7 +3,6 @@ package de.hpi.hpcc.main;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Array;
@@ -24,20 +23,17 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.parser.ParseException;
 
-import de.hpi.hpcc.parsing.ECLEngine;
 
 public class HPCCPreparedStatement extends HPCCStatement implements PreparedStatement{
     private String sqlStatement;
     private HashMap<Integer, Object> parameters    = new HashMap<Integer, Object>();
 
-    public HPCCPreparedStatement(HPCCConnection connection, String sqlStatement) throws SQLException {
-        super(connection);
+    public HPCCPreparedStatement(HPCCConnection connection, String sqlStatement, String name) throws SQLException {
+        super(connection, name);
         CCJSqlParser parser = new CCJSqlParser(new StringReader(sqlStatement));
         try {
 			parser.Statement();
@@ -231,6 +227,10 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         return result != null ? result.getMetaData() : null;
     }
     
+    public int executeUpdate() throws SQLException{
+		return executeUpdate(sqlStatement);
+    }
+    
     //Override super method
     protected static void log(Level loggingLevel, String infoMessage){
 		logger.log(loggingLevel, HPCCPreparedStatement.class.getSimpleName()+": "+infoMessage);
@@ -243,15 +243,6 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
 
     public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
         handleUnsupportedMethod("setCharacterStream(int parameterIndex, Reader reader, int length)");
-    }
-    
-    public int executeUpdate() throws SQLException{
-		ResultSet resultSet = executeQuery();
-		if (resultSet == null) {
-			return 0;
-		}
-		resultSet.last();
-		return resultSet.getRow();
     }
     
     public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {

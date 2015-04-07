@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,18 +14,16 @@ import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLEngine;
 
 public class HPCCStatement implements Statement{
-	protected static final Logger	logger = HPCCLogger.getLogger();
+	protected static final Logger logger = HPCCLogger.getLogger();
 	protected HPCCConnection connection;
 	protected ECLEngine eclEngine;
-	
-    protected boolean                  closed        = false;
-    
-    protected SQLWarning               warnings;
-    protected ResultSet            result        = null;
-    
-    public static final String         resultSetName = "HPCC Result";
+    protected boolean closed = false;
+    protected SQLWarning warnings;
+    protected ResultSet result = null;
+    protected String name;
 
-    public HPCCStatement(HPCCConnection connection){
+    public HPCCStatement(HPCCConnection connection, String name){
+    	this.name = name;
         this.connection = (HPCCConnection) connection;
         this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
         log("Statement created");
@@ -48,7 +45,7 @@ public class HPCCStatement implements Statement{
 			connection.sendRequest(eclCode);
 			NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
 			if (rowList != null) {
-				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	resultSetName));
+				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	"HPCC Result"));
 			}
 		} catch (Exception exception) {
 			exception.printStackTrace();
@@ -100,6 +97,31 @@ public class HPCCStatement implements Statement{
         log(Level.FINEST, "Warnings cleared");
     }
     
+    public int getQueryTimeout() throws SQLException{
+    	return this.connection.getNetworkTimeout();
+    }
+    
+    public void setQueryTimeout(int seconds) throws SQLException{
+    	this.connection.setNetworkTimeout(null, seconds);
+    }
+    
+    public int executeUpdate(String sqlUpdate) throws SQLException{
+    	if (execute(sqlUpdate)) {
+    		result.last();
+        	return result.getRow();
+    	}
+    	return 0;
+    }
+    
+    public void setCursorName(String name) throws SQLException{
+    	if (!this.connection.add(name)) {
+    		log(Level.SEVERE, "Cursor name not unique!");
+    		throw new SQLException();
+    	} else {
+    		this.name = name;
+    	}
+    }
+    
     //Methods for subclasses
 	protected static void log(String infoMessage){
 		log(Level.INFO, infoMessage);
@@ -125,30 +147,10 @@ public class HPCCStatement implements Statement{
         return -1;
     }
     
-    public int getQueryTimeout() throws SQLException{
-//    	handleUnsupportedMethod("getQueryTimeout()");
-    	return 0;
-    }
-    
     public void cancel() throws SQLException{
     	handleUnsupportedMethod("cancel()");
     }
-    
-    public void setQueryTimeout(int seconds) throws SQLException{
-    	/*
-    	 * TODO: t.b.a.
-    	 */
-    }
-    
-    public int executeUpdate(String sql) throws SQLException{
-    	executeQuery(sql);
-    	if (result == null) {
-    		return 0;
-    	}
-    	result.last();
-    	return result.getRow();
-    }
-    
+
     public int getMaxFieldSize() throws SQLException{
     	handleUnsupportedMethod("getMaxFieldSize()");
     	return 0;
@@ -164,10 +166,6 @@ public class HPCCStatement implements Statement{
 
     public void setEscapeProcessing(boolean enable) throws SQLException{
     	handleUnsupportedMethod("setEscapeProcessing(boolean enable)");
-    }
-    
-    public void setCursorName(String name) throws SQLException{
-//    	handleUnsupportedMethod("setCursorName(String name)");
     }
     
     public boolean getMoreResults() throws SQLException{
