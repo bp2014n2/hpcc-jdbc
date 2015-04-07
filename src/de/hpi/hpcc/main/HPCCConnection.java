@@ -69,14 +69,30 @@ public class HPCCConnection implements Connection{
         return createStatement();
     }
     
-    public PreparedStatement prepareStatement(String query) throws SQLException {
-    	return new HPCCPreparedStatement(this, query, getUniqueName());
+    public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+    	return createStatement();
+    }
+    
+    public PreparedStatement prepareStatement(String sqlStatement) throws SQLException {
+    	return new HPCCPreparedStatement(this, sqlStatement, getUniqueName());
+    }
+    
+    public PreparedStatement prepareStatement(String sqlStatement, int[] columnIndexes) throws SQLException {
+    	return prepareStatement(sqlStatement);
+    }
+    
+    public PreparedStatement prepareStatement(String sqlStatement, String[] columnNames) throws SQLException {
+    	return prepareStatement(sqlStatement);
     }
 
-    public PreparedStatement prepareStatement(String query, int resultSetType, int resultSetConcurrency) throws SQLException {
-        return prepareStatement(query);
+    public PreparedStatement prepareStatement(String sqlStatement, int resultSetType, int resultSetConcurrency) throws SQLException {
+        return prepareStatement(sqlStatement);
     }
 
+    public PreparedStatement prepareStatement(String sqlStatement, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+    	return prepareStatement(sqlStatement);
+    }
+    
     private String getUniqueName() {
 		int index = allStatementNames.size()+1;
 		while(!add("Statement "+index)){
@@ -296,6 +312,10 @@ public class HPCCConnection implements Connection{
 		//TODO: refactor DatabaseMetaData -> set ConnectTimeoutMilli in connection
 	}
     
+    public int getTransactionIsolation() throws SQLException {
+    	return TRANSACTION_NONE;
+    }
+	
     //Logger methods
 	private static void log(String infoMessage){
 		log(Level.INFO, infoMessage);
@@ -327,11 +347,6 @@ public class HPCCConnection implements Connection{
 
     public void setTransactionIsolation(int level) throws SQLException  {
     	handleUnsupportedMethod("setTransactionIsolation(int level)");
-    }
-
-    public int getTransactionIsolation() throws SQLException {
-    	handleUnsupportedMethod("getTransactionIsolation()");
-        return 0;
     }
 
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
@@ -375,30 +390,11 @@ public class HPCCConnection implements Connection{
     	handleUnsupportedMethod("releaseSavepoint(Savepoint savepoint)");
     }
 
-    public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-    	handleUnsupportedMethod("createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability)");
-		return null;
-    }
-
-    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        handleUnsupportedMethod("prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)");
-		return null;
-    }
-
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         handleUnsupportedMethod("prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)");
 		return null;
     }
 
-    public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
-    	handleUnsupportedMethod("prepareStatement(String sql, int[] columnIndexes)");
-    	return null;
-    }
-
-    public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
-    	handleUnsupportedMethod("prepareStatement(String sql, String[] columnNames)");
-    	return null;
-    }
     public void commit() throws SQLException {
     	handleUnsupportedMethod("commit()");
     }
