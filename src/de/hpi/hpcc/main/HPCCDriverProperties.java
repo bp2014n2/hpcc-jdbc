@@ -57,11 +57,11 @@ public class HPCCDriverProperties extends Properties{
 	}
 	
 	public Object setProperty(String key, String value){
-		boolean isInDefaultProperies = defaultProperties.containsKey(key);
-		if(isInDefaultProperies){
+		boolean isInDefaultProperties = defaultProperties.containsKey(key);
+		if(isInDefaultProperties){
 			super.setProperty(key, value);
 		}
-		return isInDefaultProperies;
+		return isInDefaultProperties;
 	}
 	
 	public String getProperty(String key){

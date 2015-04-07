@@ -1,21 +1,3 @@
-/*##############################################################################
-
-Copyright (C) 2011 HPCC Systems.
-
-All rights reserved. This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
-############################################################################## */
-
 package de.hpi.hpcc.main;
 
 import java.io.IOException;
@@ -51,11 +33,6 @@ import org.xml.sax.SAXException;
 import de.hpi.hpcc.main.HPCCDFUFile.FileFormat;
 import de.hpi.hpcc.main.HPCCJDBCUtils.EclTypes;
 
-/**
- *
- * @author rpastrana
- */
-
 public class HPCCDatabaseMetaData implements DatabaseMetaData
 {
     private HPCCQueries                 eclqueries;
@@ -87,8 +64,6 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     private boolean                     lazyLoad;
     private int                         pageSize;
     private int                         pageOffset;
-    private int                         connectTimoutMillis;
-//    private int                         readTimoutMillis;
 
     private DocumentBuilderFactory      dbf;
 
@@ -120,7 +95,6 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         this.lazyLoad = Boolean.parseBoolean(props.getProperty("LazyLoad"));
         this.pageSize = Integer.parseInt(props.getProperty("PageSize"));
         this.pageOffset = Integer.parseInt(props.getProperty("PageOffset"));
-        this.connectTimoutMillis = Integer.parseInt(props.getProperty("ConnectTimeoutMilli"));
 //        this.readTimoutMillis = Integer.parseInt(props.getProperty("ReadTimeoutMilli"));
 
         HPCCJDBCUtils.traceoutln(Level.INFO, "HPCCDatabaseMetaData ServerAddress: " + protocol + serverAddress
@@ -191,7 +165,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         if (serverAddress == null || targetcluster == null)
             return false;
 
-        hasHPCCTargetBeenReached = isTargetHPCCReachable();
+        hasHPCCTargetBeenReached = isTargetHPCCReachable(5000);
 
         if (!hasHPCCTargetBeenReached)
             return false;
@@ -2958,12 +2932,6 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         {
             HPCCJDBCUtils.traceoutln(Level.SEVERE, "Error fetching Index file info: " + file.getFullyQualifiedName());
         }
-    }
-
-
-    public boolean isTargetHPCCReachable()
-    {
-        return isTargetHPCCReachable(connectTimoutMillis);
     }
 
     public boolean isTargetHPCCReachable(int timeout)
