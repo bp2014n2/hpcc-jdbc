@@ -2990,4 +2990,8 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	public void removeDFUFile(String fullyQualifiedName) {
+		dfuFiles.removeFile(fullyQualifiedName);
+	}
 }
