@@ -99,7 +99,7 @@ public class ECLLayouts {
 	
 	public static LinkedHashSet<String> getAllColumns(String table) {
 		ECLRecordDefinition recordDefinition = getLayouts().get(table.toLowerCase());
-		
+		if (recordDefinition == null) return null;
 		return recordDefinition.getColumnNames();
 	}
 
