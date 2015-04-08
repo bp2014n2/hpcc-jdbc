@@ -425,8 +425,8 @@ public class ECLEngine
     }
     
     private boolean getIndex(String tableName, StringBuilder indicesString) {
-    	return false;
-    	/*
+//    	return false;
+    	
 		switch(tableName) {
 		case "observation_fact":
 			indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd,encounter_num,patient_num,provider_id,start_date,modifier_cd,instance_num,valtype_cd,tval_char,valueflag_cd,vunits_cd,end_date,location_cd,update_date,download_date,import_date,sourcesystem_cd,upload_id}, {}, '~i2b2demodata::observation_fact_idx_all');\n");
@@ -446,7 +446,7 @@ public class ECLEngine
 			return true;
 		default: return false; 
 		}
-		*/
+	
 	}
 
 	public String parseEclCode(String sqlQuery){

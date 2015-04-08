@@ -131,8 +131,8 @@ public class ECLBuilderSelect extends ECLBuilder {
 	
 	private void generateSelects(SQLParserSelect sqlParser, StringBuilder select, Boolean inner) { 
 		if (sqlParser.isCount()) {
-			select.insert(0, "COUNT(");
-			select.append(")");
+			select.insert(0, "output(dataset([COUNT(");
+			select.append(")], {unsigned5 patient_num_count}))");
 		} else {
 			LinkedHashSet<String> selectItemsStrings = new LinkedHashSet<String>();
 			select.append(", ");

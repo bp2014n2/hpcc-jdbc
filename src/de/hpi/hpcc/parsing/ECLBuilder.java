@@ -186,8 +186,8 @@ public class ECLBuilder {
 		StringBuilder likeString = new StringBuilder();
 		String stringValue = ((StringValue) expressionItem.getRightExpression()).getValue();
 		if (stringValue.endsWith("%")) stringValue = stringValue.replace("%", "");
-		int count = stringValue.length();
-		stringValue = stringValue.replace("\\", "\\\\");
+		int count = stringValue.replace("\\\\", "\\").length();
+//		stringValue = stringValue.replace("\\", "\\\\");
 		likeString.append("");
 		likeString.append(parseExpressionECL(expressionItem.getLeftExpression()));
 		likeString.append("[");
