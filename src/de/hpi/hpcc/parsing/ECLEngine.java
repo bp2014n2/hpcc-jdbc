@@ -339,6 +339,7 @@ public class ECLEngine
         eclCode.append(generateLayouts(eclBuilder));
 		eclCode.append(generateTables());
 		
+		
 		if (!((SQLParserSelect) sqlParser).isCount()) eclCode.append("OUTPUT(");
     	eclCode.append(eclBuilder.generateECL(sqlQuery));
     	if (!((SQLParserSelect) sqlParser).isCount()) eclCode.append(");");

@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
@@ -101,16 +102,25 @@ public class ECLBuilderSelect extends ECLBuilder {
     	}
 	}
 	
-	private void generateFrom(SQLParserSelect sqlParser, StringBuilder from) {
+	private void generateFrom(SQLParserSelect sqlParser, StringBuilder from) {	
+
 		FromItem table = sqlParser.getFromItem();
-		if (table instanceof Table) {
-			from.append(((Table) table).getName());
-    	} else if (table instanceof SubSelect){
-    		from.append("(");
-    		String innerStatement = sqlParser.trimInnerStatement(table.toString());
-    		from.append(new ECLBuilder().generateECL(innerStatement));
-    		from.append(")");
-    	}
+		if (sqlParser.getJoins() != null) {
+			EqualsTo joinCondition = findJoinCondition(sqlParser.getWhere());
+			String joinColumn = ((Column) joinCondition.getRightExpression()).getColumnName();
+			from.append("JOIN("+((Table)table).getName()+", "+((Table) sqlParser.getJoins().get(0).getRightItem()).getName());
+			from.append(", LEFT."+joinColumn+" = RIGHT."+joinColumn+", LOOKUP)");
+		} else {
+			
+			if (table instanceof Table) {
+				from.append(((Table) table).getName());
+	    	} else if (table instanceof SubSelect){
+	    		from.append("(");
+	    		String innerStatement = sqlParser.trimInnerStatement(table.toString());
+	    		from.append(new ECLBuilder().generateECL(innerStatement));
+	    		from.append(")");
+	    	}
+		}
 	}
 	
 	private void generateWhere(SQLParserSelect sqlParser, StringBuilder where) {
@@ -225,22 +235,27 @@ public class ECLBuilderSelect extends ECLBuilder {
 	 * @param expression
 	 * @return
 	 */
-	private AndExpression findJoinCondition(AndExpression expression) {
-		if (expression.getRightExpression() instanceof Column && expression.getLeftExpression() instanceof Column) return expression;
-		if (expression.getRightExpression() instanceof AndExpression) return findJoinCondition(expression);
-		if (expression.getLeftExpression() instanceof AndExpression) return findJoinCondition(expression);
-		return null;
-	}
-	
-	private Expression parseJoinCondition(SQLParserSelect sqlParser) {
-		Expression where = sqlParser.getWhere();
-		if (where instanceof EqualsTo) {
-			sqlParser.setWhere(null);
-			return where;
-		} else if (where instanceof AndExpression) {
-			
+	private EqualsTo findJoinCondition(Expression expression) {
+		if(expression instanceof EqualsTo) {
+			String left = ((EqualsTo)expression).getLeftExpression().toString();
+			String right = ((EqualsTo)expression).getRightExpression().toString();
+			if(right.contains(".") && left.contains(".")) {
+				if(!right.substring(0,right.indexOf(".") + 1).equals(left.substring(0,left.indexOf(".") + 1)) 
+				&& right.substring(right.indexOf(".") + 1).equals(left.substring(left.indexOf(".") + 1))){
+					return (EqualsTo) expression;
+				}
+			}
 		}
-		
+		if (expression instanceof BinaryExpression) {
+			if (((BinaryExpression) expression).getRightExpression() instanceof BinaryExpression) { 
+				EqualsTo right = findJoinCondition(((BinaryExpression) expression).getRightExpression());
+				if (right != null) return right;
+			}
+			if (((BinaryExpression) expression).getLeftExpression() instanceof BinaryExpression) {
+				EqualsTo left = findJoinCondition(((BinaryExpression) expression).getLeftExpression());
+				if (left != null) return left;
+			}
+		}
 		return null;
 	}
 }

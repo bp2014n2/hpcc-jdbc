@@ -118,11 +118,15 @@ public class ECLBuilder {
 			}
 			expression.append(joinColumn+" IN SET(");
 			if(subParser.getSelectItems().size() == 1) {
-				if(subParser.getSelectItems().get(0).toString().equals("1"))
-					if(subParser.getFromItem() instanceof SubSelect)
-				expression.append(parseExpressionECL((Expression)subParser.getFromItem()));
-			} else
+				if(subParser.getSelectItems().get(0).toString().equals("1")) {
+					if(subParser.getFromItem() instanceof SubSelect) {
+						expression.append(parseExpressionECL((Expression)subParser.getFromItem()));
+					}
+				}
+					
+			} else {
 				expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
+			}
 			expression.append(", "+joinColumn+")");
 		} else if (expressionItem instanceof IsNullExpression) {
 			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
