@@ -53,8 +53,8 @@ public class HPCCLogicalFiles
     }
 
     public void removeFile(String fullyQualifiedName) {
-    	files.remove(fullyQualifiedName);
-    	superfiles.remove(fullyQualifiedName);
+    	files.remove(fullyQualifiedName.toUpperCase());
+    	superfiles.remove(fullyQualifiedName.toLowerCase());
     }
     
     public boolean containsFileName(String filename)

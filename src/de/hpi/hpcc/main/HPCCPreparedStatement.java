@@ -88,14 +88,14 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
        	}  	
 	}
     
-//    private String ensureCorrectFormat(String string) {
-//    	string = replaceEscapingQuotes(string);
-//		return '\'' + string + '\'';
-//	}
-//
-//    private String replaceEscapingQuotes(String string) {
-//		return string.replace("\'\'", "\\\'");
-//	}
+    private String ensureCorrectFormat(String string) {
+    	string = replaceEscapingQuotes(string);
+		return '\'' + string + '\'';
+	}
+
+    private String replaceEscapingQuotes(String string) {
+		return string.replace("\'\'", "\\\'");
+	}
 //
 //	private final static Pattern QUOTEDSTRPATTERN = Pattern.compile(
 //            "\\s*(\"|\')(.*?)(\"|\')\\s*",Pattern.DOTALL);
@@ -144,7 +144,7 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
 	}
     
 	public void setObject(int parameterIndex, Object x) {
-		if(parameterIndex > getParameterCount()-1){
+		if(parameterIndex > getParameterCount()){
 			log(Level.WARNING, "The given index ("+parameterIndex+") is too high. Value will be ignored.");
 		} else {
 			parameters.put(parameterIndex, x);
@@ -160,8 +160,8 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     }
     
     public void setString(int parameterIndex, String x) {
-//        setObject(parameterIndex, ensureCorrectFormat(x));
-    	setObject(parameterIndex, x);
+        setObject(parameterIndex, ensureCorrectFormat(x));
+//    	setObject(parameterIndex, x);
     }
     
     public void setBytes(int parameterIndex, byte[] x) throws SQLException {
