@@ -20,14 +20,12 @@ package de.hpi.hpcc.parsing;
 
 import java.net.HttpURLConnection;
 import java.sql.SQLException;
-
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-
 import java.util.logging.Level;
 
 import org.w3c.dom.NodeList;
@@ -173,7 +171,7 @@ public class ECLEngine
 		String tablePath = ((SQLParserCreate) sqlParser).getFullName();
 		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
 		if(dfuFile == null) {
-			ECLBuilder eclBuilder = new ECLBuilder();
+			ECLBuilder eclBuilder = new ECLBuilderCreate();
 			eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
 	    	eclCode.append(generateImports());
 	    	eclCode.append("TIMESTAMP := STRING25;\n");
@@ -183,7 +181,11 @@ public class ECLEngine
 			eclCode.append("Std.File.StartSuperFileTransaction(),\n");
 			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
-			String recordString = ECLLayouts.getLayouts().get(((SQLParserCreate) sqlParser).getTableName().toLowerCase()).toString();
+			
+			String tableName = ((SQLParserCreate) sqlParser).getTableName().toLowerCase();
+			HashMap<String, ECLRecordDefinition> layouts = ECLLayouts.getLayouts();
+			String recordString = layouts.get(tableName).toString();
+			
 			if(recordString == null) {
 				recordString = ((SQLParserCreate) sqlParser).getRecord();
 			} else {
@@ -246,7 +248,7 @@ public class ECLEngine
    		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(tablePath);
 //   		addFileColsToAvailableCols(hpccQueryFile, availablecols);
    		if(hpccQueryFile != null) {
-//   			dbMetadata.removeDFUFile(tablePath);
+   			dbMetadata.removeDFUFile(tablePath);
    			if(hpccQueryFile.isSuperFile()) {
    				eclCode.append("Std.File.DeleteSuperFile('~"+tablePath+"', TRUE);\n");
    			} else {
@@ -323,7 +325,9 @@ public class ECLEngine
 	}
 	
 	private String eclMetaEscape(String sqlQuery) {
-		return sqlQuery.replace("'", "\\'");
+		sqlQuery = sqlQuery.replace("'", "\\'");
+		sqlQuery = sqlQuery.replace("\n", " ");
+		return sqlQuery;
 	}
 
 	private void generateSelectECL(String sqlQuery) throws SQLException
@@ -334,6 +338,7 @@ public class ECLEngine
     	eclCode.append(generateImports());
         eclCode.append(generateLayouts(eclBuilder));
 		eclCode.append(generateTables());
+		
 		
 		if (!((SQLParserSelect) sqlParser).isCount()) eclCode.append("OUTPUT(");
     	eclCode.append(eclBuilder.generateECL(sqlQuery));
@@ -377,14 +382,24 @@ public class ECLEngine
     
     private String generateLayouts(ECLBuilder eclBuilder, List<String> orderedColumns) {
     	StringBuilder layoutsString = new StringBuilder("TIMESTAMP := STRING25;\n");
-    	String table = sqlParser.getAllTables().get(0);
+    	List<String> allTables = sqlParser.getAllTables();
+    	String table = allTables.get(0);
 		if (table.contains(".")) {
 			table = table.split("\\.")[1];
 		}
-			
 		layoutsString.append(table+"_record := ");
 		layoutsString.append(ECLLayouts.getLayouts().get(table).toString(orderedColumns));
 		layoutsString.append("\n");
+		
+		for (int i = 1; i<allTables.size(); i++) {
+			String otherTable = allTables.get(i);
+			if (otherTable.contains(".")) {
+				otherTable = otherTable.split("\\.")[1];
+			}
+			layoutsString.append(otherTable+"_record := ");
+			layoutsString.append(ECLLayouts.getLayouts().get(otherTable).toString());
+			layoutsString.append("\n");
+		}
 		
 		return layoutsString.toString();
     }
@@ -411,6 +426,8 @@ public class ECLEngine
     }
     
     private boolean getIndex(String tableName, StringBuilder indicesString) {
+//    	return false;
+    	
 		switch(tableName) {
 		case "observation_fact":
 			indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd,encounter_num,patient_num,provider_id,start_date,modifier_cd,instance_num,valtype_cd,tval_char,valueflag_cd,vunits_cd,end_date,location_cd,update_date,download_date,import_date,sourcesystem_cd,upload_id}, {}, '~i2b2demodata::observation_fact_idx_all');\n");
@@ -430,6 +447,7 @@ public class ECLEngine
 			return true;
 		default: return false; 
 		}
+	
 	}
 
 	public String parseEclCode(String sqlQuery){
@@ -452,7 +470,7 @@ public class ECLEngine
 				eclCode.append(correctedEclCode);
 			}
 			sb.append(eclCode.toString());
-			sb.append("\n\n//"+sql);
+			sb.append("\n\n//"+eclMetaEscape(sql));
 //			System.out.println(sb.toString());
 			return sb.toString();
 		} catch (Exception e) {
