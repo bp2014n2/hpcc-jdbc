@@ -23,6 +23,8 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.parser.ParseException;
@@ -89,55 +91,22 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
 	}
     
     private String ensureCorrectFormat(String string) {
-    	string = replaceEscapingQuotes(string);
-		return '\'' + string + '\'';
-	}
+    	Matcher matcher = Pattern.compile("\\s*(\"|\')(.*?)(\"|\')\\s*",Pattern.DOTALL).matcher(string);
 
-    private String replaceEscapingQuotes(String string) {
-		return string.replace("\'\'", "\\\'");
+        if (matcher.matches()) {
+            string =  matcher.group(2).trim();
+        }
+        
+        Matcher m = Pattern.compile("(.*)(\'\')(.*)(\'\')(.*)",Pattern.DOTALL).matcher(string);
+
+        String replaced;
+        if (m.matches()) {
+            replaced = m.group(1) + "\\\'" + m.group(3) + "\\\'" + m.group(5);
+        } else {
+            replaced = string.replace("\'", "\\\'");
+        }
+		return '\'' + replaced + '\'';
 	}
-//
-//	private final static Pattern QUOTEDSTRPATTERN = Pattern.compile(
-//            "\\s*(\"|\')(.*?)(\"|\')\\s*",Pattern.DOTALL);
-//
-//    private static String handleQuotedString(String quotedString) {
-//        if (quotedString == null || quotedString.length() <= 0)
-//            return "";
-//
-//        Matcher matcher = QUOTEDSTRPATTERN.matcher(quotedString);
-//
-//        if(matcher.matches() )
-//            return matcher.group(2).trim();
-//        else
-//            return quotedString;
-//    }
-//    
-////    private static String ensureECLString(String instr) {
-////        return '\'' + replaceSQLwithECLEscapeChar(handleQuotedString(instr)) + '\'';
-////    }
-//    
-//    private final static  String eclescaped = "\\\'";
-//    private final static Pattern SQLESCAPEDPATTERN = Pattern.compile(
-//            "(.*)(\'\')(.*)(\'\')(.*)",Pattern.DOTALL);
-//    
-//    private static String replaceSQLwithECLEscapeChar(String quotedString) {
-//        if (quotedString == null)
-//            return "";
-//
-//        Matcher m = SQLESCAPEDPATTERN.matcher(quotedString);
-//
-//        String replaced;
-//        if (m.matches())
-//        {
-//            replaced = m.group(1) + eclescaped + m.group(3) + eclescaped + m.group(5);
-//        }
-//        else
-//        {
-//            replaced = quotedString.replace("\'", "\\\'");
-//        }
-//
-//        return replaced;
-//    }
     
     private int getParameterCount() {
     	return (sqlStatement.length() - sqlStatement.replace("?", "").length());
