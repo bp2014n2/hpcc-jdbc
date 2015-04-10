@@ -64,6 +64,12 @@ public class HPCCConnection implements Connection
     public HPCCConnection(HPCCDriverProperties driverProperties){
         this.driverProperties = driverProperties;
         metadata = new HPCCDatabaseMetaData(driverProperties, this);
+        try {
+			httpConnection = createHPCCESPConnection(generateUrl());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
         // TODO not doing anything w/ this yet, just exposing it to comply w/ API definition...
         clientInfo = new Properties();
@@ -91,7 +97,6 @@ public class HPCCConnection implements Connection
 //      replace "+" in http request body since it is a reserved character representing a space character
     	String body = eclCode.replace("+", "%2B");
 		try {
-			httpConnection = createHPCCESPConnection(generateUrl());
 			OutputStreamWriter wr = new OutputStreamWriter(httpConnection.getOutputStream());
 			wr.write(body);
 	        wr.flush();
@@ -278,6 +283,7 @@ public class HPCCConnection implements Connection
     public void close() throws SQLException
     {
         closed = true;
+//        httpConnection.disconnect();
     }
 
     public boolean isClosed() throws SQLException

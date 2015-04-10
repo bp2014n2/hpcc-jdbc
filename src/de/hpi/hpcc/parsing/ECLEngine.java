@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package de.hpi.hpcc.parsing;
 
+import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -27,6 +28,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
+
+import net.sf.jsqlparser.statement.Statement;
 
 import org.w3c.dom.NodeList;
 
@@ -114,6 +117,7 @@ public class ECLEngine
 
     private void addFileColsToAvailableCols(HPCCDFUFile dfufile, HashMap<String, HPCCColumnMetaData> availablecols)
     {
+    	
     	Enumeration<?> fields = dfufile.getAllFields();
 	    while (fields.hasMoreElements())
 	    {
@@ -148,7 +152,12 @@ public class ECLEngine
     		break;    		
     	case "Insert":
     		this.sqlParser = new SQLParserInsert(sqlQuery);
+    		long timeBefore = System.currentTimeMillis();
     		generateInsertECL(sqlQuery);
+    		long timeAfter = System.currentTimeMillis();
+    		long timeDifference = timeAfter-timeBefore;
+    		HPCCJDBCUtils.traceoutln(Level.INFO, "Time for creating ECL in ECLEngine: "+timeDifference);
+    		
     		break;
     	case "Update":
     		this.sqlParser = new SQLParserUpdate(sqlQuery);
@@ -171,7 +180,7 @@ public class ECLEngine
 		String tablePath = ((SQLParserCreate) sqlParser).getFullName();
 		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
 		if(dfuFile == null) {
-			ECLBuilder eclBuilder = new ECLBuilderCreate();
+			ECLBuilderCreate eclBuilder = new ECLBuilderCreate();
 			eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
 	    	eclCode.append(generateImports());
 	    	eclCode.append("TIMESTAMP := STRING25;\n");
@@ -201,7 +210,7 @@ public class ECLEngine
 	}
 
 	private void generateUpdateECL(String sqlQuery) throws SQLException{
-		ECLBuilder eclBuilder = new ECLBuilder();
+		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate();
 		eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append(generateImports());
     	eclCode.append(generateLayouts(eclBuilder));
@@ -275,22 +284,44 @@ public class ECLEngine
    			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
    		}
 	}
-
+	
 	private void generateInsertECL(String sqlQuery) throws SQLException{
-    	ECLBuilder eclBuilder = new ECLBuilder();
+    	ECLBuilderInsert eclBuilder = new ECLBuilderInsert();
     	eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'thor');\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
+    	
+    	long timeBeforeImports = System.nanoTime();
     	eclCode.append(generateImports());
-        eclCode.append(generateLayouts(eclBuilder, ((SQLParserInsert) sqlParser).getColumnNames()));
+		long timeAfterImports = System.nanoTime();
+		long timeDifferenceImports = (timeAfterImports-timeBeforeImports)/1000000;
+		HPCCJDBCUtils.traceoutln(Level.INFO, "Time for creating Imports: "+timeDifferenceImports);
+		
+		long timeBeforeLayouts = System.nanoTime();
+		eclCode.append(generateLayouts(eclBuilder, ((SQLParserInsert) sqlParser).getColumnNames()));
+		long timeAfterLayouts = System.nanoTime();
+		long timeDifferenceLayouts = (timeAfterLayouts-timeBeforeLayouts)/1000000;
+		HPCCJDBCUtils.traceoutln(Level.INFO, "Time for creating Layouts: "+timeDifferenceLayouts);
+		
+		long timeBeforeTables = System.nanoTime();
 		eclCode.append(generateTables());
+		long timeAfterTables = System.nanoTime();
+		long timeDifferenceTables = (timeAfterTables-timeBeforeTables)/1000000;
+		HPCCJDBCUtils.traceoutln(Level.INFO, "Time for creating Tables: "+timeDifferenceTables);
+		
 		
 		String tablePath = "i2b2demodata::"+ ((SQLParserInsert)sqlParser).getTable().getName();
 		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
 		
+		
+		long timeBeforeECLBuilder = System.nanoTime();
 		eclCode.append(eclBuilder.generateECL(sqlQuery).replace("%NEWTABLE%",newTablePath));
+		long timeAfterECLBuilder = System.nanoTime();
+		long timeDifferenceECLBuilder = (timeAfterECLBuilder-timeBeforeECLBuilder)/1000000;
+		HPCCJDBCUtils.traceoutln(Level.INFO, "Time for creating ECL in ECLBuilder: "+timeDifferenceECLBuilder);
+		
 		
 
 //		add new subfile to superfile
@@ -308,7 +339,15 @@ public class ECLEngine
     		} else {
     			tableName = "i2b2demodata::"+table;
     		}
+    		
+    		long timeBeforeDFUFile = System.nanoTime();
     		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
+    		long timeAfterDFUFile = System.nanoTime();
+    		long timeDifferenceDFUFile = (timeAfterDFUFile-timeBeforeDFUFile)/1000000;
+    		HPCCJDBCUtils.traceoutln(Level.INFO, "Time for getting DFUFile: "+timeDifferenceDFUFile);
+    		
+    		
+    		
     		if(hpccQueryFile != null) {
         		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     		}
@@ -332,7 +371,7 @@ public class ECLEngine
 
 	private void generateSelectECL(String sqlQuery) throws SQLException
     {
-    	ECLBuilder eclBuilder = new ECLBuilder();
+    	ECLBuilderSelect eclBuilder = new ECLBuilderSelect();
     	eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());

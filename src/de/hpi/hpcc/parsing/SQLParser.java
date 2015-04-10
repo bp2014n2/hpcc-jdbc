@@ -3,7 +3,9 @@ package de.hpi.hpcc.parsing;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
@@ -47,7 +49,11 @@ public class SQLParser{
 	
 	protected static String sqlIsInstanceOf(String sql) {
 		try {
+			long timeBefore = System.currentTimeMillis();
 			Statement statement = parserManager.parse(new StringReader(sql));
+			long timeAfter = System.currentTimeMillis();
+			long timeDifference = timeAfter-timeBefore;
+			HPCCJDBCUtils.traceoutln(Level.INFO, "Time for parsing SQL to object tree: "+timeDifference);
 			if (statement instanceof Select) {
 				return "Select";
 			} else if (statement instanceof Insert) {

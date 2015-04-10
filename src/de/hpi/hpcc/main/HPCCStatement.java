@@ -47,7 +47,11 @@ public class HPCCStatement implements Statement{
 		result = null;
 		try {
 			this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
+			long timeBefore = System.currentTimeMillis();
 			String eclCode = eclEngine.parseEclCode(sqlStatement);
+			long timeAfter = System.currentTimeMillis();
+			long timeDifference = timeAfter-timeBefore;
+			HPCCJDBCUtils.traceoutln(Level.INFO, "Time for parsing SQL to ECL: "+timeDifference);
 			connection.sendRequest(eclCode);
 			NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
 			if (rowList != null) {
