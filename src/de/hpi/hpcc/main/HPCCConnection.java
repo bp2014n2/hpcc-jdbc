@@ -1,21 +1,3 @@
-/*##############################################################################
-
-Copyright (C) 2011 HPCC Systems.
-
-All rights reserved. This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
-############################################################################## */
-
 package de.hpi.hpcc.main;
 
 import java.io.IOException;
@@ -38,10 +20,12 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -51,21 +35,24 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public class HPCCConnection implements Connection
-{
-    private boolean              closed;
+import de.hpi.hpcc.logging.HPCCLogger;
+
+public class HPCCConnection implements Connection{
+    private boolean closed;
     private HPCCDatabaseMetaData metadata;
-    private Properties           driverProperties;
-    private Properties           clientInfo;
-    private SQLWarning           warnings = null;
-    private String               catalog = HPCCJDBCUtils.HPCCCATALOGNAME;
+    private Properties driverProperties;
+    private SQLWarning warnings;
+    private String catalog = HPCCJDBCUtils.HPCCCATALOGNAME;
     private HttpURLConnection httpConnection;
+    private HashSet<String> allStatementNames = new HashSet<String>();
+    private boolean autoCommit = true;
+    
+    protected static final Logger logger = HPCCLogger.getLogger();
 
     public HPCCConnection(HPCCDriverProperties driverProperties){
         this.driverProperties = driverProperties;
+
         metadata = new HPCCDatabaseMetaData(driverProperties, this);        
-        // TODO not doing anything w/ this yet, just exposing it to comply w/ API definition...
-        clientInfo = new Properties();
 
         if (metadata != null && metadata.hasHPCCTargetBeenReached())
         {
@@ -76,7 +63,53 @@ public class HPCCConnection implements Connection
             HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection not initialized - server: " + this.driverProperties.getProperty("ServerAddress"));
     }
     
-    public URL generateUrl(){
+    public Statement createStatement() throws SQLException {
+        return new HPCCStatement(this, getUniqueName());
+    }
+    
+    public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+        return createStatement();
+    }
+    
+    public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+    	return createStatement();
+    }
+    
+    public PreparedStatement prepareStatement(String sqlStatement) throws SQLException {
+    	return new HPCCPreparedStatement(this, sqlStatement, getUniqueName());
+    }
+    
+    public PreparedStatement prepareStatement(String sqlStatement, int[] columnIndexes) throws SQLException {
+    	return prepareStatement(sqlStatement);
+    }
+    
+    public PreparedStatement prepareStatement(String sqlStatement, String[] columnNames) throws SQLException {
+    	return prepareStatement(sqlStatement);
+    }
+
+    public PreparedStatement prepareStatement(String sqlStatement, int resultSetType, int resultSetConcurrency) throws SQLException {
+        return prepareStatement(sqlStatement);
+    }
+
+    public PreparedStatement prepareStatement(String sqlStatement, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+    	return prepareStatement(sqlStatement);
+    }
+    
+    private String getUniqueName() {
+		int index = allStatementNames.size()+1;
+		while(!add("Statement "+index)){
+			index++;
+		}
+		return "Statement "+index;
+	}
+
+	public boolean add(String name) {
+		int sizeBeforeAdding = allStatementNames.size();
+		allStatementNames.add(name);
+		return (sizeBeforeAdding < allStatementNames.size());
+	}
+
+	public URL generateUrl(){
     	String urlString = driverProperties.getProperty("Protocol")+(driverProperties.getProperty("WsECLDirectAddress") + ":"
                 + driverProperties.getProperty("WsECLDirectPort") + "/EclDirect/RunEcl?Submit")+"&cluster=" + driverProperties.getProperty("TargetCluster");
 
@@ -181,14 +214,14 @@ public class HPCCConnection implements Connection
         return rowList;
     }
     
-    public HttpURLConnection createHPCCESPConnection(URL theurl) throws IOException{
+    public HttpURLConnection createHPCCESPConnection(URL theurl) throws IOException {
     	return createHPCCESPConnection(theurl, Integer.parseInt(driverProperties.getProperty("ConnectTimeoutMilli")));
     }
     
-    protected HttpURLConnection createHPCCESPConnection(URL url, int connectionTimeout) throws IOException{
+    protected HttpURLConnection createHPCCESPConnection(URL url, int connectionTimeout) throws IOException {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setInstanceFollowRedirects(false);
-        conn.setRequestProperty("Authorization", createBasicAuth(driverProperties.getProperty("username"), driverProperties.getProperty("password")));
+        conn.setRequestProperty("Authorization", this.createBasicAuth());
         conn.setRequestMethod("GET");
         conn.setDoOutput(true);
         conn.setDoInput(true);
@@ -198,358 +231,246 @@ public class HPCCConnection implements Connection
         return conn;
     }
 
-    public static String createBasicAuth(String username, String passwd){
-        return "Basic " + HPCCJDBCUtils.Base64Encode((username + ":" + passwd).getBytes(), false);
+    public String createBasicAuth() {
+        return "Basic " + HPCCJDBCUtils.Base64Encode((driverProperties.getProperty("username") + ":" + driverProperties.getProperty("password")).getBytes(), false);
     }
 
-    public Properties getProperties()
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: getProperties(  )");
-        return driverProperties;
-    }
-
-    public String getProperty(String propname)
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: getProperty( " + propname + " )");
-        return driverProperties.getProperty(propname, "");
-    }
-
-    public HPCCDatabaseMetaData getDatabaseMetaData()
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: getDatabaseMetaData(  )");
+    public HPCCDatabaseMetaData getDatabaseMetaData() {
         return metadata;
     }
-
-    public Statement createStatement() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection: createStatement(  )");
-        return new HPCCStatement(this);
-    }
-
-    public PreparedStatement prepareStatement(String query) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection: prepareStatement( " + query + " )");
-        HPCCPreparedStatement p = new HPCCPreparedStatement(this, query);
-        SQLWarning prepstmtexcp = p.getWarnings();
-        if (prepstmtexcp != null)
-            throw (SQLException)prepstmtexcp.getNextException();
-
-        return p;
-    }
     
-    public PreparedStatement prepareStatement(String query, int autoGeneratedKeys) throws SQLException
-    {
+    public PreparedStatement prepareStatement(String query, int autoGeneratedKeys) throws SQLException {
         return prepareStatement(query);
     }
+    
+	public InputStream getInputStream() {
+		try {
+			return httpConnection.getInputStream();
+		} catch (IOException ioException) {
+			log(Level.SEVERE, "Unable to get InputStream!\n"+ioException.getMessage());
+		}
+		return null;
+	} 
 
-    public CallableStatement prepareCall(String sql) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,"HPCCConnection: prepareCall(string sql) Not supported yet.");
-        throw new UnsupportedOperationException("HPCCConnection: prepareCall(string sql) Not supported yet.");
-    }
-
-    public String nativeSQL(String sql) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: nativeSQL(string sql) Not supported yet.");
-        return sql;
-    }
-
-    public void setAutoCommit(boolean autoCommit) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: setAutoCommit(boolean autoCommit) Not supported yet.");
-    }
-
-    public boolean getAutoCommit() throws SQLException
-    {
+    public boolean getAutoCommit() throws SQLException {
         return true;
     }
 
-    public void commit() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: commit Not supported yet.");
-    }
-
-    public void rollback() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: rollback Not supported yet.");
-    }
-
-    public void close() throws SQLException
-    {
+    public void close() throws SQLException {
         closed = true;
 //        httpConnection.disconnect();
     }
 
-    public boolean isClosed() throws SQLException
-    {
+    public boolean isClosed() throws SQLException {
         return closed;
     }
 
-    public DatabaseMetaData getMetaData() throws SQLException
-    {
+    public DatabaseMetaData getMetaData() throws SQLException {
         return metadata;
     }
 
-    public void setReadOnly(boolean readOnly) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: setReadOnly Not supported yet.");
-    }
-
-    public boolean isReadOnly() throws SQLException
-    {
+    public boolean isReadOnly() throws SQLException {
         return true;
     }
 
-    public void setCatalog(String catalog) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCConnection: setCatalog.");
+    public void setCatalog(String catalog) throws SQLException {
         this.catalog = catalog;
     }
 
-    public String getCatalog() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCConnection: getCatalog()");
-        return catalog;
-    }
-
-    public void setTransactionIsolation(int level) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: settransactionisolation Not supported yet.");
-        throw new UnsupportedOperationException("HPCCConnection: settransactionisolation Not supported yet.");
-    }
-
-    public int getTransactionIsolation() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: getTransactionIsolation Not supported yet.");
-        return 0;
-    }
-
-    public SQLWarning getWarnings() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: getWarnings");
-        return warnings;
-    }
-
-    public void clearWarnings() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: clearWarnings.");
-    }
-
-    public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: createStatement(resulttype, resultsetcon)##");
-        return new HPCCPreparedStatement(this, null);
-    }
-
-    public PreparedStatement prepareStatement(String query, int resultSetType, int resultSetConcurrency)
-            throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: prepareStatement(" + query + ", resultsetype, resultsetcon)##");
-        return new HPCCPreparedStatement(this, query);
-    }
-
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException
-    {
-        throw new UnsupportedOperationException(
-                "HPCCConnection: prepareCall(String sql, int resultSetType, int resultSetConcurrency) Not supported yet.");
-    }
-
-    public Map<String, Class<?>> getTypeMap() throws SQLException
-    {
-        throw new UnsupportedOperationException("HPCCConnection: getTypeMap Not supported yet.");
-    }
-
-    public void setTypeMap(Map<String, Class<?>> map) throws SQLException
-    {
-        throw new UnsupportedOperationException("HPCCConnection: setTypeMap Not supported yet.");
-    }
-
-    public void setHoldability(int holdability) throws SQLException
-    {
-        throw new UnsupportedOperationException("HPCCConnection: setHoldability Not supported yet.");
-    }
-
-    public int getHoldability() throws SQLException
-    {
-        throw new UnsupportedOperationException("HPCCConnection: getHoldability Not supported yet.");
-    }
-
-    public Savepoint setSavepoint() throws SQLException
-    {
-        throw new UnsupportedOperationException("HPCCConnection: setSavepoint Not supported yet.");
-    }
-
-    public Savepoint setSavepoint(String name) throws SQLException
-    {
-        throw new UnsupportedOperationException("HPCCConnection: setSavepoint Not supported yet.");
-    }
-
-    public void rollback(Savepoint savepoint) throws SQLException
-    {
-        throw new UnsupportedOperationException("HPCCConnection: rollback Not supported yet.");
-    }
-
-    public void releaseSavepoint(Savepoint savepoint) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "releaseSavepoint Not supported yet.");
-        throw new UnsupportedOperationException("HPCCConnection: releaseSavepoint Not supported yet.");
-    }
-
-    public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) Not supported yet.");
-        throw new UnsupportedOperationException("HPCCConnection: createStatement Not supported yet.");
-    }
-
-    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency,
-            int resultSetHoldability) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) Not supported yet.");
-        throw new UnsupportedOperationException(
-                "HPCCConnection: prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) Not supported yet.");
-    }
-
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency,
-            int resultSetHoldability) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: prepareCall Not supported yet.");
-        throw new UnsupportedOperationException(
-                "HPCCConnection: prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) Not supported yet.");
-    }
-
-    public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: prepareStatement(String sql, int[] columnIndexes) Not supported yet.");
-        throw new UnsupportedOperationException(
-                "HPCCConnection: prepareStatement(String sql, int[] columnIndexes) Not supported yet.");
-    }
-
-    public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: prepareStatement(String sql, String[] columnNames) Not supported yet.");
-        throw new UnsupportedOperationException(
-                "HPCCConnection:  prepareStatement(String sql, String[] columnNames) Not supported yet.");
-    }
-
-    public Clob createClob() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: createClob Not supported yet.");
-        throw new UnsupportedOperationException("HPCCConnection: createClob Not supported yet.");
-    }
-
-    public Blob createBlob() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: createBlob Not supported yet.");
-        throw new UnsupportedOperationException("HPCCConnection: createBlob Not supported yet.");
-    }
-
-    public NClob createNClob() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: createNClob Not supported yet.");
-        throw new UnsupportedOperationException("HPCCConnection: createNClob Not supported yet.");
-    }
-
-    public SQLXML createSQLXML() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: createSQLXML Not supported yet.");
-        throw new UnsupportedOperationException("HPCCConnection: createSQLXML Not supported yet.");
-    }
-
-    public boolean isValid(int timeout) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCConnection: isValid");
+    public boolean isValid(int timeout) throws SQLException {
         boolean success = false;
-        if (!closed)
-        {
-            if (metadata != null)
-                success = metadata.isTargetHPCCReachable(timeout);
+        if (!closed) {
+            success = metadata.isTargetHPCCReachable(timeout);
+        } else {
+        	log("Connection already closed! Therefore it's not valid anymore.");
         }
         return success;
     }
 
-    public void setClientInfo(String name, String value) throws SQLClientInfoException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCCONNECTION SETCLIENTINFO(" + name + ", " + value + ")");
-        clientInfo.put(name, value);
+    public String getClientInfo(String property) {
+    	return driverProperties.getProperty(property);
     }
 
-    public void setClientInfo(Properties properties) throws SQLClientInfoException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCCONNECTION SETCLIENTINFO (properties)");
-        clientInfo = properties;
+    public Properties getClientInfo() throws SQLException {
+        return driverProperties;
+    }
+    
+    public String getCatalog() throws SQLException{
+        return catalog;
     }
 
-    public String getClientInfo(String name) throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCCONNECTION GETCLIENTINFO");
-        return clientInfo.getProperty(name);
+    public SQLWarning getWarnings() throws SQLException {
+        return warnings;
     }
 
-    public Properties getClientInfo() throws SQLException
-    {
-        HPCCJDBCUtils.traceoutln(Level.FINEST,  "HPCCCONNECTION GETCLIENTINFO");
-        return clientInfo;
+    public void clearWarnings() throws SQLException {
+    	warnings = null;
     }
-
-    public Array createArrayOf(String typeName, Object[] elements) throws SQLException
-    {
-        throw new UnsupportedOperationException(
-                "HPCCConnection: createArrayOf(String typeName, Object[] elements) Not supported yet.");
-    }
-
-    public Struct createStruct(String typeName, Object[] attributes) throws SQLException
-    {
-        throw new UnsupportedOperationException(
-                "HPCCConnection: createStruct(String typeName, Object[] attributes)Not supported yet.");
-    }
-
-    public <T> T unwrap(Class<T> iface) throws SQLException
-    {
-        throw new UnsupportedOperationException("HPCCConnection: unwrap(Class<T> iface) Not supported yet.");
-    }
-
-    public boolean isWrapperFor(Class<?> iface) throws SQLException
-    {
-        throw new UnsupportedOperationException("HPCCConnection: isWrapperFor(Class<?> iface) sNot supported yet.");
-    }
-
-	@Override
-	public void abort(Executor arg0) throws SQLException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
+    
 	public int getNetworkTimeout() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		return Integer.parseInt(driverProperties.getProperty("ConnectTimeoutMilli"));
 	}
-
-	@Override
-	public String getSchema() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
+    
 	public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
-		// TODO Auto-generated method stub
-		
+		//TODO: refactor DatabaseMetaData -> set ConnectTimeoutMilli in connection
 	}
-
-	@Override
-	public void setSchema(String arg0) throws SQLException {
-		// TODO Auto-generated method stub
-		
+    
+    public int getTransactionIsolation() throws SQLException {
+    	return TRANSACTION_NONE;
+    }
+    
+    public void setAutoCommit(boolean autoCommit) throws SQLException {
+    	//TODO: use transactions
+    	this.autoCommit = autoCommit;
+    }
+	
+    //Logger methods
+	private static void log(String infoMessage){
+		log(Level.INFO, infoMessage);
 	}
+	
+	private static void log(Level loggingLevel, String infoMessage){
+		logger.log(loggingLevel, HPCCConnection.class.getSimpleName()+": "+infoMessage);
+	}
+	
+	private void handleUnsupportedMethod(String methodSignature) throws SQLException {
+		logger.log(Level.SEVERE, methodSignature+" is not supported yet.");
+        throw new UnsupportedOperationException();
+	}
+    
+	//Unsupported Methods!!
+    public void setClientInfo(String name, String value) throws SQLClientInfoException {
+    	logger.log(Level.SEVERE, "setClientInfo(String name, String value) is not supported yet.");
+    	throw new SQLClientInfoException();
+    }
 
-	public InputStream getInputStream() {
-		try {
-			return httpConnection.getInputStream();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    public void setClientInfo(Properties properties) throws SQLClientInfoException {
+    	logger.log(Level.SEVERE, "setClientInfo(Properties properties) is not supported yet.");
+    	throw new SQLClientInfoException();
+    }
+    
+    public void setReadOnly(boolean readOnly) throws SQLException {
+    	handleUnsupportedMethod("setReadOnly(boolean readOnly)");
+    }
+
+    public void setTransactionIsolation(int level) throws SQLException  {
+    	handleUnsupportedMethod("setTransactionIsolation(int level)");
+    }
+
+    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+    	handleUnsupportedMethod("prepareCall(String sql, int resultSetType, int resultSetConcurrency)");
 		return null;
+    }
+
+    public Map<String, Class<?>> getTypeMap() throws SQLException {
+    	handleUnsupportedMethod("getTypeMap()");
+		return null;
+    }
+
+    public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
+    	handleUnsupportedMethod("setTypeMap(Map<String, Class<?>> map)");
+    }
+
+    public void setHoldability(int holdability) throws SQLException {
+    	handleUnsupportedMethod("setHoldability(int holdability)");
+    }
+
+    public int getHoldability() throws SQLException {
+    	handleUnsupportedMethod("getHoldability()");
+		return 0;
+    }
+
+    public Savepoint setSavepoint() throws SQLException {
+    	handleUnsupportedMethod("setSavepoint()");
+    	return null;
+    }
+
+    public Savepoint setSavepoint(String name) throws SQLException {
+    	handleUnsupportedMethod("setSavepoint(String name)");
+		return null;
+    }
+
+    public void rollback(Savepoint savepoint) throws SQLException {
+    	handleUnsupportedMethod("rollback(Savepoint savepoint)");
+    }
+
+    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+    	handleUnsupportedMethod("releaseSavepoint(Savepoint savepoint)");
+    }
+
+    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+        handleUnsupportedMethod("prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability)");
+		return null;
+    }
+
+    public void commit() throws SQLException {
+    	handleUnsupportedMethod("commit()");
+    }
+
+    public Clob createClob() throws SQLException {
+    	handleUnsupportedMethod("createClob()");
+		return null;
+    }
+
+    public Blob createBlob() throws SQLException {
+    	handleUnsupportedMethod("createBlob()");
+		return null;
+    }
+
+    public NClob createNClob() throws SQLException {
+    	handleUnsupportedMethod("createNClob()");
+    	return null;
+    }
+
+    public SQLXML createSQLXML() throws SQLException {
+    	handleUnsupportedMethod("createSQLXML()");
+    	return null;
+    }
+    
+    public CallableStatement prepareCall(String sql) throws SQLException {
+    	handleUnsupportedMethod("prepareCall(String sql)");
+    	return null;
+    }
+
+    public String nativeSQL(String sql) throws SQLException {
+    	handleUnsupportedMethod("nativeSQL(String sql)");
+        return null;
+    }
+
+    public void rollback() throws SQLException {
+        handleUnsupportedMethod("rollback()");
+    }
+
+    public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+       handleUnsupportedMethod("createArrayOf(String typeName, Object[] elements)");
+       return null;
+    }
+
+    public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+       handleUnsupportedMethod("createStruct(String typeName, Object[] attributes)");
+       return null;
+    }
+
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        handleUnsupportedMethod("unwrap(Class<T> iface)");
+        return null;
+    }
+
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        handleUnsupportedMethod("isWrapperFor(Class<?> iface)");
+        return false;
+    }
+
+	public void abort(Executor arg0) throws SQLException {
+		handleUnsupportedMethod("abort(Executor arg0)");
+	}
+
+	public String getSchema() throws SQLException {
+		handleUnsupportedMethod("getSchema()");
+		return null;
+	}
+
+	public void setSchema(String arg0) throws SQLException {
+		handleUnsupportedMethod("setSchema(String arg0)");
 	}
 }

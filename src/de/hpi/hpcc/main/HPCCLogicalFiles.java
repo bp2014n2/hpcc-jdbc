@@ -51,12 +51,12 @@ public class HPCCLogicalFiles
         if (file.isSuperFile())
             superfiles.add(file.getFullyQualifiedName());
     }
-    
+
     public void removeFile(String fullyQualifiedName) {
     	files.remove(fullyQualifiedName.toUpperCase());
     	superfiles.remove(fullyQualifiedName.toLowerCase());
     }
-
+    
     public boolean containsFileName(String filename)
     {
         return files.containsKey(filename.toUpperCase());

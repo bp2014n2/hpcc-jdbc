@@ -1,14 +1,12 @@
 package de.hpi.hpcc.main;
 
 import java.sql.Connection;
-import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,18 +16,18 @@ import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLEngine;
 
 public class HPCCStatement implements Statement{
-	protected static final Logger	logger = HPCCLogger.getLogger();
+	protected static final Logger logger = HPCCLogger.getLogger();
 	protected HPCCConnection connection;
 	protected ECLEngine eclEngine;
-	
-    protected boolean                  closed        = false;
+    protected boolean closed = false;
+    protected SQLWarning warnings;
+    protected ResultSet result = null;
+    protected String name;
     
-    protected SQLWarning               warnings;
-    protected ResultSet            result        = null;
-    
-    public static final String         resultSetName = "HPCC Result";
+    protected boolean federatedDatabase = false;
 
-    public HPCCStatement(HPCCConnection connection){
+    public HPCCStatement(HPCCConnection connection, String name){
+    	this.name = name;
         this.connection = (HPCCConnection) connection;
         this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
         log("Statement created");
@@ -52,46 +50,68 @@ public class HPCCStatement implements Statement{
 		whiteList.add("master_query_global_temp");
 		
 		result = null;
+		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
 		
-		for (String table : whiteList) {
-			if (sqlStatement.toLowerCase().contains(table)) {
-				try {
-					this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
-					long timeBefore = System.currentTimeMillis();
-					String eclCode = eclEngine.parseEclCode(sqlStatement);
-					long timeAfter = System.currentTimeMillis();
-					long timeDifference = timeAfter-timeBefore;
-					HPCCJDBCUtils.traceoutln(Level.INFO, "Time for parsing SQL to ECL: "+timeDifference+ " - "+sqlStatement);
-					connection.sendRequest(eclCode);
-					NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
-					if (rowList != null) {
-						result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	resultSetName));
+		if (federatedDatabase) {
+			for (String table : whiteList) {
+				if (sqlStatement.toLowerCase().contains(table)) {
+					try {
+						this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
+						long timeBefore = System.currentTimeMillis();
+						String eclCode = eclEngine.parseEclCode(sqlStatement);
+						long timeAfter = System.currentTimeMillis();
+						long timeDifference = timeAfter-timeBefore;
+						HPCCJDBCUtils.traceoutln(Level.INFO, "Time for parsing SQL to ECL: "+timeDifference+ " - "+sqlStatement);
+						connection.sendRequest(eclCode);
+						NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+						if (rowList != null) {
+							result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	"HPCC Result"));
+						}
+						return result != null;
+					} catch (Exception exception) {
+						exception.printStackTrace();
+						this.close();
 					}
-					return result != null;
-				} catch (Exception exception) {
-					exception.printStackTrace();
-					this.close();
 				}
 			}
-		}
-		
-		try {
-			Class.forName("org.postgresql.Driver");
-			Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
-			/*
-			 * create HPCCStatement object for single use SQL query
-			 * execution
-			 */
 			
-			HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to PostgreSQL");
-			Statement stmt = connection.createStatement();
-			result = stmt.executeQuery(sqlStatement);
-			return result != null;
-		} catch (SQLException sqlException) {
-			sqlException.printStackTrace();
-		} catch (ClassNotFoundException classNotFoundException) {
-			classNotFoundException.printStackTrace();
-		}	
+			try {
+				Class.forName("org.postgresql.Driver");
+				Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
+				/*
+				 * create HPCCStatement object for single use SQL query
+				 * execution
+				 */
+				
+				HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to PostgreSQL");
+				Statement stmt = connection.createStatement();
+				result = stmt.executeQuery(sqlStatement);
+				return result != null;
+			} catch (SQLException sqlException) {
+				sqlException.printStackTrace();
+			} catch (ClassNotFoundException classNotFoundException) {
+				classNotFoundException.printStackTrace();
+			}
+		} else {
+			try {
+				this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
+				long timeBefore = System.currentTimeMillis();
+				String eclCode = eclEngine.parseEclCode(sqlStatement);
+				long timeAfter = System.currentTimeMillis();
+				long timeDifference = timeAfter-timeBefore;
+				HPCCJDBCUtils.traceoutln(Level.INFO, "Time for parsing SQL to ECL: "+timeDifference+ " - "+sqlStatement);
+				connection.sendRequest(eclCode);
+				NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+				if (rowList != null) {
+					result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	"HPCC Result"));
+				}
+				return result != null;
+			} catch (Exception exception) {
+				exception.printStackTrace();
+				this.close();
+			}
+		}
+			
 		return false;
 	}    
 
@@ -125,7 +145,7 @@ public class HPCCStatement implements Statement{
 	}
 	
     public int getMaxRows() {
-		return Integer.parseInt(this.connection.getProperty("EclLimit"));
+		return Integer.parseInt(this.connection.getClientInfo("EclLimit"));
     }
 
     public SQLWarning getWarnings() {
@@ -135,6 +155,31 @@ public class HPCCStatement implements Statement{
     public void clearWarnings() {
         warnings = null;
         log(Level.FINEST, "Warnings cleared");
+    }
+    
+    public int getQueryTimeout() throws SQLException{
+    	return this.connection.getNetworkTimeout();
+    }
+    
+    public void setQueryTimeout(int seconds) throws SQLException{
+    	this.connection.setNetworkTimeout(null, seconds);
+    }
+    
+    public int executeUpdate(String sqlUpdate) throws SQLException{
+    	if (execute(sqlUpdate)) {
+    		result.last();
+        	return result.getRow();
+    	}
+    	return 0;
+    }
+    
+    public void setCursorName(String name) throws SQLException{
+    	if (!this.connection.add(name)) {
+    		log(Level.SEVERE, "Cursor name not unique!");
+    		throw new SQLException();
+    	} else {
+    		this.name = name;
+    	}
     }
     
     //Methods for subclasses
@@ -162,30 +207,10 @@ public class HPCCStatement implements Statement{
         return -1;
     }
     
-    public int getQueryTimeout() throws SQLException{
-//    	handleUnsupportedMethod("getQueryTimeout()");
-    	return 0;
-    }
-    
     public void cancel() throws SQLException{
     	handleUnsupportedMethod("cancel()");
     }
-    
-    public void setQueryTimeout(int seconds) throws SQLException{
-    	/*
-    	 * TODO: t.b.a.
-    	 */
-    }
-    
-    public int executeUpdate(String sql) throws SQLException{
-    	executeQuery(sql);
-    	if (result == null) {
-    		return 0;
-    	}
-    	result.last();
-    	return result.getRow();
-    }
-    
+
     public int getMaxFieldSize() throws SQLException{
     	handleUnsupportedMethod("getMaxFieldSize()");
     	return 0;
@@ -201,10 +226,6 @@ public class HPCCStatement implements Statement{
 
     public void setEscapeProcessing(boolean enable) throws SQLException{
     	handleUnsupportedMethod("setEscapeProcessing(boolean enable)");
-    }
-    
-    public void setCursorName(String name) throws SQLException{
-//    	handleUnsupportedMethod("setCursorName(String name)");
     }
     
     public boolean getMoreResults() throws SQLException{
