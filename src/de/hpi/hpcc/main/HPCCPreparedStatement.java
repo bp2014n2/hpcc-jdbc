@@ -113,7 +113,7 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
 	}
     
 	public void setObject(int parameterIndex, Object x) {
-		if(parameterIndex > getParameterCount()){
+		if(parameterIndex > getParameterCount()) {
 			log(Level.WARNING, "The given index ("+parameterIndex+") is too high. Value will be ignored.");
 		} else {
 			parameters.put(parameterIndex, x);
@@ -197,6 +197,7 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     }
     
     public int executeUpdate() throws SQLException{
+    	replaceJdbcParameters();
 		return executeUpdate(sqlStatement);
     }
     
