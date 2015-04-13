@@ -24,7 +24,7 @@ public class HPCCStatement implements Statement{
     protected ResultSet result = null;
     protected String name;
     
-    protected boolean federatedDatabase = false;
+    private boolean federatedDatabase = true;
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;
@@ -54,7 +54,7 @@ public class HPCCStatement implements Statement{
 		
 		if (federatedDatabase) {
 			for (String table : whiteList) {
-				if (sqlStatement.toLowerCase().contains(table)) {
+				if (sqlStatement.toLowerCase().contains(table)&& !sqlStatement.toLowerCase().contains("qt_query_master")) {
 					try {
 						this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
 						long timeBefore = System.currentTimeMillis();
@@ -78,11 +78,6 @@ public class HPCCStatement implements Statement{
 			try {
 				Class.forName("org.postgresql.Driver");
 				Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
-				/*
-				 * create HPCCStatement object for single use SQL query
-				 * execution
-				 */
-				
 				HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to PostgreSQL");
 				Statement stmt = connection.createStatement();
 				result = stmt.executeQuery(sqlStatement);
