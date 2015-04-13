@@ -18,28 +18,16 @@ import net.sf.jsqlparser.statement.select.WithItem;
 import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserInsert extends SQLParser {
-
-//	Insert insert;
-	protected SQLParserInsert(Expression expression) {
-		super(expression);
-		// TODO Auto-generated constructor stub
-	}
 	
 	protected SQLParserInsert(String sql) {
 		super(sql);
 		try {
 			if (parserManager.parse(new StringReader(sql)) instanceof Insert) {
-//				insert = (Insert) parserManager.parse(new StringReader(sql));
 				statement = parserManager.parse(new StringReader(sql));
 			} 
 		} catch (JSQLParserException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	protected SQLParserInsert(Statement statement) {
-		super(statement);
-		// TODO Auto-generated constructor stub
 	}
 	
 	protected Boolean isAllColumns() {
@@ -86,7 +74,7 @@ public class SQLParserInsert extends SQLParser {
 		return ((Insert) statement).getSelect();
 	}
 	
-	protected List<String> getAllTables() {
+	public List<String> getAllTables() {
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
 		List<String> tableList = new ArrayList<String>();
 		tableList = tablesNamesFinder.getTableList((Insert) statement);

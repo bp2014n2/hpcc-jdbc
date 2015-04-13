@@ -23,16 +23,6 @@ public class SQLParserCreate extends SQLParser {
 		}
 	}
 	
-	protected SQLParserCreate(Expression expression) {
-		super(expression);
-		// TODO Auto-generated constructor stub
-	}
-	
-	protected SQLParserCreate(Statement statement) {
-		super(statement);
-		// TODO Auto-generated constructor stub
-	}
-
 	public String getTableName() {
 		return ((CreateTable) statement).getTable().getName();
 	}

@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,6 +15,7 @@ import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLEngine;
+import de.hpi.hpcc.parsing.SQLParser;
 
 public class HPCCStatement implements Statement{
 	protected static final Logger logger = HPCCLogger.getLogger();
@@ -44,37 +46,41 @@ public class HPCCStatement implements Statement{
 		
 		ArrayList<String> whiteList = new ArrayList<String>();
 		whiteList.add("query_global_temp");
-		whiteList.add("observation_fact");
-		whiteList.add("provider_dimension");
 		whiteList.add("dx");
 		whiteList.add("master_query_global_temp");
+		whiteList.add("observation_fact");
+		whiteList.add("provider_dimension");
+		whiteList.add("visit_dimension");
+		whiteList.add("patient_dimension");
+		whiteList.add("modifier_dimension");
 		
 		result = null;
 		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
 		
+		SQLParser sqlParser = new SQLParser(sqlStatement);
+		List<String> tables = sqlParser.getAllTables();
+		
 		if (federatedDatabase) {
-			for (String table : whiteList) {
-				if (sqlStatement.toLowerCase().contains(table)&& !sqlStatement.toLowerCase().contains("qt_query_master")) {
-					try {
-						this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
-						long timeBefore = System.currentTimeMillis();
-						String eclCode = eclEngine.parseEclCode(sqlStatement);
-						long timeAfter = System.currentTimeMillis();
-						long timeDifference = timeAfter-timeBefore;
-						HPCCJDBCUtils.traceoutln(Level.INFO, "Time for parsing SQL to ECL: "+timeDifference+ " - "+sqlStatement);
-						connection.sendRequest(eclCode);
-						NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
-						if (rowList != null) {
-							result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	"HPCC Result"));
-						}
-						return result != null;
-					} catch (Exception exception) {
-						exception.printStackTrace();
-						this.close();
+			if (whiteList.containsAll(tables)) {
+				try {
+					this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
+					long timeBefore = System.currentTimeMillis();
+					String eclCode = eclEngine.parseEclCode(sqlStatement);
+					long timeAfter = System.currentTimeMillis();
+					long timeDifference = timeAfter-timeBefore;
+					HPCCJDBCUtils.traceoutln(Level.INFO, "Time for parsing SQL to ECL: "+timeDifference+ " - "+sqlStatement);
+					connection.sendRequest(eclCode);
+					NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+					if (rowList != null) {
+						result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	"HPCC Result"));
 					}
+					return result != null;
+				} catch (Exception exception) {
+					exception.printStackTrace();
+					this.close();
 				}
 			}
-			
+		
 			try {
 				Class.forName("org.postgresql.Driver");
 				Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");

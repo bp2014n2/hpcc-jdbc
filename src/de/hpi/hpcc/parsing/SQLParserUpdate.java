@@ -53,11 +53,6 @@ public class SQLParserUpdate extends SQLParser {
 		return (ArrayList<Expression>) ((Update) statement).getExpressions();
 	}
 
-	protected Expression containsJoinCondition(Expression expression) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	public boolean isIncrement() {
 		return getExpressions().get(0).toString().contains(getColumns().get(0));
 	}
@@ -70,7 +65,4 @@ public class SQLParserUpdate extends SQLParser {
 		}
 		return columnNames;
 	}
-	
-	
-
 }

@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package de.hpi.hpcc.parsing;
 
-import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -29,53 +28,25 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 
-import net.sf.jsqlparser.statement.Statement;
-
 import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.main.*;
 
 public class ECLEngine
 {
-//    private HPCCQuery               hpccPublishedQuery = null;
-//    private String                  expectedDSName = null;
+
     private NodeList                resultSchema = null;
-//    private final Properties        hpccConnProps;
-
     private SQLParser               sqlParser;
-//    private String					sqlQuery;
-
     private HPCCDatabaseMetaData    dbMetadata;
-
     private StringBuilder           eclCode = new StringBuilder();
-    
-//	private URL                     hpccRequestUrl;
 	private HPCCConnection			conn;
-//    private ArrayList<HPCCColumnMetaData> storeProcInParams = null;
-//    private String[]                    procInParamValues = null;
     private List<HPCCColumnMetaData>    expectedretcolumns = null;
     private HashMap<String, HPCCColumnMetaData> availablecols = null;
-
-//    private static final int            INDEXSCORECRITERIAVARS         = 3;
-
-//    private static final int            NumberOfCommonParamInThisIndex_INDEX = 0;
-//    private static final int            LeftMostKeyIndexPosition_INDEX       = 1;
-//    private static final int            NumberofColsKeyedInThisIndex_INDEX   = 2;
-
-//    private static final int            NumberOfCommonParamInThisIndex_WEIGHT = 5;
-//    private static final int            LeftMostKeyIndexPosition_WEIGHT       = 3;
-//    private static final int            NumberofColsKeyedInThisIndex_WEIGHT   = 2;
-
-//    private static final String         SELECTOUTPUTNAME = "JDBCSelectQueryResult";
     private static final String			HPCCEngine = "THOR";
-
-//    private DocumentBuilderFactory      dbf = DocumentBuilderFactory.newInstance();
-    
     private String sub = null;
 	private String sql;
 
-    public ECLEngine(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata)
-    {
+    public ECLEngine(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
         this.dbMetadata = dbmetadata;
         this.conn = conn;
     }
@@ -90,7 +61,7 @@ public class ECLEngine
 			sql = sql.replace(sql.substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52),substring);
 		} else if(sql.toLowerCase().contains("nextval")){
 			String sequence = sql.substring(sql.indexOf('(')+2, sql.indexOf(')')-1);
-			ECLEngine updateEngine = new ECLEngine(conn, dbMetadata);
+			ECLEngine updateEngine = new ECLEngineUpdate(conn, dbMetadata);
 			conn.sendRequest(updateEngine.parseEclCode("update sequences set value = value + 1 where name = '"+sequence+"'"));
 			sql = "select value as nextval from sequences where name = '"+sequence+"'";
 		}
@@ -101,8 +72,7 @@ public class ECLEngine
 		sub = substring;
 	}
 
-	public List<HPCCColumnMetaData> getExpectedRetCols()
-    {
+	public List<HPCCColumnMetaData> getExpectedRetCols() {
         return expectedretcolumns;
     }
     
@@ -115,34 +85,27 @@ public class ECLEngine
 		return eclCode.toString();
 	}
 
-    private void addFileColsToAvailableCols(HPCCDFUFile dfufile, HashMap<String, HPCCColumnMetaData> availablecols)
-    {
-    	
+    private void addFileColsToAvailableCols(HPCCDFUFile dfufile, HashMap<String, HPCCColumnMetaData> availablecols) {
     	Enumeration<?> fields = dfufile.getAllFields();
-	    while (fields.hasMoreElements())
-	    {
+	    while (fields.hasMoreElements()) {
 	        HPCCColumnMetaData col = (HPCCColumnMetaData) fields.nextElement();
 	        availablecols.put(col.getTableName().toLowerCase() + "." + col.getColumnName().toLowerCase(), col);
 	    }
     }
 
-    public NodeList executeSelectConstant()
-    {
-        try
-        {
+    public NodeList executeSelectConstant(){
+        try {
             long startTime = System.currentTimeMillis();
 
             HttpURLConnection conn = this.conn.createHPCCESPConnection(this.conn.generateUrl());
             return this.conn.parseDataset(conn.getInputStream(), startTime);
         }
-        catch (Exception e)
-        {
+        catch (Exception e){
             throw new RuntimeException(e);
         }
     }
     
-    public void generateECL(String sqlQuery) throws SQLException 
-    {
+    public void generateECL(String sqlQuery) throws SQLException {
     	sql = sqlQuery;
     	sqlQuery = convertToAppropriateSQL();
     	switch(SQLParser.sqlIsInstanceOf(sqlQuery)) {
@@ -152,12 +115,7 @@ public class ECLEngine
     		break;    		
     	case "Insert":
     		this.sqlParser = new SQLParserInsert(sqlQuery);
-    		long timeBefore = System.currentTimeMillis();
     		generateInsertECL(sqlQuery);
-    		long timeAfter = System.currentTimeMillis();
-    		long timeDifference = timeAfter-timeBefore;
-    		HPCCJDBCUtils.traceoutln(Level.INFO, "Time for creating ECL in ECLEngine: "+timeDifference);
-    		
     		break;
     	case "Update":
     		this.sqlParser = new SQLParserUpdate(sqlQuery);
@@ -209,14 +167,14 @@ public class ECLEngine
 		} else System.out.println("Table '"+tablePath+"' already exists. Query aborted.");
 	}
 
-	private void generateUpdateECL(String sqlQuery) throws SQLException{
+	private void generateUpdateECL(String sqlQuery) throws SQLException {
 		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate();
 		eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append(generateImports());
     	eclCode.append(generateLayouts(eclBuilder));
 		eclCode.append(generateTables());
 		
-    	String tablePath = ((SQLParserUpdate)sqlParser).getFullName();
+    	String tablePath = ((SQLParserUpdate) sqlParser).getFullName();
 		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
     	
 		eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
@@ -285,7 +243,7 @@ public class ECLEngine
    		}
 	}
 	
-	private void generateInsertECL(String sqlQuery) throws SQLException{
+	private void generateInsertECL(String sqlQuery) throws SQLException {
     	ECLBuilderInsert eclBuilder = new ECLBuilderInsert();
     	eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
@@ -369,8 +327,7 @@ public class ECLEngine
 		return sqlQuery;
 	}
 
-	private void generateSelectECL(String sqlQuery) throws SQLException
-    {
+	private void generateSelectECL(String sqlQuery) throws SQLException {
     	ECLBuilderSelect eclBuilder = new ECLBuilderSelect();
     	eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
@@ -413,8 +370,7 @@ public class ECLEngine
 			
 			layoutsString.append(table+"_record := ");
 			layoutsString.append(ECLLayouts.getLayouts().get(table));
-			layoutsString.append("\n");
-			
+			layoutsString.append("\n");	
 		}
 		return layoutsString.toString();
 	}
@@ -465,8 +421,6 @@ public class ECLEngine
     }
     
     private boolean getIndex(String tableName, StringBuilder indicesString) {
-//    	return false;
-    	
 		switch(tableName) {
 		case "observation_fact":
 			indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd,encounter_num,patient_num,provider_id,start_date,modifier_cd,instance_num,valtype_cd,tval_char,valueflag_cd,vunits_cd,end_date,location_cd,update_date,download_date,import_date,sourcesystem_cd,upload_id}, {}, '~i2b2demodata::observation_fact_idx_all');\n");
@@ -505,8 +459,7 @@ public class ECLEngine
 				String correctedEclCode = eclCode.toString().replace(
 						subName + " := " + subOf,
 						subName + " := " + subOf + subRange);
-				eclCode.delete(0, eclCode.length());
-				eclCode.append(correctedEclCode);
+				eclCode = new StringBuilder(correctedEclCode);
 			}
 			sb.append(eclCode.toString());
 			sb.append("\n\n//"+eclMetaEscape(sql));
@@ -517,127 +470,6 @@ public class ECLEngine
 		}
 		return null;
     }
-
-    /*private boolean appendTranslatedHavingClause(StringBuilder sb, String latesDSName)
-    {
-        if (sqlParser.hasHavingClause())
-        {
-            HashMap<String, String> translator = new HashMap<String, String>();
-            List<SQLTable> sqltables = sqlParser.getSQLTables();
-            for(SQLTable table : sqltables)
-            {
-                translator.put(table.getName().toUpperCase(), "LEFT");
-            }
-
-            String havingclause = sqlParser.getHavingClause().toECLStringTranslateSource(translator, false, true, false, false);
-
-            if (havingclause.length() > 0)
-            {
-                sb.append(latesDSName).append("Having").append(" := HAVING( ");
-                sb.append(latesDSName);
-                sb.append(", ");
-                sb.append(havingclause);
-                sb.append(" );\n");
-
-                return true;
-            }
-        }
-
-        return false;
-    }*/
-
-    /*public NodeList executeCall( Map inParameters)
-    {
-        StringBuilder sb = new StringBuilder();
-        try
-        {
-            if (procInParamValues != null)
-            {
-                for (int columindex = 0, parameterindex = 0; columindex < procInParamValues.length && columindex < storeProcInParams.size(); columindex++)
-                {
-                    String key = storeProcInParams.get(columindex).getColumnName();
-                    String value = procInParamValues[columindex];
-
-                    if (HPCCJDBCUtils.isParameterizedStr(value))
-                    {
-                        if (inParameters != null && parameterindex <= inParameters.size())
-                        {
-                            Object invalue = inParameters.get(parameterindex + 1);
-
-                            if (invalue != null)
-                            {
-                                try
-                                {
-                                    if (invalue instanceof String)
-                                        value = (String)invalue;
-                                    else if (invalue instanceof Boolean)
-                                        value = ((Boolean) invalue).toString();
-                                    else if (invalue instanceof Byte)
-                                        value = ((Byte) invalue).toString();
-                                    else if (invalue instanceof Short)
-                                        value = ((Short) invalue).toString();
-                                    else if (invalue instanceof Integer)
-                                        value = ((Integer) invalue).toString();
-                                    else if (invalue instanceof Long)
-                                        value = ((Long) invalue).toString();
-                                    else if (invalue instanceof Float)
-                                        value = ((Float) invalue).toString();
-                                    else if (invalue instanceof Double)
-                                        value = ((Double) invalue).toString();
-                                    else if (invalue instanceof BigDecimal)
-                                        value = ((BigDecimal)invalue).toString();
-                                    else if (invalue instanceof byte[])
-                                        value = ((byte[]) invalue).toString();
-                                    else if (invalue instanceof Time)
-                                        value = ((Time) invalue).toString();
-                                    else if (invalue instanceof java.sql.Date)
-                                        value = ((java.sql.Date) invalue).toString();
-                                    else if (invalue instanceof Timestamp)
-                                        value = ((Timestamp) invalue).toString();
-                                    else if (invalue instanceof InputStream)
-                                        value = ((InputStream) invalue).toString();
-                                    else
-                                        value = invalue.toString();
-                                }
-                                catch (Exception e)
-                                {
-                                    throw new SQLException("Error while converting input parameter(" + parameterindex +") to string representation.");
-                                }
-                            }
-                            else
-                                throw new SQLException("Could not bind parameter");
-
-                            if (value == null)
-                                throw new SQLException("Could not bind parameter");
-                            parameterindex++;
-                        }
-                        else
-                            throw new SQLException("Detected empty input parameter list");
-                    }
-                    if (value != null && !value.isEmpty())
-                        sb.append("&").append(key).append("=").append(URLEncoder.encode(value, "UTF-8"));
-                }
-            }
-
-            long startTime = System.currentTimeMillis();
-
-            HttpURLConnection conn = dbMetadata.createHPCCESPConnection(hpccRequestUrl);
-
-            OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
-            wr.write(sb.toString());
-            wr.flush();
-
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "Executing: " + hpccRequestUrl + " : " + sb.toString());
-
-            return parseDataset(conn.getInputStream(), startTime);
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException(e);
-        }
-    }*/
-
-   
 
     public boolean hasResultSchema()
     {
@@ -658,87 +490,4 @@ public class ECLEngine
     {
         return resultSchema;
     }
-
-    /*public String findAppropriateIndex(String index, List<HPCCColumnMetaData> expectedretcolumns, SQLParser parser)
-    {
-        List<String> indexhint = new ArrayList<String>();
-        indexhint.add(index);
-        return findAppropriateIndex(indexhint, expectedretcolumns, parser);
-    }*/
-
-    /*public String findAppropriateIndex(List<String> relindexes, List<HPCCColumnMetaData> expectedretcolumns, SQLParser parser)
-    {
-        String indextouse = null;
-        List<String> sqlqueryparamnames = new ArrayList<String>();
-        parser.getUniqueWhereClauseColumnNames(sqlqueryparamnames);
-        if (sqlqueryparamnames == null || sqlqueryparamnames.size() <= 0)
-            return indextouse;
-
-        int totalparamcount = parser.getWhereClauseExpressionsCount();
-        /*[ FieldsInIndexCount ][LeftMostKeyIndex][ColsKeyedcount]*
-        int indexscore[][] = new int[relindexes.size()][INDEXSCORECRITERIAVARS];
-        int highscore = Integer.MIN_VALUE;
-        boolean payloadIdxWithAtLeast1KeyedFieldFound = false;
-        for (int indexcounter = 0; indexcounter < relindexes.size(); indexcounter++)
-        {
-            String indexname = relindexes.get(indexcounter);
-            HPCCDFUFile indexfile = dbMetadata.getDFUFile(indexname);
-            if (indexfile != null && indexfile.isKeyFile() && indexfile.hasValidIdxFilePosField())
-            {
-                for (int j = 0; j < expectedretcolumns.size(); j++)
-                {
-                    if (indexfile.containsField(expectedretcolumns.get(j), true))
-                        ++indexscore[indexcounter][NumberOfCommonParamInThisIndex_INDEX];
-                }
-                if (payloadIdxWithAtLeast1KeyedFieldFound
-                        && indexscore[indexcounter][NumberOfCommonParamInThisIndex_INDEX] == 0)
-                    break; // Don't bother with this index
-                int localleftmostindex = Integer.MAX_VALUE;
-
-                Properties KeyColumns = indexfile.getKeyedColumns();
-                if (KeyColumns != null)
-                {
-                    for (String currentparam : sqlqueryparamnames)
-                    {
-                        if (KeyColumns.contains(currentparam))
-                        {
-                            ++indexscore[indexcounter][NumberofColsKeyedInThisIndex_INDEX];
-                            int paramindex = indexfile.getKeyColumnIndex(currentparam);
-                            if (localleftmostindex > paramindex)
-                                localleftmostindex = paramindex;
-                        }
-                    }
-                    indexscore[indexcounter][LeftMostKeyIndexPosition_INDEX] = localleftmostindex;
-                }
-                if (indexscore[indexcounter][NumberOfCommonParamInThisIndex_INDEX] == expectedretcolumns.size()
-                        && indexscore[indexcounter][NumberofColsKeyedInThisIndex_INDEX] > 0
-                        && (!parser.whereClauseContainsOrOperator()))
-                    payloadIdxWithAtLeast1KeyedFieldFound = true; // during scoring, give this priority
-            }
-        }
-
-        for (int i = 0; i < relindexes.size(); i++)
-        {
-            if (indexscore[i][NumberofColsKeyedInThisIndex_INDEX] == 0) // does one imply the other?
-                continue; // not good enough
-            if (payloadIdxWithAtLeast1KeyedFieldFound
-                    && indexscore[i][NumberOfCommonParamInThisIndex_INDEX] < expectedretcolumns.size())
-                continue; // not good enough
-            if (indexscore[i][NumberofColsKeyedInThisIndex_INDEX] < totalparamcount
-                    && parser.whereClauseContainsOrOperator())
-                continue; // not so sure about this rule.
-
-            int localscore =
-                    ((indexscore[i][NumberOfCommonParamInThisIndex_INDEX] / expectedretcolumns.size()) * NumberOfCommonParamInThisIndex_WEIGHT)
-                    - (((indexscore[i][LeftMostKeyIndexPosition_INDEX] / totalparamcount) - 1) * LeftMostKeyIndexPosition_WEIGHT)
-                    + ((indexscore[i][NumberofColsKeyedInThisIndex_INDEX]) * NumberofColsKeyedInThisIndex_WEIGHT);
-
-            if (highscore < localscore)
-            {
-                highscore = localscore;
-                indextouse = relindexes.get(i);
-            }
-        }
-        return indextouse;
-    }*/
 }

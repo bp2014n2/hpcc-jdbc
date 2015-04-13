@@ -50,7 +50,7 @@ public class SQLParserSelect extends SQLParser {
 			e.printStackTrace();
 		}
 	}
-	
+	/*
 	protected SQLParserSelect (Statement statement) {
 		super(statement);
 		this.statement = statement;
@@ -58,7 +58,7 @@ public class SQLParserSelect extends SQLParser {
 			plain = (PlainSelect) ((Select) statement).getSelectBody();
 		}
 	}
-		
+		*/
 	protected FromItem getFromItem() {
 		if (plain == null) return null;
 		return plain.getFromItem();
@@ -149,14 +149,10 @@ public class SQLParserSelect extends SQLParser {
     	return false;
 	}
 	
-	
 	protected Limit getLimit() {
 		if (plain == null) return null;
 		return plain.getLimit();
 	}
-	
-	
-	
 	
 	protected Expression getHaving() {
 		if (plain == null) return null;
@@ -164,7 +160,6 @@ public class SQLParserSelect extends SQLParser {
 	}
 	
 	protected HashSet<String> concatenateSelectsOrderBysHaving() {
-		
 		return null;
 	}
 

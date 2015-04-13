@@ -23,18 +23,18 @@ import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParser{
 	
-	public static final String parameterizedPrefix = "var";
+	//public static final String parameterizedPrefix = "var";
 	static CCJSqlParserManager parserManager = new CCJSqlParserManager();
 	Statement statement;
 	Expression expression;
 	
-	protected SQLParser(Expression expression) {
+	public SQLParser(Expression expression) {
 	}
 	
-	protected SQLParser(String sql) {
+	public SQLParser(String sql) {
 	}
 	
-	protected SQLParser(Statement statement) {
+	public SQLParser(Statement statement) {
 	}
 	
 	
@@ -72,7 +72,7 @@ public class SQLParser{
 		return "";
 	}
 	
-	protected List<String> getAllTables() {
+	public List<String> getAllTables() {
 		List<String> tableList = new ArrayList<String>();
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
 		if (statement instanceof Select) {
@@ -98,6 +98,5 @@ public class SQLParser{
 	public int getParameterizedCount() {
 		return statement.toString().length() - statement.toString().replace("?", "").length();
 	}
-	
 	
 }
