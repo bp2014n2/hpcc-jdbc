@@ -3,6 +3,7 @@ package de.hpi.hpcc.parsing;
 public class ECLColumnDefinition {
 	private String dataType;
 	private String columnName;
+	
 	/* TODO: 
 	 * replace with HPCCColumnMetaData
 	 */

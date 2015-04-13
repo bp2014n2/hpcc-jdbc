@@ -134,13 +134,16 @@ public class ECLBuilderSelect extends ECLBuilder {
 	
 	/**
 	 * Generates the SelectItems between "SELECT" and "FROM" in a SQL query.
-	 * If a "SELECT * FROM" is used 
+	 * If a "SELECT * FROM" is used all columns of corresponding tables are added.
 	 * 
 	 * @return
 	 */
 	
 	private void generateSelects(SQLParserSelect sqlParser, StringBuilder select, Boolean inner) { 
 		if (sqlParser.isCount()) {
+			/*
+			 * TODO: much better solution that is more flexible, however this is currently working
+			 */
 			select.insert(0, "output(dataset([COUNT(");
 			select.append(")], {unsigned5 patient_num_count}))");
 		} else {
@@ -231,7 +234,7 @@ public class ECLBuilderSelect extends ECLBuilder {
 	}
 
 	/**
-	 * not supported currently
+	 * 
 	 * @param expression
 	 * @return
 	 */

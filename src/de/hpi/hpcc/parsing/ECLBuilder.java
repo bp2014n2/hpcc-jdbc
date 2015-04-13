@@ -30,8 +30,8 @@ public class ECLBuilder {
 	private boolean hasAlias = false;
 	/**
 	 * This method generates ECL code from a given SQL code. 
-	 * Therefore it delegates the generation to the appropriate method, 
-	 * depending on the type of the given SQL (e.g. Select, Insert or Update) 
+	 * Therefore it delegates the generation to the appropriate subclass, 
+	 * depending on the type of the given SQL (e.g. Select, Insert, Update, Drop or Create) 
 	 * @param sql
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
@@ -53,9 +53,67 @@ public class ECLBuilder {
 		return null;
 	}
 	
+	/**
+	 * This methods surrounds a given ECL string with a Table definition. 
+	 * The input StringBuilder is modified.
+	 * @param eclCode
+	 */
+	
 	protected void convertToTable(StringBuilder eclCode) {
-   		eclCode.insert(0, "TABLE(");
+   		encapsulateWithBrackets(eclCode);
+		eclCode.insert(0, "TABLE");
+   		
+	}
+	
+	/**
+	 * Modifies input StringBuilder and surrounds it with brackets
+	 * @param eclCode
+	 */
+	protected void encapsulateWithBrackets(StringBuilder eclCode) {
+		eclCode.insert(0, "(");
    		eclCode.append(")");
+	}
+	
+	/**
+	 * Modifies input StringBuilder and surrounds it with curly brackets
+	 * @param eclCode
+	 */
+	protected void encapsulateWithCurlyBrackets(StringBuilder eclCode) {
+		eclCode.insert(0, "{");
+   		eclCode.append("}");
+	}
+	
+	/**
+	 * Modifies input StringBuilder and surrounds it with square brackets
+	 * @param eclCode
+	 */
+	protected void encapsulateWithSquareBrackets(StringBuilder eclCode) {
+		eclCode.insert(0, "[");
+   		eclCode.append("]");
+	}
+	
+	/**
+	 * Modifies input StringBuilder and surrounds it with brackets
+	 * @param eclCode
+	 */
+	protected String encapsulateWithBrackets(String eclCode) {
+		return "("+eclCode+")";
+	}
+	
+	/**
+	 * Modifies input StringBuilder and surrounds it with curly brackets
+	 * @param eclCode
+	 */
+	protected String encapsulateWithCurlyBrackets(String eclCode) {
+		return "{"+eclCode+"}";
+	}
+	
+	/**
+	 * Modifies input StringBuilder and surrounds it with square brackets
+	 * @param eclCode
+	 */
+	protected String encapsulateWithSquareBrackets(String eclCode) {
+		return "["+eclCode+"]";
 	}
 	
 	/**
@@ -79,9 +137,7 @@ public class ECLBuilder {
 		} else if (expressionItem instanceof Column) {
 			expression.append(((Column) expressionItem).getColumnName());
 		} else if (expressionItem instanceof SubSelect) {
-			expression.append("(");
-			expression.append(parseSubSelect(expressionItem));
-			expression.append(")");
+			expression.append(encapsulateWithBrackets(parseSubSelect((SubSelect) expressionItem)));
 		} else if (expressionItem instanceof Function) {
 			if (!hasAlias()) {
 				expression.append(nameFunction((Function) expressionItem));
@@ -89,13 +145,13 @@ public class ECLBuilder {
 			}
 			expression.append(parseFunction((Function) expressionItem));
 		}  else if (expressionItem instanceof Between) {
-			expression.append("(");
-			expression.append(parseExpressionECL(((Between) expressionItem).getLeftExpression()));
-			expression.append(" BETWEEN ");
-			expression.append(parseExpressionECL(((Between) expressionItem).getBetweenExpressionStart()));
-			expression.append(" AND ");
-			expression.append(parseExpressionECL(((Between) expressionItem).getBetweenExpressionEnd()));
-			expression.append(")");
+			StringBuilder between = new StringBuilder();
+			between.append(parseExpressionECL(((Between) expressionItem).getLeftExpression()));
+			between.append(" BETWEEN ");
+			between.append(parseExpressionECL(((Between) expressionItem).getBetweenExpressionStart()));
+			between.append(" AND ");
+			between.append(parseExpressionECL(((Between) expressionItem).getBetweenExpressionEnd()));
+			expression.append(encapsulateWithBrackets(between.toString()));
 		} else if (expressionItem instanceof StringValue) {
 			expression.append("'");
 			expression.append(((StringValue) expressionItem).getValue());
@@ -123,7 +179,6 @@ public class ECLBuilder {
 						expression.append(parseExpressionECL((Expression)subParser.getFromItem()));
 					}
 				}
-					
 			} else {
 				expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
 			}
@@ -144,19 +199,32 @@ public class ECLBuilder {
 		return expression.toString();
 	}
 	
+	/**
+	 * This method resets the variable hasAlias to false.
+	 * @return returns the old value for hasAlias
+	 */
 	protected boolean hasAlias() {
 		boolean oldHasAlias = this.hasAlias;
 		setHasAlias(false);
 		return oldHasAlias;	
 	}
-
-	private void setHasAlias(boolean b) {
-		hasAlias = b;
+	
+	/**
+	 * Set value of hasAlias
+	 * @param b
+	 */	
+	private void setHasAlias(boolean bool) {
+		hasAlias = bool;
 	}
 
 
-	private String parseSubSelect(Expression expression) {
-		return new ECLBuilderSelect().generateECL(((SubSelect) expression).getSelectBody().toString());
+	/**
+	 * This method calls a new ECLBuilderSelect whenever a SQL SubSelect is found
+	 * @param subSelect
+	 * @return returns the ECL code for that SubSelect
+	 */
+	private String parseSubSelect(SubSelect subSelect) {
+		return new ECLBuilderSelect().generateECL((subSelect).getSelectBody().toString());
 	}
 	
 	/**
@@ -164,11 +232,15 @@ public class ECLBuilder {
 	 * @param function can be e.g. an object representing "COUNT" or "AVG"
 	 * @return returns the ECL for the given function
 	 */
-
 	private String parseFunction(Function function) {	
-		return function.getName().toUpperCase()+"(GROUP)";
+		return function.getName().toUpperCase()+encapsulateWithBrackets("GROUP");
 	}
 	
+	/**
+	 * 
+	 * @param function
+	 * @return
+	 */
 	private String nameFunction(Function function) {
 		StringBuilder innerFunctionString = new StringBuilder();
 		if (!function.isAllColumns()) {
@@ -189,15 +261,12 @@ public class ECLBuilder {
 	private String parseLikeExpression(LikeExpression expressionItem) {
 		StringBuilder likeString = new StringBuilder();
 		String stringValue = ((StringValue) expressionItem.getRightExpression()).getValue();
-		if (stringValue.endsWith("%")) stringValue = stringValue.replace("%", "");
+		if (stringValue.endsWith("%")) {
+			stringValue = stringValue.replace("%", "");
+		}
 		int count = stringValue.replace("\\\\", "\\").length();
-//		stringValue = stringValue.replace("\\", "\\\\");
-		likeString.append("");
 		likeString.append(parseExpressionECL(expressionItem.getLeftExpression()));
-		likeString.append("[");
-		
-		likeString.append("1");
-		likeString.append("..");
+		likeString.append("[1..");
 		likeString.append(count);
 		likeString.append("] = '");
 		likeString.append(stringValue);
@@ -205,6 +274,11 @@ public class ECLBuilder {
 		return likeString.toString();
 	}
 	
+	/**
+	 * Parses an InExpression and generates ECL code
+	 * @param expressionItem 
+	 * @return returns the ECL for the given expression
+	 */
 	private String parseInExpression(InExpression expressionItem) {
 		StringBuilder expression = new StringBuilder();
 		String inColumn = parseExpressionECL(((InExpression) expressionItem).getLeftExpression());
@@ -223,7 +297,12 @@ public class ECLBuilder {
 		}
 		return expression.toString();
 	}
-
+	
+	/**
+	 * Parses the symbol of BinaryExpressions
+	 * @param whereItems 
+	 * @return returns the ECL symbol for the given expression
+	 */
 	private String getSymbolOfExpression(BinaryExpression whereItems) {
 		if (whereItems instanceof AndExpression) {
 			return " AND ";

@@ -22,11 +22,9 @@ public class ECLBuilderUpdate extends ECLBuilder {
 		if (sqlParser.getWhere() != null) {
 			Expression expression = sqlParser.getWhere();
 			
-			preSelection.append("(");
 			preSelection.append(parseExpressionECL(expression));
-			preSelection.append(")");			
+			encapsulateWithBrackets(preSelection);
 		}
-		
 		
 		eclCode.append("updates := ");
 		StringBuilder updateTable = new StringBuilder();
@@ -42,9 +40,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 				selectString += column;
 			}
 		}
-		updateTable.append("{");
-		updateTable.append(selectString);
-		updateTable.append("}");
+		updateTable.append(encapsulateWithCurlyBrackets(selectString));
 		
 		convertToTable(updateTable);
 		updateTable.append(", ");
@@ -76,10 +72,8 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			eclCode.append(sqlParser.getName());
 			Expression expression = sqlParser.getWhere();
 			outputTable.append("(NOT");
-			outputTable.append("(");
-			
-			outputTable.append(parseExpressionECL(expression));
-			outputTable.append("))+");
+			outputTable.append(encapsulateWithBrackets(parseExpressionECL(expression)));
+			outputTable.append(")+");
 		}
 
 		outputTable.append("updates,, '~%NEWTABLE%', overwrite);\n");

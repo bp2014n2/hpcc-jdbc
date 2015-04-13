@@ -1,7 +1,11 @@
 package de.hpi.hpcc.parsing;
 
 public class ECLBuilderCreate extends ECLBuilder {
-	
+	/**
+	 * This method generates ECL code from a given SQL code. 
+	 * @param sql
+	 * @return returns ECL code as String, including layout definitions and imports 
+	 */
 	public String generateECL(String sql) {
 		SQLParserCreate sqlParser = new SQLParserCreate(sql);
 		StringBuilder eclCode = new StringBuilder();
