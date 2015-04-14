@@ -121,21 +121,6 @@ public class ECLEngine
 	        availablecols.put(col.getTableName().toLowerCase() + "." + col.getColumnName().toLowerCase(), col);
 	    }
     }
-
-    public NodeList executeSelectConstant()
-    {
-        try
-        {
-            long startTime = System.currentTimeMillis();
-
-            HttpURLConnection conn = this.conn.createHPCCESPConnection(this.conn.generateUrl());
-            return this.conn.parseDataset(conn.getInputStream(), startTime);
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException(e);
-        }
-    }
     
     public void generateECL(String sqlQuery) throws SQLException 
     {

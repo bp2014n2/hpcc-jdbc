@@ -20,7 +20,9 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -30,6 +32,25 @@ import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -128,6 +149,25 @@ public class HPCCConnection implements Connection{
 	        wr.flush();
 	        wr.close();
 	        responseCode = httpConnection.getResponseCode();
+	        
+	        RequestConfig.Builder requestBuilder = RequestConfig.custom();
+	        requestBuilder = requestBuilder.setConnectTimeout(10000);
+	        requestBuilder = requestBuilder.setConnectionRequestTimeout(10000);
+	        requestBuilder = requestBuilder.setRedirectsEnabled(false);
+	        HttpClientBuilder builder = HttpClientBuilder.create();     
+	        builder.setDefaultRequestConfig(requestBuilder.build());
+	        HttpClient client = builder.build();
+	    	HttpPost httppost = new HttpPost(generateUrl().toExternalForm().replace(" ", "+"));
+	    	httppost.setHeader("Authorization", this.createBasicAuth());
+	    	List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+	    	formparams.add(new BasicNameValuePair("eclText", body.replace("&eclText=", "")));
+	    	UrlEncodedFormEntity  se = new UrlEncodedFormEntity(formparams);
+	    	se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/x-www-form-urlencoded"));
+	    	httppost.setEntity(se);
+	    	HttpResponse response = client.execute(httppost);
+	    	HttpEntity entity1 = response.getEntity();
+//	    	System.out.println(EntityUtils.toString(entity1));
+	    	
 		} catch (IOException e) {
 			System.out.println(e.getMessage());
 			if (responseCode != 200){
@@ -218,6 +258,19 @@ public class HPCCConnection implements Connection{
     }
     
     protected HttpURLConnection createHPCCESPConnection(URL url, int connectionTimeout) throws IOException {
+//    	RequestConfig.Builder requestBuilder = RequestConfig.custom();
+//        requestBuilder = requestBuilder.setConnectTimeout(10000);
+//        requestBuilder = requestBuilder.setConnectionRequestTimeout(10000);
+//        requestBuilder = requestBuilder.setRedirectsEnabled(false);
+//        HttpClientBuilder builder = HttpClientBuilder.create();     
+//        builder.setDefaultRequestConfig(requestBuilder.build());
+//        HttpClient client = builder.build();
+//    	HttpGet httppost = new HttpGet(generateUrl().toExternalForm().replace(" ", "+"));
+//    	httppost.setHeader("Authorization", this.createBasicAuth());
+//    	HttpResponse response = client.execute(httppost);
+//    	HttpEntity entity1 = response.getEntity();
+//    	System.out.println(EntityUtils.toString(entity1));
+    	
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setInstanceFollowRedirects(false);
         conn.setRequestProperty("Authorization", this.createBasicAuth());
