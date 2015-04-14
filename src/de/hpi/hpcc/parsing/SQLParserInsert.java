@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
@@ -30,9 +31,8 @@ public class SQLParserInsert extends SQLParser {
 		}
 	}
 	
-	protected Boolean isAllColumns() {
-		if (((Insert) statement).getColumns() == null) return true;
-		return ((Insert) statement).getColumns().size() == ECLLayouts.getAllColumns(getTable().getName()).size();
+	protected List<Column> getColumns() {
+		return ((Insert) statement).getColumns();
 	}
 	
 	protected Table getTable() {
@@ -50,11 +50,6 @@ public class SQLParserInsert extends SQLParser {
 			columnNames.add(column.getColumnName());
 		}
 		return columnNames;
-	}
-
-	protected LinkedHashSet<String> getAllCoumns() {
-		String table = ((Insert) statement).getTable().getName();
-		return ECLLayouts.getAllColumns(table);
 	}
 
 	protected ItemsList getItemsList() {

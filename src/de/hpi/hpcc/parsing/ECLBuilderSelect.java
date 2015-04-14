@@ -18,10 +18,18 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
+import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 
 public class ECLBuilderSelect extends ECLBuilder {
-//	private boolean hasAlias = false;
+public ECLBuilderSelect(HPCCDatabaseMetaData dbMetadata) {
+		super(dbMetadata);
+		// TODO Auto-generated constructor stub
+	}
+	
+
+	protected SQLParserSelect sqlParser;
+	//	private boolean hasAlias = false;
 	/**
 	 * This method generates ECL code from a given SQL code. 
 	 * Therefore it delegates the generation to the appropriate method, 
@@ -30,7 +38,7 @@ public class ECLBuilderSelect extends ECLBuilder {
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
 	public String generateECL(String sql) {
-		SQLParserSelect sqlParser = new SQLParserSelect(sql);
+		sqlParser = new SQLParserSelect(sql);
 		StringBuilder eclCode = new StringBuilder();
 		
     	generateFrom(sqlParser, eclCode);
@@ -117,7 +125,7 @@ public class ECLBuilderSelect extends ECLBuilder {
 	    	} else if (table instanceof SubSelect){
 	    		from.append("(");
 	    		String innerStatement = sqlParser.trimInnerStatement(table.toString());
-	    		from.append(new ECLBuilder().generateECL(innerStatement));
+	    		from.append(new ECLBuilderSelect(dbMetadata).generateECL(innerStatement));
 	    		from.append(")");
 	    	}
 		}
@@ -180,7 +188,7 @@ public class ECLBuilderSelect extends ECLBuilder {
 				StringBuilder selectItemString = new StringBuilder();
 				if (((SelectExpressionItem) selectItem).getAlias() != null) {
 					if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getAllColumns(), ((SelectExpressionItem) selectItem).getAlias().getName())) {
-						String dataType = ECLLayouts.getECLDataType(sqlParser.getAllTables().get(0), ((SelectExpressionItem) selectItem).getAlias().getName());
+						String dataType = ECLLayouts.getECLDataType(sqlParser.getAllTables().get(0), ((SelectExpressionItem) selectItem).getAlias().getName(), dbMetadata);
 	   					selectItemString.append(dataType+" ");
 					}			   						
 	   				selectItemString.append(((SelectExpressionItem) selectItem).getAlias().getName());
@@ -260,5 +268,11 @@ public class ECLBuilderSelect extends ECLBuilder {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	protected SQLParserSelect getSqlParser() {
+		// TODO Auto-generated method stub
+		return sqlParser;
 	}
 }

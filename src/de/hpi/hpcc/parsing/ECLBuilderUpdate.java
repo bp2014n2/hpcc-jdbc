@@ -2,11 +2,20 @@ package de.hpi.hpcc.parsing;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+
 import net.sf.jsqlparser.expression.Expression;
+import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 
 public class ECLBuilderUpdate extends ECLBuilder {
 
+	public ECLBuilderUpdate(HPCCDatabaseMetaData dbMetadata) {
+		super(dbMetadata);
+		// TODO Auto-generated constructor stub
+	}
+	
+	SQLParserUpdate sqlParser;
+	
 	/**
 	 * This method generates ECL code from a given SQL code. 
 	 * Therefore it delegates the generation to the appropriate method, 
@@ -15,7 +24,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
 	public String generateECL(String sql) {
-		SQLParserUpdate sqlParser = new SQLParserUpdate(sql);
+		sqlParser = new SQLParserUpdate(sql);
 		StringBuilder eclCode = new StringBuilder();
 		
 		StringBuilder preSelection = new StringBuilder();
@@ -53,7 +62,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			if (HPCCJDBCUtils.containsStringCaseInsensitive(columns, column)) {
 				String expr = sqlParser.getExpressions().get(sqlParser.getColumnsToLowerCase().indexOf(column)).toString();
 				expr = expr.equals("NULL")? "''" : expr;
-				tableColumnString += ECLLayouts.getECLDataType(sqlParser.getName(), column)+" "+column+" := "+expr;
+				tableColumnString += ECLLayouts.getECLDataType(sqlParser.getName(), column, dbMetadata)+" "+column+" := "+expr;
 			} else {
 				tableColumnString += column;
 			}
@@ -80,5 +89,11 @@ public class ECLBuilderUpdate extends ECLBuilder {
 		eclCode.append(outputTable.toString());
 		
 		return eclCode.toString();
+	}
+
+	@Override
+	protected SQLParserUpdate getSqlParser() {
+		// TODO Auto-generated method stub
+		return sqlParser;
 	}
 }

@@ -20,7 +20,7 @@ public class HPCCDriverProperties extends Properties{
 		{
 			put("ConnectTimeoutMilli", 	new String[]{"500000","HPCC requests connection time out value in milliseconds."});
 			put("ReadTimeoutMilli", 	new String[]{"1500000","HPCC requests connection read time out value in milliseconds."});
-			put("LazyLoad", 			new String[]{"true","If disabled, all HPCC metadata loaded and cached at connect time; otherwise HPCC file, and published query info is loaded on-demand."});
+			put("LazyLoad", 			new String[]{"false","If disabled, all HPCC metadata loaded and cached at connect time; otherwise HPCC file, and published query info is loaded on-demand."});
 			put("EclResultLimit", 		new String[]{"100","Default limit on number of result records returned."});
 			put("TraceLevel", 			new String[]{HPCCLogger.getDefaultLogLevel().getName(),	"Logging level (java.util.logging.level)."});
 			put("TraceToFile", 			new String[]{"false","false -> System.out, true -> " + HPCCJDBCUtils.workingDir +  HPCCJDBCUtils.traceFileName});

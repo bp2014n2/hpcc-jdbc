@@ -27,7 +27,7 @@ public class ECLEngineInsert extends ECLEngine {
 	public String generateECL(String sqlQuery) throws SQLException{
 		this.sqlParser = getSQLParserInstance(sqlQuery);
 		
-    	ECLBuilderInsert eclBuilder = new ECLBuilderInsert();
+    	ECLBuilderInsert eclBuilder = new ECLBuilderInsert(dbMetadata);
     	eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'thor');\n");
@@ -35,10 +35,10 @@ public class ECLEngineInsert extends ECLEngine {
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	
     	eclCode.append(generateImports());
-		eclCode.append(generateLayouts(eclBuilder, ((SQLParserInsert) sqlParser).getColumnNames()));
+		eclCode.append(generateLayouts(sqlParser.getColumnNames()));
 		eclCode.append(generateTables());
 		
-		String tablePath = "i2b2demodata::"+ ((SQLParserInsert)sqlParser).getTable().getName();
+		String tablePath = "i2b2demodata::"+ sqlParser.getTable().getName();
 		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
 		
 		
@@ -73,11 +73,11 @@ public class ECLEngineInsert extends ECLEngine {
     	}
 
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserInsert) sqlParser).getTable().getName());
+    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserInsert) sqlParser).getTable().getName(), dbMetadata);
     	int i=0;
     	for (String column : columns) {
     		i++;
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(column)));
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column, dbMetadata)));
     		
     	} 
     	

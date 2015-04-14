@@ -25,10 +25,10 @@ public class ECLEngineUpdate extends ECLEngine {
 	public String generateECL(String sqlQuery) throws SQLException{
 		this.sqlParser = getSQLParserInstance(sqlQuery);
 		
-		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate();
+		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate(dbMetadata);
 		eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append(generateImports());
-    	eclCode.append(generateLayouts(eclBuilder));
+    	eclCode.append(generateLayouts());
 		eclCode.append(generateTables());
 		
     	String tablePath = sqlParser.getFullName();
@@ -52,11 +52,11 @@ public class ECLEngineUpdate extends ECLEngine {
    		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	HashSet<String> columns = ECLLayouts.getAllColumns(sqlParser.getName());
+    	HashSet<String> columns = ECLLayouts.getAllColumns(sqlParser.getName(), dbMetadata);
     	int i=0;
     	for (String column : columns) {
     		i++;
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(column)));
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column, dbMetadata)));
     	}  
     	
     	return eclCode.toString();

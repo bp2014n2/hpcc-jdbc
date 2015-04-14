@@ -176,7 +176,7 @@ public abstract class ECLEngine
     	return "IMPORT STD;\n";
     }
     
-    protected String generateLayouts(ECLBuilder eclBuilder) {
+    protected String generateLayouts() {
 		StringBuilder layoutsString = new StringBuilder("TIMESTAMP := STRING25;\n");
 		
 		for (String table : getSQLParser().getAllTables()) {
@@ -184,14 +184,14 @@ public abstract class ECLEngine
 				table = table.split("\\.")[1];
 			}
 			
-			layoutsString.append(table+"_record := ");
-			layoutsString.append(ECLLayouts.getLayouts().get(table));
+			//layoutsString.append(table+"_record := ");
+			layoutsString.append(ECLLayouts.getLayout(table, dbMetadata));
 			layoutsString.append("\n");	
 		}
 		return layoutsString.toString();
 	}
     
-    protected String generateLayouts(ECLBuilder eclBuilder, List<String> orderedColumns) {
+    protected String generateLayouts(List<String> orderedColumns) {
     	StringBuilder layoutsString = new StringBuilder("TIMESTAMP := STRING25;\n");
     	List<String> allTables = getSQLParser().getAllTables();
     	String table = allTables.get(0);
@@ -199,7 +199,7 @@ public abstract class ECLEngine
 			table = table.split("\\.")[1];
 		}
 		layoutsString.append(table+"_record := ");
-		layoutsString.append(ECLLayouts.getLayouts().get(table).toString(orderedColumns));
+		layoutsString.append(ECLLayouts.getLayoutOrdered(table, dbMetadata, orderedColumns));
 		layoutsString.append("\n");
 		
 		for (int i = 1; i<allTables.size(); i++) {
@@ -208,7 +208,7 @@ public abstract class ECLEngine
 				otherTable = otherTable.split("\\.")[1];
 			}
 			layoutsString.append(otherTable+"_record := ");
-			layoutsString.append(ECLLayouts.getLayouts().get(otherTable).toString());
+			layoutsString.append(ECLLayouts.getLayout(otherTable, dbMetadata));
 			layoutsString.append("\n");
 		}
 		

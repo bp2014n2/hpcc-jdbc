@@ -4,6 +4,7 @@ import java.io.StringReader;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.Statement;

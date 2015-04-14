@@ -28,11 +28,11 @@ public class ECLEngineSelect extends ECLEngine {
     {
 		this.sqlParser = getSQLParserInstance(sqlQuery);
 		
-    	ECLBuilderSelect eclBuilder = new ECLBuilderSelect();
+    	ECLBuilderSelect eclBuilder = new ECLBuilderSelect(dbMetadata);
     	eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
-        eclCode.append(generateLayouts(eclBuilder));
+        eclCode.append(generateLayouts());
 		eclCode.append(generateTables());
 		
 		
@@ -49,10 +49,12 @@ public class ECLEngineSelect extends ECLEngine {
     	}
     	
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	ArrayList<String> selectItems = (ArrayList<String>) sqlParser.getAllSelectItemsInQuery();
+    	HashMap<String, List<String>> selectItems = (HashMap<String, List<String>>) sqlParser.getAllSelectItemsInQuery();
+    	
+    	// TODO: replace select * by columns names
     	for (int i=0; i<selectItems.size(); i++) {
     		String column = selectItems.get(i);
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(column)));
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column, dbMetadata)));
     	}
     	
     	return eclCode.toString();

@@ -1,5 +1,6 @@
 package de.hpi.hpcc.parsing;
 
+import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -26,8 +27,9 @@ import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
-public class ECLBuilder {
+abstract public class ECLBuilder {
 	private boolean hasAlias = false;
+	protected HPCCDatabaseMetaData dbMetadata;
 	/**
 	 * This method generates ECL code from a given SQL code. 
 	 * Therefore it delegates the generation to the appropriate subclass, 
@@ -35,23 +37,28 @@ public class ECLBuilder {
 	 * @param sql
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
+	
+	public ECLBuilder(HPCCDatabaseMetaData dbMetadata) {
+		this.dbMetadata = dbMetadata;
+	}
+	/*
 	public String generateECL(String sql) {
 		switch(SQLParser.sqlIsInstanceOf(sql)) {
     	case "Select":
-    		return new ECLBuilderSelect().generateECL(sql);
+    		return new ECLBuilderSelect(dbMetadata).generateECL(sql);
 		case "Insert":
-			return new ECLBuilderInsert().generateECL(sql);
+			return new ECLBuilderInsert(dbMetadata).generateECL(sql);
     	case "Update":
-    		return new ECLBuilderUpdate().generateECL(sql);
+    		return new ECLBuilderUpdate(dbMetadata).generateECL(sql);
     	case "Drop":
-    		return new ECLBuilderDrop().generateECL(sql);
+    		return new ECLBuilderDrop(dbMetadata).generateECL(sql);
     	case "Create":
-    		return new ECLBuilderCreate().generateECL(sql);
+    		return new ECLBuilderCreate(dbMetadata).generateECL(sql);
 		default:
     		System.out.println("type of sql not recognized "+SQLParser.sqlIsInstanceOf(sql));
     	}
 		return null;
-	}
+	}*/
 	
 	/**
 	 * This methods surrounds a given ECL string with a Table definition. 
@@ -115,6 +122,8 @@ public class ECLBuilder {
 	protected String encapsulateWithSquareBrackets(String eclCode) {
 		return "["+eclCode+"]";
 	}
+	
+	abstract protected SQLParser getSqlParser();
 	
 	/**
 	 * Generates for a given Expression the ECL code by a recursive approach
@@ -185,7 +194,7 @@ public class ECLBuilder {
 			expression.append(", "+joinColumn+")");
 		} else if (expressionItem instanceof IsNullExpression) {
 			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
-			expression.append(" = "+((ECLLayouts.isColumnOfIntInAnyTable(((Column)((IsNullExpression) expressionItem).getLeftExpression()).getColumnName()))?"0":"''"));
+			expression.append(" = "+((ECLLayouts.isColumnOfIntInAnyTable(getSqlParser().getAllTables(), ((Column)((IsNullExpression) expressionItem).getLeftExpression()).getColumnName(), dbMetadata))?"0":"''"));
 		} else if (expressionItem instanceof Parenthesis) {
 			expression.append("("+parseExpressionECL(((Parenthesis) expressionItem).getExpression())+")");
 		} else if (expressionItem instanceof JdbcParameter) {
@@ -224,7 +233,7 @@ public class ECLBuilder {
 	 * @return returns the ECL code for that SubSelect
 	 */
 	private String parseSubSelect(SubSelect subSelect) {
-		return new ECLBuilderSelect().generateECL((subSelect).getSelectBody().toString());
+		return new ECLBuilderSelect(dbMetadata).generateECL((subSelect).getSelectBody().toString());
 	}
 	
 	/**
@@ -292,7 +301,7 @@ public class ECLBuilder {
 			}
 		} else if (((InExpression) expressionItem).getRightItemsList() instanceof SubSelect) {
 			expression.append("SET(");
-			expression.append(new ECLBuilder().generateECL(((SubSelect) ((InExpression) expressionItem).getRightItemsList()).getSelectBody().toString()));
+			expression.append(new ECLBuilderSelect(dbMetadata).generateECL(((SubSelect) ((InExpression) expressionItem).getRightItemsList()).getSelectBody().toString()));
 			expression.append(","+inColumn+")");
 		}
 		return expression.toString();

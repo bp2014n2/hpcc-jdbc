@@ -1,6 +1,8 @@
 package de.hpi.hpcc.parsing;
 
 import java.io.StringReader;
+
+import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.statement.drop.Drop;
 

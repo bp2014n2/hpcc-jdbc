@@ -30,7 +30,7 @@ public class ECLEngineCreate extends ECLEngine {
 		String tablePath = sqlParser.getFullName();
 		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
 		if(dfuFile == null) {
-			ECLBuilderCreate eclBuilder = new ECLBuilderCreate();
+			ECLBuilderCreate eclBuilder = new ECLBuilderCreate(dbMetadata);
 			eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
 	    	eclCode.append(generateImports());
 	    	eclCode.append("TIMESTAMP := STRING25;\n");
@@ -42,8 +42,7 @@ public class ECLEngineCreate extends ECLEngine {
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
 			
 			String tableName = ((SQLParserCreate) sqlParser).getTableName().toLowerCase();
-			HashMap<String, ECLRecordDefinition> layouts = ECLLayouts.getLayouts();
-			String recordString = layouts.get(tableName).toString();
+			String recordString = ECLLayouts.getLayout(tableName, dbMetadata);
 			
 			if(recordString == null) {
 				recordString = ((SQLParserCreate) sqlParser).getRecord();
@@ -54,7 +53,7 @@ public class ECLEngineCreate extends ECLEngine {
 	    	int i=0;
 	    	for (String column : recordString.split(",")) {
 	    		i++;
-	    		expectedretcolumns.add(new HPCCColumnMetaData(column.split(" ")[1], i, ECLLayouts.getSqlTypeOfColumn(column)));
+	    		expectedretcolumns.add(new HPCCColumnMetaData(column.split(" ")[1], i, ECLLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column, dbMetadata)));
 	    	}  	
 		} else System.out.println("Table '"+tablePath+"' already exists. Query aborted.");
 		
@@ -71,7 +70,7 @@ public class ECLEngineCreate extends ECLEngine {
 
 
 	@Override
-	protected SQLParser getSQLParser() {
+	protected SQLParserCreate getSQLParser() {
 		return sqlParser;
 	}
 }

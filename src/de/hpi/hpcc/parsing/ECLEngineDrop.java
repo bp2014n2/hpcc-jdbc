@@ -47,11 +47,11 @@ public class ECLEngineDrop extends ECLEngine {
    			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
    			
    	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-   	    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
+   	    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName(), dbMetadata);
    	    	int i=0;
    	    	for (String column : columns) {
    	    		i++;
-   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(column)));
+   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column, dbMetadata)));
    	    	}  	
    		} else {
    			/*

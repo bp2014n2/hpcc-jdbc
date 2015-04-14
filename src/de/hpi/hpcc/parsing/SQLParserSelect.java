@@ -2,10 +2,14 @@ package de.hpi.hpcc.parsing;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
+import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -69,35 +73,49 @@ public class SQLParserSelect extends SQLParser {
 		return plain.getSelectItems();
 	}
 	
-	protected List<String> getAllSelectItemsInQuery() {
-		ArrayList<String> allSelects = new ArrayList<String>();
+	protected HashMap<String,List<String>> getAllSelectItemsInQuery() {
+		HashMap<String, List<String>> allSelects = new HashMap<String, List<String>>();
 		if (isCount()) {	
-			allSelects.add(((SelectExpressionItem) getSelectItems().get(0)).getAlias().getName());
+			List<String> columns = new ArrayList<String>();
+			columns.add(((SelectExpressionItem) getSelectItems().get(0)).getAlias().getName());
+			allSelects.put("default", columns);
 			return allSelects;
 		}
+		List<String> columns = new ArrayList<String>();
 		for (SelectItem selectItem : getSelectItems()) {
 			if (selectItem instanceof SelectExpressionItem) {
 				if (((SelectExpressionItem) selectItem).getAlias() != null) {
-					allSelects.add(((SelectExpressionItem) selectItem).getAlias().getName());
+					
+					columns.add(((SelectExpressionItem) selectItem).getAlias().getName());
+					
 				} else {
 					Expression expression = ((SelectExpressionItem) selectItem).getExpression();
 					if (expression instanceof Column) {
-						allSelects.add(expression.toString());
+						columns.add(expression.toString());
 					} else if (expression instanceof Function) {
 						String function = expression.toString().replace("(", "_").replace(")", "").toLowerCase();
-						allSelects.add(function);
+						columns.add(function);
 					}
 				}
 			}
 			else if (selectItem instanceof AllColumns) {
 				if (getFromItem() instanceof Table) {
 					String tableName = ((Table) getFromItem()).getName();
-					allSelects.addAll(ECLLayouts.getAllColumns(tableName));
+					allSelects.put(tableName, null);
 				} else if (getFromItem() instanceof SubSelect) {
-					allSelects.addAll(new SQLParserSelect(((SubSelect) getFromItem()).toString()).getAllSelectItemsInQuery());
+					HashMap<String,List<String>> recursive = new SQLParserSelect(((SubSelect) getFromItem()).toString()).getAllSelectItemsInQuery();
+					for (Entry<String, List<String>> entry : recursive.entrySet()) {
+						List<String> oldColumns = allSelects.get(entry.getKey());
+						if (oldColumns == null) {
+							oldColumns = new ArrayList<String>();
+						} 
+						oldColumns.addAll(entry.getValue());
+						allSelects.put(entry.getKey(), oldColumns);
+					}
 				}	
 			}		
 		}
+		allSelects.put("default", columns);
 		return allSelects;
 	}
 	
@@ -106,7 +124,7 @@ public class SQLParserSelect extends SQLParser {
 		String table;
 		if (fromItem instanceof Table) {
 			table = ((Table) fromItem).getName();
-			return ECLLayouts.getAllColumns(table);
+			return ECLLayouts.getAllColumns(table, dbMetadata);
 		} else {
 			return new SQLParserSelect((SubSelect) fromItem).getAllColumns();
 		}

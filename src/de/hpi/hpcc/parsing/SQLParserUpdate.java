@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.schema.Column;
@@ -37,7 +38,7 @@ public class SQLParserUpdate extends SQLParser {
 	
 	protected LinkedHashSet<String> getAllCoumns() {
 		String table = ((Update) statement).getTables().get(0).getName();
-		return ECLLayouts.getAllColumns(table);
+		return ECLLayouts.getAllColumns(table, dbMetadata);
 	}
 	
 	protected List<String> getColumns() {
