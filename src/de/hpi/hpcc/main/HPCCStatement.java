@@ -15,6 +15,11 @@ import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLEngine;
+import de.hpi.hpcc.parsing.ECLEngineCreate;
+import de.hpi.hpcc.parsing.ECLEngineDrop;
+import de.hpi.hpcc.parsing.ECLEngineInsert;
+import de.hpi.hpcc.parsing.ECLEngineSelect;
+import de.hpi.hpcc.parsing.ECLEngineUpdate;
 import de.hpi.hpcc.parsing.SQLParser;
 
 public class HPCCStatement implements Statement{
@@ -31,8 +36,27 @@ public class HPCCStatement implements Statement{
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;
         this.connection = (HPCCConnection) connection;
-        this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
+        
         log("Statement created");
+    }
+    
+    public ECLEngine createNewECLEngine(String sqlStatement) {
+    	//String sqlQuery = convertToAppropriateSQL();
+    	switch(SQLParser.sqlIsInstanceOf(sqlStatement)) {
+    	case "Select":
+    		return new ECLEngineSelect(connection, connection.getDatabaseMetaData());  		
+    	case "Insert":
+    		return new ECLEngineInsert(connection, connection.getDatabaseMetaData());
+    	case "Update":
+    		return new ECLEngineUpdate(connection, connection.getDatabaseMetaData());
+    	case "Drop":
+    		return new ECLEngineDrop(connection, connection.getDatabaseMetaData());
+    	case "Create":
+    		return new ECLEngineCreate(connection, connection.getDatabaseMetaData());
+    	default:
+    		System.out.println("type of sql not recognized"+SQLParser.sqlIsInstanceOf(sqlStatement));	
+    	}
+    	return null;
     }
 
 	public boolean execute(String sqlStatement) throws SQLException {
@@ -57,17 +81,17 @@ public class HPCCStatement implements Statement{
 		result = null;
 		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
 		
-		SQLParser sqlParser = new SQLParser(sqlStatement);
+		String sqlStatementTemp = ECLEngine.escapeToAppropriateSQL(sqlStatement);
+		SQLParser sqlParser = new SQLParser(sqlStatementTemp);
 		List<String> tables = sqlParser.getAllTables();
 		
 		if (federatedDatabase) {
 			if (whiteList.containsAll(tables)) {
 				try {
-					this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
+					this.eclEngine = ECLEngine.getInstance(connection, connection.getDatabaseMetaData(), sqlStatement);
 					long timeBefore = System.currentTimeMillis();
 					String eclCode = eclEngine.parseEclCode(sqlStatement);
-					long timeAfter = System.currentTimeMillis();
-					long timeDifference = timeAfter-timeBefore;
+					long timeDifference = System.currentTimeMillis()-timeBefore;
 					HPCCJDBCUtils.traceoutln(Level.INFO, "Time for parsing SQL to ECL: "+timeDifference+ " - "+sqlStatement);
 					connection.sendRequest(eclCode);
 					NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
@@ -79,23 +103,23 @@ public class HPCCStatement implements Statement{
 					exception.printStackTrace();
 					this.close();
 				}
-			}
-		
-			try {
-				Class.forName("org.postgresql.Driver");
-				Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
-				HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to PostgreSQL");
-				Statement stmt = connection.createStatement();
-				result = stmt.executeQuery(sqlStatement);
-				return result != null;
-			} catch (SQLException sqlException) {
-				sqlException.printStackTrace();
-			} catch (ClassNotFoundException classNotFoundException) {
-				classNotFoundException.printStackTrace();
+			} else {
+				try {
+					Class.forName("org.postgresql.Driver");
+					Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
+					HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to PostgreSQL");
+					Statement stmt = connection.createStatement();
+					result = stmt.executeQuery(sqlStatement);
+					return result != null;
+				} catch (SQLException sqlException) {
+					sqlException.printStackTrace();
+				} catch (ClassNotFoundException classNotFoundException) {
+					classNotFoundException.printStackTrace();
+				}
 			}
 		} else {
 			try {
-				this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
+				this.eclEngine = ECLEngine.getInstance(connection, connection.getDatabaseMetaData(), sqlStatement);
 				long timeBefore = System.currentTimeMillis();
 				String eclCode = eclEngine.parseEclCode(sqlStatement);
 				long timeAfter = System.currentTimeMillis();

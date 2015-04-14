@@ -32,6 +32,12 @@ public class SQLParser{
 	}
 	
 	public SQLParser(String sql) {
+		try {
+			statement = parserManager.parse(new StringReader(sql));
+		} catch (JSQLParserException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public SQLParser(Statement statement) {
@@ -47,7 +53,7 @@ public class SQLParser{
 		return "";
 	}
 	
-	protected static String sqlIsInstanceOf(String sql) {
+	public static String sqlIsInstanceOf(String sql) {
 		try {
 			long timeBefore = System.currentTimeMillis();
 			Statement statement = parserManager.parse(new StringReader(sql));
