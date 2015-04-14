@@ -15,6 +15,7 @@ public class ECLEngineDrop extends ECLEngine {
 	
 	private HPCCDatabaseMetaData dbMetadata;
 	private StringBuilder           eclCode = new StringBuilder();
+	private SQLParserDrop sqlParser;
 
 	public ECLEngineDrop(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
 		super(conn, dbmetadata);
@@ -23,7 +24,7 @@ public class ECLEngineDrop extends ECLEngine {
 
 	public String generateECL(String sqlQuery) throws SQLException {
 		
-		SQLParserDrop sqlParser = new SQLParserDrop(sqlQuery);
+		this.sqlParser = getSQLParserInstance(sqlQuery);
 		eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append(generateImports());
 //		eclCode.append(eclBuilder.generateECL(sqlQuery));
@@ -59,5 +60,15 @@ public class ECLEngineDrop extends ECLEngine {
    			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
    		}
    		return eclCode.toString();
+	}
+
+	@Override
+	public SQLParserDrop getSQLParserInstance(String sqlQuery) {
+		return new SQLParserDrop(sqlQuery);
+	}
+
+	@Override
+	protected SQLParserDrop getSQLParser() {
+		return sqlParser;
 	}
 }

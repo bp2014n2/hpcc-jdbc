@@ -33,20 +33,21 @@ public abstract class ECLEngine
 {
 
     private NodeList                resultSchema = null;
-    protected SQLParser               sqlParser;
     private HPCCDatabaseMetaData    dbMetadata;
     private StringBuilder           eclCode = new StringBuilder();
 	private HPCCConnection			conn;
 	protected List<HPCCColumnMetaData>    expectedretcolumns = null;
     protected HashMap<String, HPCCColumnMetaData> availablecols = null;
     private static final String			HPCCEngine = "THOR";
-    private String substring = "";
+    private String substring = null;
 
     public ECLEngine(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
         this.dbMetadata = dbmetadata;
         this.conn = conn;
-        
     }
+    
+    abstract protected SQLParser getSQLParser();
+    abstract public SQLParser getSQLParserInstance(String sqlQuery);
     
     public static ECLEngine getInstance (HPCCConnection conn, HPCCDatabaseMetaData dbMetadata, String sqlQuery) throws SQLException{
     	sqlQuery = escapeToAppropriateSQL(sqlQuery);
@@ -76,15 +77,7 @@ public abstract class ECLEngine
 			sb.append("&eclText=\n");
 			
 			if (substring != null) {
-				String subRange = substring.substring(substring.indexOf("["),
-						substring.indexOf("]") + 1);
-				String subOf = substring.substring(0, substring.indexOf("["));
-				String subName = substring.substring(substring.indexOf("as") + 3,
-						substring.length());
-				String correctedEclCode = eclCode.toString().replace(
-						subName + " := " + subOf,
-						subName + " := " + subOf + subRange);
-				eclCode = new StringBuilder(correctedEclCode);
+				eclCode = new StringBuilder(createSubstring());
 			}
 			sb.append(eclCode.toString());
 			sb.append("\n\n//"+eclMetaEscape(sqlQuery));
@@ -96,18 +89,27 @@ public abstract class ECLEngine
 		return null;
     }
     
+    protected String createSubstring() {
+    	String subRange = substring.substring(substring.indexOf("["),
+				substring.indexOf("]") + 1);
+		String subOf = substring.substring(0, substring.indexOf("["));
+		String subName = substring.substring(substring.indexOf("as") + 3,
+				substring.length());
+		String correctedEclCode = eclCode.toString().replace(
+				subName + " := " + subOf,
+				subName + " := " + subOf + subRange);
+		return correctedEclCode;
+    }
+    
     public static String escapeToAppropriateSQL(String sql) {
 		if(sql.toLowerCase().contains("substring")){
 			String substring = sql.toLowerCase().substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52);
 			substring = substring.replace("substring(", "").replace(" from ", "[").replace(" for ", "..").replace(")", "]");
-			//setSubstring(substring);
 			String subRange = substring.substring(substring.indexOf("["), substring.indexOf("]")+1);
 			substring = substring.replace(subRange,"");
 			sql = sql.replace(sql.substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52),substring);
 		} else if(sql.toLowerCase().contains("nextval")){
 			String sequence = sql.substring(sql.indexOf('(')+2, sql.indexOf(')')-1);
-			//ECLEngine updateEngine = new ECLEngineUpdate(conn, dbMetadata);
-			//conn.sendRequest(updateEngine.parseEclCode("update sequences set value = value + 1 where name = '"+sequence+"'"));
 			sql = "select value as nextval from sequences where name = '"+sequence+"'";
 		}
 		return sql;
@@ -177,7 +179,7 @@ public abstract class ECLEngine
     protected String generateLayouts(ECLBuilder eclBuilder) {
 		StringBuilder layoutsString = new StringBuilder("TIMESTAMP := STRING25;\n");
 		
-		for (String table : sqlParser.getAllTables()) {
+		for (String table : getSQLParser().getAllTables()) {
 			if (table.contains(".")) {
 				table = table.split("\\.")[1];
 			}
@@ -191,7 +193,7 @@ public abstract class ECLEngine
     
     protected String generateLayouts(ECLBuilder eclBuilder, List<String> orderedColumns) {
     	StringBuilder layoutsString = new StringBuilder("TIMESTAMP := STRING25;\n");
-    	List<String> allTables = sqlParser.getAllTables();
+    	List<String> allTables = getSQLParser().getAllTables();
     	String table = allTables.get(0);
 		if (table.contains(".")) {
 			table = table.split("\\.")[1];
@@ -217,7 +219,7 @@ public abstract class ECLEngine
     	StringBuilder datasetsString = new StringBuilder();
     	StringBuilder indicesString = new StringBuilder();
     	boolean usingIndices = false;
-    	for (String table : sqlParser.getAllTables()) {
+    	for (String table : getSQLParser().getAllTables()) {
     		usingIndices = false;
     		String tableName = table;
     		if (table.contains(".")) {

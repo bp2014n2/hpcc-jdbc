@@ -3,6 +3,7 @@ package de.hpi.hpcc.parsing;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedList;
+
 import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCConnection;
 import de.hpi.hpcc.main.HPCCDFUFile;
@@ -12,16 +13,19 @@ public class ECLEngineCreate extends ECLEngine {
 
 	private StringBuilder           eclCode = new StringBuilder();	
 	private HPCCDatabaseMetaData dbMetadata;
+	private SQLParserCreate sqlParser;
 	
 	
 	public ECLEngineCreate(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
 		super(conn, dbmetadata);
 		this.dbMetadata = dbmetadata;
 	}
+	
+	
 
 	public String generateECL(String sqlQuery) throws SQLException {
 		
-		SQLParserCreate sqlParser = new SQLParserCreate(sqlQuery);
+		sqlParser = getSQLParserInstance(sqlQuery);
 		
 		String tablePath = sqlParser.getFullName();
 		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
@@ -37,12 +41,12 @@ public class ECLEngineCreate extends ECLEngine {
 			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
 			
-			String tableName = sqlParser.getTableName().toLowerCase();
+			String tableName = ((SQLParserCreate) sqlParser).getTableName().toLowerCase();
 			HashMap<String, ECLRecordDefinition> layouts = ECLLayouts.getLayouts();
 			String recordString = layouts.get(tableName).toString();
 			
 			if(recordString == null) {
-				recordString = sqlParser.getRecord();
+				recordString = ((SQLParserCreate) sqlParser).getRecord();
 			} else {
 				recordString = recordString.substring(7, recordString.length() - 6).replace(";", ",");
 			}
@@ -55,5 +59,19 @@ public class ECLEngineCreate extends ECLEngine {
 		} else System.out.println("Table '"+tablePath+"' already exists. Query aborted.");
 		
 		return eclCode.toString();
+	}
+
+
+
+	@Override
+	public SQLParserCreate getSQLParserInstance(String sqlQuery) {
+		return new SQLParserCreate(sqlQuery);
+	}
+
+
+
+	@Override
+	protected SQLParser getSQLParser() {
+		return sqlParser;
 	}
 }

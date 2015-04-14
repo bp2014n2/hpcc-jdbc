@@ -15,15 +15,18 @@ public class ECLEngineSelect extends ECLEngine {
 
 	private StringBuilder           eclCode = new StringBuilder();
 	private HPCCDatabaseMetaData dbMetadata;
+	private SQLParserSelect sqlParser;
 	
 	public ECLEngineSelect(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
 		super(conn, dbmetadata);
 		this.dbMetadata = dbmetadata;
 	}
+	
+	
 
 	public String generateECL(String sqlQuery) throws SQLException
     {
-		this.sqlParser = new SQLParserSelect(sqlQuery);
+		this.sqlParser = getSQLParserInstance(sqlQuery);
 		
     	ECLBuilderSelect eclBuilder = new ECLBuilderSelect();
     	eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
@@ -33,9 +36,9 @@ public class ECLEngineSelect extends ECLEngine {
 		eclCode.append(generateTables());
 		
 		
-		if (!((SQLParserSelect) sqlParser).isCount()) eclCode.append("OUTPUT(");
+		if (!sqlParser.isCount()) eclCode.append("OUTPUT(");
     	eclCode.append(eclBuilder.generateECL(sqlQuery));
-    	if (!((SQLParserSelect) sqlParser).isCount()) eclCode.append(");");
+    	if (!sqlParser.isCount()) eclCode.append(");");
 
     	availablecols = new HashMap<String, HPCCColumnMetaData>();
     	
@@ -46,7 +49,7 @@ public class ECLEngineSelect extends ECLEngine {
     	}
     	
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	ArrayList<String> selectItems = (ArrayList<String>) ((SQLParserSelect) sqlParser).getAllSelectItemsInQuery();
+    	ArrayList<String> selectItems = (ArrayList<String>) sqlParser.getAllSelectItemsInQuery();
     	for (int i=0; i<selectItems.size(); i++) {
     		String column = selectItems.get(i);
     		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(column)));
@@ -54,6 +57,20 @@ public class ECLEngineSelect extends ECLEngine {
     	
     	return eclCode.toString();
     }
+
+
+
+	@Override
+	public SQLParserSelect getSQLParserInstance(String sqlQuery) {
+		return new SQLParserSelect(sqlQuery);
+	}
+
+
+
+	@Override
+	protected SQLParserSelect getSQLParser() {
+		return sqlParser;
+	}
 	
 	
 }

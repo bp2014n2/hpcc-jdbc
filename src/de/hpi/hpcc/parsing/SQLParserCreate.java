@@ -58,7 +58,7 @@ public class SQLParserCreate extends SQLParser {
 		return dataType.substring(9, dataType.length()-1);
 	}
 
-	public String getFullName() {
+	protected String getFullName() {
 		return "i2b2demodata::"+getTableName();
 	}
 }

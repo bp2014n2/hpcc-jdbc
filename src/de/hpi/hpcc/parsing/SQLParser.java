@@ -27,6 +27,7 @@ public class SQLParser{
 	static CCJSqlParserManager parserManager = new CCJSqlParserManager();
 	Statement statement;
 	Expression expression;
+
 	
 	public SQLParser(Expression expression) {
 	}
@@ -87,11 +88,18 @@ public class SQLParser{
 			tableList = tablesNamesFinder.getTableList((Insert) statement);
 		} else if (statement instanceof Update) {
 			tableList = tablesNamesFinder.getTableList((Update) statement);
+		} else if (statement instanceof CreateTable) {
+			tableList.add(((CreateTable) statement).getTable().getName());
+		} else if (statement instanceof Drop) {
+			tableList.add(((Drop) statement).getName());
 		} else {
 			tableList = null;
 		}
 		List<String> lowerTableList = new ArrayList<String>();
 		for (String table : tableList) {
+			if (table.contains(".")) {
+				table = table.split("\\.")[1];
+			}
 			lowerTableList.add(table.toLowerCase());
 		}
 		return lowerTableList;
@@ -104,5 +112,4 @@ public class SQLParser{
 	public int getParameterizedCount() {
 		return statement.toString().length() - statement.toString().replace("?", "").length();
 	}
-	
 }

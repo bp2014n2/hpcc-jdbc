@@ -17,7 +17,7 @@ public class ECLEngineInsert extends ECLEngine {
 
 	private HPCCDatabaseMetaData dbMetadata;
 	private StringBuilder           eclCode = new StringBuilder();
-	
+	private SQLParserInsert sqlParser;
 	
 	public ECLEngineInsert(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
 		super(conn, dbmetadata);
@@ -25,6 +25,8 @@ public class ECLEngineInsert extends ECLEngine {
 	}
 	
 	public String generateECL(String sqlQuery) throws SQLException{
+		this.sqlParser = getSQLParserInstance(sqlQuery);
+		
     	ECLBuilderInsert eclBuilder = new ECLBuilderInsert();
     	eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
@@ -80,5 +82,15 @@ public class ECLEngineInsert extends ECLEngine {
     	} 
     	
     	return eclCode.toString();
+	}
+
+	@Override
+	protected SQLParserInsert getSQLParser() {
+		return sqlParser;
+	}
+
+	@Override
+	public SQLParserInsert getSQLParserInstance(String sqlQuery) {
+		return new SQLParserInsert(sqlQuery);
 	}
 }

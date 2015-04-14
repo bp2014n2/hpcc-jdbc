@@ -15,7 +15,7 @@ public class ECLEngineUpdate extends ECLEngine {
 	
 	private HPCCDatabaseMetaData dbMetadata;
 	private StringBuilder           eclCode = new StringBuilder();
-	
+	private SQLParserUpdate sqlParser;
 	
 	public ECLEngineUpdate(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
 		super(conn, dbmetadata);
@@ -23,18 +23,20 @@ public class ECLEngineUpdate extends ECLEngine {
 	}
 
 	public String generateECL(String sqlQuery) throws SQLException{
+		this.sqlParser = getSQLParserInstance(sqlQuery);
+		
 		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate();
 		eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append(generateImports());
     	eclCode.append(generateLayouts(eclBuilder));
 		eclCode.append(generateTables());
 		
-    	String tablePath = ((SQLParserUpdate)sqlParser).getFullName();
+    	String tablePath = sqlParser.getFullName();
 		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
     	
 		eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
 		
-   		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(((SQLParserUpdate) sqlParser).getFullName());
+   		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(sqlParser.getFullName());
 		
 		eclCode.append("SEQUENTIAL(\nStd.File.StartSuperFileTransaction(),\n Std.File.ClearSuperFile('~"+tablePath+"'),\n");
 		for(String subfile : hpccQueryFile.getSubfiles()) {
@@ -50,7 +52,7 @@ public class ECLEngineUpdate extends ECLEngine {
    		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserUpdate) sqlParser).getName());
+    	HashSet<String> columns = ECLLayouts.getAllColumns(sqlParser.getName());
     	int i=0;
     	for (String column : columns) {
     		i++;
@@ -58,5 +60,15 @@ public class ECLEngineUpdate extends ECLEngine {
     	}  
     	
     	return eclCode.toString();
+	}
+
+	@Override
+	protected SQLParserUpdate getSQLParser() {
+		return sqlParser;
+	}
+
+	@Override
+	public SQLParserUpdate getSQLParserInstance(String sqlQuery) {
+		return new SQLParserUpdate(sqlQuery);
 	}
 }
