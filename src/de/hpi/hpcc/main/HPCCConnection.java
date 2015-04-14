@@ -2,7 +2,9 @@ package de.hpi.hpcc.main;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Array;
@@ -32,6 +34,7 @@ import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -129,13 +132,11 @@ public class HPCCConnection implements Connection{
 		return (sizeBeforeAdding < allStatementNames.size());
 	}
 
-	public URL generateUrl(){
+	public String generateUrl(){
     	String urlString = driverProperties.getProperty("Protocol")+(driverProperties.getProperty("WsECLDirectAddress") + ":"
                 + driverProperties.getProperty("WsECLDirectPort") + "/EclDirect/RunEcl?Submit")+"&cluster=" + driverProperties.getProperty("TargetCluster");
-
-        URL hpccRequestUrl = HPCCJDBCUtils.makeURL(urlString);
         
-        return hpccRequestUrl;
+        return urlString;
     }
     
     public void sendRequest(String eclCode){
@@ -143,30 +144,41 @@ public class HPCCConnection implements Connection{
 //      replace "+" in http request body since it is a reserved character representing a space character
     	String body = eclCode.replace("+", "%2B");
 		try {
-			httpConnection = createHPCCESPConnection(generateUrl());
-			OutputStreamWriter wr = new OutputStreamWriter(httpConnection.getOutputStream());
-			wr.write(body);
-	        wr.flush();
-	        wr.close();
-	        responseCode = httpConnection.getResponseCode();
-	        
-	        RequestConfig.Builder requestBuilder = RequestConfig.custom();
+			long startTime;
+			long endTime;
+			RequestConfig.Builder requestBuilder = RequestConfig.custom();
 	        requestBuilder = requestBuilder.setConnectTimeout(10000);
 	        requestBuilder = requestBuilder.setConnectionRequestTimeout(10000);
 	        requestBuilder = requestBuilder.setRedirectsEnabled(false);
 	        HttpClientBuilder builder = HttpClientBuilder.create();     
 	        builder.setDefaultRequestConfig(requestBuilder.build());
 	        HttpClient client = builder.build();
-	    	HttpPost httppost = new HttpPost(generateUrl().toExternalForm().replace(" ", "+"));
+	        String url = generateUrl();
+	        String body1 = body.replace("&eclText=", "");
+	        startTime = System.currentTimeMillis();
+	    	HttpPost httppost = new HttpPost(url.replace(" ", "+"));
 	    	httppost.setHeader("Authorization", this.createBasicAuth());
 	    	List<NameValuePair> formparams = new ArrayList<NameValuePair>();
-	    	formparams.add(new BasicNameValuePair("eclText", body.replace("&eclText=", "")));
+	    	formparams.add(new BasicNameValuePair("eclText", body1));
 	    	UrlEncodedFormEntity  se = new UrlEncodedFormEntity(formparams);
 	    	se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/x-www-form-urlencoded"));
 	    	httppost.setEntity(se);
 	    	HttpResponse response = client.execute(httppost);
 	    	HttpEntity entity1 = response.getEntity();
-//	    	System.out.println(EntityUtils.toString(entity1));
+	    	entity1.getContent();
+	        endTime = System.currentTimeMillis();
+	        System.out.println("HttpClient: "+(endTime-startTime));
+	        
+	        startTime = System.currentTimeMillis();
+	        httpConnection = createHPCCESPConnection(generateUrl());
+			OutputStreamWriter wr = new OutputStreamWriter(httpConnection.getOutputStream());
+			wr.write(body);
+	        wr.flush();
+	        wr.close();
+	        httpConnection.getInputStream();
+	    	endTime = System.currentTimeMillis();
+	    	System.out.println("HttpURLConnection: "+(endTime-startTime));
+	    	responseCode = httpConnection.getResponseCode();
 	    	
 		} catch (IOException e) {
 			System.out.println(e.getMessage());
@@ -253,11 +265,11 @@ public class HPCCConnection implements Connection{
         return rowList;
     }
     
-    public HttpURLConnection createHPCCESPConnection(URL theurl) throws IOException {
+    public HttpURLConnection createHPCCESPConnection(String theurl) throws IOException {
     	return createHPCCESPConnection(theurl, Integer.parseInt(driverProperties.getProperty("ConnectTimeoutMilli")));
     }
     
-    protected HttpURLConnection createHPCCESPConnection(URL url, int connectionTimeout) throws IOException {
+    protected HttpURLConnection createHPCCESPConnection(String urlString, int connectionTimeout) throws IOException {
 //    	RequestConfig.Builder requestBuilder = RequestConfig.custom();
 //        requestBuilder = requestBuilder.setConnectTimeout(10000);
 //        requestBuilder = requestBuilder.setConnectionRequestTimeout(10000);
@@ -271,6 +283,7 @@ public class HPCCConnection implements Connection{
 //    	HttpEntity entity1 = response.getEntity();
 //    	System.out.println(EntityUtils.toString(entity1));
     	
+    	URL url = HPCCJDBCUtils.makeURL(urlString);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setInstanceFollowRedirects(false);
         conn.setRequestProperty("Authorization", this.createBasicAuth());

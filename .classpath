@@ -8,5 +8,6 @@
 	<classpathentry kind="lib" path="C:/Local_Users/peter.schwarz/workspace/hpcc-jdbc/lib/commons-logging-1.2.jar"/>
 	<classpathentry kind="lib" path="C:/Local_Users/peter.schwarz/workspace/hpcc-jdbc/lib/httpclient-4.4.1.jar"/>
 	<classpathentry kind="lib" path="C:/Local_Users/peter.schwarz/workspace/hpcc-jdbc/lib/httpcore-4.4.1.jar"/>
+	<classpathentry kind="lib" path="C:/Local_Users/peter.schwarz/workspace/hpcc-jdbc/lib/commons-io-2.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
