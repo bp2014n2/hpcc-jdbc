@@ -3,6 +3,7 @@ package de.hpi.hpcc.main;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Array;
@@ -20,7 +21,9 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -30,6 +33,18 @@ import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -46,7 +61,8 @@ public class HPCCConnection implements Connection{
     private HttpURLConnection httpConnection;
     private HashSet<String> allStatementNames = new HashSet<String>();
     private boolean autoCommit = true;
-//    private HttpEntity entity1;
+    private HttpEntity entity;
+    private HttpClient client;
     
     protected static final Logger logger = HPCCLogger.getLogger();
 
@@ -54,6 +70,14 @@ public class HPCCConnection implements Connection{
         this.driverProperties = driverProperties;
         metadata = new HPCCDatabaseMetaData(driverProperties, this);
 
+        RequestConfig.Builder requestBuilder = RequestConfig.custom();
+        requestBuilder = requestBuilder.setConnectTimeout(10000);
+        requestBuilder = requestBuilder.setConnectionRequestTimeout(10000);
+        requestBuilder = requestBuilder.setRedirectsEnabled(false);
+        HttpClientBuilder builder = HttpClientBuilder.create();     
+        builder.setDefaultRequestConfig(requestBuilder.build());
+        client = builder.build();
+        
         if (metadata != null && metadata.hasHPCCTargetBeenReached())
         {
             closed = false;
@@ -116,86 +140,30 @@ public class HPCCConnection implements Connection{
         return urlString;
     }
     
-    public void sendRequest(String eclCode){
-    	int responseCode = -1;
-//      replace "+" in http request body since it is a reserved character representing a space character
-    	String body = eclCode.replace("+", "%2B");
+    public InputStream sendRequest(String eclCode){
+		String url = generateUrl();
+		String body1 = eclCode.replace("&eclText=", "");
+		HttpPost httppost = new HttpPost(url);
+		httppost.setHeader("Authorization", this.createBasicAuth());
+		List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+		formparams.add(new BasicNameValuePair("eclText", body1));
+		UrlEncodedFormEntity se = null;
 		try {
-//			long startTime;
-//			long endTime;
-//			RequestConfig.Builder requestBuilder = RequestConfig.custom();
-//	        requestBuilder = requestBuilder.setConnectTimeout(10000);
-//	        requestBuilder = requestBuilder.setConnectionRequestTimeout(10000);
-//	        requestBuilder = requestBuilder.setRedirectsEnabled(false);
-//	        HttpClientBuilder builder = HttpClientBuilder.create();     
-//	        builder.setDefaultRequestConfig(requestBuilder.build());
-//	        HttpClient client = builder.build();
-//	        String url = generateUrl();
-//	        String body1 = eclCode.replace("&eclText=", "");
-//	        startTime = System.currentTimeMillis();
-//	    	HttpPost httppost = new HttpPost(url);
-//	    	httppost.setHeader("Authorization", this.createBasicAuth());
-//	    	List<NameValuePair> formparams = new ArrayList<NameValuePair>();
-//	    	formparams.add(new BasicNameValuePair("eclText", body1));
-//	    	UrlEncodedFormEntity  se = new UrlEncodedFormEntity(formparams);
-//	    	se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/x-www-form-urlencoded"));
-//	    	httppost.setEntity(se);
-//	    	HttpResponse response = client.execute(httppost);
-//	    	entity1 = response.getEntity();
-//	        endTime = System.currentTimeMillis();
-//	        System.out.println("HttpClient: "+(endTime-startTime));
-	        
-//	        startTime = System.currentTimeMillis();
-	        httpConnection = createHPCCESPConnection(generateUrl());
-			OutputStreamWriter wr = new OutputStreamWriter(httpConnection.getOutputStream());
-			wr.write(body);
-	        wr.flush();
-	        wr.close();
-//	    	endTime = System.currentTimeMillis();
-//	    	System.out.println("HttpURLConnection: "+(endTime-startTime));
-	    	responseCode = httpConnection.getResponseCode();
-	    	
-//	    	startTime = System.currentTimeMillis();
-//	    	String data = URLEncoder.encode("eclText", "UTF-8") + "=" + URLEncoder.encode(body.replace("&eclText=", ""), "UTF-8");
-//	        
-//	        Socket socket = new Socket("54.93.130.121", 8010);
-//
-//	        String path = "/EclDirect/RunEcl?Submit&cluster=thor";
-//	        OutputStreamWriter wr1 = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
-//	        wr1.write("POST " + path + " HTTP/1.1\r\n");
-//	        wr1.write("Content-Length: " + data.length() + "\r\n");
-//	        wr1.write("Content-Type: application/x-www-form-urlencoded\r\n");
-//	        wr1.write("Authorization: "+this.createBasicAuth());
-//	        wr1.write("\r\n");
-//
-//	        wr1.write(data);
-//	        wr1.flush();
-//	        socket.getInputStream();
-//	        socket.close();
-	    	
-//	    	HttpForm form = new HttpForm(new URI(generateUrl()));
-//	    	form.setCredentials("eha", "eha");
-//	    	form.putFieldValue("eclText", body1);
-//	    	HttpResponse response = form.doPost();
-//	    	if(!response.hasError()){
-//	    		System.out.println(response.getData());
-//	    	}
-//		    endTime = System.currentTimeMillis();
-//		    
-//		    System.out.println("Corn: "+(endTime-startTime));
-	    	
-	    	
-		} catch (IOException e) {
-			System.out.println(e.getMessage());
-			if (responseCode != 200){
-	                throw new RuntimeException("HTTP Connection Response code: " + responseCode
-	                        + "\nVerify access to WsECLDirect: " + httpConnection, e);
-			} else if(e.getMessage().contains("Error in response:")) {
-	            		System.out.println("Server response: "+e.getMessage().substring(e.getMessage().indexOf("'")+1,e.getMessage().length() - 1));
-	        } else {
-	        	throw new RuntimeException(e);	
-	        }
+			se = new UrlEncodedFormEntity(formparams);
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+		se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/x-www-form-urlencoded"));
+		httppost.setEntity(se);
+		InputStream response = null;
+		try {
+			response = client.execute(httppost).getEntity().getContent();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return response;
     }
 
     public NodeList parseDataset(InputStream xml, long startTime) throws Exception {
@@ -270,35 +238,15 @@ public class HPCCConnection implements Connection{
         return rowList;
     }
     
-    public HttpURLConnection createHPCCESPConnection(String theurl) throws IOException {
+    public InputStream createHPCCESPConnection(String theurl) throws IOException {
     	return createHPCCESPConnection(theurl, Integer.parseInt(driverProperties.getProperty("ConnectTimeoutMilli")));
     }
     
-    protected HttpURLConnection createHPCCESPConnection(String urlString, int connectionTimeout) throws IOException {
-//    	RequestConfig.Builder requestBuilder = RequestConfig.custom();
-//        requestBuilder = requestBuilder.setConnectTimeout(10000);
-//        requestBuilder = requestBuilder.setConnectionRequestTimeout(10000);
-//        requestBuilder = requestBuilder.setRedirectsEnabled(false);
-//        HttpClientBuilder builder = HttpClientBuilder.create();     
-//        builder.setDefaultRequestConfig(requestBuilder.build());
-//        HttpClient client = builder.build();
-//    	HttpGet httppost = new HttpGet(generateUrl().toExternalForm().replace(" ", "+"));
-//    	httppost.setHeader("Authorization", this.createBasicAuth());
-//    	HttpResponse response = client.execute(httppost);
-//    	HttpEntity entity1 = response.getEntity();
-//    	System.out.println(EntityUtils.toString(entity1));
-    	
-    	URL url = HPCCJDBCUtils.makeURL(urlString);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setInstanceFollowRedirects(false);
-        conn.setRequestProperty("Authorization", this.createBasicAuth());
-        conn.setRequestMethod("GET");
-        conn.setDoOutput(true);
-        conn.setDoInput(true);
-        conn.setConnectTimeout(connectionTimeout);
-        conn.setReadTimeout(Integer.parseInt(driverProperties.getProperty("ReadTimeoutMilli")));
-
-        return conn;
+    protected InputStream createHPCCESPConnection(String urlString, int connectionTimeout) throws IOException {
+    	HttpGet httpGetRequest = new HttpGet(urlString.replace(" ", "+"));
+    	httpGetRequest.setHeader("Authorization", this.createBasicAuth());
+    	HttpResponse response = client.execute(httpGetRequest);
+        return response.getEntity().getContent();
     }
 
     public String createBasicAuth() {
@@ -312,15 +260,6 @@ public class HPCCConnection implements Connection{
     public PreparedStatement prepareStatement(String query, int autoGeneratedKeys) throws SQLException {
         return prepareStatement(query);
     }
-    
-	public InputStream getInputStream() {
-		try {
-			return httpConnection.getInputStream();
-		} catch (IOException ioException) {
-			log(Level.SEVERE, "Unable to get InputStream!\n"+ioException.getMessage());
-		}
-		return null;
-	} 
 
     public boolean getAutoCommit() throws SQLException {
         return true;

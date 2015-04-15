@@ -42,8 +42,7 @@ public class HPCCStatement implements Statement{
 		try {
 			this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
 			String eclCode = eclEngine.parseEclCode(sqlStatement);
-			connection.sendRequest(eclCode);
-			NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+			NodeList rowList = connection.parseDataset(connection.sendRequest(eclCode), System.currentTimeMillis());
 			if (rowList != null) {
 				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	"HPCC Result"));
 			}

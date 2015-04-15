@@ -15,6 +15,9 @@
 	<property name="libLocation" location="lib"/>
 	<property name="sqlParserVersion" value="0.9.3-SNAPSHOT"/>
 	<property name="sqlParser" value="jsqlparser-${sqlParserVersion}.jar"/>
+	<property name="httpClient" value="httpclient-4.4.1.jar"/>
+	<property name="httpCore" value="httpcore-4.4.1.jar"/>
+	<property name="commonsLogging" value="commons-logging-1.2.jar"/>
 	
 	<target name="init">
 		<tstamp/>
@@ -36,6 +39,9 @@
 			<src path="${logging}"/>
 			<classpath>
 				<pathelement path="${libLocation}/${sqlParser}"/>
+				<pathelement path="${libLocation}/${httpClient}"/>
+				<pathelement path="${libLocation}/${httpCore}"/>
+				<pathelement path="${libLocation}/${commonsLogging}"/>	
 			</classpath>
 		</javac>
 	</target>
@@ -46,6 +52,9 @@
 			<fileset dir="${build}" includes="${parsing}/*.class" />
 			<fileset dir="${build}" includes="${logging}/*.class" />
 			<zipgroupfileset dir="lib" includes="${sqlParser}" />
+			<zipgroupfileset dir="lib" includes="${httpClient}" />
+			<zipgroupfileset dir="lib" includes="${httpCore}" />
+			<zipgroupfileset dir="lib" includes="${commonsLogging}" />
 			<metainf dir="${extra}" includes="**/java.sql.Driver"/>
 		</jar>
 	</target>
