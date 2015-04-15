@@ -111,6 +111,7 @@ public class SQLParserSelect extends SQLParser {
 						allSelects.put(entry.getKey(), oldColumns);
 					}
 				}	
+				return allSelects;
 			}		
 		}
 		allSelects.put("default", columns);

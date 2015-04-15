@@ -193,13 +193,13 @@ public abstract class ECLEngine
 	}
     
     protected String generateLayouts(List<String> orderedColumns) {
-    	StringBuilder layoutsString = new StringBuilder("TIMESTAMP := STRING25;\n");
+    	StringBuilder layoutsString = new StringBuilder();
     	List<String> allTables = getSQLParser().getAllTables();
     	String table = allTables.get(0);
 		if (table.contains(".")) {
 			table = table.split("\\.")[1];
 		}
-		layoutsString.append(table+"_record := ");
+//		layoutsString.append(table+"_record := ");
 		layoutsString.append(eclLayouts.getLayoutOrdered(table, orderedColumns));
 		layoutsString.append("\n");
 		
@@ -208,7 +208,7 @@ public abstract class ECLEngine
 			if (otherTable.contains(".")) {
 				otherTable = otherTable.split("\\.")[1];
 			}
-			layoutsString.append(otherTable+"_record := ");
+//			layoutsString.append(otherTable+"_record := ");
 			layoutsString.append(eclLayouts.getLayout(otherTable));
 			layoutsString.append("\n");
 		}

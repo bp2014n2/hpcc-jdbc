@@ -24,8 +24,13 @@ public class ECLLayouts {
 	}
 	
 	public String getECLDataType(String table, String column){
-		HPCCColumnMetaData columnMeta = dbMetadata.getDFUFile(table).getFieldMetaData(column);
-		return columnMeta.getColumnType().toString();
+		table = getFullTableName(table);
+		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
+		if (dfuFile != null) {
+			HPCCColumnMetaData columnMeta = dfuFile.getFieldMetaData(column);
+			return columnMeta.getEclType();
+		}
+		return "";
 	}
 	
 	public LinkedHashSet<String> getAllColumns(String table) {
@@ -46,7 +51,7 @@ public class ECLLayouts {
 
 	
 	public boolean isInt(HPCCColumnMetaData column) {	
-		if (column.getColumnType().toString().toLowerCase().matches("(unsigned.*|integer.*)")) {
+		if (column.getEclType().toString().toLowerCase().matches("(unsigned.*|integer.*)")) {
 			return true;
 		}
 		return false;
@@ -67,12 +72,16 @@ public class ECLLayouts {
 	
 	public int getSqlTypeOfColumn (List<String> tables, String column) {
 		for (String table : tables) {
+			table = getFullTableName(table);
 			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
+			if (dfuFile == null) {
+				return java.sql.Types.OTHER;
+			}
 			for(String field : dfuFile.getAllTableFieldsStringArray()){
 				if(!field.equalsIgnoreCase(column)) {
 					continue;
 				}
-				return getSqlType(dfuFile.getFieldMetaData(field).getColumnType().toString());
+				return getSqlType(dfuFile.getFieldMetaData(field).getEclType().toString());
 			}
 		}
 		return java.sql.Types.OTHER;
@@ -80,19 +89,22 @@ public class ECLLayouts {
 	
 	private String getFullTableName(String tableName) {
 		if (tableName.startsWith("i2b2demodata::")) {
-			return tableName;
+			return tableName.toLowerCase();
 		} else {
-			return "i2b2demodata::"+tableName;
+			return "i2b2demodata::"+tableName.toLowerCase();
 		}
 	}
 	
 	public String getLayout(String tableName) {
 		String name = getFullTableName(tableName);
 		String layout = tableName.toLowerCase()+"_record";
+		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
 		
-		String recordDefinition = dbMetadata.getDFUFile(name).getFileRecDef(layout);
-		
-		return recordDefinition;
+		if (dfuFile != null) {
+			return dfuFile.getFileRecDef(layout);
+		} else {
+			return null;
+		}
 	}
 	
 	public static int getSqlType(String dataType) {
@@ -111,19 +123,26 @@ public class ECLLayouts {
 
 	public String getLayoutOrdered(String table, List<String> orderedColumns) {
 		String name = getFullTableName(table);
-		String layout = table.toLowerCase()+"_record";
+		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");
 		
 		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
 		List<Object> fields = Collections.list(dfuFile.getAllFields());
 		
-		for (Object field : fields) {
-			HPCCColumnMetaData column = dfuFile.getFieldMetaData(field.toString());
+		for (String columnName : orderedColumns) {
+			for (Object field : fields) {
+				HPCCColumnMetaData column = (HPCCColumnMetaData) field;
+				if (!column.getColumnName().equals(columnName)) {
+					continue;
+				}
+				layout.append(column.getEclType());
+				layout.append(" ");
+				layout.append(column.getColumnName());
+				layout.append("; ");
+			}
 		}
-		/*
-		 * TODO: implementation
-		 */
+		layout.append("END;");
 		
-		return null;
+		return layout.toString();
 	}
 
 }

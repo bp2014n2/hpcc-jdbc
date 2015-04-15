@@ -20,7 +20,7 @@ public class ECLBuilderCreate extends ECLBuilder {
 		eclCode.append("OUTPUT(DATASET([],{");
 		//remove "RECORD " at beginning of Layout definition
 		String record = eclLayouts.getLayout(tableName);
-		
+
 		String recordString = null;
 		if(record == null) {
 			recordString = ((SQLParserCreate) sqlParser).getRecord();

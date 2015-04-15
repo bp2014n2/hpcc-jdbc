@@ -67,6 +67,7 @@ public class ECLEngineSelect extends ECLEngine {
     		}
     		for (String column : columns) {
     			expectedretcolumns.add(new HPCCColumnMetaData(column, i, eclLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
+    			i++;
     		}
     	}
     	
