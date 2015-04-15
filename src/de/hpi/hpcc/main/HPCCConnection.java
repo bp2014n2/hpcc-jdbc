@@ -2,9 +2,7 @@ package de.hpi.hpcc.main;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Array;
@@ -22,9 +20,7 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -34,26 +30,6 @@ import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -70,6 +46,7 @@ public class HPCCConnection implements Connection{
     private HttpURLConnection httpConnection;
     private HashSet<String> allStatementNames = new HashSet<String>();
     private boolean autoCommit = true;
+//    private HttpEntity entity1;
     
     protected static final Logger logger = HPCCLogger.getLogger();
 
@@ -144,41 +121,69 @@ public class HPCCConnection implements Connection{
 //      replace "+" in http request body since it is a reserved character representing a space character
     	String body = eclCode.replace("+", "%2B");
 		try {
-			long startTime;
-			long endTime;
-			RequestConfig.Builder requestBuilder = RequestConfig.custom();
-	        requestBuilder = requestBuilder.setConnectTimeout(10000);
-	        requestBuilder = requestBuilder.setConnectionRequestTimeout(10000);
-	        requestBuilder = requestBuilder.setRedirectsEnabled(false);
-	        HttpClientBuilder builder = HttpClientBuilder.create();     
-	        builder.setDefaultRequestConfig(requestBuilder.build());
-	        HttpClient client = builder.build();
-	        String url = generateUrl();
-	        String body1 = body.replace("&eclText=", "");
-	        startTime = System.currentTimeMillis();
-	    	HttpPost httppost = new HttpPost(url.replace(" ", "+"));
-	    	httppost.setHeader("Authorization", this.createBasicAuth());
-	    	List<NameValuePair> formparams = new ArrayList<NameValuePair>();
-	    	formparams.add(new BasicNameValuePair("eclText", body1));
-	    	UrlEncodedFormEntity  se = new UrlEncodedFormEntity(formparams);
-	    	se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/x-www-form-urlencoded"));
-	    	httppost.setEntity(se);
-	    	HttpResponse response = client.execute(httppost);
-	    	HttpEntity entity1 = response.getEntity();
-	    	entity1.getContent();
-	        endTime = System.currentTimeMillis();
-	        System.out.println("HttpClient: "+(endTime-startTime));
+//			long startTime;
+//			long endTime;
+//			RequestConfig.Builder requestBuilder = RequestConfig.custom();
+//	        requestBuilder = requestBuilder.setConnectTimeout(10000);
+//	        requestBuilder = requestBuilder.setConnectionRequestTimeout(10000);
+//	        requestBuilder = requestBuilder.setRedirectsEnabled(false);
+//	        HttpClientBuilder builder = HttpClientBuilder.create();     
+//	        builder.setDefaultRequestConfig(requestBuilder.build());
+//	        HttpClient client = builder.build();
+//	        String url = generateUrl();
+//	        String body1 = eclCode.replace("&eclText=", "");
+//	        startTime = System.currentTimeMillis();
+//	    	HttpPost httppost = new HttpPost(url);
+//	    	httppost.setHeader("Authorization", this.createBasicAuth());
+//	    	List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+//	    	formparams.add(new BasicNameValuePair("eclText", body1));
+//	    	UrlEncodedFormEntity  se = new UrlEncodedFormEntity(formparams);
+//	    	se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/x-www-form-urlencoded"));
+//	    	httppost.setEntity(se);
+//	    	HttpResponse response = client.execute(httppost);
+//	    	entity1 = response.getEntity();
+//	        endTime = System.currentTimeMillis();
+//	        System.out.println("HttpClient: "+(endTime-startTime));
 	        
-	        startTime = System.currentTimeMillis();
+//	        startTime = System.currentTimeMillis();
 	        httpConnection = createHPCCESPConnection(generateUrl());
 			OutputStreamWriter wr = new OutputStreamWriter(httpConnection.getOutputStream());
 			wr.write(body);
 	        wr.flush();
 	        wr.close();
-	        httpConnection.getInputStream();
-	    	endTime = System.currentTimeMillis();
-	    	System.out.println("HttpURLConnection: "+(endTime-startTime));
+//	    	endTime = System.currentTimeMillis();
+//	    	System.out.println("HttpURLConnection: "+(endTime-startTime));
 	    	responseCode = httpConnection.getResponseCode();
+	    	
+//	    	startTime = System.currentTimeMillis();
+//	    	String data = URLEncoder.encode("eclText", "UTF-8") + "=" + URLEncoder.encode(body.replace("&eclText=", ""), "UTF-8");
+//	        
+//	        Socket socket = new Socket("54.93.130.121", 8010);
+//
+//	        String path = "/EclDirect/RunEcl?Submit&cluster=thor";
+//	        OutputStreamWriter wr1 = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
+//	        wr1.write("POST " + path + " HTTP/1.1\r\n");
+//	        wr1.write("Content-Length: " + data.length() + "\r\n");
+//	        wr1.write("Content-Type: application/x-www-form-urlencoded\r\n");
+//	        wr1.write("Authorization: "+this.createBasicAuth());
+//	        wr1.write("\r\n");
+//
+//	        wr1.write(data);
+//	        wr1.flush();
+//	        socket.getInputStream();
+//	        socket.close();
+	    	
+//	    	HttpForm form = new HttpForm(new URI(generateUrl()));
+//	    	form.setCredentials("eha", "eha");
+//	    	form.putFieldValue("eclText", body1);
+//	    	HttpResponse response = form.doPost();
+//	    	if(!response.hasError()){
+//	    		System.out.println(response.getData());
+//	    	}
+//		    endTime = System.currentTimeMillis();
+//		    
+//		    System.out.println("Corn: "+(endTime-startTime));
+	    	
 	    	
 		} catch (IOException e) {
 			System.out.println(e.getMessage());
