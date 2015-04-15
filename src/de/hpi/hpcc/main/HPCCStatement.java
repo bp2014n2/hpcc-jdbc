@@ -20,6 +20,7 @@ import de.hpi.hpcc.parsing.ECLEngineDrop;
 import de.hpi.hpcc.parsing.ECLEngineInsert;
 import de.hpi.hpcc.parsing.ECLEngineSelect;
 import de.hpi.hpcc.parsing.ECLEngineUpdate;
+import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 
 public class HPCCStatement implements Statement{
@@ -65,7 +66,8 @@ public class HPCCStatement implements Statement{
 		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
 		
 		String sqlStatementTemp = ECLEngine.escapeToAppropriateSQL(sqlStatement);
-		SQLParser sqlParser = new SQLParser(sqlStatementTemp);
+		ECLLayouts eclLayouts = new ECLLayouts(connection.getDatabaseMetaData());
+		SQLParser sqlParser = new SQLParser(sqlStatementTemp, eclLayouts);
 		List<String> tables = sqlParser.getAllTables();
 		
 		if (federatedDatabase) {

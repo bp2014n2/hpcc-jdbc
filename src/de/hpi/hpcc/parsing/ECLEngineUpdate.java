@@ -4,7 +4,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 
 import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCConnection;
@@ -13,19 +12,17 @@ import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 
 public class ECLEngineUpdate extends ECLEngine {
 	
-	private HPCCDatabaseMetaData dbMetadata;
 	private StringBuilder           eclCode = new StringBuilder();
 	private SQLParserUpdate sqlParser;
 	
 	public ECLEngineUpdate(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
 		super(conn, dbmetadata);
-		this.dbMetadata = dbmetadata;
 	}
 
 	public String generateECL(String sqlQuery) throws SQLException{
 		this.sqlParser = getSQLParserInstance(sqlQuery);
 		
-		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate(dbMetadata);
+		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate(eclLayouts);
 		eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append(generateImports());
     	eclCode.append(generateLayouts());
@@ -52,11 +49,11 @@ public class ECLEngineUpdate extends ECLEngine {
    		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	HashSet<String> columns = ECLLayouts.getAllColumns(sqlParser.getName(), dbMetadata);
+    	HashSet<String> columns = eclLayouts.getAllColumns(sqlParser.getName());
     	int i=0;
     	for (String column : columns) {
     		i++;
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column, dbMetadata)));
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, eclLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
     	}  
     	
     	return eclCode.toString();
@@ -69,6 +66,6 @@ public class ECLEngineUpdate extends ECLEngine {
 
 	@Override
 	public SQLParserUpdate getSQLParserInstance(String sqlQuery) {
-		return new SQLParserUpdate(sqlQuery);
+		return new SQLParserUpdate(sqlQuery, eclLayouts);
 	}
 }

@@ -4,15 +4,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import net.sf.jsqlparser.statement.select.WithItem;
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 
 public class ECLBuilderInsert extends ECLBuilder {
-	public ECLBuilderInsert(HPCCDatabaseMetaData dbMetadata) {
-		super(dbMetadata);
+	public ECLBuilderInsert(ECLLayouts eclLayouts) {
+		super(eclLayouts);
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -26,14 +24,14 @@ public class ECLBuilderInsert extends ECLBuilder {
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
 	public String generateECL(String sql) {
-		sqlParser = new SQLParserInsert(sql);
+		sqlParser = new SQLParserInsert(sql, eclLayouts);
 		
 		StringBuilder eclCode = new StringBuilder();
 		
 		if (sqlParser.hasWith()) {
 			for (WithItem withItem : sqlParser.getWithItemsList()) {
 				eclCode.append(withItem.getName()+" := ");
-				eclCode.append(new ECLBuilderSelect(dbMetadata).generateECL(withItem.getSelectBody().toString())+";\n");
+				eclCode.append(new ECLBuilderSelect(eclLayouts).generateECL(withItem.getSelectBody().toString())+";\n");
 			}
 		}
 
@@ -50,7 +48,7 @@ public class ECLBuilderInsert extends ECLBuilder {
 	}
 
 	private void generateNewDataset(SQLParserInsert sqlParser, StringBuilder eclCode) {
-		if (sqlParser.getColumns() == null || sqlParser.getColumns().size() == ECLLayouts.getAllColumns(sqlParser.getTable().getName(), dbMetadata).size()) {
+		if (sqlParser.getColumns() == null || sqlParser.getColumns().size() == eclLayouts.getAllColumns(sqlParser.getTable().getName()).size()) {
 			if (sqlParser.getItemsList() instanceof SubSelect) {
 			eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
 			} else {
@@ -67,7 +65,7 @@ public class ECLBuilderInsert extends ECLBuilder {
 			eclCode.append("TABLE(");
 			List<String> columns = sqlParser.getColumnNames();
 			if (sqlParser.getSelect() != null) {
-				eclCode.append(new ECLBuilderSelect(dbMetadata).generateECL(sqlParser.getSelect().getSelectBody().toString()));
+				eclCode.append(new ECLBuilderSelect(eclLayouts).generateECL(sqlParser.getSelect().getSelectBody().toString()));
 			} else if (sqlParser.getItemsList() != null) {
 				eclCode.append("DATASET([{");
 				String valueString = "";
@@ -79,21 +77,21 @@ public class ECLBuilderInsert extends ECLBuilder {
 				String columnString = "";
 				for(String column : columns){
 					columnString += (columnString=="" ? "":", ");
-					columnString += ECLLayouts.getECLDataType(sqlParser.getTable().getName(), column, dbMetadata)+" ";
+					columnString += eclLayouts.getECLDataType(sqlParser.getTable().getName(), column)+" ";
 					
 					columnString += column;
 				}
 				eclCode.append(columnString + "})");
 			}
 			eclCode.append(",{");
-			LinkedHashSet<String> allColumns = ECLLayouts.getAllColumns(sqlParser.getTable().getName(), dbMetadata);
+			LinkedHashSet<String> allColumns = eclLayouts.getAllColumns(sqlParser.getTable().getName());
 			String tableColumnString = "";
 			for(String tableColumn : allColumns){
 				tableColumnString += (tableColumnString=="" ? "":", ");
 				if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getColumnNames(), tableColumn)) {
 					tableColumnString += tableColumn;
 				} else {
-					String dataType = ECLLayouts.getECLDataType(sqlParser.getTable().getName(), tableColumn, dbMetadata);
+					String dataType = eclLayouts.getECLDataType(sqlParser.getTable().getName(), tableColumn);
 					tableColumnString += dataType+" "+tableColumn+" := "+(dataType.startsWith("UNSIGNED")||dataType.startsWith("integer")?"0":"''");
 				}
 			}

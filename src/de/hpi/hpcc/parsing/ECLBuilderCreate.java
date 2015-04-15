@@ -1,12 +1,10 @@
 package de.hpi.hpcc.parsing;
 
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 
 public class ECLBuilderCreate extends ECLBuilder {
 	
-	public ECLBuilderCreate(HPCCDatabaseMetaData dbMetadata) {
-		super(dbMetadata);
-		// TODO Auto-generated constructor stub
+	public ECLBuilderCreate(ECLLayouts eclLayouts) {
+		super(eclLayouts);
 	}
 	private SQLParserCreate sqlParser;
 	
@@ -16,12 +14,12 @@ public class ECLBuilderCreate extends ECLBuilder {
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
 	public String generateECL(String sql) {
-		sqlParser = new SQLParserCreate(sql);
+		sqlParser = new SQLParserCreate(sql, eclLayouts);
 		StringBuilder eclCode = new StringBuilder();
 		String tableName = ((SQLParserCreate) sqlParser).getTableName();
 		eclCode.append("OUTPUT(DATASET([],{");
 		//remove "RECORD " at beginning of Layout definition
-		String record = ECLLayouts.getLayout(tableName, dbMetadata);
+		String record = eclLayouts.getLayout(tableName);
 		
 		String recordString = null;
 		if(record == null) {
@@ -36,8 +34,7 @@ public class ECLBuilderCreate extends ECLBuilder {
 	}
 
 	@Override
-	protected SQLParser getSqlParser() {
-		// TODO Auto-generated method stub
+	protected SQLParserCreate getSqlParser() {
 		return sqlParser;
 	}
 }

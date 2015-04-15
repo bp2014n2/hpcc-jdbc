@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCConnection;
@@ -14,12 +15,10 @@ import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 public class ECLEngineSelect extends ECLEngine {
 
 	private StringBuilder           eclCode = new StringBuilder();
-	private HPCCDatabaseMetaData dbMetadata;
 	private SQLParserSelect sqlParser;
 	
 	public ECLEngineSelect(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
 		super(conn, dbmetadata);
-		this.dbMetadata = dbmetadata;
 	}
 	
 	
@@ -28,7 +27,7 @@ public class ECLEngineSelect extends ECLEngine {
     {
 		this.sqlParser = getSQLParserInstance(sqlQuery);
 		
-    	ECLBuilderSelect eclBuilder = new ECLBuilderSelect(dbMetadata);
+    	ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
     	eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	eclCode.append(generateImports());
@@ -52,9 +51,23 @@ public class ECLEngineSelect extends ECLEngine {
     	HashMap<String, List<String>> selectItems = (HashMap<String, List<String>>) sqlParser.getAllSelectItemsInQuery();
     	
     	// TODO: replace select * by columns names
-    	for (int i=0; i<selectItems.size(); i++) {
-    		String column = selectItems.get(i);
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column, dbMetadata)));
+    	int i = 0;
+    	//for (int i=0; i<selectItems.size(); i++) {
+    	for (Entry<String, List<String>> entry : selectItems.entrySet()) {
+    		List<String> columns;
+    		if (entry.getValue() == null) {
+    			try {
+					columns = new ArrayList<String>(eclLayouts.getAllColumns(entry.getKey()));
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					throw new SQLException(e);
+				}
+    		} else {
+    			columns = entry.getValue();
+    		}
+    		for (String column : columns) {
+    			expectedretcolumns.add(new HPCCColumnMetaData(column, i, eclLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
+    		}
     	}
     	
     	return eclCode.toString();
@@ -64,7 +77,7 @@ public class ECLEngineSelect extends ECLEngine {
 
 	@Override
 	public SQLParserSelect getSQLParserInstance(String sqlQuery) {
-		return new SQLParserSelect(sqlQuery);
+		return new SQLParserSelect(sqlQuery, eclLayouts);
 	}
 
 

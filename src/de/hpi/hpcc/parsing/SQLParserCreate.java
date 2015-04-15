@@ -4,17 +4,14 @@ import java.io.StringReader;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import net.sf.jsqlparser.JSQLParserException;
-import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public class SQLParserCreate extends SQLParser {
 
-	protected SQLParserCreate(String sql) {
-		super(sql);
+	protected SQLParserCreate(String sql, ECLLayouts eclLayouts) {
+		super(sql, eclLayouts);
 		try {
 			if (parserManager.parse(new StringReader(sql)) instanceof CreateTable) {
 				statement = parserManager.parse(new StringReader(sql));

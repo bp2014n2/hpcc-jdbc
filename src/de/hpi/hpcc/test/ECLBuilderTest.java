@@ -9,15 +9,16 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import de.hpi.hpcc.parsing.ECLBuilder;
+import de.hpi.hpcc.parsing.ECLBuilderSelect;
 import de.hpi.hpcc.parsing.ECLLayouts;
 
 public class ECLBuilderTest {
 	
-	private static ECLBuilder eclBuilder;
+	
 	
 	@BeforeClass
 	public static void initialize() {
-		eclBuilder = new ECLBuilder();
+//		eclBuilder = new ECLBuilder();
 		ECLLayouts.setLayouts("mytable", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
 		ECLLayouts.setLayouts("mytablea", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
 		ECLLayouts.setLayouts("mytableb", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
@@ -25,6 +26,7 @@ public class ECLBuilderTest {
 	
 	@Test
 	public void shouldTranslateSimpleSelect() throws SQLException {
+		private ECLBuilderSelect eclBuilder = new ECLBuilderSelect();
 		assertEquals("TABLE(myTable, {myColumn, myColumnA, myColumnB})", eclBuilder.generateECL("select * from mySchema.myTable"));
 		assertEquals("TABLE(myTable, {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable"));
 		assertEquals("DEDUP(TABLE(myTable, {myColumn, myColumnA, myColumnB}), All)", eclBuilder.generateECL("select distinct * from mySchema.myTable"));

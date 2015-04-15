@@ -2,14 +2,13 @@ package de.hpi.hpcc.parsing;
 
 import java.io.StringReader;
 
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.statement.drop.Drop;
 
 public class SQLParserDrop extends SQLParser {
 
-	protected SQLParserDrop(String sql) {
-		super(sql);
+	protected SQLParserDrop(String sql, ECLLayouts layouts) {
+		super(sql, layouts);
 		try {
 			if (parserManager.parse(new StringReader(sql)) instanceof Drop) {
 				statement = parserManager.parse(new StringReader(sql));

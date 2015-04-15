@@ -2,17 +2,14 @@ package de.hpi.hpcc.parsing;
 
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.ItemsList;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.WithItem;
@@ -20,8 +17,8 @@ import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserInsert extends SQLParser {
 	
-	protected SQLParserInsert(String sql) {
-		super(sql);
+	protected SQLParserInsert(String sql, ECLLayouts layouts) {
+		super(sql, layouts);
 		try {
 			if (parserManager.parse(new StringReader(sql)) instanceof Insert) {
 				statement = parserManager.parse(new StringReader(sql));

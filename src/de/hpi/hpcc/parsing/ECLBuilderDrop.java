@@ -1,11 +1,8 @@
 package de.hpi.hpcc.parsing;
 
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
-
 public class ECLBuilderDrop extends ECLBuilder {
-	public ECLBuilderDrop(HPCCDatabaseMetaData dbMetadata) {
-		super(dbMetadata);
-		// TODO Auto-generated constructor stub
+	public ECLBuilderDrop(ECLLayouts eclLayouts) {
+		super(eclLayouts);
 	}
 	
 	SQLParserDrop sqlParser;
@@ -16,7 +13,7 @@ public class ECLBuilderDrop extends ECLBuilder {
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
 	public String generateECL(String sql) {
-		sqlParser = new SQLParserDrop(sql);
+		sqlParser = new SQLParserDrop(sql, eclLayouts);
 		StringBuilder eclCode = new StringBuilder();
 		eclCode.append("Std.File.DeleteLogicalFile('~"+sqlParser.getFullName().replace(".", "::")+"', true)");
 		

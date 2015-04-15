@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
@@ -28,14 +27,15 @@ public class SQLParser{
 	static CCJSqlParserManager parserManager = new CCJSqlParserManager();
 	Statement statement;
 	Expression expression;
-	
+	ECLLayouts eclLayouts;
 
 	
-	public SQLParser(Expression expression) {
-		
+	public SQLParser(Expression expression, ECLLayouts eclLayouts) {
+		this.eclLayouts = eclLayouts;
 	}
 	
-	public SQLParser(String sql) {
+	public SQLParser(String sql, ECLLayouts eclLayouts) {
+		this.eclLayouts = eclLayouts;
 		try {
 			statement = parserManager.parse(new StringReader(sql));
 		} catch (JSQLParserException e) {
@@ -45,7 +45,8 @@ public class SQLParser{
 		 
 	}
 	
-	public SQLParser(Statement statement) {
+	public SQLParser(Statement statement, ECLLayouts eclLayouts) {
+		this.eclLayouts = eclLayouts;
 	}
 	
 	

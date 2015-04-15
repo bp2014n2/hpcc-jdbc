@@ -33,17 +33,19 @@ public abstract class ECLEngine
 {
 
     private NodeList                resultSchema = null;
-    private HPCCDatabaseMetaData    dbMetadata;
+    protected HPCCDatabaseMetaData    dbMetadata;
     private StringBuilder           eclCode = new StringBuilder();
 	private HPCCConnection			conn;
 	protected List<HPCCColumnMetaData>    expectedretcolumns = null;
     protected HashMap<String, HPCCColumnMetaData> availablecols = null;
     private static final String			HPCCEngine = "THOR";
     private String substring = null;
+    protected ECLLayouts eclLayouts;
 
     public ECLEngine(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
         this.dbMetadata = dbmetadata;
         this.conn = conn;
+        this.eclLayouts = new ECLLayouts(dbMetadata);
     }
     
     abstract protected SQLParser getSQLParser();
@@ -184,8 +186,7 @@ public abstract class ECLEngine
 				table = table.split("\\.")[1];
 			}
 			
-			//layoutsString.append(table+"_record := ");
-			layoutsString.append(ECLLayouts.getLayout(table, dbMetadata));
+			layoutsString.append(eclLayouts.getLayout(table));
 			layoutsString.append("\n");	
 		}
 		return layoutsString.toString();
@@ -199,7 +200,7 @@ public abstract class ECLEngine
 			table = table.split("\\.")[1];
 		}
 		layoutsString.append(table+"_record := ");
-		layoutsString.append(ECLLayouts.getLayoutOrdered(table, dbMetadata, orderedColumns));
+		layoutsString.append(eclLayouts.getLayoutOrdered(table, orderedColumns));
 		layoutsString.append("\n");
 		
 		for (int i = 1; i<allTables.size(); i++) {
@@ -208,7 +209,7 @@ public abstract class ECLEngine
 				otherTable = otherTable.split("\\.")[1];
 			}
 			layoutsString.append(otherTable+"_record := ");
-			layoutsString.append(ECLLayouts.getLayout(otherTable, dbMetadata));
+			layoutsString.append(eclLayouts.getLayout(otherTable));
 			layoutsString.append("\n");
 		}
 		

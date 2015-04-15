@@ -6,10 +6,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -33,8 +31,8 @@ public class SQLParserSelect extends SQLParser {
 
 	private PlainSelect plain;
 
-	protected SQLParserSelect(Expression expression) {
-		super(expression);
+	protected SQLParserSelect(Expression expression, ECLLayouts layouts) {
+		super(expression, layouts);
 		if (expression instanceof SubSelect) {
 			statement = (Statement) expression;
 			plain = (PlainSelect) ((SubSelect) expression).getSelectBody();
@@ -43,8 +41,8 @@ public class SQLParserSelect extends SQLParser {
 		} 
 	}
 	
-	protected SQLParserSelect(String sql) {
-		super(sql);
+	protected SQLParserSelect(String sql, ECLLayouts layouts) {
+		super(sql, layouts);
 		try {
 			statement = parserManager.parse(new StringReader(sql));
 			if (statement instanceof Select) {
@@ -103,7 +101,7 @@ public class SQLParserSelect extends SQLParser {
 					String tableName = ((Table) getFromItem()).getName();
 					allSelects.put(tableName, null);
 				} else if (getFromItem() instanceof SubSelect) {
-					HashMap<String,List<String>> recursive = new SQLParserSelect(((SubSelect) getFromItem()).toString()).getAllSelectItemsInQuery();
+					HashMap<String,List<String>> recursive = new SQLParserSelect(((SubSelect) getFromItem()).toString(), eclLayouts).getAllSelectItemsInQuery();
 					for (Entry<String, List<String>> entry : recursive.entrySet()) {
 						List<String> oldColumns = allSelects.get(entry.getKey());
 						if (oldColumns == null) {
@@ -124,9 +122,15 @@ public class SQLParserSelect extends SQLParser {
 		String table;
 		if (fromItem instanceof Table) {
 			table = ((Table) fromItem).getName();
-			return ECLLayouts.getAllColumns(table, dbMetadata);
+			try {
+				return eclLayouts.getAllColumns(table);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}
 		} else {
-			return new SQLParserSelect((SubSelect) fromItem).getAllColumns();
+			return new SQLParserSelect((SubSelect) fromItem, eclLayouts).getAllColumns();
 		}
 		
 	}
@@ -183,7 +187,7 @@ public class SQLParserSelect extends SQLParser {
 
 	protected List<String> getFromItemColumns() {
 		if (plain == null) return null;
-		List<SelectItem> selectItems = new SQLParserSelect(trimInnerStatement(plain.getFromItem().toString())).getSelectItems();
+		List<SelectItem> selectItems = new SQLParserSelect(trimInnerStatement(plain.getFromItem().toString()), eclLayouts).getSelectItems();
 		List<String> selectItemStrings = new ArrayList<String>();
 		for (SelectItem selectItem : selectItems) {
 			selectItemStrings.add(selectItem.toString());

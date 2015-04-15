@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.schema.Column;
@@ -13,8 +12,8 @@ import net.sf.jsqlparser.statement.update.Update;
 
 public class SQLParserUpdate extends SQLParser {
 
-	protected SQLParserUpdate(String sql) {
-		super(sql);
+	protected SQLParserUpdate(String sql, ECLLayouts eclLayouts) {
+		super(sql, eclLayouts);
 		try {
 			if (parserManager.parse(new StringReader(sql)) instanceof Update) {
 				statement = parserManager.parse(new StringReader(sql));
@@ -38,7 +37,7 @@ public class SQLParserUpdate extends SQLParser {
 	
 	protected LinkedHashSet<String> getAllCoumns() {
 		String table = ((Update) statement).getTables().get(0).getName();
-		return ECLLayouts.getAllColumns(table, dbMetadata);
+		return eclLayouts.getAllColumns(table);
 	}
 	
 	protected List<String> getColumns() {

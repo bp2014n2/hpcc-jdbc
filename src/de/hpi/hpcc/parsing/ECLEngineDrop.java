@@ -4,7 +4,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 
 import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCConnection;
@@ -13,13 +12,11 @@ import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 
 public class ECLEngineDrop extends ECLEngine {
 	
-	private HPCCDatabaseMetaData dbMetadata;
 	private StringBuilder           eclCode = new StringBuilder();
 	private SQLParserDrop sqlParser;
 
 	public ECLEngineDrop(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
 		super(conn, dbmetadata);
-		this.dbMetadata = dbmetadata;
 	}
 
 	public String generateECL(String sqlQuery) throws SQLException {
@@ -47,11 +44,11 @@ public class ECLEngineDrop extends ECLEngine {
    			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
    			
    	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-   	    	HashSet<String> columns = ECLLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName(), dbMetadata);
+   	    	HashSet<String> columns = eclLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
    	    	int i=0;
    	    	for (String column : columns) {
    	    		i++;
-   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, ECLLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column, dbMetadata)));
+   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, eclLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
    	    	}  	
    		} else {
    			/*
@@ -64,7 +61,7 @@ public class ECLEngineDrop extends ECLEngine {
 
 	@Override
 	public SQLParserDrop getSQLParserInstance(String sqlQuery) {
-		return new SQLParserDrop(sqlQuery);
+		return new SQLParserDrop(sqlQuery, eclLayouts);
 	}
 
 	@Override

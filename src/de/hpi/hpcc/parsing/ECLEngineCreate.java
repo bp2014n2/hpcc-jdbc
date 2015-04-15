@@ -1,7 +1,6 @@
 package de.hpi.hpcc.parsing;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.LinkedList;
 
 import de.hpi.hpcc.main.HPCCColumnMetaData;
@@ -11,17 +10,13 @@ import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 
 public class ECLEngineCreate extends ECLEngine {
 
-	private StringBuilder           eclCode = new StringBuilder();	
-	private HPCCDatabaseMetaData dbMetadata;
+	private StringBuilder eclCode = new StringBuilder();	
 	private SQLParserCreate sqlParser;
 	
 	
 	public ECLEngineCreate(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
 		super(conn, dbmetadata);
-		this.dbMetadata = dbmetadata;
 	}
-	
-	
 
 	public String generateECL(String sqlQuery) throws SQLException {
 		
@@ -30,7 +25,7 @@ public class ECLEngineCreate extends ECLEngine {
 		String tablePath = sqlParser.getFullName();
 		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
 		if(dfuFile == null) {
-			ECLBuilderCreate eclBuilder = new ECLBuilderCreate(dbMetadata);
+			ECLBuilderCreate eclBuilder = new ECLBuilderCreate(eclLayouts);
 			eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
 	    	eclCode.append(generateImports());
 	    	eclCode.append("TIMESTAMP := STRING25;\n");
@@ -42,7 +37,7 @@ public class ECLEngineCreate extends ECLEngine {
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
 			
 			String tableName = ((SQLParserCreate) sqlParser).getTableName().toLowerCase();
-			String recordString = ECLLayouts.getLayout(tableName, dbMetadata);
+			String recordString = eclLayouts.getLayout(tableName);
 			
 			if(recordString == null) {
 				recordString = ((SQLParserCreate) sqlParser).getRecord();
@@ -53,7 +48,7 @@ public class ECLEngineCreate extends ECLEngine {
 	    	int i=0;
 	    	for (String column : recordString.split(",")) {
 	    		i++;
-	    		expectedretcolumns.add(new HPCCColumnMetaData(column.split(" ")[1], i, ECLLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column, dbMetadata)));
+	    		expectedretcolumns.add(new HPCCColumnMetaData(column.split(" ")[1], i, eclLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
 	    	}  	
 		} else System.out.println("Table '"+tablePath+"' already exists. Query aborted.");
 		
@@ -64,7 +59,7 @@ public class ECLEngineCreate extends ECLEngine {
 
 	@Override
 	public SQLParserCreate getSQLParserInstance(String sqlQuery) {
-		return new SQLParserCreate(sqlQuery);
+		return new SQLParserCreate(sqlQuery, eclLayouts);
 	}
 
 

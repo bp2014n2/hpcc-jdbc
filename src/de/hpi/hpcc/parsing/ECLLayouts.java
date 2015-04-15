@@ -1,16 +1,13 @@
 package de.hpi.hpcc.parsing;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 
 import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.main.HPCCDatabaseMetaData;
-import de.hpi.hpcc.parsing.ECLRecordDefinition;
 
 public class ECLLayouts {
      
@@ -20,31 +17,42 @@ public class ECLLayouts {
 	 * @param value is the layout definition itself
 	 */
 	
-	public static String getECLDataType(String table, String column, HPCCDatabaseMetaData dbMetadata){
-		//ECLRecordDefinition recordDefinition = getLayout(table);
-		HPCCColumnMetaData columnMeta = dbMetadata.getDFUFile(table).getFieldMetaData(column);
-		
-		return columnMeta.getColumnType().toString();
-		//return recordDefinition.findColumn(column).getDataType();
+	HPCCDatabaseMetaData dbMetadata;
+	
+	public ECLLayouts (HPCCDatabaseMetaData dbMetadata) {
+		this.dbMetadata = dbMetadata;
 	}
 	
-	public static LinkedHashSet<String> getAllColumns(String table, HPCCDatabaseMetaData dbMetadata) {
+	public String getECLDataType(String table, String column){
+		HPCCColumnMetaData columnMeta = dbMetadata.getDFUFile(table).getFieldMetaData(column);
+		return columnMeta.getColumnType().toString();
+	}
+	
+	public LinkedHashSet<String> getAllColumns(String table) {
 		//ECLRecordDefinition recordDefinition = getLayouts(table);
 //		if (recordDefinition == null) return null;
 //		return recordDefinition.getColumnNames();
-		List<String> list = Arrays.asList(dbMetadata.getDFUFile(table).getAllTableFieldsStringArray());
-		return new LinkedHashSet<String>(list);
+		table = getFullTableName(table);
+		HPCCDFUFile file = dbMetadata.getDFUFile(table);
+		if(file != null) {
+			List<String> list = Arrays.asList(file.getAllTableFieldsStringArray());
+			return new LinkedHashSet<String>(list);
+		} else {
+			//throw new Exception("DFUFile not found: "+table);
+			return null;
+		}
+		
 	}
 
 	
-	public static boolean isInt(HPCCColumnMetaData column) {	
+	public boolean isInt(HPCCColumnMetaData column) {	
 		if (column.getColumnType().toString().toLowerCase().matches("(unsigned.*|integer.*)")) {
 			return true;
 		}
 		return false;
 	}
 	
-	public static boolean isColumnOfIntInAnyTable(List<String> tables, String column, HPCCDatabaseMetaData dbMetadata) {
+	public boolean isColumnOfIntInAnyTable(List<String> tables, String column) {
 		for (String table : tables) {
 			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
 			for(String field : dfuFile.getAllTableFieldsStringArray()){
@@ -57,7 +65,7 @@ public class ECLLayouts {
 		return false;
 	}
 	
-	public static int getSqlTypeOfColumn (List<String> tables, String column, HPCCDatabaseMetaData dbMetadata) {
+	public int getSqlTypeOfColumn (List<String> tables, String column) {
 		for (String table : tables) {
 			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
 			for(String field : dfuFile.getAllTableFieldsStringArray()){
@@ -70,16 +78,21 @@ public class ECLLayouts {
 		return java.sql.Types.OTHER;
 	}
 	
-	public static String getLayout(String tableName, HPCCDatabaseMetaData dbMetadata) {
-		String name = "i2b2demodata::"+tableName;
+	private String getFullTableName(String tableName) {
+		if (tableName.startsWith("i2b2demodata::")) {
+			return tableName;
+		} else {
+			return "i2b2demodata::"+tableName;
+		}
+	}
+	
+	public String getLayout(String tableName) {
+		String name = getFullTableName(tableName);
 		String layout = tableName.toLowerCase()+"_record";
 		
 		String recordDefinition = dbMetadata.getDFUFile(name).getFileRecDef(layout);
-				
 		
 		return recordDefinition;
-		
-		
 	}
 	
 	public static int getSqlType(String dataType) {
@@ -96,9 +109,20 @@ public class ECLLayouts {
 		}
 	}
 
-	public static Object getLayoutOrdered(String table,
-			HPCCDatabaseMetaData dbMetadata, List<String> orderedColumns) {
-		// TODO Auto-generated method stub
+	public String getLayoutOrdered(String table, List<String> orderedColumns) {
+		String name = getFullTableName(table);
+		String layout = table.toLowerCase()+"_record";
+		
+		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
+		List<Object> fields = Collections.list(dfuFile.getAllFields());
+		
+		for (Object field : fields) {
+			HPCCColumnMetaData column = dfuFile.getFieldMetaData(field.toString());
+		}
+		/*
+		 * TODO: implementation
+		 */
+		
 		return null;
 	}
 

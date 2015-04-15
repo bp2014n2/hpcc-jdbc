@@ -1,6 +1,5 @@
 package de.hpi.hpcc.parsing;
 
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -29,7 +28,7 @@ import net.sf.jsqlparser.statement.select.SubSelect;
 
 abstract public class ECLBuilder {
 	private boolean hasAlias = false;
-	protected HPCCDatabaseMetaData dbMetadata;
+	protected ECLLayouts eclLayouts;
 	/**
 	 * This method generates ECL code from a given SQL code. 
 	 * Therefore it delegates the generation to the appropriate subclass, 
@@ -38,27 +37,9 @@ abstract public class ECLBuilder {
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
 	
-	public ECLBuilder(HPCCDatabaseMetaData dbMetadata) {
-		this.dbMetadata = dbMetadata;
+	public ECLBuilder(ECLLayouts eclLayouts) {
+		this.eclLayouts = eclLayouts;
 	}
-	/*
-	public String generateECL(String sql) {
-		switch(SQLParser.sqlIsInstanceOf(sql)) {
-    	case "Select":
-    		return new ECLBuilderSelect(dbMetadata).generateECL(sql);
-		case "Insert":
-			return new ECLBuilderInsert(dbMetadata).generateECL(sql);
-    	case "Update":
-    		return new ECLBuilderUpdate(dbMetadata).generateECL(sql);
-    	case "Drop":
-    		return new ECLBuilderDrop(dbMetadata).generateECL(sql);
-    	case "Create":
-    		return new ECLBuilderCreate(dbMetadata).generateECL(sql);
-		default:
-    		System.out.println("type of sql not recognized "+SQLParser.sqlIsInstanceOf(sql));
-    	}
-		return null;
-	}*/
 	
 	/**
 	 * This methods surrounds a given ECL string with a Table definition. 
@@ -168,7 +149,7 @@ abstract public class ECLBuilder {
 		} else if (expressionItem instanceof LongValue) {
 			expression.append(((LongValue) expressionItem).getValue());
 		} else if (expressionItem instanceof ExistsExpression) {		
-			SQLParserSelect subParser = new SQLParserSelect(((SubSelect)((ExistsExpression) expressionItem).getRightExpression()).getSelectBody().toString());	
+			SQLParserSelect subParser = new SQLParserSelect(((SubSelect)((ExistsExpression) expressionItem).getRightExpression()).getSelectBody().toString(), eclLayouts);	
 			Expression where = subParser.getWhere();
 			String joinColumn = null;
 			if(where instanceof EqualsTo) {
@@ -194,7 +175,7 @@ abstract public class ECLBuilder {
 			expression.append(", "+joinColumn+")");
 		} else if (expressionItem instanceof IsNullExpression) {
 			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
-			expression.append(" = "+((ECLLayouts.isColumnOfIntInAnyTable(getSqlParser().getAllTables(), ((Column)((IsNullExpression) expressionItem).getLeftExpression()).getColumnName(), dbMetadata))?"0":"''"));
+			expression.append(" = "+((eclLayouts.isColumnOfIntInAnyTable(getSqlParser().getAllTables(), ((Column)((IsNullExpression) expressionItem).getLeftExpression()).getColumnName()))?"0":"''"));
 		} else if (expressionItem instanceof Parenthesis) {
 			expression.append("("+parseExpressionECL(((Parenthesis) expressionItem).getExpression())+")");
 		} else if (expressionItem instanceof JdbcParameter) {
@@ -233,7 +214,7 @@ abstract public class ECLBuilder {
 	 * @return returns the ECL code for that SubSelect
 	 */
 	private String parseSubSelect(SubSelect subSelect) {
-		return new ECLBuilderSelect(dbMetadata).generateECL((subSelect).getSelectBody().toString());
+		return new ECLBuilderSelect(eclLayouts).generateECL((subSelect).getSelectBody().toString());
 	}
 	
 	/**
@@ -301,7 +282,7 @@ abstract public class ECLBuilder {
 			}
 		} else if (((InExpression) expressionItem).getRightItemsList() instanceof SubSelect) {
 			expression.append("SET(");
-			expression.append(new ECLBuilderSelect(dbMetadata).generateECL(((SubSelect) ((InExpression) expressionItem).getRightItemsList()).getSelectBody().toString()));
+			expression.append(new ECLBuilderSelect(eclLayouts).generateECL(((SubSelect) ((InExpression) expressionItem).getRightItemsList()).getSelectBody().toString()));
 			expression.append(","+inColumn+")");
 		}
 		return expression.toString();

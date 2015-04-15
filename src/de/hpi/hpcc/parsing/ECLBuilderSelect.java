@@ -8,7 +8,6 @@ import java.util.List;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
-import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
@@ -18,12 +17,11 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 
 public class ECLBuilderSelect extends ECLBuilder {
-public ECLBuilderSelect(HPCCDatabaseMetaData dbMetadata) {
-		super(dbMetadata);
+public ECLBuilderSelect(ECLLayouts eclLayouts) {
+		super(eclLayouts);
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -38,7 +36,7 @@ public ECLBuilderSelect(HPCCDatabaseMetaData dbMetadata) {
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
 	public String generateECL(String sql) {
-		sqlParser = new SQLParserSelect(sql);
+		sqlParser = new SQLParserSelect(sql, eclLayouts);
 		StringBuilder eclCode = new StringBuilder();
 		
     	generateFrom(sqlParser, eclCode);
@@ -125,7 +123,7 @@ public ECLBuilderSelect(HPCCDatabaseMetaData dbMetadata) {
 	    	} else if (table instanceof SubSelect){
 	    		from.append("(");
 	    		String innerStatement = sqlParser.trimInnerStatement(table.toString());
-	    		from.append(new ECLBuilderSelect(dbMetadata).generateECL(innerStatement));
+	    		from.append(new ECLBuilderSelect(eclLayouts).generateECL(innerStatement));
 	    		from.append(")");
 	    	}
 		}
@@ -188,7 +186,7 @@ public ECLBuilderSelect(HPCCDatabaseMetaData dbMetadata) {
 				StringBuilder selectItemString = new StringBuilder();
 				if (((SelectExpressionItem) selectItem).getAlias() != null) {
 					if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getAllColumns(), ((SelectExpressionItem) selectItem).getAlias().getName())) {
-						String dataType = ECLLayouts.getECLDataType(sqlParser.getAllTables().get(0), ((SelectExpressionItem) selectItem).getAlias().getName(), dbMetadata);
+						String dataType = eclLayouts.getECLDataType(sqlParser.getAllTables().get(0), ((SelectExpressionItem) selectItem).getAlias().getName());
 	   					selectItemString.append(dataType+" ");
 					}			   						
 	   				selectItemString.append(((SelectExpressionItem) selectItem).getAlias().getName());
