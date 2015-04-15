@@ -55,6 +55,7 @@ public class HPCCStatement implements Statement{
 		whiteList.add("dx");
 		whiteList.add("master_query_global_temp");
 		whiteList.add("observation_fact");
+		whiteList.add("concept_dimension");
 		whiteList.add("provider_dimension");
 		whiteList.add("visit_dimension");
 		whiteList.add("patient_dimension");
