@@ -15,6 +15,7 @@
 	<property name="libLocation" location="lib"/>
 	<property name="sqlParserVersion" value="0.9.3-SNAPSHOT"/>
 	<property name="sqlParser" value="jsqlparser-${sqlParserVersion}.jar"/>
+	<property name="cornHttpClient" value="corn-httpclient-1.0.8.jar"/>
 	
 	<target name="init">
 		<tstamp/>
@@ -36,6 +37,7 @@
 			<src path="${logging}"/>
 			<classpath>
 				<pathelement path="${libLocation}/${sqlParser}"/>
+				<pathelement path="${libLocation}/${cornHttpClient}"/>
 			</classpath>
 		</javac>
 	</target>
@@ -46,6 +48,7 @@
 			<fileset dir="${build}" includes="${parsing}/*.class" />
 			<fileset dir="${build}" includes="${logging}/*.class" />
 			<zipgroupfileset dir="lib" includes="${sqlParser}" />
+			<zipgroupfileset dir="lib" includes="${cornHttpClient}" />
 			<metainf dir="${extra}" includes="**/java.sql.Driver"/>
 		</jar>
 	</target>
