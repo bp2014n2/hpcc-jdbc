@@ -1,4 +1,7 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.create;
+
+import de.hpi.hpcc.parsing.ECLBuilder;
+import de.hpi.hpcc.parsing.ECLLayouts;
 
 
 public class ECLBuilderCreate extends ECLBuilder {
@@ -16,18 +19,8 @@ public class ECLBuilderCreate extends ECLBuilder {
 	public String generateECL(String sql) {
 		sqlParser = new SQLParserCreate(sql, eclLayouts);
 		StringBuilder eclCode = new StringBuilder();
-		String tableName = ((SQLParserCreate) sqlParser).getTableName();
 		eclCode.append("OUTPUT(DATASET([],{");
-		//remove "RECORD " at beginning of Layout definition
-		String record = eclLayouts.getLayout(tableName);
-
-		String recordString = null;
-		if(record == null) {
-			recordString = ((SQLParserCreate) sqlParser).getRecord();
-		} else {
-			recordString = record.toString();
-			recordString = recordString.substring(7, recordString.length() - 6).replace(";", ",");
-		}
+		String recordString = sqlParser.getRecord();
 		eclCode.append(recordString);
 		eclCode.append("}),,'~%NEWTABLE%',OVERWRITE);");
 		return eclCode.toString();

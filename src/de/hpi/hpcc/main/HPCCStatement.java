@@ -15,13 +15,13 @@ import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLEngine;
-import de.hpi.hpcc.parsing.ECLEngineCreate;
-import de.hpi.hpcc.parsing.ECLEngineDrop;
-import de.hpi.hpcc.parsing.ECLEngineInsert;
-import de.hpi.hpcc.parsing.ECLEngineSelect;
-import de.hpi.hpcc.parsing.ECLEngineUpdate;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
+import de.hpi.hpcc.parsing.create.ECLEngineCreate;
+import de.hpi.hpcc.parsing.drop.ECLEngineDrop;
+import de.hpi.hpcc.parsing.insert.ECLEngineInsert;
+import de.hpi.hpcc.parsing.select.ECLEngineSelect;
+import de.hpi.hpcc.parsing.update.ECLEngineUpdate;
 
 public class HPCCStatement implements Statement{
 	protected static final Logger logger = HPCCLogger.getLogger();
@@ -69,7 +69,7 @@ public class HPCCStatement implements Statement{
 		
 		String sqlStatementTemp = ECLEngine.escapeToAppropriateSQL(sqlStatement);
 		ECLLayouts eclLayouts = new ECLLayouts(connection.getDatabaseMetaData());
-		SQLParser sqlParser = new SQLParser(sqlStatementTemp, eclLayouts);
+		SQLParser sqlParser = SQLParser.getInstance(sqlStatementTemp, eclLayouts);
 		List<String> tables = sqlParser.getAllTables();
 		
 		if (federatedDatabase) {

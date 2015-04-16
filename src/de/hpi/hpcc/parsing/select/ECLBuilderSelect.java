@@ -1,4 +1,4 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.select;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,15 +18,21 @@ import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
+import de.hpi.hpcc.parsing.ECLBuilder;
+import de.hpi.hpcc.parsing.ECLLayouts;
 
 public class ECLBuilderSelect extends ECLBuilder {
-public ECLBuilderSelect(ECLLayouts eclLayouts) {
+
+	
+	protected SQLParserSelect sqlParser;
+	
+	
+	public ECLBuilderSelect(ECLLayouts eclLayouts) {
 		super(eclLayouts);
 		// TODO Auto-generated constructor stub
 	}
 	
 
-	protected SQLParserSelect sqlParser;
 	//	private boolean hasAlias = false;
 	/**
 	 * This method generates ECL code from a given SQL code. 

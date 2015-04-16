@@ -50,11 +50,8 @@ public class ECLLayouts {
 	}
 
 	
-	public boolean isInt(HPCCColumnMetaData column) {	
-		if (column.getEclType().toString().toLowerCase().matches("(unsigned.*|integer.*)")) {
-			return true;
-		}
-		return false;
+	private boolean isInt(HPCCColumnMetaData column) {	
+		return column.getEclType().toString().toLowerCase().matches("(unsigned.*|integer.*)");
 	}
 	
 	public boolean isColumnOfIntInAnyTable(List<String> tables, String column) {

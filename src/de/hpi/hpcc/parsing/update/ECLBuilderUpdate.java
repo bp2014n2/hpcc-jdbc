@@ -1,19 +1,24 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.update;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 
 import net.sf.jsqlparser.expression.Expression;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
+import de.hpi.hpcc.parsing.ECLBuilder;
+import de.hpi.hpcc.parsing.ECLLayouts;
 
 public class ECLBuilderUpdate extends ECLBuilder {
 
+	
+	SQLParserUpdate sqlParser;
+	
+	
 	public ECLBuilderUpdate(ECLLayouts eclLayouts) {
 		super(eclLayouts);
 		// TODO Auto-generated constructor stub
 	}
 	
-	SQLParserUpdate sqlParser;
 	
 	/**
 	 * This method generates ECL code from a given SQL code. 
@@ -70,7 +75,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			
 			tableColumnString += (tableColumnString.equals("")? "":", ");
 			if (HPCCJDBCUtils.containsStringCaseInsensitive(columns, column)) {
-				String expr = sqlParser.getExpressions().get(sqlParser.getColumnsToLowerCase().indexOf(column)).toString();
+				String expr = sqlParser.getExpressions().get(sqlParser.getColumnsToLowerCase().indexOf(column.toLowerCase())).toString();
 				expr = expr.equals("NULL")? "''" : expr;
 				tableColumnString += eclLayouts.getECLDataType(sqlParser.getName(), column)+" "+column+" := "+expr;
 			} else {

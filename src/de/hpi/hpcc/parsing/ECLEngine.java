@@ -30,6 +30,11 @@ import java.util.regex.Pattern;
 import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.main.*;
+import de.hpi.hpcc.parsing.create.ECLEngineCreate;
+import de.hpi.hpcc.parsing.drop.ECLEngineDrop;
+import de.hpi.hpcc.parsing.insert.ECLEngineInsert;
+import de.hpi.hpcc.parsing.select.ECLEngineSelect;
+import de.hpi.hpcc.parsing.update.ECLEngineUpdate;
 
 public abstract class ECLEngine
 {
@@ -56,15 +61,15 @@ public abstract class ECLEngine
     public static ECLEngine getInstance (HPCCConnection conn, HPCCDatabaseMetaData dbMetadata, String sqlQuery) throws SQLException{
     	sqlQuery = escapeToAppropriateSQL(sqlQuery);
     	switch(SQLParser.sqlIsInstanceOf(sqlQuery)) {
-    	case "Select":
+    	case SELECT:
     		return new ECLEngineSelect(conn, dbMetadata);
-    	case "Insert":
+    	case INSERT:
     		return new ECLEngineInsert(conn, dbMetadata);
-    	case "Update":
+    	case UPDATE:
     		return new ECLEngineUpdate(conn, dbMetadata);
-    	case "Drop":
+    	case DROP:
     		return new ECLEngineDrop(conn, dbMetadata);
-    	case "Create":
+    	case CREATE:
     		return new ECLEngineCreate(conn, dbMetadata);
     	default:
     		System.out.println("type of sql not recognized"+SQLParser.sqlIsInstanceOf(sqlQuery));

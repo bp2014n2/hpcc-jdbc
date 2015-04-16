@@ -1,4 +1,4 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.insert;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -7,15 +7,20 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import net.sf.jsqlparser.statement.select.WithItem;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
+import de.hpi.hpcc.parsing.ECLBuilder;
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
 
 public class ECLBuilderInsert extends ECLBuilder {
+	
+	SQLParserInsert sqlParser;
+	
+	
 	public ECLBuilderInsert(ECLLayouts eclLayouts) {
 		super(eclLayouts);
 		// TODO Auto-generated constructor stub
 	}
 	
-	SQLParserInsert sqlParser;
-
 	/**
 	 * This method generates ECL code from a given SQL code. 
 	 * Therefore it delegates the generation to the appropriate method, 
