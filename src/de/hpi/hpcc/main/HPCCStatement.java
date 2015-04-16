@@ -59,8 +59,10 @@ public class HPCCStatement implements Statement{
 		whiteList.add("visit_dimension");
 		whiteList.add("patient_dimension");
 		whiteList.add("modifier_dimension");
+		whiteList.add("concept_dimension");
 		whiteList.add("qt_patient_set_collection");
 		whiteList.add("qt_patient_env_collection");
+		whiteList.add("avk_fdb_t_leistungskosten");
 		
 		result = null;
 		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);

@@ -278,10 +278,12 @@ abstract public class ECLBuilder {
 		expression.append(" IN ");
 		if (((InExpression) expressionItem).getRightItemsList() instanceof ExpressionList) {
 			expression.append("[");
+			String expressionList = "";
 			for (Expression exp : ((ExpressionList) ((InExpression) expressionItem).getRightItemsList()).getExpressions()) {
-				expression.append(parseExpressionECL(exp));
-			expression.append("]");
+				expressionList += (expressionList.equals("")?"":", ");
+				expressionList += parseExpressionECL(exp);
 			}
+			expression.append(expressionList).append("]");
 		} else if (((InExpression) expressionItem).getRightItemsList() instanceof SubSelect) {
 			expression.append("SET(");
 			expression.append(new ECLBuilderSelect(eclLayouts).generateECL(((SubSelect) ((InExpression) expressionItem).getRightItemsList()).getSelectBody().toString()));
