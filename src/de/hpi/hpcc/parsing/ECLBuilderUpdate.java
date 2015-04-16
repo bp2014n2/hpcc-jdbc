@@ -25,6 +25,17 @@ public class ECLBuilderUpdate extends ECLBuilder {
 	public String generateECL(String sql) {
 		sqlParser = new SQLParserUpdate(sql, eclLayouts);
 		StringBuilder eclCode = new StringBuilder();
+//		String tableName = sqlParser.getAllTables().get(0).toLowerCase();
+//		StringBuilder transformFunction = new StringBuilder();
+//		String transformResultType = tableName + "_record";
+//		transformFunction.append(transformResultType + " update(" + transformResultType + " l, " + transformResultType + " r) := TRANSFORM\n");
+//		for (String col : eclLayouts.getAllColumns(tableName)) {
+//			if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getColumns(),col)) {
+//				transformFunction.append("SELF." + col + " := IF(r." + col +" = " + sqlParser.isInt(col)?"0":"''" + ", l." + col + ", r." + col +");\n");
+//			} else {
+//				
+//			}
+//		}
 		
 		StringBuilder preSelection = new StringBuilder();
 		if (sqlParser.getWhere() != null) {
@@ -34,7 +45,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			encapsulateWithBrackets(preSelection);
 		}
 		
-		eclCode.append("updates := ");
+		eclCode.append("toUpdate := ");
 		StringBuilder updateTable = new StringBuilder();
 		updateTable.append(sqlParser.getName());
 		updateTable.append(preSelection.toString());
