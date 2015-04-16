@@ -9,24 +9,27 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import de.hpi.hpcc.parsing.ECLBuilder;
-import de.hpi.hpcc.parsing.ECLBuilderSelect;
-import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.create.ECLBuilderCreate;
+import de.hpi.hpcc.parsing.drop.ECLBuilderDrop;
+import de.hpi.hpcc.parsing.insert.ECLBuilderInsert;
+import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
+import de.hpi.hpcc.parsing.update.ECLBuilderUpdate;
 
 public class ECLBuilderTest {
 	
-	
+	private static ECLLayoutsStub eclLayouts = new ECLLayoutsStub(null);
 	
 	@BeforeClass
 	public static void initialize() {
 //		eclBuilder = new ECLBuilder();
-		ECLLayouts.setLayouts("mytable", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
-		ECLLayouts.setLayouts("mytablea", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
-		ECLLayouts.setLayouts("mytableb", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
+		eclLayouts.setLayout("mytable", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
+		eclLayouts.setLayout("mytablea", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
+		eclLayouts.setLayout("mytableb", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
 	}
 	
 	@Test
 	public void shouldTranslateSimpleSelect() throws SQLException {
-		private ECLBuilderSelect eclBuilder = new ECLBuilderSelect();
+		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		assertEquals("TABLE(myTable, {myColumn, myColumnA, myColumnB})", eclBuilder.generateECL("select * from mySchema.myTable"));
 		assertEquals("TABLE(myTable, {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable"));
 		assertEquals("DEDUP(TABLE(myTable, {myColumn, myColumnA, myColumnB}), All)", eclBuilder.generateECL("select distinct * from mySchema.myTable"));
@@ -36,6 +39,7 @@ public class ECLBuilderTest {
 
 	@Test
 	public void shouldTranslateSelectWithWhere() {
+		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		assertEquals("TABLE(myTable(myColumn = 'foo'), {myColumn, myColumnA, myColumnB})", eclBuilder.generateECL("select * from mySchema.myTable where myColumn = 'foo'"));
 		assertEquals("TABLE(myTable(myColumn = 'foo'), {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable where myColumn = 'foo'"));
 		assertEquals("TABLE(myTable(myColumn = ''), {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable where myColumn is NULL"));
@@ -43,12 +47,14 @@ public class ECLBuilderTest {
 	
 	@Test
 	public void shouldTranslateSelectWithLike() {
+		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		assertEquals("TABLE(myTable(myColumn[1..3] = 'foo'), {myColumn, myColumnA, myColumnB})", eclBuilder.generateECL("select * from mySchema.myTable where myColumn like 'foo%'"));
 		assertEquals("TABLE(myTable(myColumn[1..3] = 'foo'), {myColumn, myColumnA, myColumnB})", eclBuilder.generateECL("select * from mySchema.myTable where myColumn like 'foo'"));
 	}
 	
 	@Test
 	public void shouldTranslateSelectWithOrderBy() {
+		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		assertEquals("SORT(TABLE(myTable, {myColumn, myColumnA, myColumnB}), myColumn)", eclBuilder.generateECL("select * from mySchema.myTable order by myColumn"));
 		assertEquals("SORT(TABLE(myTable, {myColumn}), myColumn)", eclBuilder.generateECL("select myColumn from mySchema.myTable order by myColumn"));
 		assertEquals("DEDUP(SORT(TABLE(myTable, {myColumn}), myColumn), All)", eclBuilder.generateECL("select distinct myColumn from mySchema.myTable order by myColumn"));
@@ -58,6 +64,7 @@ public class ECLBuilderTest {
 	
 	@Test 
 	public void shouldTranslateSelectWithGroupBy() {
+		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		assertEquals("TABLE(myTable, {myColumn}, myColumn)", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn"));
 		assertEquals("TABLE(myTable, {myColumn}, myColumnA, myColumnB)", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumnA, myColumnB"));
 		assertEquals("TABLE(myTable, {count_myColumn := COUNT(GROUP)}, myColumn)", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable group by myColumn"));
@@ -66,40 +73,47 @@ public class ECLBuilderTest {
 	
 	@Test
 	public void shouldTranslateSelectWithCount() {
+		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		assertEquals("COUNT(myTable)", eclBuilder.generateECL("select count(*) from mySchema.myTable"));
 		assertEquals("COUNT(myTable)", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable"));
 	}
 		
 	@Test
 	public void shouldTranslateSelectWithLimit() {
+		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		assertEquals("CHOOSEN(TABLE(myTable, {myColumn}), 1)", eclBuilder.generateECL("select myColumn from mySchema.myTable limit 1"));
 	}
 	
 	@Test @Ignore
 	public void shouldTranslateSelectWithJoin() {
+		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 //		not implemented yet
 		assertEquals("JOIN(myTableA, myTableB, left.myColumnA = right.myColumnB), {myColumn}", eclBuilder.generateECL("select myColumn from mySchema.myTableA, mySchema.myTableB where myTableA.columnA = myTableB.columnB"));
 	}
 	
 	@Test
 	public void shouldTranslateSelectWithSubselectInFrom() {
+		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		assertEquals("TABLE((TABLE(myTable, {myColumnA, myColumnB})), {myColumnA})", eclBuilder.generateECL("select myColumnA from (select myColumnA, myColumnB from myTable)"));
 	}
 	
 	@Test
 	public void shouldTranslateSelectWithSubselectInWhere() {
+		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		assertEquals("TABLE(myTableA(myColumnB IN SET(TABLE(myTableB, {myColumnC}),myColumnB)), {myColumnA})", eclBuilder.generateECL("select myColumnA from myTableA where myColumnB in (select myColumnC from myTableB)"));
 //		assertEquals("Table(myTableA(myColumnB in dictionary([{'myValue1'}, {'myValue2'}], {STRING15 myColumnB})), {myColumnA})", eclBuilder.generateECL("select myColumnA from myTableA where myColumnB in ('myValue1', 'myValue2')"));
 	}
 	
 	@Test @Ignore
 	public void shouldTranslateSelectWithFunction() {
+		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 //		not implemented yet
 		assertEquals("", eclBuilder.generateECL("select nextval('mySequence')"));
 	}
 	
 	@Test
 	public void shouldTranslateInsertInto() {
+		ECLBuilderInsert eclBuilder = new ECLBuilderInsert(eclLayouts);
 		assertEquals("OUTPUT(DATASET([{valueA, valueB, valueC}], myTable_record),,'~%NEWTABLE%', overwrite);\n",eclBuilder.generateECL("insert into myTable values (valueA, valueB, valueC)"));
 		assertEquals("OUTPUT(TABLE(DATASET([{valueA}], {STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, STRING50 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) values (valueA)"));
 		assertEquals("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING50 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB)"));
@@ -110,19 +124,21 @@ public class ECLBuilderTest {
 	
 	@Test
 	public void shouldTranslateUpdate() {
+		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate(eclLayouts);
 		assertEquals("updates := TABLE(TABLE(myTable, {myColumnA, myColumnB}), {STRING50 myColumn := 'myValue', myColumnA, myColumnB});\nOUTPUT(updates,, '~%NEWTABLE%', overwrite);\n",eclBuilder.generateECL("update myTable set myColumn = 'myValue'"));
 		assertEquals("updates := TABLE(TABLE(myTable(myColumnB = 'anotherValue'), {myColumn, myColumnB}), {myColumn, STRING50 myColumnA := 'myValue', myColumnB});\nOUTPUT(myTable(NOT(myColumnB = 'anotherValue'))+updates,, '~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"));	
 	} 
 	
 	@Test
 	public void shouldTranslateDropTable() {
+		ECLBuilderDrop eclBuilder = new ECLBuilderDrop(eclLayouts);
 		assertEquals("Std.File.DeleteLogicalFile('~i2b2demodata::myTable', true)", eclBuilder.generateECL("drop table myTable"));		
 	}
 	
 	@Test
 	public void shouldCreateTable() {
+		ECLBuilderCreate eclBuilder = new ECLBuilderCreate(eclLayouts);
 		assertEquals("OUTPUT(DATASET([],{INTEGER5 myColumnA, STRING37 myColumnB, STRING25 myColumnC}),,'~%NEWTABLE%',OVERWRITE);", eclBuilder.generateECL("create table newTable (myColumnA int, myColumnB varchar(37), myColumnC timestamp)"));
-		assert(ECLLayouts.getLayouts().containsKey("myTable"));
 		assertEquals("OUTPUT(DATASET([],{INTEGER5 myColumnA, STRING12 myColumnB}),,'~%NEWTABLE%',OVERWRITE);", eclBuilder.generateECL("create temp table newTable (myColumnA int, myColumnB varchar(12))"));
 	}
 	

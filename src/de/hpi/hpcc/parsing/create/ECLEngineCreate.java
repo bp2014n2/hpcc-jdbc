@@ -1,4 +1,4 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.create;
 
 import java.sql.SQLException;
 import java.util.LinkedList;
@@ -7,6 +7,7 @@ import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCConnection;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.main.HPCCDatabaseMetaData;
+import de.hpi.hpcc.parsing.ECLEngine;
 
 public class ECLEngineCreate extends ECLEngine {
 

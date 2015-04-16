@@ -1,11 +1,22 @@
 package de.hpi.hpcc.parsing;
 
 import java.io.StringReader;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
 import de.hpi.hpcc.main.HPCCJDBCUtils;
+import de.hpi.hpcc.parsing.create.ECLEngineCreate;
+import de.hpi.hpcc.parsing.create.SQLParserCreate;
+import de.hpi.hpcc.parsing.drop.ECLEngineDrop;
+import de.hpi.hpcc.parsing.drop.SQLParserDrop;
+import de.hpi.hpcc.parsing.insert.ECLEngineInsert;
+import de.hpi.hpcc.parsing.insert.SQLParserInsert;
+import de.hpi.hpcc.parsing.select.ECLEngineSelect;
+import de.hpi.hpcc.parsing.select.SQLParserSelect;
+import de.hpi.hpcc.parsing.update.ECLEngineUpdate;
+import de.hpi.hpcc.parsing.update.SQLParserUpdate;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
@@ -21,13 +32,15 @@ import net.sf.jsqlparser.statement.select.SubSelect;
 import net.sf.jsqlparser.statement.update.Update;
 import net.sf.jsqlparser.util.TablesNamesFinder;
 
-public class SQLParser{
+abstract public class SQLParser{
 	
 	//public static final String parameterizedPrefix = "var";
-	static CCJSqlParserManager parserManager = new CCJSqlParserManager();
-	Statement statement;
-	Expression expression;
-	ECLLayouts eclLayouts;
+	protected static CCJSqlParserManager parserManager = new CCJSqlParserManager();
+	protected Statement statement;
+	protected Expression expression;
+	protected ECLLayouts eclLayouts;
+	
+	public enum Types {CREATE, DROP, INSERT, SELECT, UPDATE, OTHER};
 
 	
 	public SQLParser(Expression expression, ECLLayouts eclLayouts) {
@@ -59,7 +72,7 @@ public class SQLParser{
 		return "";
 	}
 	
-	public static String sqlIsInstanceOf(String sql) {
+	public static Types sqlIsInstanceOf(String sql) {
 		try {
 			long timeBefore = System.currentTimeMillis();
 			Statement statement = parserManager.parse(new StringReader(sql));
@@ -67,21 +80,40 @@ public class SQLParser{
 			long timeDifference = timeAfter-timeBefore;
 			HPCCJDBCUtils.traceoutln(Level.INFO, "Time for parsing SQL to object tree: "+timeDifference);
 			if (statement instanceof Select) {
-				return "Select";
+				return Types.SELECT;
 			} else if (statement instanceof Insert) {
-				return "Insert";
+				return Types.INSERT;
 			} else if (statement instanceof Drop) {
-				return "Drop";
+				return Types.DROP;
 			} else if (statement instanceof Update) {
-				return "Update";
+				return Types.UPDATE;
 			} else if (statement instanceof CreateTable) {
-				return "Create";
+				return Types.CREATE;
 			}
 		} catch (JSQLParserException e) {
 			System.out.println("No valid SQL:");
 			e.printStackTrace();
 		}
-		return "";
+		return Types.OTHER;
+	}
+	
+	public static SQLParser getInstance(String sql, ECLLayouts eclLayouts) {
+		switch(sqlIsInstanceOf(sql)) {
+    	case SELECT:
+    		return new SQLParserSelect(sql, eclLayouts);
+    	case INSERT:
+    		return new SQLParserInsert(sql, eclLayouts);
+    	case UPDATE:
+    		return new SQLParserUpdate(sql, eclLayouts);
+    	case DROP:
+    		return new SQLParserDrop(sql, eclLayouts);
+    	case CREATE:
+    		return new SQLParserCreate(sql, eclLayouts);
+    	default:
+    		System.out.println("type of sql not recognized"+SQLParser.sqlIsInstanceOf(sql));
+//    		throw new SQLException();
+    		return null;
+    	}
 	}
 	
 	public List<String> getAllTables() {

@@ -1,4 +1,4 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.insert;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -11,10 +11,11 @@ import de.hpi.hpcc.main.HPCCConnection;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
+import de.hpi.hpcc.parsing.ECLEngine;
 
 public class ECLEngineInsert extends ECLEngine {
 
-	private StringBuilder           eclCode = new StringBuilder();
+	private StringBuilder eclCode = new StringBuilder();
 	private SQLParserInsert sqlParser;
 	
 	public ECLEngineInsert(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
