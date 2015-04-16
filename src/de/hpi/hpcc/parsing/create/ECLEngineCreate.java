@@ -44,6 +44,7 @@ public class ECLEngineCreate extends ECLEngine {
 			if(recordString == null) {
 				recordString = ((SQLParserCreate) sqlParser).getRecord();
 			} else {
+				// TODO: better!
 				recordString = recordString.substring(7, recordString.length() - 6).replace(";", ",");
 			}
 	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
