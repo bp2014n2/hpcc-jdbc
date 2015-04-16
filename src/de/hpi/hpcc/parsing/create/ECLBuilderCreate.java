@@ -19,18 +19,8 @@ public class ECLBuilderCreate extends ECLBuilder {
 	public String generateECL(String sql) {
 		sqlParser = new SQLParserCreate(sql, eclLayouts);
 		StringBuilder eclCode = new StringBuilder();
-		String tableName = sqlParser.getTableName();
 		eclCode.append("OUTPUT(DATASET([],{");
-		//remove "RECORD " at beginning of Layout definition
-//		String record = eclLayouts.getLayout(tableName);
-
-//		String recordString = null;
-//		if(record == null) {
 		String recordString = sqlParser.getRecord();
-		/*} else {
-			recordString = record.toString();
-			recordString = recordString.substring(7, recordString.length() - 6).replace(";", ",");
-		}*/
 		eclCode.append(recordString);
 		eclCode.append("}),,'~%NEWTABLE%',OVERWRITE);");
 		return eclCode.toString();

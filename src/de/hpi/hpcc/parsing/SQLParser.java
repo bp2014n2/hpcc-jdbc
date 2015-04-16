@@ -1,21 +1,15 @@
 package de.hpi.hpcc.parsing;
 
 import java.io.StringReader;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
 import de.hpi.hpcc.main.HPCCJDBCUtils;
-import de.hpi.hpcc.parsing.create.ECLEngineCreate;
 import de.hpi.hpcc.parsing.create.SQLParserCreate;
-import de.hpi.hpcc.parsing.drop.ECLEngineDrop;
 import de.hpi.hpcc.parsing.drop.SQLParserDrop;
-import de.hpi.hpcc.parsing.insert.ECLEngineInsert;
 import de.hpi.hpcc.parsing.insert.SQLParserInsert;
-import de.hpi.hpcc.parsing.select.ECLEngineSelect;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
-import de.hpi.hpcc.parsing.update.ECLEngineUpdate;
 import de.hpi.hpcc.parsing.update.SQLParserUpdate;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;

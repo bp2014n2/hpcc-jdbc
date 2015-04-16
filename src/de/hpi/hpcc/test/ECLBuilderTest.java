@@ -8,7 +8,6 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.create.ECLBuilderCreate;
 import de.hpi.hpcc.parsing.drop.ECLBuilderDrop;
 import de.hpi.hpcc.parsing.insert.ECLBuilderInsert;
