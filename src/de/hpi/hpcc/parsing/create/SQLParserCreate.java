@@ -2,6 +2,7 @@ package de.hpi.hpcc.parsing.create;
 
 import java.io.StringReader;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
@@ -39,23 +40,41 @@ public class SQLParserCreate extends SQLParser {
 
 	private String parseDataType(String dataType) {
 		dataType = dataType.toLowerCase();
-		String newDataType = "";
-		String charLength = "";
-		if (dataType.matches(Pattern.quote("varchar (")+"[0-9]*"+Pattern.quote(")"))) {
-			charLength = getCharLength(dataType);
-			dataType = "varchar";
+		int charLength = 0;
+		int precision = 0;
+		int scale = 0;
+		boolean hasScale = false;
+		
+		Matcher matcher = Pattern.compile("(varchar|character\\s+varying)\\s*\\(\\s*(\\d+\\s*)\\)", Pattern.CASE_INSENSITIVE).matcher(dataType);
+		if (matcher.find()) {
+			dataType = matcher.group(1);
+			charLength = Integer.parseInt(matcher.group(2));
+		} 
+		matcher = Pattern.compile("(numeric)\\s*\\(\\s*(\\d+)\\s*(,\\s*(\\d+)\\s*\\))?", Pattern.CASE_INSENSITIVE).matcher(dataType);
+		if (matcher.find()) {
+			dataType = matcher.group(1);
+			precision = Integer.parseInt(matcher.group(2));
+			if (matcher.group(4) != null) {
+				scale = Integer.parseInt(matcher.group(4));
+				hasScale = true;
+			}
 		}
 		switch(dataType) {
-		case "int": newDataType = "INTEGER5"; break;
-		case "varchar": newDataType = "STRING"+charLength; break;
-		case "timestamp": newDataType = "STRING25"; break;
-		default: newDataType = "unknown";
+		case "serial": 
+		case "int": 
+		case "integer": return "INTEGER5";
+		case "bigint": 
+		case "bigserial": return "INTEGER8";
+		case "text": return "STRING";
+		case "numeric": 
+			String eclDataType = "DECIMAL"+precision;
+			eclDataType += hasScale?"_"+scale : "";
+			return eclDataType;
+		case "varchar":
+		case "character varying": return "STRING"+charLength;
+		case "timestamp": return "STRING25";
+		default: return "unknown";
 		}
-		return newDataType;
-	}
-
-	private String getCharLength(String dataType) {
-		return dataType.substring(9, dataType.length()-1);
 	}
 
 	public String getFullName() {

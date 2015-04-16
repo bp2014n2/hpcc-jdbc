@@ -32,7 +32,7 @@ public class HPCCStatement implements Statement{
     protected ResultSet result = null;
     protected String name;
     
-    private boolean federatedDatabase = true;
+    private boolean federatedDatabase = false;
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;
@@ -84,11 +84,7 @@ public class HPCCStatement implements Statement{
 	private boolean sendQueryToHPCC(String sqlStatement) throws SQLException{
 		try {
 			this.eclEngine = ECLEngine.getInstance(connection, connection.getDatabaseMetaData(), sqlStatement);
-			long timeBefore = System.currentTimeMillis();
 			String eclCode = eclEngine.parseEclCode(sqlStatement);
-			long timeAfter = System.currentTimeMillis();
-			long timeDifference = timeAfter-timeBefore;
-			HPCCJDBCUtils.traceoutln(Level.INFO, "Time for parsing SQL to ECL: "+timeDifference+ " - "+sqlStatement);
 			connection.sendRequest(eclCode);
 			NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
 			if (rowList != null) {
