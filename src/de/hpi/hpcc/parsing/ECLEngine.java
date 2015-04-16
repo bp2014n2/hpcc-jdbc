@@ -46,7 +46,7 @@ public abstract class ECLEngine
 	protected List<HPCCColumnMetaData>    expectedretcolumns = null;
     protected HashMap<String, HPCCColumnMetaData> availablecols = null;
     private static final String			HPCCEngine = "THOR";
-    private ECLSubstringDefinition substring = null;
+//    private ECLSubstringDefinition substring = null;
     protected ECLLayouts eclLayouts;
 
     public ECLEngine(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
@@ -85,9 +85,9 @@ public abstract class ECLEngine
 
 			sb.append("&eclText=\n");
 			
-			if (substring != null) {
-				eclCode = new StringBuilder(createSubstring());
-			}
+//			if (substring != null) {
+//				eclCode = new StringBuilder(createSubstring());
+//			}
 			sb.append(eclCode.toString());
 			sb.append("\n\n//"+eclMetaEscape(sqlQuery));
 //			System.out.println(sb.toString());
@@ -97,14 +97,14 @@ public abstract class ECLEngine
 		}
 		return null;
     }
-    
+  /*  
     protected String createSubstring() {
 		String correctedEclCode = eclCode.toString().replace(
 				substring.toReplaceString(),
 				substring.toString());
 		return correctedEclCode;
     }
-    
+    */
     public static String escapeToAppropriateSQL(String sql) {
 		Pattern pattern = Pattern.compile("substring\\s*\\(\\s*(\\w+)\\s+from\\s+(\\d+)\\s+for\\s+(\\d+)\\s*\\)(\\s+as\\s+(\\w+))?", Pattern.CASE_INSENSITIVE);
 		Matcher matcher = pattern.matcher(sql);
@@ -130,9 +130,9 @@ public abstract class ECLEngine
 			if (selectMatcher.find() && alias == null) {
 				alias = column + "_substring";
 			}
-			this.substring = new ECLSubstringDefinition(column, alias, start, count);
+//			this.substring = new ECLSubstringDefinition(column, alias, start, count);
 			String substring = sql.substring(matcher.start(),matcher.end());
-			sql = sql.replace(substring, this.substring.toSql());
+//			sql = sql.replace(substring, this.substring.toSql());
 		}
 		if(sql.toLowerCase().contains("nextval")){
 			String sequence = sql.substring(sql.indexOf('(')+2, sql.indexOf(')')-1);

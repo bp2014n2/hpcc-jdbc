@@ -34,9 +34,6 @@ public class ECLLayouts {
 	}
 	
 	public LinkedHashSet<String> getAllColumns(String table) {
-		//ECLRecordDefinition recordDefinition = getLayouts(table);
-//		if (recordDefinition == null) return null;
-//		return recordDefinition.getColumnNames();
 		table = getFullTableName(table);
 		HPCCDFUFile file = dbMetadata.getDFUFile(table);
 		if(file != null) {

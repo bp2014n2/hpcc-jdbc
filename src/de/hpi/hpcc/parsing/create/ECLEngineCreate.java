@@ -38,15 +38,8 @@ public class ECLEngineCreate extends ECLEngine {
 			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
 			
-			String tableName = ((SQLParserCreate) sqlParser).getTableName().toLowerCase();
-			String recordString = eclLayouts.getLayout(tableName);
-			
-			if(recordString == null) {
-				recordString = ((SQLParserCreate) sqlParser).getRecord();
-			} else {
-				// TODO: better!
-				recordString = recordString.substring(7, recordString.length() - 6).replace(";", ",");
-			}
+			String recordString = ((SQLParserCreate) sqlParser).getRecord();
+
 	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
 	    	int i=0;
 	    	for (String column : recordString.split(",\\s*")) {
