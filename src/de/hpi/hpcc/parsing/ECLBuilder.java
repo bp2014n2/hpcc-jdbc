@@ -224,8 +224,16 @@ abstract public class ECLBuilder {
 	 * @param function can be e.g. an object representing "COUNT" or "AVG"
 	 * @return returns the ECL for the given function
 	 */
-	private String parseFunction(Function function) {	
-		return function.getName().toUpperCase()+encapsulateWithBrackets("GROUP");
+	private String parseFunction(Function function) {
+		String parameters = "";
+		if (function.getName().toUpperCase().equals("SUM")) {
+			if (function.getParameters().getExpressions().size() > 0) {
+				for (Expression e : function.getParameters().getExpressions()) {
+					if (e instanceof Column) parameters += ", " + ((Column) e).getColumnName();
+				}
+			}
+		}
+		return function.getName().toUpperCase()+encapsulateWithBrackets("GROUP"+parameters);
 	}
 	
 	/**

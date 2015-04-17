@@ -31,8 +31,9 @@ public class ECLBuilderUpdate extends ECLBuilder {
 		sqlParser = new SQLParserUpdate(sql, eclLayouts);
 		StringBuilder eclCode = new StringBuilder();
 		String tableName = sqlParser.getAllTables().get(0).toLowerCase();
-		ArrayList<String> tableList = new ArrayList();
-		tableList.add(tableName);
+		String fullTableName = tableName.contains(".") ? tableName.replace(".", "::") : "i2b2demodata::" + tableName;
+		ArrayList<String> tableList = new ArrayList<String>();
+		tableList.add(fullTableName);
 		StringBuilder transformFunction = new StringBuilder();
 		String transformResultType = tableName + "_record";
 		transformFunction.append(transformResultType + " update(" + transformResultType + " l, " + transformResultType + " r) := TRANSFORM\n");

@@ -118,7 +118,7 @@ public abstract class ECLEngine
 	}
     
     public String convertToAppropriateSQL(String sql) {
-    	Pattern pattern = Pattern.compile("substring\\s*\\(\\s*(\\w+)\\s+from\\s+(\\d+)\\s+for\\s+(\\d+)\\s*\\)(\\s+as\\s+(\\w+))?", Pattern.CASE_INSENSITIVE);
+    	Pattern pattern = Pattern.compile("substring\\s*\\(\\s*(\\w+)\\s+from\\s+(\\d+)\\s+for\\s+(\\d+)\\s*\\)(\\s+as\\s+(\\w+))?(\\s*(=|<|>|<=|>=)\\s*'?\\w+'?)?", Pattern.CASE_INSENSITIVE);
     	Pattern selectPattern = Pattern.compile("select\\s*(distinct\\s*)?(((count|sum|avg)\\(w*\\))?\\w*\\s*,\\s*)*\\s*substring\\s*\\(\\s*\\w+\\s+from\\s+\\d+\\s+for\\s+\\d+\\s*\\)(\\s+as\\s+\\w+)?", Pattern.CASE_INSENSITIVE);
     	Matcher matcher = pattern.matcher(sql);
     	Matcher selectMatcher = selectPattern.matcher(sql);
@@ -127,10 +127,12 @@ public abstract class ECLEngine
 			String alias = matcher.group(5);
 			int start = Integer.parseInt(matcher.group(2));
 			int count = Integer.parseInt(matcher.group(3));
-			if (selectMatcher.find() && alias == null) {
-				alias = column + "_substring";
-			}
 			this.substring = new ECLSubstringDefinition(column, alias, start, count);
+			if (selectMatcher.find()) {
+				if (alias == null) this.substring.setAlias(column + "_substring");
+			} else {
+				this.substring.setContext(matcher.group(6));
+			}
 			String substring = sql.substring(matcher.start(),matcher.end());
 			sql = sql.replace(substring, this.substring.toSql());
 		}
