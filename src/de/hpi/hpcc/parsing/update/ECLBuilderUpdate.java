@@ -100,7 +100,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			outputTable.append(")+");
 		}
 
-		outputTable.append("updates,, '~%NEWTABLE%', overwrite);\n");
+		outputTable.append("toUpdate,, '~%NEWTABLE%', overwrite);\n");
 		eclCode.append(outputTable.toString());
 		
 		return eclCode.toString();

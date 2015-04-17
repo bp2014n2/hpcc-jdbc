@@ -53,6 +53,7 @@ public class ECLLayouts {
 	
 	public boolean isColumnOfIntInAnyTable(List<String> tables, String column) {
 		for (String table : tables) {
+			table = getFullTableName(table);
 			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
 			for(String field : dfuFile.getAllTableFieldsStringArray()){
 				if(!field.equalsIgnoreCase(column)) {
@@ -115,28 +116,28 @@ public class ECLLayouts {
 		}
 	}
 
-	public String getLayoutOrdered(String table, List<String> orderedColumns) {
-		String name = getFullTableName(table);
-		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");
-		
-		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
-		List<Object> fields = Collections.list(dfuFile.getAllFields());
-		
-		for (String columnName : orderedColumns) {
-			for (Object field : fields) {
-				HPCCColumnMetaData column = (HPCCColumnMetaData) field;
-				if (!column.getColumnName().equals(columnName)) {
-					continue;
-				}
-				layout.append(column.getEclType());
-				layout.append(" ");
-				layout.append(column.getColumnName());
-				layout.append("; ");
-			}
-		}
-		layout.append("END;");
-		
-		return layout.toString();
-	}
+//	public String getLayoutOrdered(String table, List<String> orderedColumns) {
+//		String name = getFullTableName(table);
+//		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");
+//		
+//		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
+//		List<Object> fields = Collections.list(dfuFile.getAllFields());
+//		
+//		for (String columnName : orderedColumns) {
+//			for (Object field : fields) {
+//				HPCCColumnMetaData column = (HPCCColumnMetaData) field;
+//				if (!column.getColumnName().equalsIgnoreCase(columnName)) {
+//					continue;
+//				}
+//				layout.append(column.getEclType());
+//				layout.append(" ");
+//				layout.append(column.getColumnName());
+//				layout.append("; ");
+//			}
+//		}
+//		layout.append("END;");
+//		
+//		return layout.toString();
+//	}
 
 }

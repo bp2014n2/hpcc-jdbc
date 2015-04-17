@@ -209,7 +209,7 @@ public abstract class ECLEngine
 			table = table.split("\\.")[1];
 		}
 //		layoutsString.append(table+"_record := ");
-		layoutsString.append(eclLayouts.getLayoutOrdered(table, orderedColumns));
+		layoutsString.append(eclLayouts.getLayout(table));
 		layoutsString.append("\n");
 		
 		for (int i = 1; i<allTables.size(); i++) {

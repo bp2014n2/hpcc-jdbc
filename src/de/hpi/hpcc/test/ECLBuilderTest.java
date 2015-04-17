@@ -124,8 +124,8 @@ public class ECLBuilderTest {
 	@Test
 	public void shouldTranslateUpdate() {
 		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate(eclLayouts);
-		assertEquals("updates := TABLE(TABLE(myTable, {myColumnA, myColumnB}), {STRING50 myColumn := 'myValue', myColumnA, myColumnB});\nOUTPUT(updates,, '~%NEWTABLE%', overwrite);\n",eclBuilder.generateECL("update myTable set myColumn = 'myValue'"));
-		assertEquals("updates := TABLE(TABLE(myTable(myColumnB = 'anotherValue'), {myColumn, myColumnB}), {myColumn, STRING50 myColumnA := 'myValue', myColumnB});\nOUTPUT(myTable(NOT(myColumnB = 'anotherValue'))+updates,, '~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"));	
+		assertEquals("toUpdate := TABLE(TABLE(myTable, {myColumnA, myColumnB}), {STRING50 myColumn := 'myValue', myColumnA, myColumnB});\nOUTPUT(toUpdate,, '~%NEWTABLE%', overwrite);\n",eclBuilder.generateECL("update myTable set myColumn = 'myValue'"));
+		assertEquals("toUpdate := TABLE(TABLE(myTable(myColumnB = 'anotherValue'), {myColumn, myColumnB}), {myColumn, STRING50 myColumnA := 'myValue', myColumnB});\nOUTPUT(myTable(NOT(myColumnB = 'anotherValue'))+toUpdate,, '~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"));	
 	} 
 	
 	@Test
