@@ -1,4 +1,7 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.drop;
+
+import de.hpi.hpcc.parsing.ECLBuilder;
+import de.hpi.hpcc.parsing.ECLLayouts;
 
 public class ECLBuilderDrop extends ECLBuilder {
 	public ECLBuilderDrop(ECLLayouts eclLayouts) {

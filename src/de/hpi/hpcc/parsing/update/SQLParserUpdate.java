@@ -1,10 +1,12 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.update;
 
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.schema.Column;
@@ -12,7 +14,7 @@ import net.sf.jsqlparser.statement.update.Update;
 
 public class SQLParserUpdate extends SQLParser {
 
-	protected SQLParserUpdate(String sql, ECLLayouts eclLayouts) {
+	public SQLParserUpdate(String sql, ECLLayouts eclLayouts) {
 		super(sql, eclLayouts);
 		try {
 			if (parserManager.parse(new StringReader(sql)) instanceof Update) {
@@ -23,24 +25,30 @@ public class SQLParserUpdate extends SQLParser {
 		}
 	}
 	
-	protected String getName() {
+	public String getName() {
 		return ((Update) statement).getTables().get(0).getName();
 	}
 	
-	protected String getFullName() {
+	public String getFullName() {
 		return "i2b2demodata::"+getName();
 	}
 	
-	protected Expression getWhere() {
+	public Expression getWhere() {
 		return ((Update) statement).getWhere();
 	}
 	
-	protected LinkedHashSet<String> getAllCoumns() {
+	public Expression getWhereWithoutExists() {
+		Expression where = ((Update) statement).getWhere();
+		
+		return where;
+	}
+	
+	public LinkedHashSet<String> getAllCoumns() {
 		String table = ((Update) statement).getTables().get(0).getName();
 		return eclLayouts.getAllColumns(table);
 	}
 	
-	protected List<String> getColumns() {
+	public List<String> getColumns() {
 		List<Column> columns = ((Update) statement).getColumns();
 		List<String> columnNames = new ArrayList<String>();
 		for (Column column : columns) {
@@ -49,7 +57,7 @@ public class SQLParserUpdate extends SQLParser {
 		return columnNames;
 	}
 	
-	protected ArrayList<Expression> getExpressions() {
+	public ArrayList<Expression> getExpressions() {
 		return (ArrayList<Expression>) ((Update) statement).getExpressions();
 	}
 

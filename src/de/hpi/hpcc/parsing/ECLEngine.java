@@ -24,10 +24,17 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.main.*;
+import de.hpi.hpcc.parsing.create.ECLEngineCreate;
+import de.hpi.hpcc.parsing.drop.ECLEngineDrop;
+import de.hpi.hpcc.parsing.insert.ECLEngineInsert;
+import de.hpi.hpcc.parsing.select.ECLEngineSelect;
+import de.hpi.hpcc.parsing.update.ECLEngineUpdate;
 
 public abstract class ECLEngine
 {
@@ -39,7 +46,7 @@ public abstract class ECLEngine
 	protected List<HPCCColumnMetaData>    expectedretcolumns = null;
     protected HashMap<String, HPCCColumnMetaData> availablecols = null;
     private static final String			HPCCEngine = "THOR";
-    private String substring = null;
+    private ECLSubstringDefinition substring = null;
     protected ECLLayouts eclLayouts;
 
     public ECLEngine(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
@@ -54,15 +61,15 @@ public abstract class ECLEngine
     public static ECLEngine getInstance (HPCCConnection conn, HPCCDatabaseMetaData dbMetadata, String sqlQuery) throws SQLException{
     	sqlQuery = escapeToAppropriateSQL(sqlQuery);
     	switch(SQLParser.sqlIsInstanceOf(sqlQuery)) {
-    	case "Select":
+    	case SELECT:
     		return new ECLEngineSelect(conn, dbMetadata);
-    	case "Insert":
+    	case INSERT:
     		return new ECLEngineInsert(conn, dbMetadata);
-    	case "Update":
+    	case UPDATE:
     		return new ECLEngineUpdate(conn, dbMetadata);
-    	case "Drop":
+    	case DROP:
     		return new ECLEngineDrop(conn, dbMetadata);
-    	case "Create":
+    	case CREATE:
     		return new ECLEngineCreate(conn, dbMetadata);
     	default:
     		System.out.println("type of sql not recognized"+SQLParser.sqlIsInstanceOf(sqlQuery));
@@ -92,40 +99,42 @@ public abstract class ECLEngine
     }
     
     protected String createSubstring() {
-    	String subRange = substring.substring(substring.indexOf("["),
-				substring.indexOf("]") + 1);
-		String subOf = substring.substring(0, substring.indexOf("["));
-		String subName = substring.substring(substring.indexOf("as") + 3,
-				substring.length());
 		String correctedEclCode = eclCode.toString().replace(
-				subName + " := " + subOf,
-				subName + " := " + subOf + subRange);
+				substring.toReplaceString(),
+				substring.toString());
 		return correctedEclCode;
     }
     
     public static String escapeToAppropriateSQL(String sql) {
-		if(sql.toLowerCase().contains("substring")){
-			String substring = sql.toLowerCase().substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52);
-			substring = substring.replace("substring(", "").replace(" from ", "[").replace(" for ", "..").replace(")", "]");
-			String subRange = substring.substring(substring.indexOf("["), substring.indexOf("]")+1);
-			substring = substring.replace(subRange,"");
-			sql = sql.replace(sql.substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52),substring);
-		} else if(sql.toLowerCase().contains("nextval")){
-			String sequence = sql.substring(sql.indexOf('(')+2, sql.indexOf(')')-1);
-			sql = "select value as nextval from sequences where name = '"+sequence+"'";
+		Pattern pattern = Pattern.compile("substring\\s*\\(\\s*(\\w+)\\s+from\\s+(\\d+)\\s+for\\s+(\\d+)\\s*\\)(\\s+as\\s+(\\w+))?", Pattern.CASE_INSENSITIVE);
+		Matcher matcher = pattern.matcher(sql);
+		if(matcher.find()){
+			String substring = sql.substring(matcher.start(),matcher.end());
+			String replaceString = matcher.group(1);
+			replaceString += matcher.group(4) != null? matcher.group(4) : "";
+			sql = sql.replace(substring, replaceString);
 		}
 		return sql;
 	}
     
     public String convertToAppropriateSQL(String sql) {
-		if(sql.toLowerCase().contains("substring")){
-			String substring = sql.toLowerCase().substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52);
-			substring = substring.replace("substring(", "").replace(" from ", "[").replace(" for ", "..").replace(")", "]");
-			this.substring = substring;
-			String subRange = substring.substring(substring.indexOf("["), substring.indexOf("]")+1);
-			substring = substring.replace(subRange,"");
-			sql = sql.replace(sql.substring(sql.toLowerCase().indexOf("substring"), sql.toLowerCase().indexOf("substring")+52),substring);
-		} else if(sql.toLowerCase().contains("nextval")){
+    	Pattern pattern = Pattern.compile("substring\\s*\\(\\s*(\\w+)\\s+from\\s+(\\d+)\\s+for\\s+(\\d+)\\s*\\)(\\s+as\\s+(\\w+))?", Pattern.CASE_INSENSITIVE);
+    	Pattern selectPattern = Pattern.compile("select\\s*(distinct\\s*)?(((count|sum|avg)\\(w*\\))?\\w*\\s*,\\s*)*\\s*substring\\s*\\(\\s*\\w+\\s+from\\s+\\d+\\s+for\\s+\\d+\\s*\\)(\\s+as\\s+\\w+)?", Pattern.CASE_INSENSITIVE);
+    	Matcher matcher = pattern.matcher(sql);
+    	Matcher selectMatcher = selectPattern.matcher(sql);
+		if(matcher.find()){
+			String column = matcher.group(1);
+			String alias = matcher.group(5);
+			int start = Integer.parseInt(matcher.group(2));
+			int count = Integer.parseInt(matcher.group(3));
+			if (selectMatcher.find() && alias == null) {
+				alias = column + "_substring";
+			}
+			this.substring = new ECLSubstringDefinition(column, alias, start, count);
+			String substring = sql.substring(matcher.start(),matcher.end());
+			sql = sql.replace(substring, this.substring.toSql());
+		}
+		if(sql.toLowerCase().contains("nextval")){
 			String sequence = sql.substring(sql.indexOf('(')+2, sql.indexOf(')')-1);
 			ECLEngine updateEngine = new ECLEngineUpdate(conn, dbMetadata);
 			conn.sendRequest(updateEngine.parseEclCode("update sequences set value = value + 1 where name = '"+sequence+"'"));
@@ -193,13 +202,13 @@ public abstract class ECLEngine
 	}
     
     protected String generateLayouts(List<String> orderedColumns) {
-    	StringBuilder layoutsString = new StringBuilder("TIMESTAMP := STRING25;\n");
+    	StringBuilder layoutsString = new StringBuilder();
     	List<String> allTables = getSQLParser().getAllTables();
     	String table = allTables.get(0);
 		if (table.contains(".")) {
 			table = table.split("\\.")[1];
 		}
-		layoutsString.append(table+"_record := ");
+//		layoutsString.append(table+"_record := ");
 		layoutsString.append(eclLayouts.getLayoutOrdered(table, orderedColumns));
 		layoutsString.append("\n");
 		
@@ -208,7 +217,7 @@ public abstract class ECLEngine
 			if (otherTable.contains(".")) {
 				otherTable = otherTable.split("\\.")[1];
 			}
-			layoutsString.append(otherTable+"_record := ");
+//			layoutsString.append(otherTable+"_record := ");
 			layoutsString.append(eclLayouts.getLayout(otherTable));
 			layoutsString.append("\n");
 		}

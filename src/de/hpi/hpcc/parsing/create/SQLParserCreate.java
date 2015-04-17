@@ -1,16 +1,18 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.create;
 
 import java.io.StringReader;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public class SQLParserCreate extends SQLParser {
 
-	protected SQLParserCreate(String sql, ECLLayouts eclLayouts) {
+	public SQLParserCreate(String sql, ECLLayouts eclLayouts) {
 		super(sql, eclLayouts);
 		try {
 			if (parserManager.parse(new StringReader(sql)) instanceof CreateTable) {
@@ -56,7 +58,7 @@ public class SQLParserCreate extends SQLParser {
 		return dataType.substring(9, dataType.length()-1);
 	}
 
-	protected String getFullName() {
+	public String getFullName() {
 		return "i2b2demodata::"+getTableName();
 	}
 }
