@@ -29,7 +29,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 	 */
 	public String generateECL(String sql) {
 		sqlParser = new SQLParserUpdate(sql, eclLayouts);
-		StringBuilder eclCode = new StringBuilder();
+		eclCode = new StringBuilder();
 //		String tableName = sqlParser.getAllTables().get(0).toLowerCase();
 //		StringBuilder transformFunction = new StringBuilder();
 //		String transformResultType = tableName + "_record";

@@ -72,15 +72,10 @@ public class HPCCStatement implements Statement{
 		SQLParser sqlParser = SQLParser.getInstance(sqlStatementTemp, eclLayouts);
 		List<String> tables = sqlParser.getAllTables();
 		
-		if (federatedDatabase) {
-			if (whiteList.containsAll(tables)) {
-				return sendQueryToHPCC(sqlStatement);
-			} else {
-				return sendQueryToPostgreSQL(sqlStatement);
-			}
-		} else {
+		if (!federatedDatabase && whiteList.containsAll(tables)) {
 			return sendQueryToHPCC(sqlStatement);
 		}
+		return sendQueryToPostgreSQL(sqlStatement);
 	}
 	
 	private boolean sendQueryToHPCC(String sqlStatement) throws SQLException{
@@ -100,7 +95,7 @@ public class HPCCStatement implements Statement{
 		return false;
 	}
 	
-	private boolean sendQueryToPostgreSQL(String sqlStatement) {
+	private boolean sendQueryToPostgreSQL(String sqlStatement) throws SQLException {
 		try {
 			Class.forName("org.postgresql.Driver");
 			Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
@@ -108,8 +103,6 @@ public class HPCCStatement implements Statement{
 			Statement stmt = connection.createStatement();
 			result = stmt.executeQuery(sqlStatement);
 			return result != null;
-		} catch (SQLException sqlException) {
-			sqlException.printStackTrace();
 		} catch (ClassNotFoundException classNotFoundException) {
 			classNotFoundException.printStackTrace();
 		}

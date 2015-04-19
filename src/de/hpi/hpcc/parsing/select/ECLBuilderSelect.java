@@ -43,30 +43,31 @@ public class ECLBuilderSelect extends ECLBuilder {
 	 */
 	public String generateECL(String sql) {
 		sqlParser = new SQLParserSelect(sql, eclLayouts);
-		StringBuilder eclCode = new StringBuilder();
+		eclCode = new StringBuilder();
 		
-    	generateFrom(sqlParser, eclCode);
-    	generateWhere(sqlParser, eclCode);    	
-    	generateSelects(sqlParser, eclCode, true);
-    	generateGroupBys(sqlParser, eclCode);
+    	generateFrom(sqlParser);
+    	generateWhere(sqlParser);    	
+    	generateSelects(sqlParser, true);
+    	generateGroupBys(sqlParser);
     	 
-    	if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
-    		if (!((SQLParserSelect) sqlParser).isCount()) convertToTable(eclCode);
+    	if ((sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) && !((SQLParserSelect) sqlParser).isCount()) {
+    		//Why not always?
+    		convertToTable(eclCode);
     	}
-    	generateOrderBys(sqlParser, eclCode);
+    	generateOrderBys(sqlParser);
 //    	if(sqlParser.getOrderBys() != null) {
-//    		generateSelects(sqlParser, eclCode, false);
+//    		generateSelects(sqlParser, false);
 //    		if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
 //        		convertToTable(eclCode);
 //        	}
 //    	}
-    	generateDistinct(sqlParser, eclCode);
-    	generateLimit(sqlParser, eclCode);
+    	generateDistinct(sqlParser);
+    	generateLimit(sqlParser);
     	
     	return(eclCode.toString());
 	}
 	
-	private void generateLimit(SQLParserSelect sqlParser, StringBuilder eclCode) {
+	private void generateLimit(SQLParserSelect sqlParser) {
 		Limit limit = sqlParser.getLimit();
 		if (limit != null) {
 			eclCode.insert(0, "CHOOSEN(");
@@ -76,14 +77,14 @@ public class ECLBuilderSelect extends ECLBuilder {
     	}
 	}
 	
-	private void generateDistinct(SQLParserSelect sqlParser, StringBuilder eclCode) {
+	private void generateDistinct(SQLParserSelect sqlParser) {
 		if (sqlParser.isDistinct()) {
 			eclCode.insert(0, "DEDUP(");
 			eclCode.append(", All)");
     	}
 	}
 	
-	private void generateGroupBys(SQLParserSelect sqlParser, StringBuilder eclCode) {
+	private void generateGroupBys(SQLParserSelect sqlParser) {
 		List<Expression> groupBys = sqlParser.getGroupBys(); 
 		if (groupBys != null) {
 			for (Expression expression : groupBys) {
@@ -93,7 +94,7 @@ public class ECLBuilderSelect extends ECLBuilder {
 		}
 	}
 	
-	private void generateOrderBys(SQLParserSelect sqlParser, StringBuilder eclCode) {
+	private void generateOrderBys(SQLParserSelect sqlParser) {
 		List<OrderByElement> orderBys = sqlParser.getOrderBys(); 	
     	if (orderBys != null) {
     		eclCode.insert(0, "SORT(");
@@ -114,33 +115,33 @@ public class ECLBuilderSelect extends ECLBuilder {
     	}
 	}
 	
-	private void generateFrom(SQLParserSelect sqlParser, StringBuilder from) {	
+	private void generateFrom(SQLParserSelect sqlParser) {	
 
 		FromItem table = sqlParser.getFromItem();
 		if (sqlParser.getJoins() != null) {
 			EqualsTo joinCondition = findJoinCondition(sqlParser.getWhere());
 			String joinColumn = ((Column) joinCondition.getRightExpression()).getColumnName();
-			from.append("JOIN("+((Table)table).getName()+", "+((Table) sqlParser.getJoins().get(0).getRightItem()).getName());
-			from.append(", LEFT."+joinColumn+" = RIGHT."+joinColumn+", LOOKUP)");
+			eclCode.append("JOIN("+((Table)table).getName()+", "+((Table) sqlParser.getJoins().get(0).getRightItem()).getName());
+			eclCode.append(", LEFT."+joinColumn+" = RIGHT."+joinColumn+", LOOKUP)");
 		} else {
 			
 			if (table instanceof Table) {
-				from.append(((Table) table).getName());
+				eclCode.append(((Table) table).getName());
 	    	} else if (table instanceof SubSelect){
-	    		from.append("(");
+	    		eclCode.append("(");
 	    		String innerStatement = sqlParser.trimInnerStatement(table.toString());
-	    		from.append(new ECLBuilderSelect(eclLayouts).generateECL(innerStatement));
-	    		from.append(")");
+	    		eclCode.append(new ECLBuilderSelect(eclLayouts).generateECL(innerStatement));
+	    		eclCode.append(")");
 	    	}
 		}
 	}
 	
-	private void generateWhere(SQLParserSelect sqlParser, StringBuilder where) {
+	private void generateWhere(SQLParserSelect sqlParser) {
 		Expression whereItems = sqlParser.getWhere();
     	if (whereItems != null) {
-    		where.append("(");
-    		where.append(parseExpressionECL(whereItems));
-    		where.append(")");
+    		eclCode.append("(");
+    		eclCode.append(parseExpressionECL(whereItems));
+    		eclCode.append(")");
     	}
 	}
 	
@@ -151,17 +152,17 @@ public class ECLBuilderSelect extends ECLBuilder {
 	 * @return
 	 */
 	
-	private void generateSelects(SQLParserSelect sqlParser, StringBuilder select, Boolean inner) { 
+	private void generateSelects(SQLParserSelect sqlParser, Boolean inner) { 
 		if (sqlParser.isCount()) {
 			/*
 			 * TODO: much better solution that is more flexible, however this is currently working
 			 */
-			select.insert(0, "output(dataset([COUNT(");
-			select.append(")], {unsigned5 patient_num_count}))");
+			eclCode.insert(0, "output(dataset([COUNT(");
+			eclCode.append(")], {unsigned5 patient_num_count}))");
 		} else {
 			LinkedHashSet<String> selectItemsStrings = new LinkedHashSet<String>();
-			select.append(", ");
-			select.append("{");
+			eclCode.append(", ");
+			eclCode.append("{");
 			if(inner) {
 				selectItemsStrings.addAll(createInnerSelectItemsString(sqlParser));
 			}
@@ -179,8 +180,8 @@ public class ECLBuilderSelect extends ECLBuilder {
     		for (String selectItem : selectItemsStrings) {
     			selectItemString += (selectItemString=="" ? "":", ")+selectItem;
     		}
-    		select.append(selectItemString);
-    		select.append("}");
+    		eclCode.append(selectItemString);
+    		eclCode.append("}");
 		}
 	}
 	

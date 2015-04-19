@@ -31,6 +31,7 @@ import net.sf.jsqlparser.statement.select.SubSelect;
 abstract public class ECLBuilder {
 	private boolean hasAlias = false;
 	protected ECLLayouts eclLayouts;
+	protected StringBuilder eclCode;
 	/**
 	 * This method generates ECL code from a given SQL code. 
 	 * Therefore it delegates the generation to the appropriate subclass, 
