@@ -1,5 +1,7 @@
 package de.hpi.hpcc.parsing;
 
+import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
+import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -26,37 +28,31 @@ import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
-public class ECLBuilder {
+abstract public class ECLBuilder {
 	private boolean hasAlias = false;
+	protected ECLLayouts eclLayouts;
+	protected StringBuilder eclCode;
 	/**
 	 * This method generates ECL code from a given SQL code. 
-	 * Therefore it delegates the generation to the appropriate method, 
-	 * depending on the type of the given SQL (e.g. Select, Insert or Update) 
+	 * Therefore it delegates the generation to the appropriate subclass, 
+	 * depending on the type of the given SQL (e.g. Select, Insert, Update, Drop or Create) 
 	 * @param sql
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
-	public String generateECL(String sql) {
-		switch(SQLParser.sqlIsInstanceOf(sql)) {
-    	case "Select":
-    		return new ECLBuilderSelect().generateECL(sql);
-		case "Insert":
-			return new ECLBuilderInsert().generateECL(sql);
-    	case "Update":
-    		return new ECLBuilderUpdate().generateECL(sql);
-    	case "Drop":
-    		return new ECLBuilderDrop().generateECL(sql);
-    	case "Create":
-    		return new ECLBuilderCreate().generateECL(sql);
-		default:
-    		System.out.println("type of sql not recognized "+SQLParser.sqlIsInstanceOf(sql));
-    	}
-		return null;
+	
+	public ECLBuilder(ECLLayouts eclLayouts) {
+		this.eclLayouts = eclLayouts;
 	}
 	
-	protected void convertToTable(StringBuilder eclCode) {
-   		eclCode.insert(0, "TABLE(");
-   		eclCode.append(")");
-	}
+	/**
+	 * This methods surrounds a given ECL string with a Table definition. 
+	 * The input StringBuilder is modified.
+	 * @param eclCode
+	 */
+	
+	
+	
+	abstract protected SQLParser getSqlParser();
 	
 	/**
 	 * Generates for a given Expression the ECL code by a recursive approach
@@ -79,9 +75,7 @@ public class ECLBuilder {
 		} else if (expressionItem instanceof Column) {
 			expression.append(((Column) expressionItem).getColumnName());
 		} else if (expressionItem instanceof SubSelect) {
-			expression.append("(");
-			expression.append(parseSubSelect(expressionItem));
-			expression.append(")");
+			expression.append(ECLUtils.encapsulateWithBrackets(parseSubSelect((SubSelect) expressionItem)));
 		} else if (expressionItem instanceof Function) {
 			if (!hasAlias()) {
 				expression.append(nameFunction((Function) expressionItem));
@@ -89,21 +83,19 @@ public class ECLBuilder {
 			}
 			expression.append(parseFunction((Function) expressionItem));
 		}  else if (expressionItem instanceof Between) {
-			expression.append("(");
-			expression.append(parseExpressionECL(((Between) expressionItem).getLeftExpression()));
-			expression.append(" BETWEEN ");
-			expression.append(parseExpressionECL(((Between) expressionItem).getBetweenExpressionStart()));
-			expression.append(" AND ");
-			expression.append(parseExpressionECL(((Between) expressionItem).getBetweenExpressionEnd()));
-			expression.append(")");
+			StringBuilder between = new StringBuilder();
+			between.append(parseExpressionECL(((Between) expressionItem).getLeftExpression()));
+			between.append(" BETWEEN ");
+			between.append(parseExpressionECL(((Between) expressionItem).getBetweenExpressionStart()));
+			between.append(" AND ");
+			between.append(parseExpressionECL(((Between) expressionItem).getBetweenExpressionEnd()));
+			expression.append(ECLUtils.encapsulateWithBrackets(between.toString()));
 		} else if (expressionItem instanceof StringValue) {
-			expression.append("'");
-			expression.append(((StringValue) expressionItem).getValue());
-			expression.append("'");
+			expression.append(ECLUtils.encapsulateWithSingleQuote(((StringValue) expressionItem).getValue()));
 		} else if (expressionItem instanceof LongValue) {
 			expression.append(((LongValue) expressionItem).getValue());
 		} else if (expressionItem instanceof ExistsExpression) {		
-			SQLParserSelect subParser = new SQLParserSelect(((SubSelect)((ExistsExpression) expressionItem).getRightExpression()).getSelectBody().toString());	
+			SQLParserSelect subParser = new SQLParserSelect(((SubSelect)((ExistsExpression) expressionItem).getRightExpression()).getSelectBody().toString(), eclLayouts);	
 			Expression where = subParser.getWhere();
 			String joinColumn = null;
 			if(where instanceof EqualsTo) {
@@ -116,23 +108,25 @@ public class ECLBuilder {
 					}
 				}
 			}
-			expression.append(joinColumn+" IN SET(");
+			expression.append(joinColumn+" IN SET");
+			StringBuilder existString = new StringBuilder();
 			if(subParser.getSelectItems().size() == 1) {
 				if(subParser.getSelectItems().get(0).toString().equals("1")) {
 					if(subParser.getFromItem() instanceof SubSelect) {
-						expression.append(parseExpressionECL((Expression)subParser.getFromItem()));
+						existString.append(parseExpressionECL((Expression)subParser.getFromItem()));
 					}
 				}
-					
 			} else {
-				expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
+				existString.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
 			}
-			expression.append(", "+joinColumn+")");
+			existString.append(", "+joinColumn);
+			expression.append(ECLUtils.encapsulateWithBrackets(existString));
 		} else if (expressionItem instanceof IsNullExpression) {
 			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
-			expression.append(" = "+((ECLLayouts.isColumnOfIntInAnyTable(((Column)((IsNullExpression) expressionItem).getLeftExpression()).getColumnName()))?"0":"''"));
+			expression.append(" = "+((eclLayouts.isColumnOfIntInAnyTable(getSqlParser().getAllTables(), ((Column)((IsNullExpression) expressionItem).getLeftExpression()).getColumnName()))?"0":"''"));
 		} else if (expressionItem instanceof Parenthesis) {
-			expression.append("("+parseExpressionECL(((Parenthesis) expressionItem).getExpression())+")");
+			Parenthesis parenthesis = (Parenthesis) expressionItem;
+			expression.append(ECLUtils.encapsulateWithBrackets(parseExpressionECL(parenthesis.getExpression())));
 		} else if (expressionItem instanceof JdbcParameter) {
 			expression.append("?");
 		} else if (expressionItem instanceof NullValue) {
@@ -144,19 +138,32 @@ public class ECLBuilder {
 		return expression.toString();
 	}
 	
+	/**
+	 * This method resets the variable hasAlias to false.
+	 * @return returns the old value for hasAlias
+	 */
 	protected boolean hasAlias() {
 		boolean oldHasAlias = this.hasAlias;
 		setHasAlias(false);
 		return oldHasAlias;	
 	}
-
-	private void setHasAlias(boolean b) {
-		hasAlias = b;
+	
+	/**
+	 * Set value of hasAlias
+	 * @param b
+	 */	
+	private void setHasAlias(boolean bool) {
+		hasAlias = bool;
 	}
 
 
-	private String parseSubSelect(Expression expression) {
-		return new ECLBuilderSelect().generateECL(((SubSelect) expression).getSelectBody().toString());
+	/**
+	 * This method calls a new ECLBuilderSelect whenever a SQL SubSelect is found
+	 * @param subSelect
+	 * @return returns the ECL code for that SubSelect
+	 */
+	private String parseSubSelect(SubSelect subSelect) {
+		return new ECLBuilderSelect(eclLayouts).generateECL((subSelect).getSelectBody().toString());
 	}
 	
 	/**
@@ -164,11 +171,15 @@ public class ECLBuilder {
 	 * @param function can be e.g. an object representing "COUNT" or "AVG"
 	 * @return returns the ECL for the given function
 	 */
-
 	private String parseFunction(Function function) {	
-		return function.getName().toUpperCase()+"(GROUP)";
+		return function.getName().toUpperCase()+ECLUtils.encapsulateWithBrackets("GROUP");
 	}
 	
+	/** 
+	 * 
+	 * @param function
+	 * @return
+	 */
 	private String nameFunction(Function function) {
 		StringBuilder innerFunctionString = new StringBuilder();
 		if (!function.isAllColumns()) {
@@ -189,15 +200,12 @@ public class ECLBuilder {
 	private String parseLikeExpression(LikeExpression expressionItem) {
 		StringBuilder likeString = new StringBuilder();
 		String stringValue = ((StringValue) expressionItem.getRightExpression()).getValue();
-		if (stringValue.endsWith("%")) stringValue = stringValue.replace("%", "");
+		if (stringValue.endsWith("%")) {
+			stringValue = stringValue.replace("%", "");
+		}
 		int count = stringValue.replace("\\\\", "\\").length();
-//		stringValue = stringValue.replace("\\", "\\\\");
-		likeString.append("");
 		likeString.append(parseExpressionECL(expressionItem.getLeftExpression()));
-		likeString.append("[");
-		
-		likeString.append("1");
-		likeString.append("..");
+		likeString.append("[1..");
 		likeString.append(count);
 		likeString.append("] = '");
 		likeString.append(stringValue);
@@ -205,6 +213,11 @@ public class ECLBuilder {
 		return likeString.toString();
 	}
 	
+	/**
+	 * Parses an InExpression and generates ECL code
+	 * @param expressionItem 
+	 * @return returns the ECL for the given expression
+	 */
 	private String parseInExpression(InExpression expressionItem) {
 		StringBuilder expression = new StringBuilder();
 		String inColumn = parseExpressionECL(((InExpression) expressionItem).getLeftExpression());
@@ -212,18 +225,25 @@ public class ECLBuilder {
 		expression.append(" IN ");
 		if (((InExpression) expressionItem).getRightItemsList() instanceof ExpressionList) {
 			expression.append("[");
+			String expressionList = "";
 			for (Expression exp : ((ExpressionList) ((InExpression) expressionItem).getRightItemsList()).getExpressions()) {
-				expression.append(parseExpressionECL(exp));
-			expression.append("]");
+				expressionList += (expressionList.equals("")?"":", ");
+				expressionList += parseExpressionECL(exp);
 			}
+			expression.append(expressionList).append("]");
 		} else if (((InExpression) expressionItem).getRightItemsList() instanceof SubSelect) {
 			expression.append("SET(");
-			expression.append(new ECLBuilder().generateECL(((SubSelect) ((InExpression) expressionItem).getRightItemsList()).getSelectBody().toString()));
+			expression.append(new ECLBuilderSelect(eclLayouts).generateECL(((SubSelect) ((InExpression) expressionItem).getRightItemsList()).getSelectBody().toString()));
 			expression.append(","+inColumn+")");
 		}
 		return expression.toString();
 	}
-
+	
+	/**
+	 * Parses the symbol of BinaryExpressions
+	 * @param whereItems 
+	 * @return returns the ECL symbol for the given expression
+	 */
 	private String getSymbolOfExpression(BinaryExpression whereItems) {
 		if (whereItems instanceof AndExpression) {
 			return " AND ";

@@ -66,7 +66,8 @@ public class HPCCConnection implements Connection{
 
     public HPCCConnection(HPCCDriverProperties driverProperties){
         this.driverProperties = driverProperties;
-        metadata = new HPCCDatabaseMetaData(driverProperties, this);
+
+        metadata = new HPCCDatabaseMetaData(driverProperties, this);        
 
         RequestConfig.Builder requestBuilder = RequestConfig.custom();
         requestBuilder = requestBuilder.setConnectTimeout(10000);
@@ -265,6 +266,7 @@ public class HPCCConnection implements Connection{
 
     public void close() throws SQLException {
         closed = true;
+//        httpConnection.disconnect();
     }
 
     public boolean isClosed() throws SQLException {

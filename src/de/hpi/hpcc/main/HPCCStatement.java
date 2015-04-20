@@ -1,10 +1,13 @@
 package de.hpi.hpcc.main;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -12,6 +15,13 @@ import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLEngine;
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.SQLParser;
+import de.hpi.hpcc.parsing.create.ECLEngineCreate;
+import de.hpi.hpcc.parsing.drop.ECLEngineDrop;
+import de.hpi.hpcc.parsing.insert.ECLEngineInsert;
+import de.hpi.hpcc.parsing.select.ECLEngineSelect;
+import de.hpi.hpcc.parsing.update.ECLEngineUpdate;
 
 public class HPCCStatement implements Statement{
 	protected static final Logger logger = HPCCLogger.getLogger();
@@ -21,14 +31,16 @@ public class HPCCStatement implements Statement{
     protected SQLWarning warnings;
     protected ResultSet result = null;
     protected String name;
+    
+    private boolean federatedDatabase = false;
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;
         this.connection = (HPCCConnection) connection;
-        this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
+        
         log("Statement created");
     }
-
+    
 	public boolean execute(String sqlStatement) throws SQLException {
 		if (this.closed){
 			log(Level.SEVERE, "Statement is closed! Cannot execute query!");
@@ -38,21 +50,63 @@ public class HPCCStatement implements Statement{
             warnings.setNextException(new SQLException());
 		}
 		
+		ArrayList<String> whiteList = new ArrayList<String>();
+		whiteList.add("query_global_temp");
+		whiteList.add("dx");
+		whiteList.add("master_query_global_temp");
+		whiteList.add("observation_fact");
+		whiteList.add("provider_dimension");
+		whiteList.add("visit_dimension");
+		whiteList.add("patient_dimension");
+		whiteList.add("modifier_dimension");
+		whiteList.add("concept_dimension");
+		whiteList.add("qt_patient_set_collection");
+		whiteList.add("qt_patient_env_collection");
+		whiteList.add("avk_fdb_t_leistungskosten");
+		
 		result = null;
+		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
+		
+		String sqlStatementTemp = ECLEngine.escapeToAppropriateSQL(sqlStatement);
+		ECLLayouts eclLayouts = new ECLLayouts(connection.getDatabaseMetaData());
+		SQLParser sqlParser = SQLParser.getInstance(sqlStatementTemp, eclLayouts);
+		List<String> tables = sqlParser.getAllTables();
+		
+		if (!federatedDatabase || whiteList.containsAll(tables)) {
+			return sendQueryToHPCC(sqlStatement);
+		}
+		return sendQueryToPostgreSQL(sqlStatement);
+	}
+	
+	private boolean sendQueryToHPCC(String sqlStatement) throws SQLException{
 		try {
-			this.eclEngine = new ECLEngine(connection, connection.getDatabaseMetaData());
+			this.eclEngine = ECLEngine.getInstance(connection, connection.getDatabaseMetaData(), sqlStatement);
 			String eclCode = eclEngine.parseEclCode(sqlStatement);
 			NodeList rowList = connection.parseDataset(connection.sendRequest(eclCode), System.currentTimeMillis());
 			if (rowList != null) {
 				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	"HPCC Result"));
 			}
+			return result != null;
 		} catch (Exception exception) {
 			exception.printStackTrace();
 			this.close();
 		}
-
-		return result != null;
-	}    
+		return false;
+	}
+	
+	private boolean sendQueryToPostgreSQL(String sqlStatement) throws SQLException {
+		try {
+			Class.forName("org.postgresql.Driver");
+			Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
+			HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to PostgreSQL");
+			Statement stmt = connection.createStatement();
+			result = stmt.executeQuery(sqlStatement);
+			return result != null;
+		} catch (ClassNotFoundException classNotFoundException) {
+			classNotFoundException.printStackTrace();
+		}
+		return false;
+	}
 
 	public ResultSet executeQuery(String sqlQuery) throws SQLException {      
     	execute(sqlQuery);

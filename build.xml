@@ -19,6 +19,8 @@
 	<property name="httpCore" value="httpcore-4.4.1.jar"/>
 	<property name="commonsLogging" value="commons-logging-1.2.jar"/>
 	
+	<property name="postgres" value="postgresql-9.3-1102.jdbc4.jar"/>
+	
 	<target name="init">
 		<tstamp/>
 		<mkdir dir="${build}" />
@@ -41,7 +43,8 @@
 				<pathelement path="${libLocation}/${sqlParser}"/>
 				<pathelement path="${libLocation}/${httpClient}"/>
 				<pathelement path="${libLocation}/${httpCore}"/>
-				<pathelement path="${libLocation}/${commonsLogging}"/>	
+				<pathelement path="${libLocation}/${commonsLogging}"/>
+				<pathelement path="${libLocation}/${postgres}"/>	
 			</classpath>
 		</javac>
 	</target>
@@ -55,6 +58,7 @@
 			<zipgroupfileset dir="lib" includes="${httpClient}" />
 			<zipgroupfileset dir="lib" includes="${httpCore}" />
 			<zipgroupfileset dir="lib" includes="${commonsLogging}" />
+			<zipgroupfileset dir="lib" includes="${postgres}" />
 			<metainf dir="${extra}" includes="**/java.sql.Driver"/>
 		</jar>
 	</target>

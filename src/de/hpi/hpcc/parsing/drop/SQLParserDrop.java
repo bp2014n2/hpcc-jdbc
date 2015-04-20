@@ -1,13 +1,16 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.drop;
 
 import java.io.StringReader;
+
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.statement.drop.Drop;
 
 public class SQLParserDrop extends SQLParser {
 
-	protected SQLParserDrop(String sql) {
-		super(sql);
+	public SQLParserDrop(String sql, ECLLayouts layouts) {
+		super(sql, layouts);
 		try {
 			if (parserManager.parse(new StringReader(sql)) instanceof Drop) {
 				statement = parserManager.parse(new StringReader(sql));
@@ -17,11 +20,11 @@ public class SQLParserDrop extends SQLParser {
 		}
 	}
 	
-	protected String getName() {
+	public String getName() {
 		return ((Drop) statement).getName();
 	}
 	
-	protected String getFullName() {
+	public String getFullName() {
 		return "i2b2demodata::"+getName();
 	}
 
