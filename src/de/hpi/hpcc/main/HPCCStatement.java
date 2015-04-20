@@ -72,7 +72,7 @@ public class HPCCStatement implements Statement{
 		SQLParser sqlParser = SQLParser.getInstance(sqlStatementTemp, eclLayouts);
 		List<String> tables = sqlParser.getAllTables();
 		
-		if (!federatedDatabase && whiteList.containsAll(tables)) {
+		if (!federatedDatabase || whiteList.containsAll(tables)) {
 			return sendQueryToHPCC(sqlStatement);
 		}
 		return sendQueryToPostgreSQL(sqlStatement);
