@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -158,8 +159,16 @@ public class ECLBuilderSelect extends ECLBuilder {
 			/*
 			 * TODO: much better solution that is more flexible, however this is currently working
 			 */
+			
+			SelectItem count = sqlParser.getSelectItems().get(0);
+			String columnName = "count";
+			Alias alias = ((SelectExpressionItem) count).getAlias();
+			if (alias != null) {
+				columnName = alias.getName();
+			}
+			
 			eclCode.insert(0, "output(dataset([COUNT(");
-			eclCode.append(")], {unsigned5 patient_num_count}))");
+			eclCode.append(")], {integer8 "+columnName+"}))");
 		} else {
 			LinkedHashSet<String> selectItemsStrings = new LinkedHashSet<String>();
 			eclCode.append(", ");
