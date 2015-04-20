@@ -1,5 +1,6 @@
 package de.hpi.hpcc.main;
 
+import java.awt.LinearGradientPaint;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -21,6 +22,7 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -46,8 +48,8 @@ public class HPCCConnection implements Connection{
     private SQLWarning warnings;
     private String catalog = HPCCJDBCUtils.HPCCCATALOGNAME;
     private HttpURLConnection httpConnection;
-    private HashSet<String> allStatementNames = new HashSet<String>();
     private boolean autoCommit = true;
+    private LinkedList<HPCCStatement> statementList = new LinkedList<HPCCStatement>();
     
     protected static final Logger logger = HPCCLogger.getLogger();
 
@@ -97,18 +99,25 @@ public class HPCCConnection implements Connection{
     	return prepareStatement(sqlStatement);
     }
     
+    public void addToQueue(HPCCStatement statement) { 
+    	this.statementList.add(statement);
+    }
+    
     private String getUniqueName() {
-		int index = allStatementNames.size()+1;
-		while(!add("Statement "+index)){
+		int index = this.statementList.size()+1;
+		while(!isUniqueCursorName("Statement "+index)){
 			index++;
 		}
 		return "Statement "+index;
 	}
 
-	public boolean add(String name) {
-		int sizeBeforeAdding = allStatementNames.size();
-		allStatementNames.add(name);
-		return (sizeBeforeAdding < allStatementNames.size());
+	public boolean isUniqueCursorName(String name) {
+		for(HPCCStatement statement : this.statementList) {
+			if(name.equals(statement.getCursorName())) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public URL generateUrl(){
@@ -416,7 +425,9 @@ public class HPCCConnection implements Connection{
     }
 
     public void commit() throws SQLException {
-    	handleUnsupportedMethod("commit()");
+    	for(HPCCStatement statement : this.statementList) {
+    		statement.execute(statement.getSqlStatement());
+    	}
     }
 
     public Clob createClob() throws SQLException {

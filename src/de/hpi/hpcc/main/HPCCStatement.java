@@ -1,5 +1,6 @@
 package de.hpi.hpcc.main;
 
+import java.io.ObjectInputStream.GetField;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -12,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.w3c.dom.NodeList;
+
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
@@ -25,36 +27,36 @@ public class HPCCStatement implements Statement{
     protected SQLWarning warnings;
     protected ResultSet result = null;
     protected String name;
-    private List<String> whiteList;
+    protected String sqlStatement;
+    private static final List<String> whiteList = new ArrayList<String>() {
+		private static final long serialVersionUID = 1L;
+	{
+    	whiteList.add("query_global_temp");
+		whiteList.add("dx");
+		whiteList.add("master_query_global_temp");
+		whiteList.add("observation_fact");
+		whiteList.add("provider_dimension");
+		whiteList.add("visit_dimension");
+		whiteList.add("patient_dimension");
+		whiteList.add("modifier_dimension");
+		whiteList.add("concept_dimension");
+		whiteList.add("qt_patient_set_collection");
+		whiteList.add("qt_patient_env_collection");
+		whiteList.add("avk_fdb_t_leistungskosten");
+    	
+    }};
     
     private boolean federatedDatabase = false;
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;
         this.connection = (HPCCConnection) connection;
-        initializeWhiteList();
+        this.connection.addToQueue(this);
         log("Statement created");
     }
     
-    private void initializeWhiteList() {
-    	if(whiteList == null) {
-	    	whiteList = new ArrayList<String>();
-			whiteList.add("query_global_temp");
-			whiteList.add("dx");
-			whiteList.add("master_query_global_temp");
-			whiteList.add("observation_fact");
-			whiteList.add("provider_dimension");
-			whiteList.add("visit_dimension");
-			whiteList.add("patient_dimension");
-			whiteList.add("modifier_dimension");
-			whiteList.add("concept_dimension");
-			whiteList.add("qt_patient_set_collection");
-			whiteList.add("qt_patient_env_collection");
-			whiteList.add("avk_fdb_t_leistungskosten");
-    	}
-    }
-    
 	public boolean execute(String sqlStatement) throws SQLException {
+		this.sqlStatement = sqlStatement;
 		if (this.closed){
 			log(Level.SEVERE, "Statement is closed! Cannot execute query!");
 			if (warnings == null){
@@ -64,7 +66,7 @@ public class HPCCStatement implements Statement{
 		}
 		
 		result = null;
-		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
+		log("currentQuery: "+sqlStatement);
 		
 		String sqlStatementTemp = ECLEngine.escapeToAppropriateSQL(sqlStatement);
 		ECLLayouts eclLayouts = new ECLLayouts(connection.getDatabaseMetaData());
@@ -99,7 +101,7 @@ public class HPCCStatement implements Statement{
 		try {
 			Class.forName("org.postgresql.Driver");
 			Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
-			HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to PostgreSQL");
+			log("Query sent to PostgreSQL");
 			Statement stmt = connection.createStatement();
 			result = stmt.executeQuery(sqlStatement);
 			return result != null;
@@ -124,11 +126,14 @@ public class HPCCStatement implements Statement{
         log("Statement closed");
     }
 	
+	protected String getSqlStatement() {
+		return this.sqlStatement;
+	}
+	
 	public ResultSet getResultSet() throws SQLException{
 	    return this.result;
 	}
 
-	 
 	public int getFetchDirection() throws SQLException{
 		return ResultSet.FETCH_FORWARD;
 	}
@@ -167,12 +172,16 @@ public class HPCCStatement implements Statement{
     }
     
     public void setCursorName(String name) throws SQLException{
-    	if (!this.connection.add(name)) {
+    	if (!this.connection.isUniqueCursorName(name)) {
     		log(Level.SEVERE, "Cursor name not unique!");
     		throw new HPCCException();
     	} else {
     		this.name = name;
     	}
+    }
+    
+    public String getCursorName() {
+    	return this.name;
     }
     
     //Methods for subclasses

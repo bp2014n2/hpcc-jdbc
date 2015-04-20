@@ -31,7 +31,6 @@ import net.sf.jsqlparser.parser.ParseException;
 
 
 public class HPCCPreparedStatement extends HPCCStatement implements PreparedStatement{
-    private String sqlStatement;
     private HashMap<Integer, Object> parameters    = new HashMap<Integer, Object>();
 
     public HPCCPreparedStatement(HPCCConnection connection, String sqlStatement, String name) throws SQLException {
