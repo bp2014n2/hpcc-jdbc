@@ -15,7 +15,15 @@
 	<property name="libLocation" location="lib"/>
 	<property name="sqlParserVersion" value="0.9.3-SNAPSHOT"/>
 	<property name="sqlParser" value="jsqlparser-${sqlParserVersion}.jar"/>
+<<<<<<< HEAD
 	<property name="cornHttpClient" value="corn-httpclient-1.0.8.jar"/>
+=======
+	<property name="httpClient" value="httpclient-4.4.1.jar"/>
+	<property name="httpCore" value="httpcore-4.4.1.jar"/>
+	<property name="commonsLogging" value="commons-logging-1.2.jar"/>
+	
+	<property name="postgres" value="postgresql-9.3-1102.jdbc4.jar"/>
+>>>>>>> HttpClient
 	
 	<target name="init">
 		<tstamp/>
@@ -37,7 +45,14 @@
 			<src path="${logging}"/>
 			<classpath>
 				<pathelement path="${libLocation}/${sqlParser}"/>
+<<<<<<< HEAD
 				<pathelement path="${libLocation}/${cornHttpClient}"/>
+=======
+				<pathelement path="${libLocation}/${httpClient}"/>
+				<pathelement path="${libLocation}/${httpCore}"/>
+				<pathelement path="${libLocation}/${commonsLogging}"/>
+				<pathelement path="${libLocation}/${postgres}"/>	
+>>>>>>> HttpClient
 			</classpath>
 		</javac>
 	</target>
@@ -48,7 +63,14 @@
 			<fileset dir="${build}" includes="${parsing}/*.class" />
 			<fileset dir="${build}" includes="${logging}/*.class" />
 			<zipgroupfileset dir="lib" includes="${sqlParser}" />
+<<<<<<< HEAD
 			<zipgroupfileset dir="lib" includes="${cornHttpClient}" />
+=======
+			<zipgroupfileset dir="lib" includes="${httpClient}" />
+			<zipgroupfileset dir="lib" includes="${httpCore}" />
+			<zipgroupfileset dir="lib" includes="${commonsLogging}" />
+			<zipgroupfileset dir="lib" includes="${postgres}" />
+>>>>>>> HttpClient
 			<metainf dir="${extra}" includes="**/java.sql.Driver"/>
 		</jar>
 	</target>

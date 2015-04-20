@@ -1,11 +1,12 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.select;
 
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
@@ -29,8 +30,8 @@ public class SQLParserSelect extends SQLParser {
 
 	private PlainSelect plain;
 
-	protected SQLParserSelect(Expression expression) {
-		super(expression);
+	public SQLParserSelect(Expression expression, ECLLayouts layouts) {
+		super(expression, layouts);
 		if (expression instanceof SubSelect) {
 			statement = (Statement) expression;
 			plain = (PlainSelect) ((SubSelect) expression).getSelectBody();
@@ -39,8 +40,8 @@ public class SQLParserSelect extends SQLParser {
 		} 
 	}
 	
-	protected SQLParserSelect(String sql) {
-		super(sql);
+	public SQLParserSelect(String sql, ECLLayouts layouts) {
+		super(sql, layouts);
 		try {
 			statement = parserManager.parse(new StringReader(sql));
 			if (statement instanceof Select) {
@@ -50,26 +51,26 @@ public class SQLParserSelect extends SQLParser {
 			e.printStackTrace();
 		}
 	}
-	
-	protected SQLParserSelect (Statement statement) {
+	/*
+	public SQLParserSelect (Statement statement) {
 		super(statement);
 		this.statement = statement;
 		if (statement instanceof Select) {
 			plain = (PlainSelect) ((Select) statement).getSelectBody();
 		}
 	}
-		
-	protected FromItem getFromItem() {
+		*/
+	public FromItem getFromItem() {
 		if (plain == null) return null;
 		return plain.getFromItem();
 	}
 	
-	protected List<SelectItem> getSelectItems() {
+	public List<SelectItem> getSelectItems() {
 		if (plain == null) return null;
 		return plain.getSelectItems();
 	}
 	
-	protected List<String> getAllSelectItemsInQuery() {
+	public List<String> getAllSelectItemsInQuery() {
 		ArrayList<String> allSelects = new ArrayList<String>();
 		if (isCount()) {	
 			allSelects.add(((SelectExpressionItem) getSelectItems().get(0)).getAlias().getName());
@@ -92,85 +93,86 @@ public class SQLParserSelect extends SQLParser {
 			else if (selectItem instanceof AllColumns) {
 				if (getFromItem() instanceof Table) {
 					String tableName = ((Table) getFromItem()).getName();
-					allSelects.addAll(ECLLayouts.getAllColumns(tableName));
+					allSelects.addAll(eclLayouts.getAllColumns(tableName));
 				} else if (getFromItem() instanceof SubSelect) {
-					allSelects.addAll(new SQLParserSelect(((SubSelect) getFromItem()).toString()).getAllSelectItemsInQuery());
+					allSelects.addAll(new SQLParserSelect(((SubSelect) getFromItem()).toString(), eclLayouts).getAllSelectItemsInQuery());
 				}	
 			}		
 		}
 		return allSelects;
 	}
 	
-	protected LinkedHashSet<String> getAllColumns() {
+	public LinkedHashSet<String> getAllColumns() {
 		FromItem fromItem = getFromItem();
 		String table;
 		if (fromItem instanceof Table) {
 			table = ((Table) fromItem).getName();
-			return ECLLayouts.getAllColumns(table);
+			try {
+				return eclLayouts.getAllColumns(table);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}
 		} else {
-			return new SQLParserSelect((SubSelect) fromItem).getAllColumns();
+			return new SQLParserSelect((SubSelect) fromItem, eclLayouts).getAllColumns();
 		}
 		
 	}
 	
-	protected Expression getWhere() {
+	public Expression getWhere() {
 		if (plain == null) return null;
 		return plain.getWhere();
 	}
 	
-	protected void setWhere(Expression expression) {
+	public void setWhere(Expression expression) {
 		plain.setWhere(expression);
 	}
 	
-	protected List<Expression> getGroupBys() {
+	public List<Expression> getGroupBys() {
 		if (plain == null) return null;
 		return plain.getGroupByColumnReferences();
 	}
 	
-	protected List<OrderByElement> getOrderBys() {
+	public List<OrderByElement> getOrderBys() {
 		if (plain == null) return null;
 		return plain.getOrderByElements();
 	}
 	
-	protected List<Join> getJoins() {
+	public List<Join> getJoins() {
 		if (plain == null) return null;
 		return plain.getJoins();
 	}
 	
-	protected Boolean isDistinct() {
+	public Boolean isDistinct() {
 		if (plain == null || plain.getDistinct() == null) return false;
 		return true;
 	}
 	
-	protected Boolean isSelectAll() {
+	public Boolean isSelectAll() {
     	for (SelectItem selectItem : getSelectItems()) {
     		if(selectItem instanceof AllColumns) return true;
     	}
     	return false;
 	}
 	
-	
-	protected Limit getLimit() {
+	public Limit getLimit() {
 		if (plain == null) return null;
 		return plain.getLimit();
 	}
 	
-	
-	
-	
-	protected Expression getHaving() {
+	public Expression getHaving() {
 		if (plain == null) return null;
 		return plain.getHaving();
 	}
 	
-	protected HashSet<String> concatenateSelectsOrderBysHaving() {
-		
+	public HashSet<String> concatenateSelectsOrderBysHaving() {
 		return null;
 	}
 
-	protected List<String> getFromItemColumns() {
+	public List<String> getFromItemColumns() {
 		if (plain == null) return null;
-		List<SelectItem> selectItems = new SQLParserSelect(trimInnerStatement(plain.getFromItem().toString())).getSelectItems();
+		List<SelectItem> selectItems = new SQLParserSelect(trimInnerStatement(plain.getFromItem().toString()), eclLayouts).getSelectItems();
 		List<String> selectItemStrings = new ArrayList<String>();
 		for (SelectItem selectItem : selectItems) {
 			selectItemStrings.add(selectItem.toString());
@@ -178,7 +180,7 @@ public class SQLParserSelect extends SQLParser {
 		return selectItemStrings;
 	}	
 	
-	protected String trimInnerStatement(String innerStatement) {
+	public String trimInnerStatement(String innerStatement) {
 		if (innerStatement.charAt(0) == '(') {
 			int end = innerStatement.lastIndexOf(")");
 			innerStatement = innerStatement.substring(1, end);

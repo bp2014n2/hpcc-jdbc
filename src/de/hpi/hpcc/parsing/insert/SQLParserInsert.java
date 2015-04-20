@@ -1,35 +1,28 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.insert;
 
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.ItemsList;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.WithItem;
 import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserInsert extends SQLParser {
-
-//	Insert insert;
-	protected SQLParserInsert(Expression expression) {
-		super(expression);
-		// TODO Auto-generated constructor stub
-	}
 	
-	protected SQLParserInsert(String sql) {
-		super(sql);
+	public SQLParserInsert(String sql, ECLLayouts layouts) {
+		super(sql, layouts);
 		try {
 			if (parserManager.parse(new StringReader(sql)) instanceof Insert) {
-//				insert = (Insert) parserManager.parse(new StringReader(sql));
 				statement = parserManager.parse(new StringReader(sql));
 			} 
 		} catch (JSQLParserException e) {
@@ -37,56 +30,51 @@ public class SQLParserInsert extends SQLParser {
 		}
 	}
 	
-	protected SQLParserInsert(Statement statement) {
-		super(statement);
-		// TODO Auto-generated constructor stub
+	public List<Column> getColumns() {
+		return ((Insert) statement).getColumns();
 	}
 	
-	protected Boolean isAllColumns() {
-		if (((Insert) statement).getColumns() == null) return true;
-		return ((Insert) statement).getColumns().size() == ECLLayouts.getAllColumns(getTable().getName()).size();
-	}
-	
-	protected Table getTable() {
+	public Table getTable() {
 		return ((Insert) statement).getTable();
 	}
 	
-	protected List<Expression> getExpressions() {
+	public List<Expression> getExpressions() {
 		return ((ExpressionList) ((Insert) statement).getItemsList()).getExpressions();
 	}
 	
-	protected List<String> getColumnNames() {
+	public List<String> getColumnNames() {
 		List<Column> columns = ((Insert) statement).getColumns();
 		List<String> columnNames = new ArrayList<String>();
+		if (columns == null) {
+			for(String column : eclLayouts.getAllColumns(getTable().getName())) {
+				columnNames.add(column);
+			}
+			return columnNames;
+		}
 		for (Column column : columns) {
 			columnNames.add(column.getColumnName());
 		}
 		return columnNames;
 	}
 
-	protected LinkedHashSet<String> getAllCoumns() {
-		String table = ((Insert) statement).getTable().getName();
-		return ECLLayouts.getAllColumns(table);
-	}
-
-	protected ItemsList getItemsList() {
+	public ItemsList getItemsList() {
 		return ((Insert) statement).getItemsList();
 	}
 
-	protected boolean hasWith() {
+	public boolean hasWith() {
 		try {return ((Insert) statement).getSelect().getWithItemsList() != null;} catch (NullPointerException e) {}
 		return false;
 	}
 
-	protected List<WithItem> getWithItemsList() {
+	public List<WithItem> getWithItemsList() {
 		return ((Insert) statement).getSelect().getWithItemsList();
 	}
 
-	protected Select getSelect() {
+	public Select getSelect() {
 		return ((Insert) statement).getSelect();
 	}
 	
-	protected List<String> getAllTables() {
+	public List<String> getAllTables() {
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
 		List<String> tableList = new ArrayList<String>();
 		tableList = tablesNamesFinder.getTableList((Insert) statement);

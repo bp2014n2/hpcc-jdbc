@@ -2350,7 +2350,6 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
                         + "&IncludeApplicationValues=0" + "&IncludeWorkflows=0" + "&IncludeHelpers=0" + "&rawxml_";
 
                 // now request the schema for each hpcc query
-
                 try
                 {
                     Document dom2 = db.parse(connection.createHPCCESPConnection(queryinfourl));
@@ -2558,7 +2557,6 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             urlString = basewseclwatchurl + "/WsSMC/Activity?rawxml_";
 
             HPCCJDBCUtils.traceoutln(Level.INFO, "HPCCDatabaseMetaData Fetching HPCC INFO: " + urlString);
-            
             DocumentBuilder db = dbf.newDocumentBuilder();
             Document dom = db.parse(connection.createHPCCESPConnection(urlString));
 
@@ -2832,7 +2830,6 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
                     + URLEncoder.encode(file.getFullyQualifiedName(), "UTF-8") + "&Cluster="
                     + file.getClusterName() + "&RoxieSelections=0" + "&rawxml_";
             DocumentBuilder db = dbf.newDocumentBuilder();
-
             Document dom3 = db.parse(connection.createHPCCESPConnection(openfiledetailUrl));
 
             Element docElement2 = dom3.getDocumentElement();

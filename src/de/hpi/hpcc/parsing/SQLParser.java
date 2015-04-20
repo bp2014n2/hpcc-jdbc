@@ -3,9 +3,17 @@ package de.hpi.hpcc.parsing;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
+import de.hpi.hpcc.main.HPCCJDBCUtils;
+import de.hpi.hpcc.parsing.create.SQLParserCreate;
+import de.hpi.hpcc.parsing.drop.SQLParserDrop;
+import de.hpi.hpcc.parsing.insert.SQLParserInsert;
+import de.hpi.hpcc.parsing.select.SQLParserSelect;
+import de.hpi.hpcc.parsing.update.SQLParserUpdate;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.parser.CCJSqlParserManager;
@@ -14,25 +22,43 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.drop.Drop;
 import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectBody;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
+import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import net.sf.jsqlparser.statement.update.Update;
 import net.sf.jsqlparser.util.TablesNamesFinder;
 
-public class SQLParser{
+abstract public class SQLParser{
 	
-	public static final String parameterizedPrefix = "var";
-	static CCJSqlParserManager parserManager = new CCJSqlParserManager();
-	Statement statement;
-	Expression expression;
+	//public static final String parameterizedPrefix = "var";
+	protected static CCJSqlParserManager parserManager = new CCJSqlParserManager();
+	protected Statement statement;
+	protected Expression expression;
+	protected ECLLayouts eclLayouts;
 	
-	protected SQLParser(Expression expression) {
+	public enum Types {CREATE, DROP, INSERT, SELECT, UPDATE, OTHER};
+
+	
+	public SQLParser(Expression expression, ECLLayouts eclLayouts) {
+		this.eclLayouts = eclLayouts;
 	}
 	
-	protected SQLParser(String sql) {
+	public SQLParser(String sql, ECLLayouts eclLayouts) {
+		this.eclLayouts = eclLayouts;
+		try {
+			statement = parserManager.parse(new StringReader(sql));
+		} catch (JSQLParserException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		 
 	}
 	
-	protected SQLParser(Statement statement) {
+	public SQLParser(Statement statement, ECLLayouts eclLayouts) {
+		this.eclLayouts = eclLayouts;
 	}
 	
 	
@@ -45,41 +71,91 @@ public class SQLParser{
 		return "";
 	}
 	
-	protected static String sqlIsInstanceOf(String sql) {
+	public static Types sqlIsInstanceOf(String sql) {
 		try {
+			long timeBefore = System.currentTimeMillis();
 			Statement statement = parserManager.parse(new StringReader(sql));
+			long timeAfter = System.currentTimeMillis();
+			long timeDifference = timeAfter-timeBefore;
+			HPCCJDBCUtils.traceoutln(Level.INFO, "Time for parsing SQL to object tree: "+timeDifference);
 			if (statement instanceof Select) {
-				return "Select";
+				return Types.SELECT;
 			} else if (statement instanceof Insert) {
-				return "Insert";
+				return Types.INSERT;
 			} else if (statement instanceof Drop) {
-				return "Drop";
+				return Types.DROP;
 			} else if (statement instanceof Update) {
-				return "Update";
+				return Types.UPDATE;
 			} else if (statement instanceof CreateTable) {
-				return "Create";
+				return Types.CREATE;
 			}
 		} catch (JSQLParserException e) {
 			System.out.println("No valid SQL:");
 			e.printStackTrace();
 		}
-		return "";
+		return Types.OTHER;
 	}
 	
-	protected List<String> getAllTables() {
+	public static SQLParser getInstance(String sql, ECLLayouts eclLayouts) {
+		switch(sqlIsInstanceOf(sql)) {
+    	case SELECT:
+    		return new SQLParserSelect(sql, eclLayouts);
+    	case INSERT:
+    		return new SQLParserInsert(sql, eclLayouts);
+    	case UPDATE:
+    		return new SQLParserUpdate(sql, eclLayouts);
+    	case DROP:
+    		return new SQLParserDrop(sql, eclLayouts);
+    	case CREATE:
+    		return new SQLParserCreate(sql, eclLayouts);
+    	default:
+    		System.out.println("type of sql not recognized"+SQLParser.sqlIsInstanceOf(sql));
+//    		throw new SQLException();
+    		return null;
+    	}
+	}
+	
+	public List<String> getAllTables() {
 		List<String> tableList = new ArrayList<String>();
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
 		if (statement instanceof Select) {
-			tableList = tablesNamesFinder.getTableList((Select) statement);
+			boolean nextval = false;
+			if (((Select) statement).getSelectBody() instanceof PlainSelect) {
+				PlainSelect sb = (PlainSelect) ((Select) statement).getSelectBody();
+				
+				for (SelectItem si : sb.getSelectItems()) {
+					if (si instanceof SelectExpressionItem) {
+						Expression ex = ((SelectExpressionItem) si).getExpression();
+						if (ex instanceof Function) {
+							if (((Function) ex).getName().equalsIgnoreCase("nextval")) {
+								tableList.add("sequences");
+								nextval = true;
+							}
+						}
+					}
+				}
+			}
+			if (!nextval) {
+				tableList = tablesNamesFinder.getTableList((Select) statement);
+			}
+			
+			
 		} else if (statement instanceof Insert) {
 			tableList = tablesNamesFinder.getTableList((Insert) statement);
 		} else if (statement instanceof Update) {
 			tableList = tablesNamesFinder.getTableList((Update) statement);
+		} else if (statement instanceof CreateTable) {
+			tableList.add(((CreateTable) statement).getTable().getName());
+		} else if (statement instanceof Drop) {
+			tableList.add(((Drop) statement).getName());
 		} else {
 			tableList = null;
 		}
 		List<String> lowerTableList = new ArrayList<String>();
 		for (String table : tableList) {
+			if (table.contains(".")) {
+				table = table.split("\\.")[1];
+			}
 			lowerTableList.add(table.toLowerCase());
 		}
 		return lowerTableList;
@@ -92,6 +168,4 @@ public class SQLParser{
 	public int getParameterizedCount() {
 		return statement.toString().length() - statement.toString().replace("?", "").length();
 	}
-	
-	
 }

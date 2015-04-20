@@ -1,12 +1,26 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.update;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+
 import net.sf.jsqlparser.expression.Expression;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
+import de.hpi.hpcc.parsing.ECLBuilder;
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.ECLUtils;
 
 public class ECLBuilderUpdate extends ECLBuilder {
 
+	
+	SQLParserUpdate sqlParser;
+	
+	
+	public ECLBuilderUpdate(ECLLayouts eclLayouts) {
+		super(eclLayouts);
+		// TODO Auto-generated constructor stub
+	}
+	
+	
 	/**
 	 * This method generates ECL code from a given SQL code. 
 	 * Therefore it delegates the generation to the appropriate method, 
@@ -15,20 +29,29 @@ public class ECLBuilderUpdate extends ECLBuilder {
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
 	public String generateECL(String sql) {
-		SQLParserUpdate sqlParser = new SQLParserUpdate(sql);
-		StringBuilder eclCode = new StringBuilder();
+		sqlParser = new SQLParserUpdate(sql, eclLayouts);
+		eclCode = new StringBuilder();
+//		String tableName = sqlParser.getAllTables().get(0).toLowerCase();
+//		StringBuilder transformFunction = new StringBuilder();
+//		String transformResultType = tableName + "_record";
+//		transformFunction.append(transformResultType + " update(" + transformResultType + " l, " + transformResultType + " r) := TRANSFORM\n");
+//		for (String col : eclLayouts.getAllColumns(tableName)) {
+//			if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getColumns(),col)) {
+//				transformFunction.append("SELF." + col + " := IF(r." + col +" = " + sqlParser.isInt(col)?"0":"''" + ", l." + col + ", r." + col +");\n");
+//			} else {
+//				
+//			}
+//		}
 		
 		StringBuilder preSelection = new StringBuilder();
 		if (sqlParser.getWhere() != null) {
 			Expression expression = sqlParser.getWhere();
 			
-			preSelection.append("(");
 			preSelection.append(parseExpressionECL(expression));
-			preSelection.append(")");			
+			preSelection = ECLUtils.encapsulateWithBrackets(preSelection);
 		}
 		
-		
-		eclCode.append("updates := ");
+		eclCode.append("toUpdate := ");
 		StringBuilder updateTable = new StringBuilder();
 		updateTable.append(sqlParser.getName());
 		updateTable.append(preSelection.toString());
@@ -42,11 +65,9 @@ public class ECLBuilderUpdate extends ECLBuilder {
 				selectString += column;
 			}
 		}
-		updateTable.append("{");
-		updateTable.append(selectString);
-		updateTable.append("}");
+		updateTable.append(ECLUtils.encapsulateWithCurlyBrackets(selectString));
 		
-		convertToTable(updateTable);
+		updateTable = ECLUtils.convertToTable(updateTable);
 		updateTable.append(", ");
 
 		updateTable.append("{");
@@ -55,9 +76,9 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			
 			tableColumnString += (tableColumnString.equals("")? "":", ");
 			if (HPCCJDBCUtils.containsStringCaseInsensitive(columns, column)) {
-				String expr = sqlParser.getExpressions().get(sqlParser.getColumnsToLowerCase().indexOf(column)).toString();
+				String expr = sqlParser.getExpressions().get(sqlParser.getColumnsToLowerCase().indexOf(column.toLowerCase())).toString();
 				expr = expr.equals("NULL")? "''" : expr;
-				tableColumnString += ECLLayouts.getECLDataType(sqlParser.getName(), column)+" "+column+" := "+expr;
+				tableColumnString += eclLayouts.getECLDataType(sqlParser.getName(), column)+" "+column+" := "+expr;
 			} else {
 				tableColumnString += column;
 			}
@@ -66,7 +87,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 		updateTable.append(tableColumnString);
 		updateTable.append("}");
 		
-		convertToTable(updateTable);
+		updateTable = ECLUtils.convertToTable(updateTable);
 		updateTable.append(";\n");
 		eclCode.append(updateTable.toString());
 		
@@ -76,15 +97,19 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			eclCode.append(sqlParser.getName());
 			Expression expression = sqlParser.getWhere();
 			outputTable.append("(NOT");
-			outputTable.append("(");
-			
-			outputTable.append(parseExpressionECL(expression));
-			outputTable.append("))+");
+			outputTable.append(ECLUtils.encapsulateWithBrackets(parseExpressionECL(expression)));
+			outputTable.append(")+");
 		}
 
-		outputTable.append("updates,, '~%NEWTABLE%', overwrite);\n");
+		outputTable.append("toUpdate,, '~%NEWTABLE%', overwrite);\n");
 		eclCode.append(outputTable.toString());
 		
 		return eclCode.toString();
+	}
+
+	@Override
+	protected SQLParserUpdate getSqlParser() {
+		// TODO Auto-generated method stub
+		return sqlParser;
 	}
 }
