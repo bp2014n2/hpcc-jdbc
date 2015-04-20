@@ -58,10 +58,8 @@ public class HPCCConnection implements Connection{
     private Properties driverProperties;
     private SQLWarning warnings;
     private String catalog = HPCCJDBCUtils.HPCCCATALOGNAME;
-    private HttpURLConnection httpConnection;
     private HashSet<String> allStatementNames = new HashSet<String>();
     private boolean autoCommit = true;
-    private HttpEntity entity;
     private HttpClient client;
     
     protected static final Logger logger = HPCCLogger.getLogger();
