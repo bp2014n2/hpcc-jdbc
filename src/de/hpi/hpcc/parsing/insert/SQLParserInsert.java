@@ -45,6 +45,12 @@ public class SQLParserInsert extends SQLParser {
 	public List<String> getColumnNames() {
 		List<Column> columns = ((Insert) statement).getColumns();
 		List<String> columnNames = new ArrayList<String>();
+		if (columns == null) {
+			for(String column : eclLayouts.getAllColumns(getTable().getName())) {
+				columnNames.add(column);
+			}
+			return columnNames;
+		}
 		for (Column column : columns) {
 			columnNames.add(column.getColumnName());
 		}

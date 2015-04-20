@@ -116,6 +116,7 @@ public class ECLBuilderTest {
 		assertEquals("OUTPUT(DATASET([{valueA, valueB, valueC}], myTable_record),,'~%NEWTABLE%', overwrite);\n",eclBuilder.generateECL("insert into myTable values (valueA, valueB, valueC)"));
 		assertEquals("OUTPUT(TABLE(DATASET([{valueA}], {STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, STRING50 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) values (valueA)"));
 		assertEquals("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING50 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB)"));
+		assertEquals("OUTPUT(TABLE(DATASET([{valueB, valueA}], {STRING50 myColumnB, STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnB, myColumnA) values (valueB, valueA)"));
 		assertEquals("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING50 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB) returning *"));
 		assertEquals("x := TABLE(anotherTable, {myColumnB});\nOUTPUT(TABLE(TABLE(x, {myColumnB}),{STRING50 myColumn := '', myColumnA, STRING50 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) with x as (select myColumnB from anotherTable) select x.myColumnB from x"));
 //		assertEquals("OUTPUT(TABLE(TABLE((TABLE(anotherTable, {myColumnA})), {myColumnA}),{STRING50 myColumn := '', myColumnA, STRING50 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) select * from (select myColumnB from anotherTable)"));
@@ -124,8 +125,8 @@ public class ECLBuilderTest {
 	@Test
 	public void shouldTranslateUpdate() {
 		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate(eclLayouts);
-		assertEquals("updates := TABLE(TABLE(myTable, {myColumnA, myColumnB}), {STRING50 myColumn := 'myValue', myColumnA, myColumnB});\nOUTPUT(updates,, '~%NEWTABLE%', overwrite);\n",eclBuilder.generateECL("update myTable set myColumn = 'myValue'"));
-		assertEquals("updates := TABLE(TABLE(myTable(myColumnB = 'anotherValue'), {myColumn, myColumnB}), {myColumn, STRING50 myColumnA := 'myValue', myColumnB});\nOUTPUT(myTable(NOT(myColumnB = 'anotherValue'))+updates,, '~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"));	
+		assertEquals("toUpdate := TABLE(TABLE(myTable, {myColumnA, myColumnB}), {STRING50 myColumn := 'myValue', myColumnA, myColumnB});\nOUTPUT(toUpdate,, '~%NEWTABLE%', overwrite);\n",eclBuilder.generateECL("update myTable set myColumn = 'myValue'"));
+		assertEquals("toUpdate := TABLE(TABLE(myTable(myColumnB = 'anotherValue'), {myColumn, myColumnB}), {myColumn, STRING50 myColumnA := 'myValue', myColumnB});\nOUTPUT(myTable(NOT(myColumnB = 'anotherValue'))+toUpdate,, '~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"));	
 	} 
 	
 	@Test

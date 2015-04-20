@@ -29,11 +29,13 @@ import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import de.hpi.hpcc.logging.HPCCLogger;
 
@@ -142,13 +144,23 @@ public class HPCCConnection implements Connection{
 		}
     }
 
-    public NodeList parseDataset(InputStream xml, long startTime) throws Exception {
+    public NodeList parseDataset(InputStream xml, long startTime) throws HPCCException {
     	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
     	String expectedDSName = null;
         NodeList rowList = null;
 
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        Document dom = db.parse(xml);
+        DocumentBuilder db;
+		try {
+			db = dbf.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			throw new HPCCException("Failed to create DocumentBuilder");
+		}
+        Document dom;
+		try {
+			dom = db.parse(xml);
+		} catch (SAXException | IOException e) {
+			throw new HPCCException("Failed to parse dataset");
+		}
 
         long elapsedTime = System.currentTimeMillis() - startTime;
 
@@ -185,7 +197,7 @@ public class HPCCConnection implements Connection{
 
             if (exceptionlist.getLength() > 0)
             {
-                Exception resexception = null;
+                HPCCException resexception = null;
                 NodeList currexceptionelements = exceptionlist.item(0).getChildNodes();
 
                 for (int j = 0; j < currexceptionelements.getLength(); j++)
@@ -193,7 +205,7 @@ public class HPCCConnection implements Connection{
                     Node exceptionelement = currexceptionelements.item(j);
                     if (exceptionelement.getNodeName().equals("Message"))
                     {
-                        resexception = new Exception("HPCCJDBC: Error in response: \'"
+                        resexception = new HPCCException("HPCCJDBC: Error in response: \'"
                                 + exceptionelement.getTextContent() + "\'");
                     }
                 }

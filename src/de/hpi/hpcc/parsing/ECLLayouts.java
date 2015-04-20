@@ -1,9 +1,11 @@
 package de.hpi.hpcc.parsing;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
@@ -33,10 +35,31 @@ public class ECLLayouts {
 		return "";
 	}
 	
+	public Collection<Object> getKeyedColumns(String table) {
+		table = getFullTableName(table);
+		HPCCDFUFile file = dbMetadata.getDFUFile(table);
+		if(file != null) {
+			Collection<Object> list = file.getKeyedColumns().values();
+			return list;
+		} else {
+			//throw new Exception("DFUFile not found: "+table);
+			return null;
+		}
+	}
+	
+	public Collection<Object> getNonKeyedColumns(String table) {
+		table = getFullTableName(table);
+		HPCCDFUFile file = dbMetadata.getDFUFile(table);
+		if(file != null) {
+			Collection<Object> list = file.getNonKeyedColumns().values();
+			return list;
+		} else {
+			//throw new Exception("DFUFile not found: "+table);
+			return null;
+		}
+	}
+	
 	public LinkedHashSet<String> getAllColumns(String table) {
-		//ECLRecordDefinition recordDefinition = getLayouts(table);
-//		if (recordDefinition == null) return null;
-//		return recordDefinition.getColumnNames();
 		table = getFullTableName(table);
 		HPCCDFUFile file = dbMetadata.getDFUFile(table);
 		if(file != null) {
@@ -56,6 +79,7 @@ public class ECLLayouts {
 	
 	public boolean isColumnOfIntInAnyTable(List<String> tables, String column) {
 		for (String table : tables) {
+			table = getFullTableName(table);
 			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
 			for(String field : dfuFile.getAllTableFieldsStringArray()){
 				if(!field.equalsIgnoreCase(column)) {
@@ -85,11 +109,16 @@ public class ECLLayouts {
 	}
 	
 	private String getFullTableName(String tableName) {
-		if (tableName.startsWith("i2b2demodata::")) {
-			return tableName.toLowerCase();
-		} else {
-			return "i2b2demodata::"+tableName.toLowerCase();
+		Matcher matcher = Pattern.compile("(~?(\\w+)::)?(\\w+)", Pattern.CASE_INSENSITIVE).matcher(tableName);
+		String schema = "i2b2demodata";
+		if (matcher.find()) {
+			if (matcher.group(2) != null) {
+				schema = matcher.group(2);
+			}
+			tableName = matcher.group(3);
 		}
+		
+		return schema+"::"+tableName.toLowerCase();
 	}
 	
 	public String getLayout(String tableName) {
@@ -117,29 +146,37 @@ public class ECLLayouts {
 			return java.sql.Types.VARCHAR;
 		}
 	}
-
-	public String getLayoutOrdered(String table, List<String> orderedColumns) {
-		String name = getFullTableName(table);
-		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");
-		
-		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
-		List<Object> fields = Collections.list(dfuFile.getAllFields());
-		
-		for (String columnName : orderedColumns) {
-			for (Object field : fields) {
-				HPCCColumnMetaData column = (HPCCColumnMetaData) field;
-				if (!column.getColumnName().equals(columnName)) {
-					continue;
-				}
-				layout.append(column.getEclType());
-				layout.append(" ");
-				layout.append(column.getColumnName());
-				layout.append("; ");
-			}
-		}
-		layout.append("END;");
-		
-		return layout.toString();
+	
+	public List<String> getListOfIndexes(String tableName) {
+    	return dbMetadata.getDFUFile(getFullTableName(tableName)).getRelatedIndexesList();
+    }
+	
+	public boolean hasIndex(String tableName) {
+		return dbMetadata.getDFUFile(getFullTableName(tableName)).hasRelatedIndexes();
 	}
+
+//	public String getLayoutOrdered(String table, List<String> orderedColumns) {
+//		String name = getFullTableName(table);
+//		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");
+//		
+//		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
+//		List<Object> fields = Collections.list(dfuFile.getAllFields());
+//		
+//		for (String columnName : orderedColumns) {
+//			for (Object field : fields) {
+//				HPCCColumnMetaData column = (HPCCColumnMetaData) field;
+//				if (!column.getColumnName().equalsIgnoreCase(columnName)) {
+//					continue;
+//				}
+//				layout.append(column.getEclType());
+//				layout.append(" ");
+//				layout.append(column.getColumnName());
+//				layout.append("; ");
+//			}
+//		}
+//		layout.append("END;");
+//		
+//		return layout.toString();
+//	}
 
 }

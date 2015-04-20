@@ -17,7 +17,7 @@ public class ECLBuilderDrop extends ECLBuilder {
 	 */
 	public String generateECL(String sql) {
 		sqlParser = new SQLParserDrop(sql, eclLayouts);
-		StringBuilder eclCode = new StringBuilder();
+		eclCode = new StringBuilder();
 		eclCode.append("Std.File.DeleteLogicalFile('~"+sqlParser.getFullName().replace(".", "::")+"', true)");
 		
 		return eclCode.toString();

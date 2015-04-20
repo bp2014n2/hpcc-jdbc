@@ -13,6 +13,7 @@ import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import de.hpi.hpcc.parsing.update.SQLParserUpdate;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.parser.CCJSqlParserManager;
@@ -21,7 +22,10 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import net.sf.jsqlparser.statement.drop.Drop;
 import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
+import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import net.sf.jsqlparser.statement.update.Update;
 import net.sf.jsqlparser.util.TablesNamesFinder;
@@ -114,7 +118,27 @@ abstract public class SQLParser{
 		List<String> tableList = new ArrayList<String>();
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
 		if (statement instanceof Select) {
-			tableList = tablesNamesFinder.getTableList((Select) statement);
+			boolean nextval = false;
+			if (((Select) statement).getSelectBody() instanceof PlainSelect) {
+				PlainSelect sb = (PlainSelect) ((Select) statement).getSelectBody();
+				
+				for (SelectItem si : sb.getSelectItems()) {
+					if (si instanceof SelectExpressionItem) {
+						Expression ex = ((SelectExpressionItem) si).getExpression();
+						if (ex instanceof Function) {
+							if (((Function) ex).getName().equalsIgnoreCase("nextval")) {
+								tableList.add("sequences");
+								nextval = true;
+							}
+						}
+					}
+				}
+			}
+			if (!nextval) {
+				tableList = tablesNamesFinder.getTableList((Select) statement);
+			}
+			
+			
 		} else if (statement instanceof Insert) {
 			tableList = tablesNamesFinder.getTableList((Insert) statement);
 		} else if (statement instanceof Update) {

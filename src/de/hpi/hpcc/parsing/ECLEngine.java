@@ -18,8 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package de.hpi.hpcc.parsing;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -77,25 +80,20 @@ public abstract class ECLEngine
     	}
     }
 
-    public String parseEclCode(String sqlQuery){
-		try {
-			sqlQuery = convertToAppropriateSQL(sqlQuery);
-			eclCode = new StringBuilder(generateECL(sqlQuery));
-			StringBuilder sb = new StringBuilder();
+    public String parseEclCode(String sqlQuery) throws SQLException{
+		sqlQuery = convertToAppropriateSQL(sqlQuery);
+		eclCode = new StringBuilder(generateECL(sqlQuery));
+		StringBuilder sb = new StringBuilder();
 
-			sb.append("&eclText=\n");
+		sb.append("&eclText=\n");
 			
 			if (substring != null) {
 				eclCode = new StringBuilder(createSubstring());
 			}
-			sb.append(eclCode.toString());
-			sb.append("\n\n//"+eclMetaEscape(sqlQuery));
+		sb.append(eclCode.toString());
+		sb.append("\n\n//"+eclMetaEscape(sqlQuery));
 //			System.out.println(sb.toString());
-			return sb.toString();
-		} catch (Exception e) {
-			System.out.println(e);
-		}
-		return null;
+		return sb.toString();
     }
     
     protected String createSubstring() {
@@ -117,7 +115,7 @@ public abstract class ECLEngine
 		return sql;
 	}
     
-    public String convertToAppropriateSQL(String sql) {
+    public String convertToAppropriateSQL(String sql) throws SQLException {
     	Pattern pattern = Pattern.compile("substring\\s*\\(\\s*(\\w+)\\s+from\\s+(\\d+)\\s+for\\s+(\\d+)\\s*\\)(\\s+as\\s+(\\w+))?(\\s*(=|<|>|<=|>=)\\s*'?\\w+'?)?", Pattern.CASE_INSENSITIVE);
     	Pattern selectPattern = Pattern.compile("select\\s*(distinct\\s*)?(((count|sum|avg)\\(w*\\))?\\w*\\s*,\\s*)*\\s*substring\\s*\\(\\s*\\w+\\s+from\\s+\\d+\\s+for\\s+\\d+\\s*\\)(\\s+as\\s+\\w+)?", Pattern.CASE_INSENSITIVE);
     	Matcher matcher = pattern.matcher(sql);
@@ -125,6 +123,7 @@ public abstract class ECLEngine
 		if(matcher.find()){
 			String column = matcher.group(1);
 			String alias = matcher.group(5);
+
 			int start = Integer.parseInt(matcher.group(2));
 			int count = Integer.parseInt(matcher.group(3));
 			this.substring = new ECLSubstringDefinition(column, alias, start, count);
@@ -165,15 +164,15 @@ public abstract class ECLEngine
 	    }
     }
 
-    public NodeList executeSelectConstant(){
+    public NodeList executeSelectConstant() throws HPCCException{
         try {
             long startTime = System.currentTimeMillis();
 
             HttpURLConnection conn = this.conn.createHPCCESPConnection(this.conn.generateUrl());
             return this.conn.parseDataset(conn.getInputStream(), startTime);
         }
-        catch (Exception e){
-            throw new RuntimeException(e);
+        catch (IOException e){
+            throw new HPCCException("Failed to initialize Connection");
         }
     }
     
@@ -211,7 +210,7 @@ public abstract class ECLEngine
 			table = table.split("\\.")[1];
 		}
 //		layoutsString.append(table+"_record := ");
-		layoutsString.append(eclLayouts.getLayoutOrdered(table, orderedColumns));
+		layoutsString.append(eclLayouts.getLayout(table));
 		layoutsString.append("\n");
 		
 		for (int i = 1; i<allTables.size(); i++) {
@@ -249,7 +248,10 @@ public abstract class ECLEngine
     }
     
     private boolean getIndex(String tableName, StringBuilder indicesString) {
-		switch(tableName) {
+		
+    	/*
+    	switch(tableName) {
+    	 
 		case "observation_fact":
 			indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd,encounter_num,patient_num,provider_id,start_date,modifier_cd,instance_num,valtype_cd,tval_char,valueflag_cd,vunits_cd,end_date,location_cd,update_date,download_date,import_date,sourcesystem_cd,upload_id}, {}, '~i2b2demodata::observation_fact_idx_all');\n");
 //			if(sqlParser.hasWhereOf("observation_fact","concept_cd") && !sqlParser.hasWhereOf("observation_fact","provider_id")) {
@@ -268,9 +270,34 @@ public abstract class ECLEngine
 			return true;
 		default: return false; 
 		}
+		*/
+    	boolean hasIndex = eclLayouts.hasIndex("observation_fact");
+    	List<String> indexes = eclLayouts.getListOfIndexes("observation_fact");
+    	Collection<Object> keyedColumns = eclLayouts.getKeyedColumns(indexes.get(0));
+    	Collection<Object> nonKeyedColumns = eclLayouts.getNonKeyedColumns(indexes.get(0));
+    	String indexString = getIndexString("observation_fact", indexes.get(0));
+    	
+    	return false;
 	
 	}
-
+   
+    private String getIndexString(String tableName, String index) {
+    	List<String> indexParameters = new ArrayList<String>();
+    	indexParameters.add(tableName+"_table");
+    	String keyedColumnList = ECLUtils.join(eclLayouts.getKeyedColumns(index), ", ");
+    	keyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(keyedColumnList);
+    	indexParameters.add(keyedColumnList);
+    	String nonKeyedColumnList = ECLUtils.join(eclLayouts.getNonKeyedColumns(index), ", ");
+    	nonKeyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(nonKeyedColumnList);
+    	indexParameters.add(nonKeyedColumnList);
+    	indexParameters.add(ECLUtils.encapsulateWithSingleQuote("~"+index));
+    	
+    	String joined = ECLUtils.join(indexParameters, ", ");
+    	joined = ECLUtils.convertToIndex(joined);
+    	
+    	return tableName + " := " + joined + ";";
+    }
+ 
 	
 
     public boolean hasResultSchema()

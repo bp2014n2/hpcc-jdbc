@@ -8,6 +8,7 @@ import de.hpi.hpcc.main.HPCCConnection;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import de.hpi.hpcc.parsing.ECLEngine;
+import de.hpi.hpcc.parsing.ECLLayouts;
 
 public class ECLEngineCreate extends ECLEngine {
 
@@ -37,19 +38,13 @@ public class ECLEngineCreate extends ECLEngine {
 			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
 			
-			String tableName = ((SQLParserCreate) sqlParser).getTableName().toLowerCase();
-			String recordString = eclLayouts.getLayout(tableName);
-			
-			if(recordString == null) {
-				recordString = ((SQLParserCreate) sqlParser).getRecord();
-			} else {
-				recordString = recordString.substring(7, recordString.length() - 6).replace(";", ",");
-			}
+			String recordString = ((SQLParserCreate) sqlParser).getRecord();
+
 	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
 	    	int i=0;
-	    	for (String column : recordString.split(",")) {
+	    	for (String column : recordString.split(",\\s*")) {
 	    		i++;
-	    		expectedretcolumns.add(new HPCCColumnMetaData(column.split(" ")[1], i, eclLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
+	    		expectedretcolumns.add(new HPCCColumnMetaData(column.split("\\s+")[1], i, ECLLayouts.getSqlType(column.split("\\s+")[0])));
 	    	}  	
 		} else System.out.println("Table '"+tablePath+"' already exists. Query aborted.");
 		

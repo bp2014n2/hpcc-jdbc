@@ -31,7 +31,7 @@ public class ECLBuilderInsert extends ECLBuilder {
 	public String generateECL(String sql) {
 		sqlParser = new SQLParserInsert(sql, eclLayouts);
 		
-		StringBuilder eclCode = new StringBuilder();
+		eclCode = new StringBuilder();
 		
 		if (sqlParser.hasWith()) {
 			for (WithItem withItem : sqlParser.getWithItemsList()) {
@@ -41,26 +41,36 @@ public class ECLBuilderInsert extends ECLBuilder {
 		}
 
 		eclCode.append("OUTPUT(");
-		generateNewDataset(sqlParser, eclCode);
+		generateNewDataset(sqlParser);
 		eclCode.append(",,'~%NEWTABLE%', overwrite);\n");
 		
 		
 		/*
 			 * TODO: replace with much, much, much better solution
 			 */
-		eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
+		//eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
 		return eclCode.toString();
 	}
 
-	private void generateNewDataset(SQLParserInsert sqlParser, StringBuilder eclCode) {
+	private void generateNewDataset(SQLParserInsert sqlParser) {
 		if (sqlParser.getColumns() == null || sqlParser.getColumns().size() == eclLayouts.getAllColumns(sqlParser.getTable().getName()).size()) {
 			if (sqlParser.getItemsList() instanceof SubSelect) {
 			eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
 			} else {
 				eclCode.append("DATASET([{");
 				String valueString = "";
-				for (Expression expression : sqlParser.getExpressions()) {
-					valueString += (valueString=="" ? "":", ")+parseExpressionECL(expression);
+				LinkedHashSet<String> layout = eclLayouts.getAllColumns(sqlParser.getTable().getName());
+				List<Expression> expressions = sqlParser.getExpressions();
+				List<String> columns = sqlParser.getColumnNames();
+				for(String column : layout) {
+					for(int index = 0; index < columns.size(); index++) {
+						if(column.equalsIgnoreCase(columns.get(index))) {
+							Expression expression = expressions.get(index);
+							valueString += (valueString=="" ? "":", ")+parseExpressionECL(expression);
+							break;
+						}
+						
+					}
 				}
 				eclCode.append(valueString);
 				eclCode.append("}], ");

@@ -18,7 +18,7 @@ public class ECLBuilderCreate extends ECLBuilder {
 	 */
 	public String generateECL(String sql) {
 		sqlParser = new SQLParserCreate(sql, eclLayouts);
-		StringBuilder eclCode = new StringBuilder();
+		eclCode = new StringBuilder();
 		eclCode.append("OUTPUT(DATASET([],{");
 		String recordString = sqlParser.getRecord();
 		eclCode.append(recordString);

@@ -12,6 +12,8 @@ import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
+import de.hpi.hpcc.parsing.ECLUtils;
+
 
 public class ECLBuilderUpdate extends ECLBuilder {
 
@@ -34,6 +36,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 	 */
 	public String generateECL(String sql) {
 		sqlParser = new SQLParserUpdate(sql, eclLayouts);
+
 		StringBuilder eclCode = new StringBuilder();
 		
 		String tableName = sqlParser.getAllTables().get(0).toLowerCase();
@@ -56,6 +59,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 				}
 			}
 		}
+
 
 		StringBuilder joinRecord = new StringBuilder();
 		String updateColumn = sqlParser.getColumns().get(0);
@@ -169,6 +173,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 //
 //		outputTable.append("updates,, '~%NEWTABLE%', overwrite);\n");
 //		eclCode.append(outputTable.toString());
+
 		
 		return eclCode.toString();
 	}
