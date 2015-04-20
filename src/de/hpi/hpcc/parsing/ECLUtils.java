@@ -1,7 +1,5 @@
 package de.hpi.hpcc.parsing;
 
-import java.util.List;
-
 public class ECLUtils {
 	
 	public static StringBuilder convertToTable(StringBuilder eclCode) {

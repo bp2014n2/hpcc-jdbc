@@ -18,13 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package de.hpi.hpcc.parsing;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -80,26 +80,20 @@ public abstract class ECLEngine
     	}
     }
 
-    public String parseEclCode(String sqlQuery){
-		try {
-			sqlQuery = convertToAppropriateSQL(sqlQuery);
-			eclCode = new StringBuilder(generateECL(sqlQuery));
-			StringBuilder sb = new StringBuilder();
+    public String parseEclCode(String sqlQuery) throws SQLException{
+		sqlQuery = convertToAppropriateSQL(sqlQuery);
+		eclCode = new StringBuilder(generateECL(sqlQuery));
+		StringBuilder sb = new StringBuilder();
 
-			sb.append("&eclText=\n");
+		sb.append("&eclText=\n");
 			
 //			if (substring != null) {
 //				eclCode = new StringBuilder(createSubstring());
 //			}
-			sb.append(eclCode.toString());
-			sb.append("\n\n//"+eclMetaEscape(sqlQuery));
+		sb.append(eclCode.toString());
+		sb.append("\n\n//"+eclMetaEscape(sqlQuery));
 //			System.out.println(sb.toString());
-			return sb.toString();
-		} catch (Exception e) {
-			//really?
-			System.out.println(e);
-		}
-		return null;
+		return sb.toString();
     }
   /*  
     protected String createSubstring() {
@@ -121,7 +115,7 @@ public abstract class ECLEngine
 		return sql;
 	}
     
-    public String convertToAppropriateSQL(String sql) {
+    public String convertToAppropriateSQL(String sql) throws SQLException {
     	Pattern pattern = Pattern.compile("substring\\s*\\(\\s*(\\w+)\\s+from\\s+(\\d+)\\s+for\\s+(\\d+)\\s*\\)(\\s+as\\s+(\\w+))?", Pattern.CASE_INSENSITIVE);
     	Pattern selectPattern = Pattern.compile("select\\s*(distinct\\s*)?(((count|sum|avg)\\(w*\\))?\\w*\\s*,\\s*)*\\s*substring\\s*\\(\\s*\\w+\\s+from\\s+\\d+\\s+for\\s+\\d+\\s*\\)(\\s+as\\s+\\w+)?", Pattern.CASE_INSENSITIVE);
     	Matcher matcher = pattern.matcher(sql);
@@ -129,13 +123,10 @@ public abstract class ECLEngine
 		if(matcher.find()){
 			String column = matcher.group(1);
 			String alias = matcher.group(5);
-			int start = Integer.parseInt(matcher.group(2));
-			int count = Integer.parseInt(matcher.group(3));
 			if (selectMatcher.find() && alias == null) {
 				alias = column + "_substring";
 			}
 //			this.substring = new ECLSubstringDefinition(column, alias, start, count);
-			String substring = sql.substring(matcher.start(),matcher.end());
 //			sql = sql.replace(substring, this.substring.toSql());
 		}
 		if(sql.toLowerCase().contains("nextval")){
@@ -167,15 +158,15 @@ public abstract class ECLEngine
 	    }
     }
 
-    public NodeList executeSelectConstant(){
+    public NodeList executeSelectConstant() throws HPCCException{
         try {
             long startTime = System.currentTimeMillis();
 
             HttpURLConnection conn = this.conn.createHPCCESPConnection(this.conn.generateUrl());
             return this.conn.parseDataset(conn.getInputStream(), startTime);
         }
-        catch (Exception e){
-            throw new RuntimeException(e);
+        catch (IOException e){
+            throw new HPCCException("Failed to initialize Connection");
         }
     }
     

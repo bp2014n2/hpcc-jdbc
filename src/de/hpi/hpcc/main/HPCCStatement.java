@@ -12,16 +12,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.w3c.dom.NodeList;
-
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
-import de.hpi.hpcc.parsing.create.ECLEngineCreate;
-import de.hpi.hpcc.parsing.drop.ECLEngineDrop;
-import de.hpi.hpcc.parsing.insert.ECLEngineInsert;
-import de.hpi.hpcc.parsing.select.ECLEngineSelect;
-import de.hpi.hpcc.parsing.update.ECLEngineUpdate;
 
 public class HPCCStatement implements Statement{
 	protected static final Logger logger = HPCCLogger.getLogger();
@@ -31,14 +25,33 @@ public class HPCCStatement implements Statement{
     protected SQLWarning warnings;
     protected ResultSet result = null;
     protected String name;
+    private List<String> whiteList;
     
     private boolean federatedDatabase = false;
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;
         this.connection = (HPCCConnection) connection;
-        
+        initializeWhiteList();
         log("Statement created");
+    }
+    
+    private void initializeWhiteList() {
+    	if(whiteList == null) {
+	    	whiteList = new ArrayList<String>();
+			whiteList.add("query_global_temp");
+			whiteList.add("dx");
+			whiteList.add("master_query_global_temp");
+			whiteList.add("observation_fact");
+			whiteList.add("provider_dimension");
+			whiteList.add("visit_dimension");
+			whiteList.add("patient_dimension");
+			whiteList.add("modifier_dimension");
+			whiteList.add("concept_dimension");
+			whiteList.add("qt_patient_set_collection");
+			whiteList.add("qt_patient_env_collection");
+			whiteList.add("avk_fdb_t_leistungskosten");
+    	}
     }
     
 	public boolean execute(String sqlStatement) throws SQLException {
@@ -49,20 +62,6 @@ public class HPCCStatement implements Statement{
 			}
             warnings.setNextException(new SQLException());
 		}
-		
-		ArrayList<String> whiteList = new ArrayList<String>();
-		whiteList.add("query_global_temp");
-		whiteList.add("dx");
-		whiteList.add("master_query_global_temp");
-		whiteList.add("observation_fact");
-		whiteList.add("provider_dimension");
-		whiteList.add("visit_dimension");
-		whiteList.add("patient_dimension");
-		whiteList.add("modifier_dimension");
-		whiteList.add("concept_dimension");
-		whiteList.add("qt_patient_set_collection");
-		whiteList.add("qt_patient_env_collection");
-		whiteList.add("avk_fdb_t_leistungskosten");
 		
 		result = null;
 		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
@@ -78,21 +77,22 @@ public class HPCCStatement implements Statement{
 		return sendQueryToPostgreSQL(sqlStatement);
 	}
 	
-	private boolean sendQueryToHPCC(String sqlStatement) throws SQLException{
+	private boolean sendQueryToHPCC(String sqlStatement) throws SQLException {
 		try {
 			this.eclEngine = ECLEngine.getInstance(connection, connection.getDatabaseMetaData(), sqlStatement);
 			String eclCode = eclEngine.parseEclCode(sqlStatement);
 			connection.sendRequest(eclCode);
-			NodeList rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+			NodeList rowList;
+			rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
 			if (rowList != null) {
 				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	"HPCC Result"));
 			}
 			return result != null;
-		} catch (Exception exception) {
+		} catch (HPCCException exception) {
 			exception.printStackTrace();
 			this.close();
+			throw exception;
 		}
-		return false;
 	}
 	
 	private boolean sendQueryToPostgreSQL(String sqlStatement) throws SQLException {
@@ -104,9 +104,8 @@ public class HPCCStatement implements Statement{
 			result = stmt.executeQuery(sqlStatement);
 			return result != null;
 		} catch (ClassNotFoundException classNotFoundException) {
-			classNotFoundException.printStackTrace();
+			throw new HPCCException("PostgreSQL driver not found");
 		}
-		return false;
 	}
 
 	public ResultSet executeQuery(String sqlQuery) throws SQLException {      
@@ -170,7 +169,7 @@ public class HPCCStatement implements Statement{
     public void setCursorName(String name) throws SQLException{
     	if (!this.connection.add(name)) {
     		log(Level.SEVERE, "Cursor name not unique!");
-    		throw new SQLException();
+    		throw new HPCCException();
     	} else {
     		this.name = name;
     	}
