@@ -33,7 +33,7 @@ public class SQLParserSelect extends SQLParser {
 	public SQLParserSelect(Expression expression, ECLLayouts layouts) {
 		super(expression, layouts);
 		if (expression instanceof SubSelect) {
-			statement = (Statement) expression;
+			this.expression = expression;
 			plain = (PlainSelect) ((SubSelect) expression).getSelectBody();
 		} else if (expression instanceof MinorThan || expression instanceof Column || expression instanceof LongValue) {
 			this.expression = expression;			

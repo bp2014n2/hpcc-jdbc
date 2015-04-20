@@ -152,19 +152,7 @@ abstract public class ECLBuilder {
 			expression.append(((LongValue) expressionItem).getValue());
 		} else if (expressionItem instanceof ExistsExpression) {		
 			SQLParserSelect subParser = new SQLParserSelect(((SubSelect)((ExistsExpression) expressionItem).getRightExpression()).getSelectBody().toString(), eclLayouts);	
-			Expression where = subParser.getWhere();
-			String joinColumn = null;
-			if(where instanceof EqualsTo) {
-				String left = ((EqualsTo)where).getLeftExpression().toString();
-				String right = ((EqualsTo)where).getRightExpression().toString();
-				if(right.contains(".") && left.contains(".")) {
-					if(!right.substring(0,right.indexOf(".") + 1).equals(left.substring(0,left.indexOf(".") + 1)) 
-					&& right.substring(right.indexOf(".") + 1).equals(left.substring(left.indexOf(".") + 1))){
-						joinColumn = right.substring(right.indexOf(".") + 1);
-					}
-				}
-			}
-			expression.append(joinColumn+" IN SET(");
+//			expression.append(joinColumn+" IN SET(");
 			if(subParser.getSelectItems().size() == 1) {
 				if(subParser.getSelectItems().get(0).toString().equals("1")) {
 					if(subParser.getFromItem() instanceof SubSelect) {
@@ -174,7 +162,7 @@ abstract public class ECLBuilder {
 			} else {
 				expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
 			}
-			expression.append(", "+joinColumn+")");
+//			expression.append(", "+joinColumn+")");
 		} else if (expressionItem instanceof IsNullExpression) {
 			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
 			expression.append(" = "+((eclLayouts.isColumnOfIntInAnyTable(getSqlParser().getAllTables(), ((Column)((IsNullExpression) expressionItem).getLeftExpression()).getColumnName()))?"0":"''"));

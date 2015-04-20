@@ -8,7 +8,9 @@ import java.util.List;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.update.Update;
 
@@ -38,9 +40,40 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	public Expression getWhereWithoutExists() {
-		Expression where = ((Update) statement).getWhere();
-		
-		return where;
+		return deleteExist(((Update) statement).getWhere());
+	}
+	
+	private Expression deleteExist(Expression expr) {
+		if (expr instanceof BinaryExpression) {
+			Expression l = deleteExist(((BinaryExpression) expr).getLeftExpression());
+			Expression r = deleteExist(((BinaryExpression) expr).getRightExpression());
+			if (l == null) {
+				expr = ((BinaryExpression) expr).getRightExpression();
+			} else if (r == null) {
+				expr = ((BinaryExpression) expr).getLeftExpression();
+			} else {
+				((BinaryExpression)expr).setLeftExpression(l);
+				((BinaryExpression)expr).setRightExpression(r);
+			}
+		} else if (expr instanceof ExistsExpression) {
+			return null;
+		}
+		return expr;
+	}
+	
+	public boolean hasExist() {
+		return getExist(((Update) statement).getWhere()) == null;
+	}
+	
+	public Expression getExist(Expression expr) {
+		if (expr instanceof ExistsExpression) 
+			return expr;
+		else if (expr instanceof BinaryExpression) 
+			if (getExist(((BinaryExpression) expr).getLeftExpression()) != null)
+				return getExist(((BinaryExpression) expr).getLeftExpression());
+			else if (getExist(((BinaryExpression) expr).getRightExpression()) != null)
+				return getExist(((BinaryExpression) expr).getRightExpression());
+		return null;
 	}
 	
 	public LinkedHashSet<String> getAllCoumns() {
