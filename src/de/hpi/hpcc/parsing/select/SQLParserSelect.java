@@ -8,6 +8,7 @@ import java.util.List;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LongValue;
@@ -72,8 +73,15 @@ public class SQLParserSelect extends SQLParser {
 	
 	public List<String> getAllSelectItemsInQuery() {
 		ArrayList<String> allSelects = new ArrayList<String>();
-		if (isCount()) {	
-			allSelects.add(((SelectExpressionItem) getSelectItems().get(0)).getAlias().getName());
+		if (isCount()) {
+			//TODO: better
+			SelectItem count = getSelectItems().get(0);
+			String columnName = "count";
+			Alias alias = ((SelectExpressionItem) count).getAlias();
+			if (alias != null) {
+				columnName = alias.getName();
+			}
+			allSelects.add(columnName);
 			return allSelects;
 		}
 		for (SelectItem selectItem : getSelectItems()) {
