@@ -20,6 +20,7 @@ import net.sf.jsqlparser.statement.select.SubSelect;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.ECLUtils;
 
 public class ECLBuilderSelect extends ECLBuilder {
 
@@ -52,7 +53,7 @@ public class ECLBuilderSelect extends ECLBuilder {
     	 
     	if ((sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) && !((SQLParserSelect) sqlParser).isCount()) {
     		//Why not always?
-    		convertToTable(eclCode);
+    		eclCode = ECLUtils.convertToTable(eclCode);
     	}
     	generateOrderBys(sqlParser);
 //    	if(sqlParser.getOrderBys() != null) {

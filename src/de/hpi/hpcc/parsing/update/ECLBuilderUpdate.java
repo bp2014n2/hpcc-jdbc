@@ -7,6 +7,7 @@ import net.sf.jsqlparser.expression.Expression;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.ECLUtils;
 
 public class ECLBuilderUpdate extends ECLBuilder {
 
@@ -47,7 +48,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			Expression expression = sqlParser.getWhere();
 			
 			preSelection.append(parseExpressionECL(expression));
-			encapsulateWithBrackets(preSelection);
+			preSelection = ECLUtils.encapsulateWithBrackets(preSelection);
 		}
 		
 		eclCode.append("toUpdate := ");
@@ -64,9 +65,9 @@ public class ECLBuilderUpdate extends ECLBuilder {
 				selectString += column;
 			}
 		}
-		updateTable.append(encapsulateWithCurlyBrackets(selectString));
+		updateTable.append(ECLUtils.encapsulateWithCurlyBrackets(selectString));
 		
-		convertToTable(updateTable);
+		updateTable = ECLUtils.convertToTable(updateTable);
 		updateTable.append(", ");
 
 		updateTable.append("{");
@@ -86,7 +87,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 		updateTable.append(tableColumnString);
 		updateTable.append("}");
 		
-		convertToTable(updateTable);
+		updateTable = ECLUtils.convertToTable(updateTable);
 		updateTable.append(";\n");
 		eclCode.append(updateTable.toString());
 		
@@ -96,7 +97,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			eclCode.append(sqlParser.getName());
 			Expression expression = sqlParser.getWhere();
 			outputTable.append("(NOT");
-			outputTable.append(encapsulateWithBrackets(parseExpressionECL(expression)));
+			outputTable.append(ECLUtils.encapsulateWithBrackets(parseExpressionECL(expression)));
 			outputTable.append(")+");
 		}
 

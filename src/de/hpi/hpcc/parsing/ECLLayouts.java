@@ -1,9 +1,14 @@
 package de.hpi.hpcc.parsing;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
@@ -31,6 +36,30 @@ public class ECLLayouts {
 			return columnMeta.getEclType();
 		}
 		return "";
+	}
+	
+	public Collection<Object> getKeyedColumns(String table) {
+		table = getFullTableName(table);
+		HPCCDFUFile file = dbMetadata.getDFUFile(table);
+		if(file != null) {
+			Collection<Object> list = file.getKeyedColumns().values();
+			return list;
+		} else {
+			//throw new Exception("DFUFile not found: "+table);
+			return null;
+		}
+	}
+	
+	public Collection<Object> getNonKeyedColumns(String table) {
+		table = getFullTableName(table);
+		HPCCDFUFile file = dbMetadata.getDFUFile(table);
+		if(file != null) {
+			Collection<Object> list = file.getNonKeyedColumns().values();
+			return list;
+		} else {
+			//throw new Exception("DFUFile not found: "+table);
+			return null;
+		}
 	}
 	
 	public LinkedHashSet<String> getAllColumns(String table) {
@@ -83,11 +112,16 @@ public class ECLLayouts {
 	}
 	
 	private String getFullTableName(String tableName) {
-		if (tableName.startsWith("i2b2demodata::")) {
-			return tableName.toLowerCase();
-		} else {
-			return "i2b2demodata::"+tableName.toLowerCase();
+		Matcher matcher = Pattern.compile("(~?(\\w+)::)?(\\w+)", Pattern.CASE_INSENSITIVE).matcher(tableName);
+		String schema = "i2b2demodata";
+		if (matcher.find()) {
+			if (matcher.group(2) != null) {
+				schema = matcher.group(2);
+			}
+			tableName = matcher.group(3);
 		}
+		
+		return schema+"::"+tableName.toLowerCase();
 	}
 	
 	public String getLayout(String tableName) {
@@ -114,6 +148,14 @@ public class ECLLayouts {
 		default: 
 			return java.sql.Types.VARCHAR;
 		}
+	}
+	
+	public List<String> getListOfIndexes(String tableName) {
+    	return dbMetadata.getDFUFile(getFullTableName(tableName)).getRelatedIndexesList();
+    }
+	
+	public boolean hasIndex(String tableName) {
+		return dbMetadata.getDFUFile(getFullTableName(tableName)).hasRelatedIndexes();
 	}
 
 //	public String getLayoutOrdered(String table, List<String> orderedColumns) {

@@ -50,62 +50,7 @@ abstract public class ECLBuilder {
 	 * @param eclCode
 	 */
 	
-	protected void convertToTable(StringBuilder eclCode) {
-   		encapsulateWithBrackets(eclCode);
-		eclCode.insert(0, "TABLE");
-   		
-	}
 	
-	/**
-	 * Modifies input StringBuilder and surrounds it with brackets
-	 * @param eclCode
-	 */
-	protected void encapsulateWithBrackets(StringBuilder eclCode) {
-		eclCode.insert(0, "(");
-   		eclCode.append(")");
-	}
-	
-	/**
-	 * Modifies input StringBuilder and surrounds it with curly brackets
-	 * @param eclCode
-	 */
-	protected void encapsulateWithCurlyBrackets(StringBuilder eclCode) {
-		eclCode.insert(0, "{");
-   		eclCode.append("}");
-	}
-	
-	/**
-	 * Modifies input StringBuilder and surrounds it with square brackets
-	 * @param eclCode
-	 */
-	protected void encapsulateWithSquareBrackets(StringBuilder eclCode) {
-		eclCode.insert(0, "[");
-   		eclCode.append("]");
-	}
-	
-	/**
-	 * Modifies input StringBuilder and surrounds it with brackets
-	 * @param eclCode
-	 */
-	protected String encapsulateWithBrackets(String eclCode) {
-		return "("+eclCode+")";
-	}
-	
-	/**
-	 * Modifies input StringBuilder and surrounds it with curly brackets
-	 * @param eclCode
-	 */
-	protected String encapsulateWithCurlyBrackets(String eclCode) {
-		return "{"+eclCode+"}";
-	}
-	
-	/**
-	 * Modifies input StringBuilder and surrounds it with square brackets
-	 * @param eclCode
-	 */
-	protected String encapsulateWithSquareBrackets(String eclCode) {
-		return "["+eclCode+"]";
-	}
 	
 	abstract protected SQLParser getSqlParser();
 	
@@ -130,7 +75,7 @@ abstract public class ECLBuilder {
 		} else if (expressionItem instanceof Column) {
 			expression.append(((Column) expressionItem).getColumnName());
 		} else if (expressionItem instanceof SubSelect) {
-			expression.append(encapsulateWithBrackets(parseSubSelect((SubSelect) expressionItem)));
+			expression.append(ECLUtils.encapsulateWithBrackets(parseSubSelect((SubSelect) expressionItem)));
 		} else if (expressionItem instanceof Function) {
 			if (!hasAlias()) {
 				expression.append(nameFunction((Function) expressionItem));
@@ -144,11 +89,9 @@ abstract public class ECLBuilder {
 			between.append(parseExpressionECL(((Between) expressionItem).getBetweenExpressionStart()));
 			between.append(" AND ");
 			between.append(parseExpressionECL(((Between) expressionItem).getBetweenExpressionEnd()));
-			expression.append(encapsulateWithBrackets(between.toString()));
+			expression.append(ECLUtils.encapsulateWithBrackets(between.toString()));
 		} else if (expressionItem instanceof StringValue) {
-			expression.append("'");
-			expression.append(((StringValue) expressionItem).getValue());
-			expression.append("'");
+			expression.append(ECLUtils.encapsulateWithSingleQuote(((StringValue) expressionItem).getValue()));
 		} else if (expressionItem instanceof LongValue) {
 			expression.append(((LongValue) expressionItem).getValue());
 		} else if (expressionItem instanceof ExistsExpression) {		
@@ -165,22 +108,25 @@ abstract public class ECLBuilder {
 					}
 				}
 			}
-			expression.append(joinColumn+" IN SET(");
+			expression.append(joinColumn+" IN SET");
+			StringBuilder existString = new StringBuilder();
 			if(subParser.getSelectItems().size() == 1) {
 				if(subParser.getSelectItems().get(0).toString().equals("1")) {
 					if(subParser.getFromItem() instanceof SubSelect) {
-						expression.append(parseExpressionECL((Expression)subParser.getFromItem()));
+						existString.append(parseExpressionECL((Expression)subParser.getFromItem()));
 					}
 				}
 			} else {
-				expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
+				existString.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
 			}
-			expression.append(", "+joinColumn+")");
+			existString.append(", "+joinColumn);
+			expression.append(ECLUtils.encapsulateWithBrackets(existString));
 		} else if (expressionItem instanceof IsNullExpression) {
 			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
 			expression.append(" = "+((eclLayouts.isColumnOfIntInAnyTable(getSqlParser().getAllTables(), ((Column)((IsNullExpression) expressionItem).getLeftExpression()).getColumnName()))?"0":"''"));
 		} else if (expressionItem instanceof Parenthesis) {
-			expression.append("("+parseExpressionECL(((Parenthesis) expressionItem).getExpression())+")");
+			Parenthesis parenthesis = (Parenthesis) expressionItem;
+			expression.append(ECLUtils.encapsulateWithBrackets(parseExpressionECL(parenthesis.getExpression())));
 		} else if (expressionItem instanceof JdbcParameter) {
 			expression.append("?");
 		} else if (expressionItem instanceof NullValue) {
@@ -226,10 +172,10 @@ abstract public class ECLBuilder {
 	 * @return returns the ECL for the given function
 	 */
 	private String parseFunction(Function function) {	
-		return function.getName().toUpperCase()+encapsulateWithBrackets("GROUP");
+		return function.getName().toUpperCase()+ECLUtils.encapsulateWithBrackets("GROUP");
 	}
 	
-	/**
+	/** 
 	 * 
 	 * @param function
 	 * @return

@@ -20,8 +20,11 @@ package de.hpi.hpcc.parsing;
 
 import java.net.HttpURLConnection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -248,7 +251,10 @@ public abstract class ECLEngine
     }
     
     private boolean getIndex(String tableName, StringBuilder indicesString) {
-		switch(tableName) {
+		
+    	/*
+    	switch(tableName) {
+    	 
 		case "observation_fact":
 			indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd,encounter_num,patient_num,provider_id,start_date,modifier_cd,instance_num,valtype_cd,tval_char,valueflag_cd,vunits_cd,end_date,location_cd,update_date,download_date,import_date,sourcesystem_cd,upload_id}, {}, '~i2b2demodata::observation_fact_idx_all');\n");
 //			if(sqlParser.hasWhereOf("observation_fact","concept_cd") && !sqlParser.hasWhereOf("observation_fact","provider_id")) {
@@ -267,9 +273,34 @@ public abstract class ECLEngine
 			return true;
 		default: return false; 
 		}
+		*/
+    	boolean hasIndex = eclLayouts.hasIndex("observation_fact");
+    	List<String> indexes = eclLayouts.getListOfIndexes("observation_fact");
+    	Collection<Object> keyedColumns = eclLayouts.getKeyedColumns(indexes.get(0));
+    	Collection<Object> nonKeyedColumns = eclLayouts.getNonKeyedColumns(indexes.get(0));
+    	String indexString = getIndexString("observation_fact", indexes.get(0));
+    	
+    	return false;
 	
 	}
-
+   
+    private String getIndexString(String tableName, String index) {
+    	List<String> indexParameters = new ArrayList<String>();
+    	indexParameters.add(tableName+"_table");
+    	String keyedColumnList = ECLUtils.join(eclLayouts.getKeyedColumns(index), ", ");
+    	keyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(keyedColumnList);
+    	indexParameters.add(keyedColumnList);
+    	String nonKeyedColumnList = ECLUtils.join(eclLayouts.getNonKeyedColumns(index), ", ");
+    	nonKeyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(nonKeyedColumnList);
+    	indexParameters.add(nonKeyedColumnList);
+    	indexParameters.add(ECLUtils.encapsulateWithSingleQuote("~"+index));
+    	
+    	String joined = ECLUtils.join(indexParameters, ", ");
+    	joined = ECLUtils.convertToIndex(joined);
+    	
+    	return tableName + " := " + joined + ";";
+    }
+ 
 	
 
     public boolean hasResultSchema()
