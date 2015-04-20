@@ -127,6 +127,7 @@ public class ECLBuilderTest {
 		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate(eclLayouts);
 		assertEquals("toUpdate := TABLE(TABLE(myTable, {myColumnA, myColumnB}), {STRING50 myColumn := 'myValue', myColumnA, myColumnB});\nOUTPUT(toUpdate,, '~%NEWTABLE%', overwrite);\n",eclBuilder.generateECL("update myTable set myColumn = 'myValue'"));
 		assertEquals("toUpdate := TABLE(TABLE(myTable(myColumnB = 'anotherValue'), {myColumn, myColumnB}), {myColumn, STRING50 myColumnA := 'myValue', myColumnB});\nOUTPUT(myTable(NOT(myColumnB = 'anotherValue'))+toUpdate,, '~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"));	
+		assertEquals("join_record := RECORD STRING50 myColumnB; STRING50 myColumnA; END;\nmytable_record update(mytable_record l, join_record r) := TRANSFORM\n  SELF.myColumn := l.myColumn;\n  SELF.myColumnA := IF(r.myColumnA = '', l.myColumnA, r.myColumnA);\n  SELF.myColumnB := l.myColumnB;\nEND;\nOUTPUT(JOIN(mytable(myColumnA = 'anotherValue'), TABLE(, {myColumnB, STRING50 myColumnA := 'myValue'}), LEFT.myColumnB = RIGHT.myColumnB, update(LEFT, RIGHT), LEFT OUTER) + mytable(NOT myColumnA = 'anotherValue'),,'~%NEWTABLE%',OVERWRITE);", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnA = 'anotherValue' and exists (select 1 from myTableA where myTable.myColumnB = myTableA.myColumnB)"));
 	} 
 	
 	@Test

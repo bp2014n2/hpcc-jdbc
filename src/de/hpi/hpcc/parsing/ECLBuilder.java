@@ -97,16 +97,16 @@ abstract public class ECLBuilder {
 		} else if (expressionItem instanceof ExistsExpression) {		
 			SQLParserSelect subParser = new SQLParserSelect(((SubSelect)((ExistsExpression) expressionItem).getRightExpression()).getSelectBody().toString(), eclLayouts);	
 
-			StringBuilder existString = new StringBuilder();
+//			StringBuilder existString = new StringBuilder();
 
 			if(subParser.getSelectItems().size() == 1) {
 				if(subParser.getSelectItems().get(0).toString().equals("1")) {
 					if(subParser.getFromItem() instanceof SubSelect) {
-						existString.append(parseExpressionECL((Expression)subParser.getFromItem()));
+						expression.append(parseExpressionECL((Expression)subParser.getFromItem()));
 					}
 				}
 			} else {
-				existString.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
+				expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
 			}
 		} else if (expressionItem instanceof IsNullExpression) {
 			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
