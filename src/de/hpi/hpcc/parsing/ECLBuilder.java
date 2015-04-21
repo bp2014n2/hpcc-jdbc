@@ -1,35 +1,9 @@
 package de.hpi.hpcc.parsing;
 
-import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
-import de.hpi.hpcc.parsing.select.SQLParserSelect;
-import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.Function;
-import net.sf.jsqlparser.expression.JdbcParameter;
-import net.sf.jsqlparser.expression.LongValue;
-import net.sf.jsqlparser.expression.NullValue;
-import net.sf.jsqlparser.expression.Parenthesis;
-import net.sf.jsqlparser.expression.SignedExpression;
-import net.sf.jsqlparser.expression.StringValue;
-import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
-import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
-import net.sf.jsqlparser.expression.operators.relational.Between;
-import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
-import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
-import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
-import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
-import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
-import net.sf.jsqlparser.expression.operators.relational.InExpression;
-import net.sf.jsqlparser.expression.operators.relational.IsNullExpression;
-import net.sf.jsqlparser.expression.operators.relational.LikeExpression;
-import net.sf.jsqlparser.expression.operators.relational.MinorThan;
-import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
-import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
-import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.statement.select.SubSelect;
 
 abstract public class ECLBuilder {
-	private boolean hasAlias = false;
+//	private boolean hasAlias = false;
 	protected ECLLayouts eclLayouts;
 	protected StringBuilder eclCode;
 	/**
@@ -49,9 +23,6 @@ abstract public class ECLBuilder {
 	 * The input StringBuilder is modified.
 	 * @param eclCode
 	 */
-	
-	
-	
 	abstract protected SQLParser getSqlParser();
 	
 	/**
@@ -63,200 +34,11 @@ abstract public class ECLBuilder {
 	 */
 	protected String parseExpressionECL(Expression expressionItem) {
 		StringBuilder expression = new StringBuilder();
-		
-		if (expressionItem instanceof LikeExpression) {
-			expression.append(parseLikeExpression((LikeExpression) expressionItem));
-		} else if (expressionItem instanceof BinaryExpression) {
-			expression.append(parseExpressionECL(((BinaryExpression) expressionItem).getLeftExpression()));
-			expression.append(getSymbolOfExpression((BinaryExpression) expressionItem));
-			expression.append(parseExpressionECL(((BinaryExpression) expressionItem).getRightExpression()));
-		} else if (expressionItem instanceof InExpression) {
-			expression.append(parseInExpression((InExpression) expressionItem));
-		} else if (expressionItem instanceof Column) {
-			expression.append(((Column) expressionItem).getColumnName());
-		} else if (expressionItem instanceof SubSelect) {
-			expression.append(ECLUtils.encapsulateWithBrackets(parseSubSelect((SubSelect) expressionItem)));
-		} else if (expressionItem instanceof Function) {
-			if (!hasAlias()) {
-				expression.append(nameFunction((Function) expressionItem));
-				expression.append(" := ");
-			}
-			expression.append(parseFunction((Function) expressionItem));
-		}  else if (expressionItem instanceof Between) {
-			StringBuilder between = new StringBuilder();
-			between.append(parseExpressionECL(((Between) expressionItem).getLeftExpression()));
-			between.append(" BETWEEN ");
-			between.append(parseExpressionECL(((Between) expressionItem).getBetweenExpressionStart()));
-			between.append(" AND ");
-			between.append(parseExpressionECL(((Between) expressionItem).getBetweenExpressionEnd()));
-			expression.append(ECLUtils.encapsulateWithBrackets(between.toString()));
-		} else if (expressionItem instanceof StringValue) {
-			expression.append(ECLUtils.encapsulateWithSingleQuote(((StringValue) expressionItem).getValue()));
-		} else if (expressionItem instanceof LongValue) {
-			expression.append(((LongValue) expressionItem).getValue());
-		} else if (expressionItem instanceof ExistsExpression) {		
-			SQLParserSelect subParser = new SQLParserSelect(((SubSelect)((ExistsExpression) expressionItem).getRightExpression()).getSelectBody().toString(), eclLayouts);	
-
-//			StringBuilder existString = new StringBuilder();
-
-			if(subParser.getSelectItems().size() == 1) {
-				if(subParser.getSelectItems().get(0).toString().equals("1")) {
-					if(subParser.getFromItem() instanceof SubSelect) {
-						expression.append(parseExpressionECL((Expression)subParser.getFromItem()));
-					}
-				}
-			} else {
-				expression.append(parseExpressionECL(((ExistsExpression) expressionItem).getRightExpression()));
-			}
-		} else if (expressionItem instanceof IsNullExpression) {
-			expression.append(parseExpressionECL(((IsNullExpression) expressionItem).getLeftExpression()));
-			expression.append(" = "+((eclLayouts.isColumnOfIntInAnyTable(getSqlParser().getAllTables(), ((Column)((IsNullExpression) expressionItem).getLeftExpression()).getColumnName()))?"0":"''"));
-		} else if (expressionItem instanceof Parenthesis) {
-			Parenthesis parenthesis = (Parenthesis) expressionItem;
-			expression.append(ECLUtils.encapsulateWithBrackets(parseExpressionECL(parenthesis.getExpression())));
-		} else if (expressionItem instanceof JdbcParameter) {
-			expression.append("?");
-		} else if (expressionItem instanceof NullValue) {
-				expression.append("''");
-		} else if (expressionItem instanceof SignedExpression) {
-			expression.append(((SignedExpression) expressionItem).toString());
-		}
-		hasAlias();
+		ECLExpressionParser expressionParser = new ECLExpressionParser(eclLayouts);
+		expressionParser.setAllTables(getSqlParser().getAllTables());
+		expression.append(expressionParser.parse(expressionItem));
+		 
 		return expression.toString();
 	}
 	
-	/**
-	 * This method resets the variable hasAlias to false.
-	 * @return returns the old value for hasAlias
-	 */
-	protected boolean hasAlias() {
-		boolean oldHasAlias = this.hasAlias;
-		setHasAlias(false);
-		return oldHasAlias;	
-	}
-	
-	/**
-	 * Set value of hasAlias
-	 * @param b
-	 */	
-	private void setHasAlias(boolean bool) {
-		hasAlias = bool;
-	}
-
-
-	/**
-	 * This method calls a new ECLBuilderSelect whenever a SQL SubSelect is found
-	 * @param subSelect
-	 * @return returns the ECL code for that SubSelect
-	 */
-	private String parseSubSelect(SubSelect subSelect) {
-		return new ECLBuilderSelect(eclLayouts).generateECL((subSelect).getSelectBody().toString());
-	}
-	
-	/**
-	 * Parses the function and generates ECL code
-	 * @param function can be e.g. an object representing "COUNT" or "AVG"
-	 * @return returns the ECL for the given function
-	 */
-	private String parseFunction(Function function) {
-		String parameters = "";
-		if (function.getName().toUpperCase().equals("SUM")) {
-			if (function.getParameters().getExpressions().size() > 0) {
-				for (Expression e : function.getParameters().getExpressions()) {
-					if (e instanceof Column) parameters += ", " + ((Column) e).getColumnName();
-				}
-			}
-		}
-		return function.getName().toUpperCase()+ECLUtils.encapsulateWithBrackets("GROUP"+parameters);
-	}
-	
-	/** 
-	 * 
-	 * @param function
-	 * @return
-	 */
-	private String nameFunction(Function function) {
-		StringBuilder innerFunctionString = new StringBuilder();
-		if (!function.isAllColumns()) {
-			for (Expression expression : function.getParameters().getExpressions()) {
-				innerFunctionString.append(parseExpressionECL(expression));
-			}
-		}
-		innerFunctionString.insert(0, function.getName().toLowerCase() + "_");
-		return innerFunctionString.toString();
-	}
-
-	/**
-	 * Parses a LikeExpression and generates ECL code
-	 * @param expressionItem 
-	 * @return returns the ECL for the given function
-	 */
-	
-	private String parseLikeExpression(LikeExpression expressionItem) {
-		StringBuilder likeString = new StringBuilder();
-		String stringValue = ((StringValue) expressionItem.getRightExpression()).getValue();
-		if (stringValue.endsWith("%")) {
-			stringValue = stringValue.replace("%", "");
-		}
-		int count = stringValue.replace("\\\\", "\\").length();
-		likeString.append(parseExpressionECL(expressionItem.getLeftExpression()));
-		likeString.append("[1..");
-		likeString.append(count);
-		likeString.append("] = '");
-		likeString.append(stringValue);
-		likeString.append("\'");
-		return likeString.toString();
-	}
-	
-	/**
-	 * Parses an InExpression and generates ECL code
-	 * @param expressionItem 
-	 * @return returns the ECL for the given expression
-	 */
-	private String parseInExpression(InExpression expressionItem) {
-		StringBuilder expression = new StringBuilder();
-		String inColumn = parseExpressionECL(((InExpression) expressionItem).getLeftExpression());
-		expression.append(inColumn);
-		expression.append(" IN ");
-		if (((InExpression) expressionItem).getRightItemsList() instanceof ExpressionList) {
-			expression.append("[");
-			String expressionList = "";
-			for (Expression exp : ((ExpressionList) ((InExpression) expressionItem).getRightItemsList()).getExpressions()) {
-				expressionList += (expressionList.equals("")?"":", ");
-				expressionList += parseExpressionECL(exp);
-			}
-			expression.append(expressionList).append("]");
-		} else if (((InExpression) expressionItem).getRightItemsList() instanceof SubSelect) {
-			expression.append("SET(");
-			expression.append(new ECLBuilderSelect(eclLayouts).generateECL(((SubSelect) ((InExpression) expressionItem).getRightItemsList()).getSelectBody().toString()));
-			expression.append(","+inColumn+")");
-		}
-		return expression.toString();
-	}
-	
-	/**
-	 * Parses the symbol of BinaryExpressions
-	 * @param whereItems 
-	 * @return returns the ECL symbol for the given expression
-	 */
-	private String getSymbolOfExpression(BinaryExpression whereItems) {
-		if (whereItems instanceof AndExpression) {
-			return " AND ";
-		} else if (whereItems instanceof OrExpression) {
-			return " OR ";
-		} else if (whereItems instanceof MinorThan) {
-			return " < ";
-		} else if (whereItems instanceof MinorThanEquals) {
-			return " <= ";
-		} else if (whereItems instanceof GreaterThan) {
-			return " > ";
-		} else if (whereItems instanceof GreaterThanEquals) {
-			return " >= ";
-		} else if (whereItems instanceof EqualsTo) {
-			return " = ";
-		} else if (whereItems instanceof NotEqualsTo) {
-			return " != ";
-		} 
-		return null;
-	}
 }

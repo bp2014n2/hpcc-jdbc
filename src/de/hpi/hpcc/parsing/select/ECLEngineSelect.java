@@ -30,11 +30,7 @@ public class ECLEngineSelect extends ECLEngine {
         eclCode.append(generateLayouts());
 		eclCode.append(generateTables());
 		
-		
-		//???
-		if (!sqlParser.isCount()) eclCode.append("OUTPUT(");
     	eclCode.append(eclBuilder.generateECL(sqlQuery));
-    	if (!sqlParser.isCount()) eclCode.append(");");
 
     	availablecols = new HashMap<String, HPCCColumnMetaData>();
     	

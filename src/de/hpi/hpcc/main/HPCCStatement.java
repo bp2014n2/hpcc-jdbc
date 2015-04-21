@@ -27,7 +27,7 @@ public class HPCCStatement implements Statement{
     protected String name;
     private List<String> whiteList;
     
-    private boolean federatedDatabase = true;
+    private boolean federatedDatabase = false;
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;

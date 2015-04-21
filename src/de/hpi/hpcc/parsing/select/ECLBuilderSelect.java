@@ -52,7 +52,7 @@ public class ECLBuilderSelect extends ECLBuilder {
     	generateSelects(sqlParser, true);
     	generateGroupBys(sqlParser);
     	 
-    	if ((sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) && !((SQLParserSelect) sqlParser).isCount()) {
+    	if ((sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null)) {
     		//Why not always?
     		eclCode = ECLUtils.convertToTable(eclCode);
     	}
@@ -154,45 +154,29 @@ public class ECLBuilderSelect extends ECLBuilder {
 	 * @return
 	 */
 	
-	private void generateSelects(SQLParserSelect sqlParser, Boolean inner) { 
-		if (sqlParser.isCount()) {
-			/*
-			 * TODO: much better solution that is more flexible, however this is currently working
-			 */
-			
-			SelectItem count = sqlParser.getSelectItems().get(0);
-			String columnName = "count";
-			Alias alias = ((SelectExpressionItem) count).getAlias();
-			if (alias != null) {
-				columnName = alias.getName();
-			}
-			
-			eclCode.insert(0, "output(dataset([COUNT(");
-			eclCode.append(")], {integer8 "+columnName+"}))");
-		} else {
-			LinkedHashSet<String> selectItemsStrings = new LinkedHashSet<String>();
-			eclCode.append(", ");
-			eclCode.append("{");
-			if(inner) {
-				selectItemsStrings.addAll(createInnerSelectItemsString(sqlParser));
-			}
-    	
-			if (sqlParser.isSelectAll()){
-				if(sqlParser.getFromItem() instanceof SubSelect) {
-					selectItemsStrings.addAll(sqlParser.getFromItemColumns());
-				} else {
-					selectItemsStrings.addAll(sqlParser.getAllColumns());
-				}
-			} else {
-				selectItemsStrings.addAll(createSelectItems(sqlParser));	
-	    	}
-	    	String selectItemString = "";
-    		for (String selectItem : selectItemsStrings) {
-    			selectItemString += (selectItemString=="" ? "":", ")+selectItem;
-    		}
-    		eclCode.append(selectItemString);
-    		eclCode.append("}");
+	private void generateSelects(SQLParserSelect sqlParser, Boolean inner) {
+		LinkedHashSet<String> selectItemsStrings = new LinkedHashSet<String>();
+		eclCode.append(", ");
+		eclCode.append("{");
+		if(inner) {
+			selectItemsStrings.addAll(createInnerSelectItemsString(sqlParser));
 		}
+    
+		if (sqlParser.isSelectAll()){
+			if(sqlParser.getFromItem() instanceof SubSelect) {
+				selectItemsStrings.addAll(sqlParser.getFromItemColumns());
+			} else {
+				selectItemsStrings.addAll(sqlParser.getAllColumns());
+			}
+		} else {
+			selectItemsStrings.addAll(createSelectItems(sqlParser));	
+	   	}
+	   	String selectItemString = "";
+    	for (String selectItem : selectItemsStrings) {
+    		selectItemString += (selectItemString=="" ? "":", ")+selectItem;
+    	}
+    	eclCode.append(selectItemString);
+    	eclCode.append("}");
 	}
 	
 	private Collection<? extends String> createSelectItems(SQLParserSelect sqlParser) {
@@ -201,15 +185,10 @@ public class ECLBuilderSelect extends ECLBuilder {
 		for (SelectItem selectItem : selectItems) {
 			if (selectItem instanceof SelectExpressionItem) {
 				StringBuilder selectItemString = new StringBuilder();
-				if (((SelectExpressionItem) selectItem).getAlias() != null) {
-					if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getAllColumns(), ((SelectExpressionItem) selectItem).getAlias().getName())) {
-						String dataType = eclLayouts.getECLDataType(sqlParser.getAllTables().get(0), ((SelectExpressionItem) selectItem).getAlias().getName());
-	   					selectItemString.append(dataType+" ");
-					}			   						
-	   				selectItemString.append(((SelectExpressionItem) selectItem).getAlias().getName());
-   					selectItemString.append(" := ");
-   				}
-   				selectItemString.append(parseExpressionECL((Expression) ((SelectExpressionItem) selectItem).getExpression()));
+				SelectExpressionItem sei = (SelectExpressionItem) selectItem;
+				ECLNameParser nameParser = new ECLNameParser(eclLayouts, sqlParser);
+				selectItemString.append(nameParser.name(sei));
+   				selectItemString.append(parseExpressionECL(sei.getExpression()));
    				selectItemsStrings.add(selectItemString.toString());
    			}
 		}

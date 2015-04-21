@@ -73,6 +73,7 @@ public class SQLParserSelect extends SQLParser {
 	
 	public List<String> getAllSelectItemsInQuery() {
 		ArrayList<String> allSelects = new ArrayList<String>();
+		/*
 		if (isCount()) {
 			//TODO: better
 			SelectItem count = getSelectItems().get(0);
@@ -83,7 +84,7 @@ public class SQLParserSelect extends SQLParser {
 			}
 			allSelects.add(columnName);
 			return allSelects;
-		}
+		}*/
 		for (SelectItem selectItem : getSelectItems()) {
 			if (selectItem instanceof SelectExpressionItem) {
 				if (((SelectExpressionItem) selectItem).getAlias() != null) {
@@ -194,9 +195,5 @@ public class SQLParserSelect extends SQLParser {
 			innerStatement = innerStatement.substring(1, end);
 		}
 		return innerStatement;
-	}
-
-	public boolean isCount() {
-		return (getSelectItems().size() == 1 && getSelectItems().get(0).toString().toLowerCase().contains("count") && getGroupBys() == null);
 	}
 }
