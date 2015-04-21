@@ -49,8 +49,8 @@ public class HPCCStatement implements Statement{
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;
-    	this.connection.addName(name);
         this.connection = (HPCCConnection) connection;
+        this.connection.addName(name);
         log("Statement created");
     }
     
