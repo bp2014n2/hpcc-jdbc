@@ -90,7 +90,9 @@ public class HPCCDriver implements Driver{
 	    					propertyKey += "name";
 	    					break;
 	    				case "TraceLevel":
-	    					//TODO: isLevelTest
+	    					if(!HPCCLogger.getTraceLevels().contains(propertyValue)){
+	    						log(propertyValue +" is not a valid trace level", defaultValue);
+	    					}
 	       			}
 	    			driverProperties.setProperty((String) propertyKey, propertyValue);
 	    		}
