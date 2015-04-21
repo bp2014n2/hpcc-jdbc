@@ -111,8 +111,7 @@ public class SQLParserUpdate extends SQLParser {
 
 	@Override
 	public List<String> getQueriedColumns(String table) {
-		List<String> columns = new ArrayList<String>();
-		findColumns(columns, getTableNameAndAlias(table), ((Update) statement).getWhere());
+		List<String> columns = findColumns(getTableNameAndAlias(table), ((Update) statement).getWhere());
 		return columns;
 	}
 }

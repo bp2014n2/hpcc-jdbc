@@ -199,9 +199,9 @@ public class SQLParserSelect extends SQLParser {
 	public List<String> getQueriedColumns(String table) {
 		List<String> columns = new ArrayList<String>();
 		for (SelectItem selectItem : getSelectItems()) {
-			findColumns(columns,getTableNameAndAlias(table),((SelectExpressionItem) selectItem).getExpression());
+			columns.addAll(findColumns(getTableNameAndAlias(table),((SelectExpressionItem) selectItem).getExpression()));
 		}
-		findColumns(columns, getTableNameAndAlias(table), plain.getWhere());
+		columns.addAll(findColumns(getTableNameAndAlias(table), plain.getWhere()));
 		return columns;
 	}
 }
