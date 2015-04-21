@@ -30,18 +30,18 @@ public class HPCCStatement implements Statement{
     private static final List<String> whiteList = new ArrayList<String>() {
 		private static final long serialVersionUID = 1L;
 	{
-    	whiteList.add("query_global_temp");
-		whiteList.add("dx");
-		whiteList.add("master_query_global_temp");
-		whiteList.add("observation_fact");
-		whiteList.add("provider_dimension");
-		whiteList.add("visit_dimension");
-		whiteList.add("patient_dimension");
-		whiteList.add("modifier_dimension");
-		whiteList.add("concept_dimension");
-		whiteList.add("qt_patient_set_collection");
-		whiteList.add("qt_patient_env_collection");
-		whiteList.add("avk_fdb_t_leistungskosten");
+    	add("query_global_temp");
+		add("dx");
+		add("master_query_global_temp");
+		add("observation_fact");
+		add("provider_dimension");
+		add("visit_dimension");
+		add("patient_dimension");
+		add("modifier_dimension");
+		add("concept_dimension");
+		add("qt_patient_set_collection");
+		add("qt_patient_env_collection");
+		add("avk_fdb_t_leistungskosten");
     	
     }};
     
