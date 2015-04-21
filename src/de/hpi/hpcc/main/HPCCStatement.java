@@ -49,8 +49,8 @@ public class HPCCStatement implements Statement{
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;
+    	this.connection.addName(name);
         this.connection = (HPCCConnection) connection;
-        this.connection.addToQueue(this);
         log("Statement created");
     }
     
@@ -170,12 +170,13 @@ public class HPCCStatement implements Statement{
     	return 0;
     }
     
-    public void setCursorName(String name) throws SQLException{
+    public void setCursorName(String cursorName) throws SQLException{
     	if (!this.connection.isUniqueCursorName(name)) {
     		log(Level.SEVERE, "Cursor name not unique!");
     		throw new HPCCException();
     	} else {
-    		this.name = name;
+    		this.name = cursorName;
+    		this.connection.addName(cursorName);
     	}
     }
     

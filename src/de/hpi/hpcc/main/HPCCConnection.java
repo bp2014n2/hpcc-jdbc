@@ -1,6 +1,5 @@
 package de.hpi.hpcc.main;
 
-import java.awt.LinearGradientPaint;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -21,7 +20,7 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -48,7 +47,7 @@ public class HPCCConnection implements Connection{
     private String catalog = HPCCJDBCUtils.HPCCCATALOGNAME;
     private HttpURLConnection httpConnection;
     private boolean autoCommit = true;
-    private LinkedList<HPCCStatement> statementList = new LinkedList<HPCCStatement>();
+    private HashSet<String> statementNames = new HashSet<String>();
     
     protected static final Logger logger = HPCCLogger.getLogger();
 
@@ -98,12 +97,12 @@ public class HPCCConnection implements Connection{
     	return prepareStatement(sqlStatement);
     }
     
-    public void addToQueue(HPCCStatement statement) { 
-    	this.statementList.add(statement);
+    public void addName(String statementName) { 
+    	this.statementNames.add(statementName);
     }
     
     private String getUniqueName() {
-		int index = this.statementList.size()+1;
+		int index = this.statementNames.size()+1;
 		while(!isUniqueCursorName("Statement "+index)){
 			index++;
 		}
@@ -111,8 +110,8 @@ public class HPCCConnection implements Connection{
 	}
 
 	public boolean isUniqueCursorName(String name) {
-		for(HPCCStatement statement : this.statementList) {
-			if(name.equals(statement.getCursorName())) {
+		for(String statementName : this.statementNames) {
+			if(name.equals(statementName)) {
 				return false;
 			}
 		}
@@ -424,9 +423,7 @@ public class HPCCConnection implements Connection{
     }
 
     public void commit() throws SQLException {
-    	for(HPCCStatement statement : this.statementList) {
-    		statement.execute(statement.getSqlStatement());
-    	}
+    	handleUnsupportedMethod("commit()");
     }
 
     public Clob createClob() throws SQLException {
