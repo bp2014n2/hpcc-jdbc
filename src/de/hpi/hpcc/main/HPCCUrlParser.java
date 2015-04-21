@@ -43,7 +43,7 @@ public class HPCCUrlParser {
 			return false;
 		}
 		url = this.removeProtocol(url);
-    	Pattern urlNameRegex = Pattern.compile("//[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]");
+    	Pattern urlNameRegex = Pattern.compile("//[^\\s/$.?#].[^\\s]*(/\\w)?(\\?\\w)?");
     	return urlNameRegex.matcher(url).matches();
 	}
 	
