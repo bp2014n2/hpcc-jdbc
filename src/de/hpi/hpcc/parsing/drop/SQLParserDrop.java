@@ -37,7 +37,7 @@ public class SQLParserDrop extends SQLParser {
 
 	@Override
 	public List<String> getTableNameAndAlias(String table) {
-		return null;
+		return new ArrayList<String>();
 	}
 
 }

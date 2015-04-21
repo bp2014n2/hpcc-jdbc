@@ -103,7 +103,8 @@ public class SQLParserInsert extends SQLParser {
 
 	@Override
 	public List<String> getTableNameAndAlias(String table) {
-		// TODO Auto-generated method stub
-		return null;
+		List<String> tableNameAndAlias = new ArrayList<String>();
+		tableNameAndAlias.add(table);
+		return tableNameAndAlias;
 	}
 }

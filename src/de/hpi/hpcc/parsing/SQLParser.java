@@ -18,6 +18,7 @@ import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LongValue;
+import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
@@ -180,14 +181,22 @@ abstract public class SQLParser{
 			String columnName = ((Column) expr).getColumnName().toLowerCase();
 			String tableName = ((Column) expr).getTable().getName();
 			if (tableName != null) {
-				if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase())) {
+				if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase()) && !columns.contains(columnName)) {
 					columns.add(columnName);
 				}
 			} else {
-				Pattern selectPattern = Pattern.compile("",Pattern.CASE_INSENSITIVE);
-				Pattern wherePattern = Pattern.compile("",Pattern.CASE_INSENSITIVE);
+				Pattern selectPattern = Pattern.compile("select\\s*(distinct\\s*)?(((count|sum|avg)\\(w*\\))?\\w*\\s*,\\s*)*(" + columnName + "\\s*|(count|sum|avg)\\(\\s*" + columnName + "\\s*\\))(,\\s*((count|sum|avg)\\(w*\\))?\\w*\\s*)*from\\s*(\\w*\\.)?(\\w*)",Pattern.CASE_INSENSITIVE);
+				Pattern wherePattern = Pattern.compile("from\\s*(\\w*\\.)?(\\w*)(\\s*\\w*)?\\s*where\\s*(\\(?(\\w*\\.)?\\w*\\s*((=|<=|>=)\\s*'?\\w*'?|in\\s*\\([\\w\\s\\\\'%\\.\\-]*\\))\\s*\\)?\\s*(and|or)\\s*)*\\(?" + columnName,Pattern.CASE_INSENSITIVE);
 				Matcher selectMatcher = selectPattern.matcher(this.statement.toString());
-				Matcher whereMatcher = selectPattern.matcher(this.statement.toString());
+				Matcher whereMatcher = wherePattern.matcher(this.statement.toString());
+				if (selectMatcher.find()) {
+					tableName = selectMatcher.group(11);
+				} else if (whereMatcher.find()) {
+					tableName = whereMatcher.group(2);
+				}
+				if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase())) {
+					columns.add(columnName);
+				}
 			}
 		} else if (expr instanceof BinaryExpression) {
 			findColumns(columns, tableNameAndAlias, ((BinaryExpression) expr).getLeftExpression());
@@ -210,6 +219,8 @@ abstract public class SQLParser{
 			if (((InExpression) expr).getRightItemsList() instanceof SubSelect) {
 				findColumns(columns, tableNameAndAlias, (Expression) ((InExpression) expr).getRightItemsList());
 			}
+		} else if (expr instanceof Parenthesis) {
+			findColumns(columns, tableNameAndAlias, ((Parenthesis) expr).getExpression());
 		}
 	}
 	
