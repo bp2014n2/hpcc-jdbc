@@ -1,10 +1,22 @@
 package de.hpi.hpcc.logging;
 
+import java.util.LinkedList;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class HPCCLogger extends Logger{
+	
+	private static final LinkedList<String> levels = new LinkedList<String>() {
+		private static final long serialVersionUID = 1L;
+		{
+			add(Level.ALL.getName());
+			add(Level.SEVERE.getName());
+			add(Level.WARNING.getName());
+			add(Level.INFO.getName());
+			add(Level.FINEST.getName());
+			add(Level.OFF.getName());
+	}};
 	
 	protected HPCCLogger(String name, String resourceBundleName) {
 		super(name, resourceBundleName);
@@ -34,9 +46,8 @@ public class HPCCLogger extends Logger{
 		return Logger.getLogger("jdbc-hpcc-driver-logger");
 	}
 	
-	public static String[] getTraceLevels(){
-		return new String[]{Level.ALL.getName(), Level.SEVERE.getName(), Level.WARNING.getName(), 
-							Level.INFO.getName(), Level.FINEST.getName(), Level.OFF.getName()};
+	public static LinkedList<String> getTraceLevels(){
+		return levels;
 	}
 	
 	public static Level getDefaultLogLevel(){
