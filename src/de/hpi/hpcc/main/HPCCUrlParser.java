@@ -38,7 +38,15 @@ public class HPCCUrlParser {
 		return null;		
 	}
 	
-	public boolean isValidUrl(String url){
+	public String getCluster(String url) {
+		return null;
+	}
+	
+	public String getSchema(String url)  {
+		return null;
+	}
+	
+	public boolean isValidUrl(String url) {
 		if((url == null) || !this.hasValidProtocol(url)){
 			return false;
 		}
@@ -50,10 +58,12 @@ public class HPCCUrlParser {
 	private boolean hasValidProtocol(String url) {
 		return (!url.startsWith(":") && url.contains("://"));
 	}
+	
 	private String removeProtocol(String url) {
 		return url.substring(url.indexOf("://")+1, url.length());
 	}
-	private int getPortIndex(String fileLocation){
+	
+	private int getPortIndex(String fileLocation) {
 		return fileLocation.indexOf(":");
 	}
 }

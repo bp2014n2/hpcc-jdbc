@@ -19,6 +19,8 @@ public class HPCCDriver implements Driver{
     private static Logger logger = HPCCLogger.getLogger();
     private static final int URI 		= 0;
     private static final int PORT 		= 1;
+    private static final int CLUSTER 	= 2;
+    private static final int SCHEMA 	= 3;
     
     static{
     	try{
@@ -129,9 +131,11 @@ public class HPCCDriver implements Driver{
 	}
 	
 	private String[] parseURL(String url){
-		String[] parsedURL = new String[2];
+		String[] parsedURL = new String[4];
 		parsedURL[URI] 	= urlParser.getFileLocation(url);
 		parsedURL[PORT] = urlParser.getPort(url);
+		parsedURL[CLUSTER] = urlParser.getCluster(url);
+		parsedURL[SCHEMA] = urlParser.getSchema(url);
 		return parsedURL;
 	}
 	
