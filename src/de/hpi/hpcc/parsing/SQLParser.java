@@ -7,6 +7,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.create.SQLParserCreate;
 import de.hpi.hpcc.parsing.drop.SQLParserDrop;
@@ -76,32 +77,17 @@ abstract public class SQLParser{
 		return "";
 	}
 	
-	public static Types sqlIsInstanceOf(String sql) {
+	public static Types sqlIsInstanceOf(String sql) throws HPCCException {
 		try {
-			long timeBefore = System.currentTimeMillis();
 			Statement statement = parserManager.parse(new StringReader(sql));
-			long timeAfter = System.currentTimeMillis();
-			long timeDifference = timeAfter-timeBefore;
-			HPCCJDBCUtils.traceoutln(Level.INFO, "Time for parsing SQL to object tree: "+timeDifference);
-			if (statement instanceof Select) {
-				return Types.SELECT;
-			} else if (statement instanceof Insert) {
-				return Types.INSERT;
-			} else if (statement instanceof Drop) {
-				return Types.DROP;
-			} else if (statement instanceof Update) {
-				return Types.UPDATE;
-			} else if (statement instanceof CreateTable) {
-				return Types.CREATE;
-			}
+			ECLStatementTypeParser typeParser = new ECLStatementTypeParser();
+			return typeParser.parse(statement);
 		} catch (JSQLParserException e) {
-			System.out.println("No valid SQL:");
-			e.printStackTrace();
+			throw new HPCCException("No valid SQL:");
 		}
-		return Types.OTHER;
 	}
 	
-	public static SQLParser getInstance(String sql, ECLLayouts eclLayouts) {
+	public static SQLParser getInstance(String sql, ECLLayouts eclLayouts) throws HPCCException {
 		switch(sqlIsInstanceOf(sql)) {
     	case SELECT:
     		return new SQLParserSelect(sql, eclLayouts);
