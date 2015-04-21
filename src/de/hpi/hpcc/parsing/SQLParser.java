@@ -4,6 +4,8 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.create.SQLParserCreate;
@@ -12,9 +14,12 @@ import de.hpi.hpcc.parsing.insert.SQLParserInsert;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import de.hpi.hpcc.parsing.update.SQLParserUpdate;
 import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LongValue;
+import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
+import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.parser.CCJSqlParserManager;
 import net.sf.jsqlparser.schema.Column;
@@ -113,6 +118,7 @@ abstract public class SQLParser{
     		return null;
     	}
 	}
+	public abstract List<String> getQueriedColumns(String table);
 	
 	public List<String> getAllTables() {
 		List<String> tableList = new ArrayList<String>();
@@ -166,5 +172,46 @@ abstract public class SQLParser{
 
 	public int getParameterizedCount() {
 		return statement.toString().length() - statement.toString().replace("?", "").length();
+	}	
+	
+	protected void findColumns(List<String> columns, List<String> tableNameAndAlias,
+			Expression expr) {
+		if (expr instanceof Column) {
+			String columnName = ((Column) expr).getColumnName().toLowerCase();
+			String tableName = ((Column) expr).getTable().getName();
+			if (tableName != null) {
+				if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase())) {
+					columns.add(columnName);
+				}
+			} else {
+				Pattern selectPattern = Pattern.compile("",Pattern.CASE_INSENSITIVE);
+				Pattern wherePattern = Pattern.compile("",Pattern.CASE_INSENSITIVE);
+				Matcher selectMatcher = selectPattern.matcher(this.statement.toString());
+				Matcher whereMatcher = selectPattern.matcher(this.statement.toString());
+			}
+		} else if (expr instanceof BinaryExpression) {
+			findColumns(columns, tableNameAndAlias, ((BinaryExpression) expr).getLeftExpression());
+			findColumns(columns, tableNameAndAlias, ((BinaryExpression) expr).getRightExpression());
+		} else if (expr instanceof ExistsExpression) {
+			findColumns(columns, tableNameAndAlias, ((ExistsExpression) expr).getRightExpression());
+		} else if (expr instanceof SubSelect) {
+			SQLParserSelect selectParser = new SQLParserSelect(((SubSelect) expr).getSelectBody().toString(),eclLayouts);
+			for (SelectItem selectItem : selectParser.getSelectItems()) {
+				findColumns(columns,tableNameAndAlias,((SelectExpressionItem) selectItem).getExpression());
+			}
+			if (selectParser.getWhere() != null) {
+				findColumns(columns, tableNameAndAlias, (Expression) selectParser.getWhere());
+			}
+			if (selectParser.getFromItem() instanceof SubSelect) {
+				findColumns(columns, tableNameAndAlias, (Expression) selectParser.getFromItem());
+			}
+		} else if (expr instanceof InExpression) {
+			findColumns(columns, tableNameAndAlias, ((InExpression) expr).getLeftExpression());
+			if (((InExpression) expr).getRightItemsList() instanceof SubSelect) {
+				findColumns(columns, tableNameAndAlias, (Expression) ((InExpression) expr).getRightItemsList());
+			}
+		}
 	}
+	
+	public abstract List<String> getTableNameAndAlias(String table);
 }

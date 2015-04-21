@@ -23,6 +23,7 @@ import java.net.HttpURLConnection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -265,13 +266,23 @@ public abstract class ECLEngine
 		default: return false; 
 		}
 		*/
-    	boolean hasIndex = eclLayouts.hasIndex("observation_fact");
-    	List<String> indexes = eclLayouts.getListOfIndexes("observation_fact");
-    	Collection<Object> keyedColumns = eclLayouts.getKeyedColumns(indexes.get(0));
-    	Collection<Object> nonKeyedColumns = eclLayouts.getNonKeyedColumns(indexes.get(0));
-    	String indexString = getIndexString("observation_fact", indexes.get(0));
+    	boolean hasIndex = eclLayouts.hasIndex(tableName);
+    	if (hasIndex) {
+        	List<String> indexes = eclLayouts.getListOfIndexes(tableName);
+    		List<String> columns = getSQLParser().getQueriedColumns(tableName);
+        	ArrayList<Integer> scores = new ArrayList<Integer>();
+        	for (String index : indexes) {
+            	Collection<Object> indexColumns = eclLayouts.getKeyedColumns(index);
+            	Collection<Object> nonKeyedColumns = eclLayouts.getNonKeyedColumns(index);
+            	indexColumns.addAll(nonKeyedColumns);
+            	if (!indexColumns.containsAll(columns)) scores.add(0);
+            	else scores.add(10 + columns.size() - indexColumns.size());
+        	}
+        	String selectedIndex = indexes.get(scores.indexOf(Collections.max(scores)));
+        	indicesString.append(getIndexString(tableName, selectedIndex)+"\n");
+    	}
     	
-    	return false;
+    	return hasIndex;
 	
 	}
    

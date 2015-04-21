@@ -1,6 +1,7 @@
 package de.hpi.hpcc.parsing.create;
 
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,7 +13,7 @@ import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public class SQLParserCreate extends SQLParser {
-
+	
 	public SQLParserCreate(String sql, ECLLayouts eclLayouts) {
 		super(sql, eclLayouts);
 		try {
@@ -79,5 +80,15 @@ public class SQLParserCreate extends SQLParser {
 
 	public String getFullName() {
 		return "i2b2demodata::"+getTableName();
+	}
+
+	@Override
+	public List<String> getQueriedColumns(String table) {
+		return new ArrayList<String>();
+	}
+
+	@Override
+	public List<String> getTableNameAndAlias(String table) {
+		return null;
 	}
 }
