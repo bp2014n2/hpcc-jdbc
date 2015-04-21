@@ -3010,7 +3010,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 		tempTables.remove(tableName);
 	}
 	
-	public String getTempTableWithSessionID(String tableName) {
+	public String getTableWithSessionID(String tableName) {
 		return tableName+this.connection.getSessionID();
 	}
 }
