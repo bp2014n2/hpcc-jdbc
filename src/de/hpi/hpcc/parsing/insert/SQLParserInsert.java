@@ -95,16 +95,16 @@ public class SQLParserInsert extends SQLParser {
 		if (getAllTables().contains(table.toLowerCase())) {
 			Select select = ((Insert) statement).getSelect();
 			if (select != null) {
-				
+				String subSelect = select.getSelectBody().toString();
+				SQLParser subParser = new SQLParserSelect(subSelect, eclLayouts);
+				columns.addAll(subParser.getQueriedColumns(table));
+				if (select.getWithItemsList() != null) {
+					String withSelect = select.getWithItemsList().get(0).getSelectBody().toString();
+					SQLParser withParser = new SQLParserSelect(withSelect, eclLayouts);
+					columns.addAll(withParser.getQueriedColumns(table));
+				}
 			}
 		}
 		return columns;
-	}
-
-	@Override
-	public List<String> getTableNameAndAlias(String table) {
-		List<String> tableNameAndAlias = new ArrayList<String>();
-		tableNameAndAlias.add(table);
-		return tableNameAndAlias;
 	}
 }

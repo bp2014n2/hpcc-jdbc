@@ -5,7 +5,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.JSQLParserException;
@@ -27,6 +30,7 @@ import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
+import net.sf.jsqlparser.statement.update.Update;
 
 public class SQLParserSelect extends SQLParser {
 
@@ -202,12 +206,5 @@ public class SQLParserSelect extends SQLParser {
 		}
 		findColumns(columns, getTableNameAndAlias(table), plain.getWhere());
 		return columns;
-	}
-
-	@Override
-	public List<String> getTableNameAndAlias(String table) {
-		List<String> tableNameAndAlias = new ArrayList<String>();
-		tableNameAndAlias.add(table);
-		return tableNameAndAlias;
 	}
 }

@@ -224,5 +224,26 @@ abstract public class SQLParser{
 		}
 	}
 	
-	public abstract List<String> getTableNameAndAlias(String table);
+	protected List<String> getTableNameAndAlias(String table) {
+		List<String> tableNameAndAlias = new ArrayList<String>();
+		tableNameAndAlias.add(table);
+		Pattern findAlias = Pattern.compile("from\\s*(\\w+(\\s*(i2b2demodata\\.)?\\w+)?\\s*,\\s*)*(i2b2demodata\\.)?" + table + "\\s*(\\w+)\\s*", Pattern.CASE_INSENSITIVE);
+		Matcher alias = findAlias.matcher(((Select) statement).toString());
+		while (alias.find()) {
+			String aliasName = alias.group(5);
+			if (isValidAlias(aliasName)) {
+				tableNameAndAlias.add(aliasName);
+			}
+		}
+		return tableNameAndAlias;
+	}
+
+	private boolean isValidAlias(String aliasName) {
+		List<String> invalidAlias = new ArrayList<String>();
+		invalidAlias.add("where");
+		if (!HPCCJDBCUtils.containsStringCaseInsensitive(invalidAlias, aliasName)) {
+			return true;
+		}
+		return false;
+	}
 }

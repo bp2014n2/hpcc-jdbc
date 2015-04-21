@@ -86,9 +86,4 @@ public class SQLParserCreate extends SQLParser {
 	public List<String> getQueriedColumns(String table) {
 		return new ArrayList<String>();
 	}
-
-	@Override
-	public List<String> getTableNameAndAlias(String table) {
-		return new ArrayList<String>();
-	}
 }
