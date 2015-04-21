@@ -201,7 +201,10 @@ public class SQLParserSelect extends SQLParser {
 		for (SelectItem selectItem : getSelectItems()) {
 			columns.addAll(findColumns(getTableNameAndAlias(table),((SelectExpressionItem) selectItem).getExpression()));
 		}
-		columns.addAll(findColumns(getTableNameAndAlias(table), plain.getWhere()));
+		if (plain.getWhere() != null) {
+			columns.addAll(findColumns(getTableNameAndAlias(table), plain.getWhere()));
+		}
+		
 		return columns;
 	}
 }

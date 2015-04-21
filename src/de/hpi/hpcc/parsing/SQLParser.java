@@ -162,53 +162,9 @@ abstract public class SQLParser{
 	}	
 	
 	protected List<String> findColumns(List<String> tableNameAndAlias, Expression expr) {
-		List<String> columns = new ArrayList<String>();
-		if (expr instanceof Column) {
-			String columnName = ((Column) expr).getColumnName().toLowerCase();
-			String tableName = ((Column) expr).getTable().getName();
-			if (tableName != null) {
-				if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase()) && !columns.contains(columnName)) {
-					columns.add(columnName);
-				}
-			} else {
-				Pattern selectPattern = Pattern.compile("select\\s*(distinct\\s*)?(((count|sum|avg)\\(w*\\))?\\w*\\s*,\\s*)*(" + columnName + "\\s*|(count|sum|avg)\\(\\s*" + columnName + "\\s*\\))(,\\s*((count|sum|avg)\\(w*\\))?\\w*\\s*)*from\\s*(\\w*\\.)?(\\w*)",Pattern.CASE_INSENSITIVE);
-				Pattern wherePattern = Pattern.compile("from\\s*(\\w*\\.)?(\\w*)(\\s*\\w*)?\\s*where\\s*(\\(?(\\w*\\.)?\\w*\\s*((=|<=|>=)\\s*'?\\w*'?|in\\s*\\([\\w\\s\\\\'%\\.\\-]*\\))\\s*\\)?\\s*(and|or)\\s*)*\\(?" + columnName,Pattern.CASE_INSENSITIVE);
-				Matcher selectMatcher = selectPattern.matcher(this.statement.toString());
-				Matcher whereMatcher = wherePattern.matcher(this.statement.toString());
-				if (selectMatcher.find()) {
-					tableName = selectMatcher.group(11);
-				} else if (whereMatcher.find()) {
-					tableName = whereMatcher.group(2);
-				}
-				if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase())) {
-					columns.add(columnName);
-				}
-			}
-		} else if (expr instanceof BinaryExpression) {
-			columns.addAll(findColumns(tableNameAndAlias, ((BinaryExpression) expr).getLeftExpression()));
-			columns.addAll(findColumns(tableNameAndAlias, ((BinaryExpression) expr).getRightExpression()));
-		} else if (expr instanceof ExistsExpression) {
-			columns.addAll(findColumns(tableNameAndAlias, ((ExistsExpression) expr).getRightExpression()));
-		} else if (expr instanceof SubSelect) {
-			SQLParserSelect selectParser = new SQLParserSelect(((SubSelect) expr).getSelectBody().toString(),eclLayouts);
-			for (SelectItem selectItem : selectParser.getSelectItems()) {
-				columns.addAll(findColumns(tableNameAndAlias,((SelectExpressionItem) selectItem).getExpression()));
-			}
-			if (selectParser.getWhere() != null) {
-				columns.addAll(findColumns(tableNameAndAlias, (Expression) selectParser.getWhere()));
-			}
-			if (selectParser.getFromItem() instanceof SubSelect) {
-				columns.addAll(findColumns(tableNameAndAlias, (Expression) selectParser.getFromItem()));
-			}
-		} else if (expr instanceof InExpression) {
-			columns.addAll(findColumns(tableNameAndAlias, ((InExpression) expr).getLeftExpression()));
-			if (((InExpression) expr).getRightItemsList() instanceof SubSelect) {
-				columns.addAll(findColumns(tableNameAndAlias, (Expression) ((InExpression) expr).getRightItemsList()));
-			}
-		} else if (expr instanceof Parenthesis) {
-			columns.addAll(findColumns(tableNameAndAlias, ((Parenthesis) expr).getExpression()));
-		}
-		return columns;
+		ECLColumnFinder finder = new ECLColumnFinder(eclLayouts, this.statement.toString(), tableNameAndAlias);
+		return finder.find(expr);
+			
 	}
 	
 	protected List<String> getTableNameAndAlias(String table) {
