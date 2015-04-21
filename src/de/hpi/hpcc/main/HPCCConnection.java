@@ -23,6 +23,7 @@ import java.sql.Struct;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,12 +49,13 @@ public class HPCCConnection implements Connection{
     private HttpURLConnection httpConnection;
     private boolean autoCommit = true;
     private HashSet<String> statementNames = new HashSet<String>();
+	private UUID sessionID;
     
     protected static final Logger logger = HPCCLogger.getLogger();
 
     public HPCCConnection(HPCCDriverProperties driverProperties){
+    	this.sessionID = UUID.randomUUID();
         this.driverProperties = driverProperties;
-
         metadata = new HPCCDatabaseMetaData(driverProperties, this);        
 
         if (metadata != null && metadata.hasHPCCTargetBeenReached())
@@ -63,6 +65,10 @@ public class HPCCConnection implements Connection{
         }
         else
             HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection not initialized - server: " + this.driverProperties.getProperty("ServerAddress"));
+    }
+    
+    public UUID getSessionID() {
+    	return this.sessionID;
     }
     
     public Statement createStatement() throws SQLException {
