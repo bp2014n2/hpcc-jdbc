@@ -1,6 +1,5 @@
 package de.hpi.hpcc.main;
 
-import java.io.ObjectInputStream.GetField;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
