@@ -33,7 +33,7 @@ public class ECLBuilderTest {
 		assertEquals("TABLE(myTable, {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable"));
 		assertEquals("DEDUP(TABLE(myTable, {myColumn, myColumnA, myColumnB}), All)", eclBuilder.generateECL("select distinct * from mySchema.myTable"));
 		assertEquals("DEDUP(TABLE(myTable, {myColumn}), All)", eclBuilder.generateECL("select distinct myColumn from mySchema.myTable"));
-		assertEquals("TABLE(myTable, {myColumnA, string25 myNewColumnB := myColumnB})", eclBuilder.generateECL("select myColumnA, myColumnB as myNewColumnB from mySchema.myTable"));
+		assertEquals("TABLE(myTable, {myColumnA, STRING25 myNewColumnB := myColumnB})", eclBuilder.generateECL("select myColumnA, myColumnB as myNewColumnB from mySchema.myTable"));
 	}
 
 	@Test
@@ -57,7 +57,7 @@ public class ECLBuilderTest {
 		assertEquals("TABLE(SORT(TABLE(myTable, {myColumn, myColumnA, myColumnB}), myColumn), {myColumn, myColumnA, myColumnB})", eclBuilder.generateECL("select * from mySchema.myTable order by myColumn"));
 		assertEquals("TABLE(SORT(TABLE(myTable, {myColumn}), myColumn), {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable order by myColumn"));
 		assertEquals("DEDUP(TABLE(SORT(TABLE(myTable, {myColumn}), myColumn), {myColumn}), All)", eclBuilder.generateECL("select distinct myColumn from mySchema.myTable order by myColumn"));
-		assertEquals("TABLE(SORT(TABLE(myTable, {integer8 func_count := COUNT(GROUP), myColumn}, myColumn), func_count), {myColumn})", eclBuilder.generateECL("select myColumn from myTable group by myColumn order by count(*)"));
+		assertEquals("TABLE(SORT(TABLE(myTable, {INTEGER8 func_count := COUNT(GROUP), myColumn}, myColumn), func_count), {myColumn})", eclBuilder.generateECL("select myColumn from myTable group by myColumn order by count(*)"));
 		
 	}
 	
@@ -66,8 +66,8 @@ public class ECLBuilderTest {
 		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		assertEquals("TABLE(myTable, {myColumn}, myColumn)", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn"));
 		assertEquals("TABLE(myTable, {myColumn}, myColumnA, myColumnB)", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumnA, myColumnB"));
-		assertEquals("TABLE(myTable, {integer8 func_count := COUNT(GROUP)}, myColumn)", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable group by myColumn"));
-		assertEquals("TABLE(SORT(TABLE(myTable, {integer8 func_count := COUNT(GROUP), myColumn}, myColumn), func_count), {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn order by count(*)"));
+		assertEquals("TABLE(myTable, {INTEGER8 func_count := COUNT(GROUP)}, myColumn)", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable group by myColumn"));
+		assertEquals("TABLE(SORT(TABLE(myTable, {INTEGER8 func_count := COUNT(GROUP), myColumn}, myColumn), func_count), {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn order by count(*)"));
 	}
 		
 	@Test
@@ -100,11 +100,11 @@ public class ECLBuilderTest {
 	public void shouldTranslateSelectWithFunction() {
 		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		//assertEquals("", eclBuilder.generateECL("select nextval('mySequence')"));
-		assertEquals("TABLE(myTable, {integer8 func_count := COUNT(GROUP)})", eclBuilder.generateECL("select count(*) from mySchema.myTable"));
-		assertEquals("TABLE(myTable, {integer8 func_count := COUNT(GROUP)})", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable"));
-		assertEquals("TABLE(myTable, {integer8 anotherName := COUNT(GROUP)})", eclBuilder.generateECL("select count(myColumn) as anotherName from mySchema.myTable"));
-		assertEquals("TABLE(myTable, {integer8 func_sum := SUM(GROUP, myColumn)})", eclBuilder.generateECL("select sum(myColumn) from mySchema.myTable"));
-		assertEquals("TABLE(myTable, {integer8 anotherName := SUM(GROUP, myColumn)})", eclBuilder.generateECL("select sum(myColumn) as anotherName from mySchema.myTable"));
+		assertEquals("TABLE(myTable, {INTEGER8 func_count := COUNT(GROUP)})", eclBuilder.generateECL("select count(*) from mySchema.myTable"));
+		assertEquals("TABLE(myTable, {INTEGER8 func_count := COUNT(GROUP)})", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable"));
+		assertEquals("TABLE(myTable, {INTEGER8 anotherName := COUNT(GROUP)})", eclBuilder.generateECL("select count(myColumn) as anotherName from mySchema.myTable"));
+		assertEquals("TABLE(myTable, {INTEGER8 func_sum := SUM(GROUP, myColumn)})", eclBuilder.generateECL("select sum(myColumn) from mySchema.myTable"));
+		assertEquals("TABLE(myTable, {INTEGER8 anotherName := SUM(GROUP, myColumn)})", eclBuilder.generateECL("select sum(myColumn) as anotherName from mySchema.myTable"));
 	}
 	
 	@Test

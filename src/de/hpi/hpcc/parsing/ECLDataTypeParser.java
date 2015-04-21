@@ -82,8 +82,8 @@ public class ECLDataTypeParser implements ExpressionVisitor {
 	public void visit(Function function) {
 		String functionName = function.getName().toLowerCase();
 		switch (functionName) {
-		case "sum": dataType = "integer8"; break;
-		default: dataType = "integer8"; break;
+		case "sum": dataType = "INTEGER8"; break;
+		default: dataType = "INTEGER8"; break;
 		}
 	}
 
