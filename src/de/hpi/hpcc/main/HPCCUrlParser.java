@@ -1,58 +1,47 @@
 package de.hpi.hpcc.main;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HPCCUrlParser {
+	private static final Pattern GENERAL_URL_PATTERN = Pattern.compile("(//[\\w-.]*)(:[0-9]{1,5})?(/[\\w]*)?");
+	private static final Pattern PORT_URL_PATTERN	 = Pattern.compile("(//[\\w-.]*)(:[0-9]{1,5})(/[\\w]*)?");
+	private static final Pattern CLUSTER_URL_PATTERN = Pattern.compile("(//[\\w-.]*)(:[0-9]{1,5})?(/[\\w]*)");
+	
 	public String getFileLocation(String url) {
-		String fileLocation = this.removeProtocol(url);
-		String fileLocationWithoutRoot = fileLocation.replaceFirst("//", "");
-		int portIndex = getPortIndex(fileLocation);
-		if(portIndex > 0){
-			return fileLocation.substring(0, portIndex);
-		}
-		if(fileLocationWithoutRoot.indexOf("/") < 0){
-			return fileLocation;
-		}
-		return "//"+fileLocationWithoutRoot.substring(0, fileLocationWithoutRoot.indexOf("/"));
+		return this.getProperty(url, 1, GENERAL_URL_PATTERN);
 	}
 
 	public String getPort(String url) {
-		String fileLocation = this.removeProtocol(url);
-		int portIndex = getPortIndex(fileLocation);
-		if(portIndex < 0 ){
-			return null;
-		}
-		String urlAfterPortColon = fileLocation.substring(portIndex+1, fileLocation.length());
-		if(urlAfterPortColon.equals("")){
-			return null;
-		}
-		if(urlAfterPortColon.indexOf("/") < 1){
-			if(HPCCJDBCUtils.isNumeric(urlAfterPortColon)){
-				return urlAfterPortColon;
-			}
-			return null;
-		}
-		if(HPCCJDBCUtils.isNumeric(urlAfterPortColon.substring(0, urlAfterPortColon.indexOf("/")))){
-			return urlAfterPortColon.substring(0, urlAfterPortColon.indexOf("/"));
-		}
-		return null;		
+		return formatProperty(this.getProperty(url, 2, PORT_URL_PATTERN));
 	}
 	
 	public String getCluster(String url) {
-		return null;
+		return formatProperty(this.getProperty(url, 3, CLUSTER_URL_PATTERN));
 	}
 	
-	public String getSchema(String url)  {
-		return null;
-	}
-	
-	public boolean isValidUrl(String url) {
+	public boolean isValidUrl(String url){
 		if((url == null) || !this.hasValidProtocol(url)){
 			return false;
 		}
 		url = this.removeProtocol(url);
-    	Pattern urlNameRegex = Pattern.compile("//[^\\s/$.?#].[^\\s]*(/\\w)?(\\?\\w)?");
-    	return urlNameRegex.matcher(url).matches();
+    	return HPCCUrlParser.GENERAL_URL_PATTERN.matcher(url).matches();
+	}
+	
+	private String getProperty(String url, int propertyNumber, Pattern pattern) {
+		url = this.removeProtocol(url);
+		Matcher matchingUrl = pattern.matcher(url);
+		if(matchingUrl.matches() && !matchingUrl.group(propertyNumber).equals("")) {
+			return matchingUrl.group(propertyNumber); 
+		}
+		return null;
+	}
+	
+	private String formatProperty(String property) {
+		if(property == null) {
+			return null;
+		}
+		return property.substring(1);
 	}
 	
 	private boolean hasValidProtocol(String url) {
@@ -61,9 +50,5 @@ public class HPCCUrlParser {
 	
 	private String removeProtocol(String url) {
 		return url.substring(url.indexOf("://")+1, url.length());
-	}
-	
-	private int getPortIndex(String fileLocation) {
-		return fileLocation.indexOf(":");
 	}
 }

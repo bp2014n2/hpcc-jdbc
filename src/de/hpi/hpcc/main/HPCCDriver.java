@@ -20,7 +20,6 @@ public class HPCCDriver implements Driver{
     private static final int URI 		= 0;
     private static final int PORT 		= 1;
     private static final int CLUSTER 	= 2;
-    private static final int SCHEMA 	= 3;
     
     static{
     	try{
@@ -50,6 +49,9 @@ public class HPCCDriver implements Driver{
     			for(String portProperty : driverProperties.getAllPropertiesUsingDefaultPort()){
     				driverProperties.setProperty(portProperty, parsedURL[PORT]);
     			}
+    		}
+    		if(parsedURL[CLUSTER] != null){
+    			driverProperties.setProperty("TargetCluster", parsedURL[CLUSTER]);
     		}
     	}else{
     		log(url +" has the wrong format (e.g. missing protocol)");
@@ -137,7 +139,6 @@ public class HPCCDriver implements Driver{
 		parsedURL[URI] 	= urlParser.getFileLocation(url);
 		parsedURL[PORT] = urlParser.getPort(url);
 		parsedURL[CLUSTER] = urlParser.getCluster(url);
-		parsedURL[SCHEMA] = urlParser.getSchema(url);
 		return parsedURL;
 	}
 	
