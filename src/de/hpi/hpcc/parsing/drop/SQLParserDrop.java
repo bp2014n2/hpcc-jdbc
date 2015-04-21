@@ -1,6 +1,8 @@
 package de.hpi.hpcc.parsing.drop;
 
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
@@ -26,6 +28,16 @@ public class SQLParserDrop extends SQLParser {
 	
 	public String getFullName() {
 		return "i2b2demodata::"+getName();
+	}
+
+	@Override
+	public List<String> getQueriedColumns(String table) {
+		return new ArrayList<String>();
+	}
+
+	@Override
+	public List<String> getTableNameAndAlias(String table) {
+		return null;
 	}
 
 }

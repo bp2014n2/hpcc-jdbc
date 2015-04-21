@@ -4,6 +4,8 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
@@ -105,5 +107,23 @@ public class SQLParserUpdate extends SQLParser {
 			columnNames.add(column.getColumnName().toLowerCase());
 		}
 		return columnNames;
+	}
+
+	@Override
+	public List<String> getQueriedColumns(String table) {
+		List<String> columns = new ArrayList<String>();
+		findColumns(columns, getTableNameAndAlias(table), ((Update) statement).getWhere());
+		return columns;
+	}
+
+	public List<String> getTableNameAndAlias(String table) {
+		List<String> tableNameAndAlias = new ArrayList<String>();
+		tableNameAndAlias.add(table);
+		Pattern findAlias = Pattern.compile("from\\s*(\\w+(\\s*(i2b2demodata\\.)?\\w+)?,\\s*)*(i2b2demodata\\.)?" + table + "\\s*(\\w+)\\s*", Pattern.CASE_INSENSITIVE);
+		Matcher alias = findAlias.matcher(((Update) statement).toString());
+		while (alias.find()) {
+			tableNameAndAlias.add(alias.group(5));
+		}
+		return tableNameAndAlias;
 	}
 }

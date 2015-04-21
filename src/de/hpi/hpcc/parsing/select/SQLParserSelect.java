@@ -5,10 +5,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
+import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LongValue;
@@ -196,4 +198,21 @@ public class SQLParserSelect extends SQLParser {
 		}
 		return innerStatement;
 	}
+
+	@Override
+	public List<String> getQueriedColumns(String table) {
+		List<String> columns = new ArrayList<String>();
+		for (SelectItem selectItem : getSelectItems()) {
+			findColumns(columns,getTableNameAndAlias(table),((SelectExpressionItem) selectItem).getExpression());
+		}
+		findColumns(columns, getTableNameAndAlias(table), plain.getWhere());
+		return columns;
+	}
+
+	@Override
+	public List<String> getTableNameAndAlias(String table) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

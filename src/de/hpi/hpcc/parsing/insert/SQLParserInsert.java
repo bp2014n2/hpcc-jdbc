@@ -6,6 +6,7 @@ import java.util.List;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
+import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
@@ -86,5 +87,23 @@ public class SQLParserInsert extends SQLParser {
 			lowerTableList.add(table.toLowerCase());
 		}
 		return lowerTableList;
+	}
+
+	@Override
+	public List<String> getQueriedColumns(String table) {
+		ArrayList<String> columns = new ArrayList<String>();
+		if (getAllTables().contains(table.toLowerCase())) {
+			Select select = ((Insert) statement).getSelect();
+			if (select != null) {
+				
+			}
+		}
+		return columns;
+	}
+
+	@Override
+	public List<String> getTableNameAndAlias(String table) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
