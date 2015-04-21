@@ -175,8 +175,8 @@ abstract public class SQLParser{
 		return statement.toString().length() - statement.toString().replace("?", "").length();
 	}	
 	
-	protected void findColumns(List<String> columns, List<String> tableNameAndAlias,
-			Expression expr) {
+	protected List<String> findColumns(List<String> tableNameAndAlias, Expression expr) {
+		List<String> columns = new ArrayList<String>();
 		if (expr instanceof Column) {
 			String columnName = ((Column) expr).getColumnName().toLowerCase();
 			String tableName = ((Column) expr).getTable().getName();
@@ -199,29 +199,30 @@ abstract public class SQLParser{
 				}
 			}
 		} else if (expr instanceof BinaryExpression) {
-			findColumns(columns, tableNameAndAlias, ((BinaryExpression) expr).getLeftExpression());
-			findColumns(columns, tableNameAndAlias, ((BinaryExpression) expr).getRightExpression());
+			columns.addAll(findColumns(tableNameAndAlias, ((BinaryExpression) expr).getLeftExpression()));
+			columns.addAll(findColumns(tableNameAndAlias, ((BinaryExpression) expr).getRightExpression()));
 		} else if (expr instanceof ExistsExpression) {
-			findColumns(columns, tableNameAndAlias, ((ExistsExpression) expr).getRightExpression());
+			columns.addAll(findColumns(tableNameAndAlias, ((ExistsExpression) expr).getRightExpression()));
 		} else if (expr instanceof SubSelect) {
 			SQLParserSelect selectParser = new SQLParserSelect(((SubSelect) expr).getSelectBody().toString(),eclLayouts);
 			for (SelectItem selectItem : selectParser.getSelectItems()) {
-				findColumns(columns,tableNameAndAlias,((SelectExpressionItem) selectItem).getExpression());
+				columns.addAll(findColumns(tableNameAndAlias,((SelectExpressionItem) selectItem).getExpression()));
 			}
 			if (selectParser.getWhere() != null) {
-				findColumns(columns, tableNameAndAlias, (Expression) selectParser.getWhere());
+				columns.addAll(findColumns(tableNameAndAlias, (Expression) selectParser.getWhere()));
 			}
 			if (selectParser.getFromItem() instanceof SubSelect) {
-				findColumns(columns, tableNameAndAlias, (Expression) selectParser.getFromItem());
+				columns.addAll(findColumns(tableNameAndAlias, (Expression) selectParser.getFromItem()));
 			}
 		} else if (expr instanceof InExpression) {
-			findColumns(columns, tableNameAndAlias, ((InExpression) expr).getLeftExpression());
+			columns.addAll(findColumns(tableNameAndAlias, ((InExpression) expr).getLeftExpression()));
 			if (((InExpression) expr).getRightItemsList() instanceof SubSelect) {
-				findColumns(columns, tableNameAndAlias, (Expression) ((InExpression) expr).getRightItemsList());
+				columns.addAll(findColumns(tableNameAndAlias, (Expression) ((InExpression) expr).getRightItemsList()));
 			}
 		} else if (expr instanceof Parenthesis) {
-			findColumns(columns, tableNameAndAlias, ((Parenthesis) expr).getExpression());
+			columns.addAll(findColumns(tableNameAndAlias, ((Parenthesis) expr).getExpression()));
 		}
+		return columns;
 	}
 	
 	protected List<String> getTableNameAndAlias(String table) {
