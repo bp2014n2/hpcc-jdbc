@@ -49,7 +49,7 @@ public abstract class ECLEngine
 	protected List<HPCCColumnMetaData>    expectedretcolumns = null;
     protected HashMap<String, HPCCColumnMetaData> availablecols = null;
     private static final String			HPCCEngine = "THOR";
-//    private ECLSubstringDefinition substring = null;
+    private ECLSubstringDefinition substring = null;
     protected ECLLayouts eclLayouts;
 
     public ECLEngine(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
@@ -87,22 +87,22 @@ public abstract class ECLEngine
 
 		sb.append("&eclText=\n");
 			
-//			if (substring != null) {
-//				eclCode = new StringBuilder(createSubstring());
-//			}
+			if (substring != null) {
+				eclCode = new StringBuilder(createSubstring());
+			}
 		sb.append(eclCode.toString());
 		sb.append("\n\n//"+eclMetaEscape(sqlQuery));
 //			System.out.println(sb.toString());
 		return sb.toString();
     }
-  /*  
+    
     protected String createSubstring() {
 		String correctedEclCode = eclCode.toString().replace(
 				substring.toReplaceString(),
 				substring.toString());
 		return correctedEclCode;
     }
-    */
+    
     public static String escapeToAppropriateSQL(String sql) {
 		Pattern pattern = Pattern.compile("substring\\s*\\(\\s*(\\w+)\\s+from\\s+(\\d+)\\s+for\\s+(\\d+)\\s*\\)(\\s+as\\s+(\\w+))?", Pattern.CASE_INSENSITIVE);
 		Matcher matcher = pattern.matcher(sql);
@@ -116,18 +116,24 @@ public abstract class ECLEngine
 	}
     
     public String convertToAppropriateSQL(String sql) throws SQLException {
-    	Pattern pattern = Pattern.compile("substring\\s*\\(\\s*(\\w+)\\s+from\\s+(\\d+)\\s+for\\s+(\\d+)\\s*\\)(\\s+as\\s+(\\w+))?", Pattern.CASE_INSENSITIVE);
+    	Pattern pattern = Pattern.compile("substring\\s*\\(\\s*(\\w+)\\s+from\\s+(\\d+)\\s+for\\s+(\\d+)\\s*\\)(\\s+as\\s+(\\w+))?(\\s*(=|<|>|<=|>=)\\s*'?\\w+'?)?", Pattern.CASE_INSENSITIVE);
     	Pattern selectPattern = Pattern.compile("select\\s*(distinct\\s*)?(((count|sum|avg)\\(w*\\))?\\w*\\s*,\\s*)*\\s*substring\\s*\\(\\s*\\w+\\s+from\\s+\\d+\\s+for\\s+\\d+\\s*\\)(\\s+as\\s+\\w+)?", Pattern.CASE_INSENSITIVE);
     	Matcher matcher = pattern.matcher(sql);
     	Matcher selectMatcher = selectPattern.matcher(sql);
 		if(matcher.find()){
 			String column = matcher.group(1);
 			String alias = matcher.group(5);
-			if (selectMatcher.find() && alias == null) {
-				alias = column + "_substring";
+
+			int start = Integer.parseInt(matcher.group(2));
+			int count = Integer.parseInt(matcher.group(3));
+			this.substring = new ECLSubstringDefinition(column, alias, start, count);
+			if (selectMatcher.find()) {
+				if (alias == null) this.substring.setAlias(column + "_substring");
+			} else {
+				this.substring.setContext(matcher.group(6));
 			}
-//			this.substring = new ECLSubstringDefinition(column, alias, start, count);
-//			sql = sql.replace(substring, this.substring.toSql());
+			String substring = sql.substring(matcher.start(),matcher.end());
+			sql = sql.replace(substring, this.substring.toSql());
 		}
 		if(sql.toLowerCase().contains("nextval")){
 			String sequence = sql.substring(sql.indexOf('(')+2, sql.indexOf(')')-1);
