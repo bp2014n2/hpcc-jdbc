@@ -1,13 +1,9 @@
 package de.hpi.hpcc.parsing;
 
-import java.util.List;
-
-import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
-import de.hpi.hpcc.parsing.select.SQLParserSelect;
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
-import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.CaseExpression;
 import net.sf.jsqlparser.expression.CastExpression;
 import net.sf.jsqlparser.expression.DateValue;
@@ -46,7 +42,6 @@ import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.Between;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
-import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
@@ -61,61 +56,47 @@ import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
-public class ECLExpressionParser implements ExpressionVisitor {
+public class ECLDataTypeParser implements ExpressionVisitor {
 
-	private String parsed;
-	private List<String> allTables;
+	private String dataType = "string50";
 	private ECLLayouts eclLayouts;
-	
-	public ECLExpressionParser(ECLLayouts eclLayouts) {
+	private SQLParser sqlParser;
+
+	public ECLDataTypeParser(ECLLayouts eclLayouts, SQLParser sqlParser) {
 		this.eclLayouts = eclLayouts;
+		this.sqlParser = sqlParser;
 	}
 
 	public String parse(Expression expression) {
 		expression.accept(this);
-		return parsed;
+		return dataType;
 	}
 	
-	public void setAllTables(List<String> allTables) {
-		this.allTables = allTables;
-	}
-	
-	
-
 	@Override
 	public void visit(NullValue nullValue) {
-		parsed = "''";	
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(Function function) {
-		StringBuilder expressionBuilder = new StringBuilder();
-
-		expressionBuilder.append(parseFunction(function));
-		parsed = expressionBuilder.toString();
-		
-	}
-	
-	private String parseFunction(Function function) {
-		String parameters = "";
-		if (function.getName().toUpperCase().equals("SUM")) {
-			if (function.getParameters().getExpressions().size() > 0) {
-				for (Expression e : function.getParameters().getExpressions()) {
-					if (e instanceof Column) parameters += ", " + parse(e);
-				}
-			}
+		String functionName = function.getName().toLowerCase();
+		switch (functionName) {
+		case "sum": dataType = "integer8"; break;
+		default: dataType = "integer8"; break;
 		}
-		return function.getName().toUpperCase()+ECLUtils.encapsulateWithBrackets("GROUP"+parameters);
 	}
-	
+
 	@Override
 	public void visit(SignedExpression signedExpression) {
-		parsed = signedExpression.toString();
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(JdbcParameter jdbcParameter) {
-		parsed = "?";
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
@@ -132,7 +113,8 @@ public class ECLExpressionParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(LongValue longValue) {
-		parsed = Long.toString(longValue.getValue());
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
@@ -150,16 +132,19 @@ public class ECLExpressionParser implements ExpressionVisitor {
 	@Override
 	public void visit(TimestampValue timestampValue) {
 		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(Parenthesis parenthesis) {
-		parsed = ECLUtils.encapsulateWithBrackets(parse(parenthesis.getExpression()));
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(StringValue stringValue) {
-		parsed = ECLUtils.encapsulateWithSingleQuote(stringValue.getValue());
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
@@ -183,115 +168,96 @@ public class ECLExpressionParser implements ExpressionVisitor {
 	@Override
 	public void visit(Subtraction subtraction) {
 		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(AndExpression andExpression) {
-		parsed = visitBinaryExpression(andExpression, "AND");
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(OrExpression orExpression) {
-		parsed = visitBinaryExpression(orExpression, "OR");
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(Between between) {
-		StringBuilder betweenBuilder = new StringBuilder();
-		betweenBuilder.append(parse(between.getLeftExpression()));
-		betweenBuilder.append(" BETWEEN ");
-		betweenBuilder.append(parse(between.getBetweenExpressionStart()));
-		betweenBuilder.append(" AND ");
-		betweenBuilder.append(parse(between.getBetweenExpressionEnd()));
-		parsed = ECLUtils.encapsulateWithBrackets(betweenBuilder.toString());
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(EqualsTo equalsTo) {
-		parsed = visitBinaryExpression(equalsTo, "=");
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(GreaterThan greaterThan) {
-		parsed = visitBinaryExpression(greaterThan, ">");
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(GreaterThanEquals greaterThanEquals) {
-		parsed = visitBinaryExpression(greaterThanEquals, ">=");
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(InExpression inExpression) {
-		StringBuilder expressionBuilder = new StringBuilder();
-		
-		String inColumn = parse(inExpression.getLeftExpression());
-		expressionBuilder.append(inColumn);
-		expressionBuilder.append(" IN ");
-		ECLItemsListParser itemsListParser = new ECLItemsListParser(eclLayouts);
-		itemsListParser.setInColumn(inColumn);
-		expressionBuilder.append(itemsListParser.parse(inExpression.getRightItemsList()));
-		
-		parsed = expressionBuilder.toString();
+		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void visit(IsNullExpression isNullExpression) {
-		StringBuilder nullExpressionString = new StringBuilder();
+		// TODO Auto-generated method stub
 		
-		nullExpressionString.append(parse(isNullExpression.getLeftExpression()));
-		nullExpressionString.append(" = "+((eclLayouts.isColumnOfIntInAnyTable(allTables, parse(isNullExpression.getLeftExpression())))?"0":"''"));
-		parsed = nullExpressionString.toString();
 	}
 
 	@Override
 	public void visit(LikeExpression likeExpression) {
-		StringBuilder likeString = new StringBuilder();
-		String stringValue = ((StringValue) likeExpression.getRightExpression()).getValue();
-		if (stringValue.endsWith("%")) {
-			stringValue = stringValue.replace("%", "");
-		}
-		int count = stringValue.replace("\\\\", "\\").length();
-		
-		
-		likeString.append(parse(likeExpression.getLeftExpression()));
-		likeString.append("[1..");
-		likeString.append(count);
-		likeString.append("] = '");
-		likeString.append(stringValue);
-		likeString.append("\'");
-		parsed = likeString.toString();
+		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void visit(MinorThan minorThan) {
-		parsed = visitBinaryExpression(minorThan, "<");
+		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void visit(MinorThanEquals minorThanEquals) {
-		parsed = visitBinaryExpression(minorThanEquals, "<=");
+		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void visit(NotEqualsTo notEqualsTo) {
-		parsed = visitBinaryExpression(notEqualsTo, "!=");
+		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void visit(Column tableColumn) {
-		parsed = tableColumn.getColumnName();
-		
+		for(String table : sqlParser.getAllTables()) {
+			for(String column : sqlParser.getQueriedColumns(table)) {
+				if(column.equalsIgnoreCase(tableColumn.getColumnName())) {
+					dataType = eclLayouts.getECLDataType(table, column);
+				}
+			}
+		}
 	}
 
 	@Override
 	public void visit(SubSelect subSelect) {
-		ECLUtils.encapsulateWithBrackets(new ECLBuilderSelect(eclLayouts).generateECL((subSelect).getSelectBody().toString()));
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
@@ -308,21 +274,7 @@ public class ECLExpressionParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(ExistsExpression existsExpression) {
-		SQLParserSelect subParser = new SQLParserSelect(((SubSelect)existsExpression.getRightExpression()).getSelectBody().toString(), eclLayouts);	
-
-		StringBuilder existString = new StringBuilder();
-
-		if(subParser.getSelectItems().size() == 1) {
-			if(subParser.getSelectItems().get(0).toString().equals("1")) {
-				if(subParser.getFromItem() instanceof SubSelect) {
-					existString.append(parse((Expression)subParser.getFromItem()));
-				}
-			}
-		} else {
-			existString.append(parse(existsExpression.getRightExpression()));
-		}
-		
-		parsed = existString.toString();
+		// TODO Auto-generated method stub
 		
 	}
 
@@ -439,19 +391,5 @@ public class ECLExpressionParser implements ExpressionVisitor {
 		// TODO Auto-generated method stub
 		
 	}
-	
-	private String visitBinaryExpression(BinaryExpression binaryExpression, String operator) {
-        StringBuilder expression = new StringBuilder();
-		if (binaryExpression.isNot()) {
-			expression.append(" NOT ");
-        }
-	
-		expression.append(parse(binaryExpression.getLeftExpression()));
-        expression.append(" " + operator + " ");
-        expression.append(parse(binaryExpression.getRightExpression()));
-        
-        return expression.toString();
-
-    }
 
 }

@@ -20,7 +20,10 @@ import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
+import de.hpi.hpcc.parsing.ECLExpressionParser;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.ECLNameParser;
+import de.hpi.hpcc.parsing.ECLSelectParser;
 import de.hpi.hpcc.parsing.ECLUtils;
 
 public class ECLBuilderSelect extends ECLBuilder {
@@ -57,12 +60,12 @@ public class ECLBuilderSelect extends ECLBuilder {
     		eclCode = ECLUtils.convertToTable(eclCode);
     	}
     	generateOrderBys(sqlParser);
-//    	if(sqlParser.getOrderBys() != null) {
-//    		generateSelects(sqlParser, false);
-//    		if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
-//        		convertToTable(eclCode);
-//        	}
-//    	}
+    	if(sqlParser.getOrderBys() != null) {
+    		generateSelects(sqlParser, false);
+    		if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
+        		eclCode = ECLUtils.convertToTable(eclCode);
+        	}
+    	}
     	generateDistinct(sqlParser);
     	generateLimit(sqlParser);
     	
@@ -99,7 +102,6 @@ public class ECLBuilderSelect extends ECLBuilder {
 	private void generateOrderBys(SQLParserSelect sqlParser) {
 		List<OrderByElement> orderBys = sqlParser.getOrderBys(); 	
     	if (orderBys != null) {
-    		eclCode.insert(0, "SORT(");
     		eclCode.append(", ");
     		for (OrderByElement orderByElement : orderBys) {
     			/*  
@@ -107,13 +109,10 @@ public class ECLBuilderSelect extends ECLBuilder {
     			 * TODO: order by expression (e.g. count)
     			 */
     			Expression orderBy = orderByElement.getExpression();
-    			if (orderBy instanceof Function) {
-    				eclCode.append(nameFunction((Function) orderBy));
-    			} else {
-    				eclCode.append(parseExpressionECL(orderByElement.getExpression()));
-    			}
+    			ECLNameParser nameParser = new ECLNameParser();
+    			eclCode.append(nameParser.name(orderBy));
     		}
-    		eclCode.append(")");
+    		eclCode = ECLUtils.convertToSort(eclCode);
     	}
 	}
 	
@@ -186,9 +185,8 @@ public class ECLBuilderSelect extends ECLBuilder {
 			if (selectItem instanceof SelectExpressionItem) {
 				StringBuilder selectItemString = new StringBuilder();
 				SelectExpressionItem sei = (SelectExpressionItem) selectItem;
-				ECLNameParser nameParser = new ECLNameParser(eclLayouts, sqlParser);
-				selectItemString.append(nameParser.name(sei));
-   				selectItemString.append(parseExpressionECL(sei.getExpression()));
+				ECLSelectParser selectParser = new ECLSelectParser(eclLayouts, sqlParser);
+				selectItemString.append(selectParser.parse(sei));
    				selectItemsStrings.add(selectItemString.toString());
    			}
 		}
@@ -200,39 +198,12 @@ public class ECLBuilderSelect extends ECLBuilder {
 		if (sqlParser.getOrderBys() != null) {
 			for (OrderByElement orderByElement : sqlParser.getOrderBys()) {
 				Expression orderBy = orderByElement.getExpression();
-				if (orderBy instanceof Function) {
-					StringBuilder function = new StringBuilder();
-					function.append(nameFunction((Function) orderBy));
-					function.append(" := ");
-					function.append(parseFunction((Function) orderBy));
-					innerItems.add(function.toString());
-				} else {
-					innerItems.add(parseExpressionECL(orderByElement.getExpression()));
-				}
+				ECLSelectParser selectParser = new ECLSelectParser(eclLayouts, sqlParser);
+				String select = selectParser.parse(orderBy);
+				innerItems.add(select);
 			}
 		}
 		return innerItems;
-	}
-
-	/**
-	 * Parses the function and generates ECL code
-	 * @param function can be e.g. an object representing "COUNT" or "AVG"
-	 * @return returns the ECL for the given function
-	 */
-
-	private String parseFunction(Function function) {	
-		return function.getName().toUpperCase()+"(GROUP)";
-	}
-	
-	private String nameFunction(Function function) {
-		StringBuilder innerFunctionString = new StringBuilder();
-		if (!function.isAllColumns()) {
-			for (Expression expression : function.getParameters().getExpressions()) {
-				innerFunctionString.append(parseExpressionECL(expression));
-			}
-		}
-		innerFunctionString.insert(0, function.getName().toLowerCase() + "_");
-		return innerFunctionString.toString();
 	}
 
 	/**

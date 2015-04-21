@@ -1,8 +1,5 @@
-package de.hpi.hpcc.parsing.select;
+package de.hpi.hpcc.parsing;
 
-import de.hpi.hpcc.main.HPCCJDBCUtils;
-import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
@@ -58,21 +55,9 @@ import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
-public class ECLDataTypeParser implements ExpressionVisitor {
+public class ECLNameParser implements ExpressionVisitor {
 
-	private String dataType = "string50";
-	private ECLLayouts eclLayouts;
-	private SQLParser sqlParser;
-
-	public ECLDataTypeParser(ECLLayouts eclLayouts, SQLParser sqlParser) {
-		this.eclLayouts = eclLayouts;
-		this.sqlParser = sqlParser;
-	}
-
-	public String parse(Expression expression) {
-		expression.accept(this);
-		return dataType;
-	}
+	private String name = "";
 	
 	@Override
 	public void visit(NullValue nullValue) {
@@ -82,11 +67,7 @@ public class ECLDataTypeParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(Function function) {
-		String functionName = function.getName().toLowerCase();
-		switch (functionName) {
-		case "sum": dataType = "integer8"; break;
-		default: dataType = "integer8"; break;
-		}
+		name = "func_" + function.getName();
 	}
 
 	@Override
@@ -247,13 +228,7 @@ public class ECLDataTypeParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(Column tableColumn) {
-		for(String table : sqlParser.getAllTables()) {
-			for(String column : sqlParser.getQueriedColumns(table)) {
-				if(column.equalsIgnoreCase(tableColumn.getColumnName())) {
-					dataType = eclLayouts.getECLDataType(table, column);
-				}
-			}
-		}
+		name = tableColumn.getColumnName();
 	}
 
 	@Override
@@ -392,6 +367,11 @@ public class ECLDataTypeParser implements ExpressionVisitor {
 	public void visit(NumericBind bind) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	public String name(Expression expression) {
+		expression.accept(this);
+		return name;
 	}
 
 }

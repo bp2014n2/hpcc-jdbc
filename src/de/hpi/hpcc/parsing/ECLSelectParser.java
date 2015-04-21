@@ -1,8 +1,6 @@
-package de.hpi.hpcc.parsing.select;
+package de.hpi.hpcc.parsing;
 
-import de.hpi.hpcc.main.HPCCJDBCUtils;
-import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.SQLParser;
+import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
@@ -60,15 +58,39 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
-public class ECLNameParser implements ExpressionVisitor {
+public class ECLSelectParser implements ExpressionVisitor {
 
-	private String name = "";
+	private String parsed = "";
 	private ECLLayouts eclLayouts;
-	private SQLParser sqlParser;
-
-	public ECLNameParser(ECLLayouts eclLayouts, SQLParser sqlParser) {
+	private SQLParserSelect sqlParser;
+	
+	public ECLSelectParser(ECLLayouts eclLayouts, SQLParserSelect sqlParser) {
 		this.eclLayouts = eclLayouts;
 		this.sqlParser = sqlParser;
+	}
+
+	public String parse(SelectExpressionItem sei) {
+		Alias alias = sei.getAlias();
+		Expression expression = sei.getExpression();
+		if(alias != null) {
+			ECLDataTypeParser dataTypeParser = new ECLDataTypeParser(eclLayouts, sqlParser);
+			parsed = dataTypeParser.parse(expression) + " ";
+			parsed += alias.getName();
+			parsed += " := ";
+			return(primitiveParse(expression));
+		}
+		return parse(expression);
+	}
+	
+	private String primitiveParse(Expression expression) {
+		ECLExpressionParser ep = new ECLExpressionParser(eclLayouts);
+		parsed += ep.parse(expression);
+		return parsed;
+	}
+
+	public String parse(Expression expression) {
+		expression.accept(this);
+		return primitiveParse(expression);
 	}
 	
 	@Override
@@ -80,9 +102,10 @@ public class ECLNameParser implements ExpressionVisitor {
 	@Override
 	public void visit(Function function) {
 		ECLDataTypeParser dataTypeParser = new ECLDataTypeParser(eclLayouts, sqlParser);
-		name = dataTypeParser.parse(function) + " ";
-		name += (function).getName();
-		name += " := ";
+		ECLNameParser nameParser = new ECLNameParser();
+		parsed = dataTypeParser.parse(function) + " ";
+		parsed += nameParser.name(function);
+		parsed += " := "; 
 	}
 
 	@Override
@@ -383,21 +406,6 @@ public class ECLNameParser implements ExpressionVisitor {
 	public void visit(NumericBind bind) {
 		// TODO Auto-generated method stub
 		
-	}
-
-	public String name(SelectExpressionItem sei) {
-		Alias alias = sei.getAlias();
-		Expression expression = sei.getExpression();
-		if (alias != null) {
-			StringBuilder nameString = new StringBuilder();
-			ECLDataTypeParser dataTypeParser = new ECLDataTypeParser(eclLayouts, sqlParser);
-			nameString.append(dataTypeParser.parse(expression) + " ");
-			nameString.append(alias.getName());
-			nameString.append(" := ");
-			return nameString.toString();
-		}
-		expression.accept(this);
-		return name;
 	}
 
 }

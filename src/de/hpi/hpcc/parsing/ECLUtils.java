@@ -89,4 +89,12 @@ public class ECLUtils {
 		return stringList.toString();
 	}
 	
+	public static StringBuilder convertToSort(StringBuilder string) {
+		return new StringBuilder(convertToSort(string.toString()));
+	}
+
+	public static String convertToSort(String eclCode) {
+		return prepend(encapsulateWithBrackets(eclCode), "SORT");
+	}
+	
 }

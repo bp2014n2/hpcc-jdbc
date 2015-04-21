@@ -21,7 +21,7 @@ public class ECLBuilderTest {
 	@BeforeClass
 	public static void initialize() {
 //		eclBuilder = new ECLBuilder();
-		eclLayouts.setLayout("mytable", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
+		eclLayouts.setLayout("mytable", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING25 myColumnB; END;");
 		eclLayouts.setLayout("mytablea", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
 		eclLayouts.setLayout("mytableb", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
 	}
@@ -33,7 +33,7 @@ public class ECLBuilderTest {
 		assertEquals("TABLE(myTable, {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable"));
 		assertEquals("DEDUP(TABLE(myTable, {myColumn, myColumnA, myColumnB}), All)", eclBuilder.generateECL("select distinct * from mySchema.myTable"));
 		assertEquals("DEDUP(TABLE(myTable, {myColumn}), All)", eclBuilder.generateECL("select distinct myColumn from mySchema.myTable"));
-		assertEquals("TABLE(myTable, {myColumnA, myNewColumnB := myColumnB})", eclBuilder.generateECL("select myColumnA, myColumnB as myNewColumnB from mySchema.myTable"));
+		assertEquals("TABLE(myTable, {myColumnA, string25 myNewColumnB := myColumnB})", eclBuilder.generateECL("select myColumnA, myColumnB as myNewColumnB from mySchema.myTable"));
 	}
 
 	@Test
@@ -54,10 +54,10 @@ public class ECLBuilderTest {
 	@Test
 	public void shouldTranslateSelectWithOrderBy() {
 		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
-		assertEquals("SORT(TABLE(myTable, {myColumn, myColumnA, myColumnB}), myColumn)", eclBuilder.generateECL("select * from mySchema.myTable order by myColumn"));
-		assertEquals("SORT(TABLE(myTable, {myColumn}), myColumn)", eclBuilder.generateECL("select myColumn from mySchema.myTable order by myColumn"));
-		assertEquals("DEDUP(SORT(TABLE(myTable, {myColumn}), myColumn), All)", eclBuilder.generateECL("select distinct myColumn from mySchema.myTable order by myColumn"));
-		assertEquals("SORT(TABLE(myTable, {count_ := COUNT(GROUP), myColumn}, myColumn), count_)", eclBuilder.generateECL("select myColumn from myTable group by myColumn order by count(*)"));
+		assertEquals("TABLE(SORT(TABLE(myTable, {myColumn, myColumnA, myColumnB}), myColumn), {myColumn, myColumnA, myColumnB})", eclBuilder.generateECL("select * from mySchema.myTable order by myColumn"));
+		assertEquals("TABLE(SORT(TABLE(myTable, {myColumn}), myColumn), {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable order by myColumn"));
+		assertEquals("DEDUP(TABLE(SORT(TABLE(myTable, {myColumn}), myColumn), {myColumn}), All)", eclBuilder.generateECL("select distinct myColumn from mySchema.myTable order by myColumn"));
+		assertEquals("TABLE(SORT(TABLE(myTable, {integer8 func_count := COUNT(GROUP), myColumn}, myColumn), func_count), {myColumn})", eclBuilder.generateECL("select myColumn from myTable group by myColumn order by count(*)"));
 		
 	}
 	
@@ -66,8 +66,8 @@ public class ECLBuilderTest {
 		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		assertEquals("TABLE(myTable, {myColumn}, myColumn)", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn"));
 		assertEquals("TABLE(myTable, {myColumn}, myColumnA, myColumnB)", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumnA, myColumnB"));
-		assertEquals("TABLE(myTable, {count_myColumn := COUNT(GROUP)}, myColumn)", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable group by myColumn"));
-		assertEquals("SORT(TABLE(myTable, {count_ := COUNT(GROUP), myColumn}, myColumn), count_)", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn order by count(*)"));
+		assertEquals("TABLE(myTable, {integer8 func_count := COUNT(GROUP)}, myColumn)", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable group by myColumn"));
+		assertEquals("TABLE(SORT(TABLE(myTable, {integer8 func_count := COUNT(GROUP), myColumn}, myColumn), func_count), {myColumn})", eclBuilder.generateECL("select myColumn from mySchema.myTable group by myColumn order by count(*)"));
 	}
 		
 	@Test
@@ -100,11 +100,10 @@ public class ECLBuilderTest {
 	public void shouldTranslateSelectWithFunction() {
 		ECLBuilderSelect eclBuilder = new ECLBuilderSelect(eclLayouts);
 		//assertEquals("", eclBuilder.generateECL("select nextval('mySequence')"));
-		assertEquals("TABLE(myTable, {integer8 count := COUNT(GROUP)})", eclBuilder.generateECL("select count(*) from mySchema.myTable"));
-		assertEquals("TABLE(myTable, {integer8 count := COUNT(GROUP)})", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable"));
+		assertEquals("TABLE(myTable, {integer8 func_count := COUNT(GROUP)})", eclBuilder.generateECL("select count(*) from mySchema.myTable"));
+		assertEquals("TABLE(myTable, {integer8 func_count := COUNT(GROUP)})", eclBuilder.generateECL("select count(myColumn) from mySchema.myTable"));
 		assertEquals("TABLE(myTable, {integer8 anotherName := COUNT(GROUP)})", eclBuilder.generateECL("select count(myColumn) as anotherName from mySchema.myTable"));
-		assertEquals("TABLE(myTable, {integer8 sum := SUM(GROUP, myColumn)})", eclBuilder.generateECL("select sum(myColumn) from mySchema.myTable"));
-		assertEquals("TABLE(myTable, {integer8 anotherName := SUM(GROUP, myColumn)})", eclBuilder.generateECL("select sum(myColumn) as anotherName from mySchema.myTable"));
+		assertEquals("TABLE(myTable, {integer8 func_sum := SUM(GROUP, myColumn)})", eclBuilder.generateECL("select sum(myColumn) from mySchema.myTable"));
 		assertEquals("TABLE(myTable, {integer8 anotherName := SUM(GROUP, myColumn)})", eclBuilder.generateECL("select sum(myColumn) as anotherName from mySchema.myTable"));
 	}
 	
@@ -112,11 +111,11 @@ public class ECLBuilderTest {
 	public void shouldTranslateInsertInto() {
 		ECLBuilderInsert eclBuilder = new ECLBuilderInsert(eclLayouts);
 		assertEquals("OUTPUT(DATASET([{valueA, valueB, valueC}], myTable_record),,'~%NEWTABLE%', overwrite);\n",eclBuilder.generateECL("insert into myTable values (valueA, valueB, valueC)"));
-		assertEquals("OUTPUT(TABLE(DATASET([{valueA}], {STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, STRING50 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) values (valueA)"));
-		assertEquals("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING50 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB)"));
-		assertEquals("OUTPUT(TABLE(DATASET([{valueB, valueA}], {STRING50 myColumnB, STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnB, myColumnA) values (valueB, valueA)"));
-		assertEquals("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING50 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB) returning *"));
-		assertEquals("x := TABLE(anotherTable, {myColumnB});\nOUTPUT(TABLE(TABLE(x, {myColumnB}),{STRING50 myColumn := '', myColumnA, STRING50 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) with x as (select myColumnB from anotherTable) select x.myColumnB from x"));
+		assertEquals("OUTPUT(TABLE(DATASET([{valueA}], {STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) values (valueA)"));
+		assertEquals("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING25 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB)"));
+		assertEquals("OUTPUT(TABLE(DATASET([{valueB, valueA}], {STRING25 myColumnB, STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnB, myColumnA) values (valueB, valueA)"));
+		assertEquals("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING25 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA, myColumnB) values (valueA, valueB) returning *"));
+		assertEquals("x := TABLE(anotherTable, {myColumnB});\nOUTPUT(TABLE(TABLE(x, {myColumnB}),{STRING50 myColumn := '', myColumnA, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) with x as (select myColumnB from anotherTable) select x.myColumnB from x"));
 //		assertEquals("OUTPUT(TABLE(TABLE((TABLE(anotherTable, {myColumnA})), {myColumnA}),{STRING50 myColumn := '', myColumnA, STRING50 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("insert into myTable (myColumnA) select * from (select myColumnB from anotherTable)"));
 	}
 	
@@ -125,7 +124,7 @@ public class ECLBuilderTest {
 		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate(eclLayouts);
 		assertEquals("toUpdate := TABLE(TABLE(myTable, {myColumnA, myColumnB}), {STRING50 myColumn := 'myValue', myColumnA, myColumnB});\nOUTPUT(toUpdate,, '~%NEWTABLE%', overwrite);\n",eclBuilder.generateECL("update myTable set myColumn = 'myValue'"));
 		assertEquals("toUpdate := TABLE(TABLE(myTable(myColumnB = 'anotherValue'), {myColumn, myColumnB}), {myColumn, STRING50 myColumnA := 'myValue', myColumnB});\nOUTPUT(myTable(NOT(myColumnB = 'anotherValue'))+toUpdate,, '~%NEWTABLE%', overwrite);\n", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'"));	
-		assertEquals("join_record := RECORD STRING50 myColumnB; STRING50 myColumnA; END;\nmytable_record update(mytable_record l, join_record r) := TRANSFORM\n  SELF.myColumn := l.myColumn;\n  SELF.myColumnA := IF(r.myColumnA = '', l.myColumnA, r.myColumnA);\n  SELF.myColumnB := l.myColumnB;\nEND;\nOUTPUT(JOIN(mytable(myColumnA = 'anotherValue'), TABLE(, {myColumnB, STRING50 myColumnA := 'myValue'}), LEFT.myColumnB = RIGHT.myColumnB, update(LEFT, RIGHT), LEFT OUTER) + mytable(NOT myColumnA = 'anotherValue'),,'~%NEWTABLE%',OVERWRITE);", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnA = 'anotherValue' and exists (select 1 from myTableA where myTable.myColumnB = myTableA.myColumnB)"));
+		assertEquals("join_record := RECORD STRING25 myColumnB; STRING50 myColumnA; END;\nmytable_record update(mytable_record l, join_record r) := TRANSFORM\n  SELF.myColumn := l.myColumn;\n  SELF.myColumnA := IF(r.myColumnA = '', l.myColumnA, r.myColumnA);\n  SELF.myColumnB := l.myColumnB;\nEND;\nOUTPUT(JOIN(mytable(myColumnA = 'anotherValue'), TABLE(, {myColumnB, STRING50 myColumnA := 'myValue'}), LEFT.myColumnB = RIGHT.myColumnB, update(LEFT, RIGHT), LEFT OUTER) + mytable(NOT myColumnA = 'anotherValue'),,'~%NEWTABLE%',OVERWRITE);", eclBuilder.generateECL("update myTable set myColumnA = 'myValue' where myColumnA = 'anotherValue' and exists (select 1 from myTableA where myTable.myColumnB = myTableA.myColumnB)"));
 	} 
 	
 	@Test
