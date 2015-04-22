@@ -30,6 +30,7 @@ public class ECLEngineUpdate extends ECLEngine {
 		eclCode.append(generateTables());
 		
     	String tablePath = sqlParser.getFullName();
+    	tablePath = checkForTempTable(tablePath);
 		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
     	
 		eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));

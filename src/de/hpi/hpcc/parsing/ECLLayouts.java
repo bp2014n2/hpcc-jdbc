@@ -13,12 +13,6 @@ import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 
 public class ECLLayouts {
      
-	/**
-	 * is only used within tests to add test layouts
-	 * @param key is the name of the corresponding table
-	 * @param value is the layout definition itself
-	 */
-	
 	HPCCDatabaseMetaData dbMetadata;
 	
 	public ECLLayouts (HPCCDatabaseMetaData dbMetadata) {
@@ -47,6 +41,10 @@ public class ECLLayouts {
 			return columnMeta.getEclType();
 		}
 		return "";
+	}
+	
+	public String getTempTableName(String tableName) {
+		return this.dbMetadata.getTableWithSessionID(tableName);
 	}
 	
 	public Collection<Object> getKeyedColumns(String table) {
@@ -132,7 +130,7 @@ public class ECLLayouts {
 			tableName = matcher.group(3);
 		}
 		
-		return schema+"::"+tableName.toLowerCase();
+		return checkForTempTable(schema+"::"+tableName.toLowerCase());
 	}
 	
 	public String getLayout(String tableName) {
@@ -166,8 +164,19 @@ public class ECLLayouts {
     }
 	
 	public boolean hasIndex(String tableName) {
-		return dbMetadata.getDFUFile(getFullTableName(tableName)).hasRelatedIndexes();
+		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(getFullTableName(tableName));
+		if (dfuFile != null) {
+			return dfuFile.hasRelatedIndexes();
+		}
+		return false;
 	}
+	
+	public String checkForTempTable(String tablePath) {
+    	if (isTempTable(tablePath)) {
+    		tablePath = getTempTableName(tablePath);
+    	}
+    	return tablePath;
+    }
 
 //	public String getLayoutOrdered(String table, List<String> orderedColumns) {
 //		String name = getFullTableName(table);

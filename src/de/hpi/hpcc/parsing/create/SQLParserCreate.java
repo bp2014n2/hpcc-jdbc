@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.JSQLParserException;
@@ -27,6 +28,15 @@ public class SQLParserCreate extends SQLParser {
 	
 	public String getTableName() {
 		return ((CreateTable) statement).getTable().getName();
+	}
+	
+	public boolean isTempTable() {
+		CreateTable create = (CreateTable) statement;
+		List<String> createOptions = create.getCreateOptionsStrings();
+		if (createOptions != null && HPCCJDBCUtils.containsStringCaseInsensitive(createOptions, "temp")) {
+			return true;
+		}
+		return false;
 	}
 	
 	public String getRecord() {

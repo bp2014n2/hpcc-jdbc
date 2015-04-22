@@ -28,6 +28,8 @@ public class ECLEngineDrop extends ECLEngine {
 //		eclCode.append(eclBuilder.generateECL(sqlQuery));
     	
     	String tablePath = ((SQLParserDrop) sqlParser).getFullName();
+    	
+    	tablePath = checkForTempTable(tablePath);
 		
 		availablecols = new HashMap<String, HPCCColumnMetaData>();
 

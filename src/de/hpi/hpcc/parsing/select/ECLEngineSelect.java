@@ -36,6 +36,7 @@ public class ECLEngineSelect extends ECLEngine {
     	
     	for (String table : sqlParser.getAllTables()) {
     		String tableName = table.contains(".")?table.replace(".", "::"):"i2b2demodata::"+table;
+    		tableName = checkForTempTable(tableName);
     		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
     		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	}

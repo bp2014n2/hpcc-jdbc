@@ -37,7 +37,8 @@ public class ECLEngineInsert extends ECLEngine {
 		eclCode.append(generateTables());
 		
 		String tablePath = "i2b2demodata::"+ sqlParser.getTable().getName();
-		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
+		tablePath = checkForTempTable(tablePath);
+		String newTablePath = tablePath + "_" + Long.toString(System.currentTimeMillis());
 		
 		
 		eclCode.append(eclBuilder.generateECL(sqlQuery).replace("%NEWTABLE%",newTablePath));

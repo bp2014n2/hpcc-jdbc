@@ -3011,6 +3011,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 	}
 	
 	public boolean isTempTable(String tableName) {
+		tableName += "_"+this.connection.getSessionID();
 		return tempTables.contains(tableName);
 	}
 
@@ -3023,6 +3024,6 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 	}
 	
 	public String getTableWithSessionID(String tableName) {
-		return tableName+this.connection.getSessionID();
+		return tableName+"_"+this.connection.getSessionID();
 	}
 }

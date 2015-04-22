@@ -25,13 +25,18 @@ public class ECLEngineCreate extends ECLEngine {
 		sqlParser = getSQLParserInstance(sqlQuery);
 		
 		String tablePath = sqlParser.getFullName();
+		if (sqlParser.isTempTable()) {
+			tablePath = eclLayouts.getTempTableName(tablePath);
+			eclLayouts.addTempTable(tablePath);
+		}
+		
 		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
 		if(dfuFile == null) {
 			ECLBuilderCreate eclBuilder = new ECLBuilderCreate(eclLayouts);
 			eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
 	    	eclCode.append(generateImports());
 	    	eclCode.append("TIMESTAMP := STRING25;\n");
-			String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
+			String newTablePath = tablePath + "_" + Long.toString(System.currentTimeMillis());
 			eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
 			eclCode.append("\nSEQUENTIAL(Std.File.CreateSuperFile('~"+tablePath+"'),\n");
 			eclCode.append("Std.File.StartSuperFileTransaction(),\n");

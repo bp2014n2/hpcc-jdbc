@@ -282,4 +282,12 @@ public abstract class ECLEngine
     {
         return resultSchema;
     }
+    
+    public String checkForTempTable(String tablePath) {
+    	if (eclLayouts.isTempTable(tablePath)) {
+    		tablePath = eclLayouts.getTempTableName(tablePath);
+    	}
+    	return tablePath;
+    }
+    
 }
