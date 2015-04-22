@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.w3c.dom.NodeList;
 
@@ -97,15 +99,19 @@ public class HPCCStatement implements Statement{
 		return true;
 	}
 	
+
+	
 	private boolean executeQueryOnHPCC(String sqlStatement) throws SQLException {
 		try {
 			ECLLayouts layouts = new ECLLayouts(connection.getDatabaseMetaData());
 			this.parser = new ECLParser(layouts);
-			String eclCode = parser.parse(sqlStatement);
-			connection.sendRequest(eclCode);
+			NodeList rowList = null;
+			for(String query : convertToAppropriateSQL(sqlStatement)) {
+				String eclCode = parser.parse(query);
+				connection.sendRequest(eclCode);
+				rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+			}
 			
-			NodeList rowList;
-			rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
 			if (rowList != null) {
 				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(parser.getExpectedRetCols(),	"HPCC Result"));
 			}
@@ -115,6 +121,20 @@ public class HPCCStatement implements Statement{
 			this.close();
 			throw exception;
 		}
+	}
+    
+    private List<String> convertToAppropriateSQL(String sql) throws SQLException {
+    	List<String> queries = new ArrayList<String>();
+    	Matcher matcher = Pattern.compile("select\\s+nextval\\(\\s*'(\\w+)'\\s*\\)", Pattern.CASE_INSENSITIVE).matcher(sql);
+    	if(matcher.find()){
+			String sequence = matcher.group(1);
+			queries.add("update sequences set value = value + 1 where name = '"+sequence+"'");
+			queries.add("select value as nextval from sequences where name = '"+sequence+"'");
+    		//TODO: implement in ONE Query
+		} else {
+			queries.add(sql);
+		}
+		return queries;
 	}
 	
 	private boolean executeQueryOnPostgreSQL(String sqlStatement) throws SQLException {

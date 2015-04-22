@@ -15,7 +15,6 @@ public class ECLParser {
 	}
 
 	public String parse(String sql) throws SQLException {
-		sql = convertToAppropriateSQL(sql);
 		StringBuilder eclCode = new StringBuilder();
 		
 		eclCode.append("&eclText=\n");
@@ -25,17 +24,6 @@ public class ECLParser {
 		eclCode.append(engine.generateECL());
 		eclCode.append("\n\n//"+eclMetaEscape(sql));
 		return eclCode.toString();
-	}
-    
-    private String convertToAppropriateSQL(String sql) throws SQLException {
-    	if(sql.toLowerCase().contains("nextval")){
-//			String sequence = sql.substring(sql.indexOf('(')+2, sql.indexOf(')')-1);
-//			ECLEngine updateEngine = new ECLEngineUpdate(conn, dbMetadata);
-//			conn.sendRequest(updateEngine.parseEclCode("update sequences set value = value + 1 where name = '"+sequence+"'"));
-//			sql = "select value as nextval from sequences where name = '"+sequence+"'";
-    		//TODO: implement in ONE Query
-		}
-		return sql;
 	}
     
 	private String eclMetaEscape(String sqlQuery) {
