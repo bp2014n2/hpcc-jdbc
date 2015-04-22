@@ -28,7 +28,7 @@ public class ECLEngineDrop extends ECLEngine {
     	eclCode.append(generateImports());
 //		eclCode.append(eclBuilder.generateECL(sqlQuery));
     	
-    	String tablePath = ((SQLParserDrop) sqlParser).getFullName();
+    	String tablePath = sqlParser.getFullName();
 		
 		availablecols = new HashMap<String, HPCCColumnMetaData>();
 
@@ -43,7 +43,7 @@ public class ECLEngineDrop extends ECLEngine {
    			}
    			
    			// TODO: replace with much, much, much better solution
-   			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
+   			eclCode.append(EMPTY_QUERY);
    			
    	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
    	    	HashSet<String> columns = layouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
@@ -57,7 +57,7 @@ public class ECLEngineDrop extends ECLEngine {
    			/*
    			 * TODO: replace with much, much, much better solution
    			 */
-   			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
+   			eclCode.append(EMPTY_QUERY);
    		}
    		return eclCode.toString();
 	}

@@ -45,7 +45,9 @@ public class ECLEngineCreate extends ECLEngine {
 	    		i++;
 	    		expectedretcolumns.add(new HPCCColumnMetaData(column.split("\\s+")[1], i, ECLLayouts.getSqlType(column.split("\\s+")[0])));
 	    	}  	
-		} else System.out.println("Table '"+tablePath+"' already exists. Query aborted.");
+		} else {
+			eclCode.append(EMPTY_QUERY);
+		}
 		
 		return eclCode.toString();
 	}

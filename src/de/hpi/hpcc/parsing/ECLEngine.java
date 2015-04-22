@@ -40,6 +40,7 @@ public abstract class ECLEngine
     protected HashMap<String, HPCCColumnMetaData> availablecols = null;
     private static final String			HPCCEngine = "THOR";
 	protected ECLLayouts layouts;
+	protected final static String EMPTY_QUERY = "OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n";
 
     public ECLEngine(Statement statement, ECLLayouts layouts) {
         this.layouts = layouts;
