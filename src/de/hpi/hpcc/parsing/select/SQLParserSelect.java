@@ -33,12 +33,8 @@ public class SQLParserSelect extends SQLParser {
 
 	public SQLParserSelect(SelectBody expression, ECLLayouts layouts) {
 		super(null, layouts);
-		try {
-			select = (Select) SQLParser.parse(expression.toString());
-		} catch (HPCCException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		this.select = new Select();
+		this.select.setSelectBody(expression);
 		plain = (PlainSelect) expression;
 	}
 	
