@@ -1,13 +1,11 @@
 package de.hpi.hpcc.parsing.insert;
 
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
-import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.ItemsList;
@@ -20,15 +18,8 @@ import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserInsert extends SQLParser {
 	
-	public SQLParserInsert(String sql, ECLLayouts layouts) {
-		super(sql, layouts);
-		try {
-			if (parserManager.parse(new StringReader(sql)) instanceof Insert) {
-				statement = parserManager.parse(new StringReader(sql));
-			} 
-		} catch (JSQLParserException e) {
-			e.printStackTrace();
-		}
+	public SQLParserInsert(Insert insert, ECLLayouts layouts) {
+		super(insert, layouts);
 	}
 	
 	public List<Column> getColumns() {
@@ -87,24 +78,5 @@ public class SQLParserInsert extends SQLParser {
 			lowerTableList.add(table.toLowerCase());
 		}
 		return lowerTableList;
-	}
-
-	@Override
-	public List<String> getQueriedColumns(String table) {
-		ArrayList<String> columns = new ArrayList<String>();
-		if (getAllTables().contains(table.toLowerCase())) {
-			Select select = ((Insert) statement).getSelect();
-			if (select != null) {
-				String subSelect = select.getSelectBody().toString();
-				SQLParser subParser = new SQLParserSelect(subSelect, eclLayouts);
-				columns.addAll(subParser.getQueriedColumns(table));
-				if (select.getWithItemsList() != null) {
-					String withSelect = select.getWithItemsList().get(0).getSelectBody().toString();
-					SQLParser withParser = new SQLParserSelect(withSelect, eclLayouts);
-					columns.addAll(withParser.getQueriedColumns(table));
-				}
-			}
-		}
-		return columns;
 	}
 }

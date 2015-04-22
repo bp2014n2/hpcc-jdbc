@@ -13,6 +13,12 @@ import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 
 public class ECLLayouts {
      
+	/**
+	 * is only used within tests to add test layouts
+	 * @param key is the name of the corresponding table
+	 * @param value is the layout definition itself
+	 */
+	
 	HPCCDatabaseMetaData dbMetadata;
 	
 	public ECLLayouts (HPCCDatabaseMetaData dbMetadata) {
@@ -22,7 +28,7 @@ public class ECLLayouts {
 	//TODO: isTmpTable, addTmpTable, removeTmpTable
 	
 	public boolean isTempTable(String tableName) {
-		return this.dbMetadata.isTempTable(tableName);
+		return this.dbMetadata.isTempTable(getFullTableName(tableName));
 	}
 	
 	public void addTempTable(String tableName) {
@@ -41,10 +47,6 @@ public class ECLLayouts {
 			return columnMeta.getEclType();
 		}
 		return "";
-	}
-	
-	public String getTempTableName(String tableName) {
-		return this.dbMetadata.getTableWithSessionID(tableName);
 	}
 	
 	public Collection<Object> getKeyedColumns(String table) {
@@ -120,8 +122,8 @@ public class ECLLayouts {
 		return java.sql.Types.OTHER;
 	}
 	
-	private String getFullTableName(String tableName) {
-		Matcher matcher = Pattern.compile("(~?(\\w+)::)?(\\w+)", Pattern.CASE_INSENSITIVE).matcher(tableName);
+	public String getFullTableName(String tableName) {
+		Matcher matcher = Pattern.compile("(~?(\\w+)::)?([\\w\\-]+)", Pattern.CASE_INSENSITIVE).matcher(tableName);
 		String schema = "i2b2demodata";
 		if (matcher.find()) {
 			if (matcher.group(2) != null) {
@@ -130,7 +132,7 @@ public class ECLLayouts {
 			tableName = matcher.group(3);
 		}
 		
-		return checkForTempTable(schema+"::"+tableName.toLowerCase());
+		return schema+"::"+tableName.toLowerCase();
 	}
 	
 	public String getLayout(String tableName) {
@@ -164,20 +166,36 @@ public class ECLLayouts {
     }
 	
 	public boolean hasIndex(String tableName) {
-		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(getFullTableName(tableName));
-		if (dfuFile != null) {
-			return dfuFile.hasRelatedIndexes();
-		}
-		return false;
+		return dbMetadata.getDFUFile(getFullTableName(tableName)).hasRelatedIndexes();
+	}
+
+	public HPCCDFUFile getDFUFile(String hpccfilename) {
+		return dbMetadata.getDFUFile(hpccfilename);
+	}
+
+	public void removeDFUFile(String hpccfilename) {
+		dbMetadata.removeDFUFile(hpccfilename);
 	}
 	
 	public String checkForTempTable(String tablePath) {
     	if (isTempTable(tablePath)) {
-    		tablePath = getTempTableName(tablePath);
+    		tablePath = getFullTempTableName(tablePath);
     	}
     	return tablePath;
     }
-
+	
+	public String getFullTempTableName(String tableName) {
+		return this.dbMetadata.getTableWithSessionID(tableName);
+	}
+	
+	public String getShortTempTableName(String tableName) {
+		String[] fullTempTableName = getFullTempTableName(tableName).split("::");
+		if (fullTempTableName.length > 1) {
+			return fullTempTableName[1];
+		}
+		return fullTempTableName[0];
+	}
+	
 //	public String getLayoutOrdered(String table, List<String> orderedColumns) {
 //		String name = getFullTableName(table);
 //		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");

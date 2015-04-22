@@ -5,35 +5,44 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import net.sf.jsqlparser.statement.drop.Drop;
 import de.hpi.hpcc.main.HPCCColumnMetaData;
-import de.hpi.hpcc.main.HPCCConnection;
 import de.hpi.hpcc.main.HPCCDFUFile;
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import de.hpi.hpcc.parsing.ECLEngine;
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.ECLTempTableParser;
 
 public class ECLEngineDrop extends ECLEngine {
 	
 	private StringBuilder           eclCode = new StringBuilder();
 	private SQLParserDrop sqlParser;
+	private Drop drop;
+	private String originalTableName;
 
-	public ECLEngineDrop(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
-		super(conn, dbmetadata);
+	public ECLEngineDrop(Drop drop, ECLLayouts layouts) {
+		super(drop, layouts);
+		this.drop = drop;
+		originalTableName = drop.getName();
+		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
+		tempTableParser.replace(drop);
+		
+		// TODO: remove later due to double initialization
+		
 	}
 
-	public String generateECL(String sqlQuery) throws SQLException {
+	public String generateECL() throws SQLException {
 		
-		this.sqlParser = getSQLParserInstance(sqlQuery);
-		eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
+		this.sqlParser = new SQLParserDrop(drop, layouts);
     	eclCode.append(generateImports());
 //		eclCode.append(eclBuilder.generateECL(sqlQuery));
     	
     	String tablePath = ((SQLParserDrop) sqlParser).getFullName();
     	
-    	tablePath = checkForTempTable(tablePath);
+    	//tablePath = checkForTempTable(tablePath);
 		
 		availablecols = new HashMap<String, HPCCColumnMetaData>();
 
-   		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(tablePath);
+   		HPCCDFUFile hpccQueryFile = layouts.getDFUFile(tablePath);
 //   		addFileColsToAvailableCols(hpccQueryFile, availablecols);
    		if(hpccQueryFile != null) {
    			
@@ -47,13 +56,14 @@ public class ECLEngineDrop extends ECLEngine {
    			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
    			
    	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-   	    	HashSet<String> columns = eclLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
+   	    	HashSet<String> columns = layouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
    	    	int i=0;
    	    	for (String column : columns) {
    	    		i++;
-   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, eclLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
+   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, layouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
    	    	}  	
-   	    	dbMetadata.removeDFUFile(tablePath);
+   	    	layouts.removeDFUFile(tablePath);
+   	    	layouts.removeTempTable(layouts.getFullTableName(originalTableName));
    		} else {
    			/*
    			 * TODO: replace with much, much, much better solution
@@ -61,11 +71,6 @@ public class ECLEngineDrop extends ECLEngine {
    			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
    		}
    		return eclCode.toString();
-	}
-
-	@Override
-	public SQLParserDrop getSQLParserInstance(String sqlQuery) {
-		return new SQLParserDrop(sqlQuery, eclLayouts);
 	}
 
 	@Override

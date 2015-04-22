@@ -1,20 +1,15 @@
 package de.hpi.hpcc.parsing.select;
 
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLNameParser;
 import de.hpi.hpcc.parsing.SQLParser;
-import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.Function;
-import net.sf.jsqlparser.expression.LongValue;
-import net.sf.jsqlparser.expression.operators.relational.MinorThan;
-import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
@@ -23,34 +18,30 @@ import net.sf.jsqlparser.statement.select.Limit;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
+import net.sf.jsqlparser.statement.select.WithItem;
 
 public class SQLParserSelect extends SQLParser {
 
 	private PlainSelect plain;
 
-	public SQLParserSelect(Expression expression, ECLLayouts layouts) {
-		super(expression, layouts);
-		if (expression instanceof SubSelect) {
-			this.expression = expression;
-			plain = (PlainSelect) ((SubSelect) expression).getSelectBody();
-		} else if (expression instanceof MinorThan || expression instanceof Column || expression instanceof LongValue) {
-			this.expression = expression;			
-		} 
-	}
-	
-	public SQLParserSelect(String sql, ECLLayouts layouts) {
-		super(sql, layouts);
+	public SQLParserSelect(SelectBody expression, ECLLayouts layouts) {
+		super(null, layouts);
 		try {
-			statement = parserManager.parse(new StringReader(sql));
-			if (statement instanceof Select) {
-				plain = (PlainSelect) ((Select) statement).getSelectBody();
-			} 
-		} catch (JSQLParserException e) {
+			statement = SQLParser.parse(expression.toString());
+		} catch (HPCCException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		plain = (PlainSelect) expression;
+	}
+	
+	public SQLParserSelect(Select statement, ECLLayouts layouts) {
+		super(statement, layouts);
+		plain = (PlainSelect) statement.getSelectBody();
 	}
 	/*
 	public SQLParserSelect (Statement statement) {
@@ -101,7 +92,7 @@ public class SQLParserSelect extends SQLParser {
 					String tableName = ((Table) getFromItem()).getName();
 					allSelects.addAll(eclLayouts.getAllColumns(tableName));
 				} else if (getFromItem() instanceof SubSelect) {
-					allSelects.addAll(new SQLParserSelect(((SubSelect) getFromItem()).toString(), eclLayouts).getAllSelectItemsInQuery());
+					allSelects.addAll(new SQLParserSelect(((SubSelect) getFromItem()).getSelectBody(), eclLayouts).getAllSelectItemsInQuery());
 				}	
 			}		
 		}
@@ -121,7 +112,7 @@ public class SQLParserSelect extends SQLParser {
 				return null;
 			}
 		} else {
-			return new SQLParserSelect((SubSelect) fromItem, eclLayouts).getAllColumns();
+			return new SQLParserSelect(((SubSelect) fromItem).getSelectBody(), eclLayouts).getAllColumns();
 		}
 		
 	}
@@ -178,32 +169,14 @@ public class SQLParserSelect extends SQLParser {
 
 	public List<String> getFromItemColumns() {
 		if (plain == null) return null;
-		List<SelectItem> selectItems = new SQLParserSelect(trimInnerStatement(plain.getFromItem().toString()), eclLayouts).getSelectItems();
-		List<String> selectItemStrings = new ArrayList<String>();
-		for (SelectItem selectItem : selectItems) {
-			selectItemStrings.add(selectItem.toString());
+		if (plain.getFromItem() instanceof SubSelect) {
+			List<SelectItem> selectItems = new SQLParserSelect(((SubSelect) plain.getFromItem()).getSelectBody(), eclLayouts).getSelectItems();
+			List<String> selectItemStrings = new ArrayList<String>();
+			for (SelectItem selectItem : selectItems) {
+				selectItemStrings.add(selectItem.toString());
+			}
+			return selectItemStrings;
 		}
-		return selectItemStrings;
-	}	
-	
-	public String trimInnerStatement(String innerStatement) {
-		if (innerStatement.charAt(0) == '(') {
-			int end = innerStatement.lastIndexOf(")");
-			innerStatement = innerStatement.substring(1, end);
-		}
-		return innerStatement;
-	}
-
-	@Override
-	public List<String> getQueriedColumns(String table) {
-		List<String> columns = new ArrayList<String>();
-		for (SelectItem selectItem : getSelectItems()) {
-			columns.addAll(findColumns(getTableNameAndAlias(table),((SelectExpressionItem) selectItem).getExpression()));
-		}
-		if (plain.getWhere() != null) {
-			columns.addAll(findColumns(getTableNameAndAlias(table), plain.getWhere()));
-		}
-		
-		return columns;
+		return null;
 	}
 }

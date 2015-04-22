@@ -15,10 +15,12 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Level;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -68,7 +70,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
     private DocumentBuilderFactory      dbf;
     
-    private LinkedList<String> tempTables = new LinkedList<String>();
+    private Set<String> tempTables = new HashSet<String>();
 
     final static String                 PROCEDURE_NAME           = "PROCEDURE_NAME";
     final static String                 TABLE_NAME               = "TABLE_NAME";
@@ -3011,7 +3013,6 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 	}
 	
 	public boolean isTempTable(String tableName) {
-		tableName += "_"+this.connection.getSessionID();
 		return tempTables.contains(tableName);
 	}
 

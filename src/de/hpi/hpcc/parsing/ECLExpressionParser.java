@@ -59,9 +59,15 @@ import net.sf.jsqlparser.expression.operators.relational.PostgreSQLFromForExpres
 import net.sf.jsqlparser.expression.operators.relational.RegExpMatchOperator;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.select.FromItem;
+import net.sf.jsqlparser.statement.select.FromItemVisitor;
+import net.sf.jsqlparser.statement.select.LateralSubSelect;
+import net.sf.jsqlparser.statement.select.SubJoin;
 import net.sf.jsqlparser.statement.select.SubSelect;
+import net.sf.jsqlparser.statement.select.ValuesList;
 
-public class ECLExpressionParser implements ExpressionVisitor {
+public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	private String parsed;
 	private List<String> allTables;
@@ -73,6 +79,11 @@ public class ECLExpressionParser implements ExpressionVisitor {
 
 	public String parse(Expression expression) {
 		expression.accept(this);
+		return parsed;
+	}
+
+	private String parse(FromItem fromItem) {
+		fromItem.accept(this);
 		return parsed;
 	}
 	
@@ -312,7 +323,7 @@ public class ECLExpressionParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(SubSelect subSelect) {
-		ECLUtils.encapsulateWithBrackets(new ECLBuilderSelect(eclLayouts).generateECL((subSelect).getSelectBody().toString()));
+		ECLUtils.encapsulateWithBrackets(new ECLBuilderSelect(subSelect.getSelectBody(), eclLayouts).generateECL());
 	}
 
 	@Override
@@ -329,14 +340,14 @@ public class ECLExpressionParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(ExistsExpression existsExpression) {
-		SQLParserSelect subParser = new SQLParserSelect(((SubSelect)existsExpression.getRightExpression()).getSelectBody().toString(), eclLayouts);	
+		SQLParserSelect subParser = new SQLParserSelect(((SubSelect)existsExpression.getRightExpression()).getSelectBody(), eclLayouts);	
 
 		StringBuilder existString = new StringBuilder();
 
 		if(subParser.getSelectItems().size() == 1) {
 			if(subParser.getSelectItems().get(0).toString().equals("1")) {
 				if(subParser.getFromItem() instanceof SubSelect) {
-					existString.append(parse((Expression)subParser.getFromItem()));
+					existString.append(parse(subParser.getFromItem()));
 				}
 			}
 		} else {
@@ -477,6 +488,30 @@ public class ECLExpressionParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(PostgreSQLFromForExpression postgreSQLFromForExpression) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(Table tableName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(SubJoin subjoin) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(LateralSubSelect lateralSubSelect) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(ValuesList valuesList) {
 		// TODO Auto-generated method stub
 		
 	}

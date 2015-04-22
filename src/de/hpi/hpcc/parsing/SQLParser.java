@@ -1,6 +1,5 @@
 package de.hpi.hpcc.parsing;
 
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -8,17 +7,13 @@ import java.util.regex.Pattern;
 
 import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
-import de.hpi.hpcc.parsing.create.SQLParserCreate;
-import de.hpi.hpcc.parsing.drop.SQLParserDrop;
-import de.hpi.hpcc.parsing.insert.SQLParserInsert;
-import de.hpi.hpcc.parsing.select.SQLParserSelect;
-import de.hpi.hpcc.parsing.update.SQLParserUpdate;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.parser.CCJSqlParserManager;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
@@ -32,34 +27,16 @@ import net.sf.jsqlparser.statement.select.SubSelect;
 import net.sf.jsqlparser.statement.update.Update;
 import net.sf.jsqlparser.util.TablesNamesFinder;
 
-abstract public class SQLParser{
+public abstract class SQLParser{
 	
 	//public static final String parameterizedPrefix = "var";
 	protected static CCJSqlParserManager parserManager = new CCJSqlParserManager();
 	protected Statement statement;
-	protected Expression expression;
 	protected ECLLayouts eclLayouts;
 	
-	public enum Types {CREATE, DROP, INSERT, SELECT, UPDATE, OTHER};
-
-	
-	public SQLParser(Expression expression, ECLLayouts eclLayouts) {
+	public SQLParser(Statement sql, ECLLayouts eclLayouts) {
 		this.eclLayouts = eclLayouts;
-	}
-	
-	public SQLParser(String sql, ECLLayouts eclLayouts) {
-		this.eclLayouts = eclLayouts;
-		try {
-			statement = parserManager.parse(new StringReader(sql));
-		} catch (JSQLParserException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		 
-	}
-	
-	public SQLParser(Statement statement, ECLLayouts eclLayouts) {
-		this.eclLayouts = eclLayouts;
+		this.statement = sql;
 	}
 	
 	
@@ -72,35 +49,17 @@ abstract public class SQLParser{
 		return "";
 	}
 	
-	public static Types sqlIsInstanceOf(String sql) throws HPCCException {
+	public static Statement parse(String sql) throws HPCCException {
 		try {
-			Statement statement = parserManager.parse(new StringReader(sql));
-			ECLStatementTypeParser typeParser = new ECLStatementTypeParser();
-			return typeParser.parse(statement);
+			return CCJSqlParserUtil.parse(sql);
 		} catch (JSQLParserException e) {
-			throw new HPCCException("No valid SQL:");
+			throw new HPCCException("No valid SQL");
 		}
 	}
-	
-	public static SQLParser getInstance(String sql, ECLLayouts eclLayouts) throws HPCCException {
-		switch(sqlIsInstanceOf(sql)) {
-    	case SELECT:
-    		return new SQLParserSelect(sql, eclLayouts);
-    	case INSERT:
-    		return new SQLParserInsert(sql, eclLayouts);
-    	case UPDATE:
-    		return new SQLParserUpdate(sql, eclLayouts);
-    	case DROP:
-    		return new SQLParserDrop(sql, eclLayouts);
-    	case CREATE:
-    		return new SQLParserCreate(sql, eclLayouts);
-    	default:
-    		System.out.println("type of sql not recognized"+SQLParser.sqlIsInstanceOf(sql));
-//    		throw new SQLException();
-    		return null;
-    	}
-	}
-	public abstract List<String> getQueriedColumns(String table);
+
+	public List<String> getQueriedColumns(String table) {
+		return findColumns(getTableNameAndAlias(table), statement);
+	};
 	
 	public List<String> getAllTables() {
 		List<String> tableList = new ArrayList<String>();
@@ -154,11 +113,11 @@ abstract public class SQLParser{
 
 	public int getParameterizedCount() {
 		return statement.toString().length() - statement.toString().replace("?", "").length();
-	}	
+	}
 	
-	protected List<String> findColumns(List<String> tableNameAndAlias, Expression expr) {
-		ECLColumnFinder finder = new ECLColumnFinder(eclLayouts, statement, tableNameAndAlias);
-		return finder.find(expr);
+	protected List<String> findColumns(List<String> tableNameAndAlias, Statement statement) {
+		ECLColumnFinder finder = new ECLColumnFinder(eclLayouts, tableNameAndAlias);
+		return finder.find(statement);
 			
 	}
 	
@@ -166,7 +125,7 @@ abstract public class SQLParser{
 		List<String> tableNameAndAlias = new ArrayList<String>();
 		tableNameAndAlias.add(table);
 		Pattern findAlias = Pattern.compile("from\\s*(\\w+(\\s*(i2b2demodata\\.)?\\w+)?\\s*,\\s*)*(i2b2demodata\\.)?" + table + "\\s*(\\w+)\\s*", Pattern.CASE_INSENSITIVE);
-		Matcher alias = findAlias.matcher(((Select) statement).toString());
+		Matcher alias = findAlias.matcher(statement.toString());
 		while (alias.find()) {
 			String aliasName = alias.group(5);
 			if (isValidAlias(aliasName)) {
@@ -183,5 +142,10 @@ abstract public class SQLParser{
 			return true;
 		}
 		return false;
+	}
+
+	public static SQLParser getInstance(String sql, ECLLayouts eclLayouts) throws HPCCException {
+		ECLStatementParser typeParser = new ECLStatementParser(eclLayouts);
+		return typeParser.getParser(sql);
 	}
 }

@@ -69,8 +69,8 @@ public class HPCCConnection implements Connection{
             HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection not initialized - server: " + this.driverProperties.getProperty("ServerAddress"));
     }
     
-    public UUID getSessionID() {
-    	return this.sessionID;
+    public String getSessionID() {
+    	return this.sessionID.toString().replace("-", "");
     }
     
     public Statement createStatement() throws SQLException {

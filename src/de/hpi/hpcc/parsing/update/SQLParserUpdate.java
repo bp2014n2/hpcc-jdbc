@@ -1,12 +1,10 @@
 package de.hpi.hpcc.parsing.update;
 
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
-import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
@@ -15,15 +13,8 @@ import net.sf.jsqlparser.statement.update.Update;
 
 public class SQLParserUpdate extends SQLParser {
 
-	public SQLParserUpdate(String sql, ECLLayouts eclLayouts) {
-		super(sql, eclLayouts);
-		try {
-			if (parserManager.parse(new StringReader(sql)) instanceof Update) {
-				statement = parserManager.parse(new StringReader(sql));
-			} 
-		} catch (JSQLParserException e) {
-			e.printStackTrace();
-		}
+	public SQLParserUpdate(Update update, ECLLayouts eclLayouts) {
+		super(update, eclLayouts);
 	}
 	
 	public String getName() {
@@ -104,11 +95,5 @@ public class SQLParserUpdate extends SQLParser {
 			columnNames.add(column.getColumnName().toLowerCase());
 		}
 		return columnNames;
-	}
-
-	@Override
-	public List<String> getQueriedColumns(String table) {
-		List<String> columns = findColumns(getTableNameAndAlias(table), ((Update) statement).getWhere());
-		return columns;
 	}
 }
