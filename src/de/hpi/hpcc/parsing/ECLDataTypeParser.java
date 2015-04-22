@@ -50,6 +50,7 @@ import net.sf.jsqlparser.expression.operators.relational.Matches;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.PostgreSQLFromForExpression;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMatchOperator;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
@@ -389,6 +390,12 @@ public class ECLDataTypeParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(NumericBind bind) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(PostgreSQLFromForExpression postgreSQLFromForExpression) {
 		// TODO Auto-generated method stub
 		
 	}

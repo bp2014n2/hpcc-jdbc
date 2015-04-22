@@ -46,7 +46,6 @@ import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.Between;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
-import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
@@ -56,6 +55,7 @@ import net.sf.jsqlparser.expression.operators.relational.Matches;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.PostgreSQLFromForExpression;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMatchOperator;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
@@ -97,6 +97,15 @@ public class ECLExpressionParser implements ExpressionVisitor {
 	}
 	
 	private String parseFunction(Function function) {
+		String functionName = function.getName().toUpperCase();
+		switch(functionName) {
+		case "SUM": return parseSum(function);
+		case "SUBSTRING": return parseSubstring(function);
+		default: return parseDefaultFunction(function);
+		}
+	}
+
+	private String parseSum(Function function) {
 		String parameters = "";
 		if (function.getName().toUpperCase().equals("SUM")) {
 			if (function.getParameters().getExpressions().size() > 0) {
@@ -105,9 +114,21 @@ public class ECLExpressionParser implements ExpressionVisitor {
 				}
 			}
 		}
-		return function.getName().toUpperCase()+ECLUtils.encapsulateWithBrackets("GROUP"+parameters);
+		return "SUM"+ECLUtils.encapsulateWithBrackets("GROUP"+parameters);
 	}
-	
+
+	private String parseSubstring(Function function) {
+		PostgreSQLFromForExpression fromFor = (PostgreSQLFromForExpression) function.getParameters().getExpressions().get(0);
+		String column = parse(fromFor.getSourceExpression());
+		int start = Integer.parseInt(parse(fromFor.getFromExpression()));
+		int end = start + Integer.parseInt(parse(fromFor.getForExpression())) - 1;
+		return column + "[" + start + ".." + end + "]";
+	}
+
+	private String parseDefaultFunction(Function function) {
+		return function.getName().toUpperCase()+ECLUtils.encapsulateWithBrackets("GROUP");
+	}
+
 	@Override
 	public void visit(SignedExpression signedExpression) {
 		parsed = signedExpression.toString();
@@ -453,5 +474,11 @@ public class ECLExpressionParser implements ExpressionVisitor {
         return expression.toString();
 
     }
+
+	@Override
+	public void visit(PostgreSQLFromForExpression postgreSQLFromForExpression) {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

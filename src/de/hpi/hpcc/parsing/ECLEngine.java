@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -50,7 +49,6 @@ public abstract class ECLEngine
 	protected List<HPCCColumnMetaData>    expectedretcolumns = null;
     protected HashMap<String, HPCCColumnMetaData> availablecols = null;
     private static final String			HPCCEngine = "THOR";
-    private ECLSubstringDefinition substring = null;
     protected ECLLayouts eclLayouts;
 
     public ECLEngine(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
@@ -63,7 +61,6 @@ public abstract class ECLEngine
     abstract public SQLParser getSQLParserInstance(String sqlQuery);
     
     public static ECLEngine getInstance (HPCCConnection conn, HPCCDatabaseMetaData dbMetadata, String sqlQuery) throws SQLException{
-    	sqlQuery = escapeToAppropriateSQL(sqlQuery);
     	switch(SQLParser.sqlIsInstanceOf(sqlQuery)) {
     	case SELECT:
     		return new ECLEngineSelect(conn, dbMetadata);
@@ -87,56 +84,14 @@ public abstract class ECLEngine
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("&eclText=\n");
-			
-			if (substring != null) {
-				eclCode = new StringBuilder(createSubstring());
-			}
 		sb.append(eclCode.toString());
 		sb.append("\n\n//"+eclMetaEscape(sqlQuery));
 //			System.out.println(sb.toString());
 		return sb.toString();
     }
     
-    protected String createSubstring() {
-		String correctedEclCode = eclCode.toString().replace(
-				substring.toReplaceString(),
-				substring.toString());
-		return correctedEclCode;
-    }
-    
-    public static String escapeToAppropriateSQL(String sql) {
-		Pattern pattern = Pattern.compile("substring\\s*\\(\\s*(\\w+)\\s+from\\s+(\\d+)\\s+for\\s+(\\d+)\\s*\\)(\\s+as\\s+(\\w+))?", Pattern.CASE_INSENSITIVE);
-		Matcher matcher = pattern.matcher(sql);
-		if(matcher.find()){
-			String substring = sql.substring(matcher.start(),matcher.end());
-			String replaceString = matcher.group(1);
-			replaceString += matcher.group(4) != null? matcher.group(4) : "";
-			sql = sql.replace(substring, replaceString);
-		}
-		return sql;
-	}
-    
     public String convertToAppropriateSQL(String sql) throws SQLException {
-    	Pattern pattern = Pattern.compile("substring\\s*\\(\\s*(\\w+)\\s+from\\s+(\\d+)\\s+for\\s+(\\d+)\\s*\\)(\\s+as\\s+(\\w+))?(\\s*(=|<|>|<=|>=)\\s*'?\\w+'?)?", Pattern.CASE_INSENSITIVE);
-    	Pattern selectPattern = Pattern.compile("select\\s*(distinct\\s*)?(((count|sum|avg)\\(w*\\))?\\w*\\s*,\\s*)*\\s*substring\\s*\\(\\s*\\w+\\s+from\\s+\\d+\\s+for\\s+\\d+\\s*\\)(\\s+as\\s+\\w+)?", Pattern.CASE_INSENSITIVE);
-    	Matcher matcher = pattern.matcher(sql);
-    	Matcher selectMatcher = selectPattern.matcher(sql);
-		if(matcher.find()){
-			String column = matcher.group(1);
-			String alias = matcher.group(5);
-
-			int start = Integer.parseInt(matcher.group(2));
-			int count = Integer.parseInt(matcher.group(3));
-			this.substring = new ECLSubstringDefinition(column, alias, start, count);
-			if (selectMatcher.find()) {
-				if (alias == null) this.substring.setAlias(column + "_substring");
-			} else {
-				this.substring.setContext(matcher.group(6));
-			}
-			String substring = sql.substring(matcher.start(),matcher.end());
-			sql = sql.replace(substring, this.substring.toSql());
-		}
-		if(sql.toLowerCase().contains("nextval")){
+    	if(sql.toLowerCase().contains("nextval")){
 			String sequence = sql.substring(sql.indexOf('(')+2, sql.indexOf(')')-1);
 			ECLEngine updateEngine = new ECLEngineUpdate(conn, dbMetadata);
 			conn.sendRequest(updateEngine.parseEclCode("update sequences set value = value + 1 where name = '"+sequence+"'"));

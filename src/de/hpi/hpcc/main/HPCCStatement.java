@@ -74,9 +74,8 @@ public class HPCCStatement implements Statement{
 	}
 	
 	private boolean checkFederatedDatabase(String sqlStatement) throws SQLException {
-		String sqlStatementTemp = ECLEngine.escapeToAppropriateSQL(sqlStatement);
 		ECLLayouts eclLayouts = new ECLLayouts(connection.getDatabaseMetaData());
-		SQLParser sqlParser = SQLParser.getInstance(sqlStatementTemp, eclLayouts);
+		SQLParser sqlParser = SQLParser.getInstance(sqlStatement, eclLayouts);
 		List<String> tables = sqlParser.getAllTables();
 		
 		if (!federatedDatabase || whiteList.containsAll(tables)) {

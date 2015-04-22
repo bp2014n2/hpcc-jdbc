@@ -105,6 +105,8 @@ public class ECLBuilderTest {
 		assertEquals("TABLE(myTable, {INTEGER8 anotherName := COUNT(GROUP)})", eclBuilder.generateECL("select count(myColumn) as anotherName from mySchema.myTable"));
 		assertEquals("TABLE(myTable, {INTEGER8 func_sum := SUM(GROUP, myColumn)})", eclBuilder.generateECL("select sum(myColumn) from mySchema.myTable"));
 		assertEquals("TABLE(myTable, {INTEGER8 anotherName := SUM(GROUP, myColumn)})", eclBuilder.generateECL("select sum(myColumn) as anotherName from mySchema.myTable"));
+		assertEquals("TABLE(myTable, {STRING50 substring := myColumn[1..3]})", eclBuilder.generateECL("select substring(myColumn from 1 for 3) as substring from mySchema.myTable"));
+		assertEquals("TABLE(myTable, {STRING50 func_substring := myColumn[2..5]})", eclBuilder.generateECL("select substring(myColumn from 2 for 4) from mySchema.myTable"));
 	}
 	
 	@Test

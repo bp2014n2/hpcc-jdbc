@@ -57,6 +57,7 @@ import net.sf.jsqlparser.expression.operators.relational.Matches;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.PostgreSQLFromForExpression;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMatchOperator;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
@@ -416,6 +417,13 @@ public class ECLColumnFinder implements ExpressionVisitor {
 	private void visitBinaryExpression(BinaryExpression binaryExpression) {
 		binaryExpression.getLeftExpression().accept(this);
 		binaryExpression.getRightExpression().accept(this);
+	}
+
+	@Override
+	public void visit(PostgreSQLFromForExpression postgreSQLFromForExpression) {
+		postgreSQLFromForExpression.getSourceExpression().accept(this);
+		postgreSQLFromForExpression.getFromExpression().accept(this);
+		postgreSQLFromForExpression.getForExpression().accept(this);
 	}
 
 }
