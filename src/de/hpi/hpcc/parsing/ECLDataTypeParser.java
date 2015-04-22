@@ -115,8 +115,7 @@ public class ECLDataTypeParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(LongValue longValue) {
-		// TODO Auto-generated method stub
-		
+		dataType = "integer5";
 	}
 
 	@Override

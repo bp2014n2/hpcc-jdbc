@@ -23,6 +23,7 @@ import java.sql.Struct;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,12 +47,15 @@ public class HPCCConnection implements Connection{
     private SQLWarning warnings;
     private String catalog = HPCCJDBCUtils.HPCCCATALOGNAME;
     private HttpURLConnection httpConnection;
-    private HashSet<String> allStatementNames = new HashSet<String>();
     private boolean autoCommit = true;
+    private HashSet<String> statementNames = new HashSet<String>();
+	private UUID sessionID;
     
     protected static final Logger logger = HPCCLogger.getLogger();
 
     public HPCCConnection(HPCCDriverProperties driverProperties){
+
+    	this.sessionID = UUID.randomUUID();
         this.driverProperties = driverProperties;
 
         metadata = new HPCCDatabaseMetaData(driverProperties, this);        
@@ -63,6 +67,10 @@ public class HPCCConnection implements Connection{
         }
         else
             HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection not initialized - server: " + this.driverProperties.getProperty("ServerAddress"));
+    }
+    
+    public UUID getSessionID() {
+    	return this.sessionID;
     }
     
     public Statement createStatement() throws SQLException {
@@ -97,18 +105,25 @@ public class HPCCConnection implements Connection{
     	return prepareStatement(sqlStatement);
     }
     
+    public void addName(String statementName) { 
+    	this.statementNames.add(statementName);
+    }
+    
     private String getUniqueName() {
-		int index = allStatementNames.size()+1;
-		while(!add("Statement "+index)){
+		int index = this.statementNames.size()+1;
+		while(!isUniqueCursorName("Statement "+index)){
 			index++;
 		}
 		return "Statement "+index;
 	}
 
-	public boolean add(String name) {
-		int sizeBeforeAdding = allStatementNames.size();
-		allStatementNames.add(name);
-		return (sizeBeforeAdding < allStatementNames.size());
+	public boolean isUniqueCursorName(String name) {
+		for(String statementName : this.statementNames) {
+			if(name.equals(statementName)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public URL generateUrl(){

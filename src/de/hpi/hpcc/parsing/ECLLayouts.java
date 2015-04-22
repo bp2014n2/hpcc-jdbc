@@ -25,6 +25,20 @@ public class ECLLayouts {
 		this.dbMetadata = dbMetadata;
 	}
 	
+	//TODO: isTmpTable, addTmpTable, removeTmpTable
+	
+	public boolean isTempTable(String tableName) {
+		return this.dbMetadata.isTempTable(tableName);
+	}
+	
+	public void addTempTable(String tableName) {
+		this.dbMetadata.addTempTable(tableName);
+	}
+	
+	public void removeTempTable(String tableName) {
+		this.dbMetadata.removeTempTable(tableName);
+	}
+	
 	public String getECLDataType(String table, String column){
 		table = getFullTableName(table);
 		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
@@ -155,14 +169,14 @@ public class ECLLayouts {
 		return dbMetadata.getDFUFile(getFullTableName(tableName)).hasRelatedIndexes();
 	}
 
-	public HPCCDFUFile getDFUFile(String tableName) {
-		return dbMetadata.getDFUFile(tableName);
+	public HPCCDFUFile getDFUFile(String hpccfilename) {
+		return dbMetadata.getDFUFile(hpccfilename);
 	}
 
-	public void removeDFUFile(String tablePath) {
-		dbMetadata.removeDFUFile(tablePath);
+	public void removeDFUFile(String hpccfilename) {
+		dbMetadata.removeDFUFile(hpccfilename);
 	}
-
+	
 //	public String getLayoutOrdered(String table, List<String> orderedColumns) {
 //		String name = getFullTableName(table);
 //		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");

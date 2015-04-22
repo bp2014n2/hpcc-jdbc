@@ -19,6 +19,7 @@ public class HPCCDriver implements Driver{
     private static Logger logger = HPCCLogger.getLogger();
     private static final int URI 		= 0;
     private static final int PORT 		= 1;
+    private static final int CLUSTER 	= 2;
     
     static{
     	try{
@@ -48,6 +49,9 @@ public class HPCCDriver implements Driver{
     			for(String portProperty : driverProperties.getAllPropertiesUsingDefaultPort()){
     				driverProperties.setProperty(portProperty, parsedURL[PORT]);
     			}
+    		}
+    		if(parsedURL[CLUSTER] != null){
+    			driverProperties.setProperty("TargetCluster", parsedURL[CLUSTER]);
     		}
     	}else{
     		log(url +" has the wrong format (e.g. missing protocol)");
@@ -88,7 +92,9 @@ public class HPCCDriver implements Driver{
 	    					propertyKey += "name";
 	    					break;
 	    				case "TraceLevel":
-	    					//TODO: isLevelTest
+	    					if(!HPCCLogger.getTraceLevels().contains(propertyValue)){
+	    						log(propertyValue +" is not a valid trace level", defaultValue);
+	    					}
 	       			}
 	    			driverProperties.setProperty((String) propertyKey, propertyValue);
 	    		}
@@ -129,9 +135,10 @@ public class HPCCDriver implements Driver{
 	}
 	
 	private String[] parseURL(String url){
-		String[] parsedURL = new String[2];
+		String[] parsedURL = new String[4];
 		parsedURL[URI] 	= urlParser.getFileLocation(url);
 		parsedURL[PORT] = urlParser.getPort(url);
+		parsedURL[CLUSTER] = urlParser.getCluster(url);
 		return parsedURL;
 	}
 	

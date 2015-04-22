@@ -27,36 +27,36 @@ public class HPCCStatement implements Statement{
     protected SQLWarning warnings;
     protected ResultSet result = null;
     protected String name;
-    private List<String> whiteList;
+    protected String sqlStatement;
+    private static final List<String> whiteList = new ArrayList<String>() {
+		private static final long serialVersionUID = 1L;
+	{
+    	add("query_global_temp");
+		add("dx");
+		add("master_query_global_temp");
+		add("observation_fact");
+		add("provider_dimension");
+		add("visit_dimension");
+		add("patient_dimension");
+		add("modifier_dimension");
+		add("concept_dimension");
+		add("qt_patient_set_collection");
+		add("qt_patient_env_collection");
+		add("avk_fdb_t_leistungskosten");
+    	
+    }};
     
     private boolean federatedDatabase = false;
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;
         this.connection = (HPCCConnection) connection;
-        initializeWhiteList();
+        this.connection.addName(name);
         log("Statement created");
     }
     
-    private void initializeWhiteList() {
-    	if(whiteList == null) {
-	    	whiteList = new ArrayList<String>();
-			whiteList.add("query_global_temp");
-			whiteList.add("dx");
-			whiteList.add("master_query_global_temp");
-			whiteList.add("observation_fact");
-			whiteList.add("provider_dimension");
-			whiteList.add("visit_dimension");
-			whiteList.add("patient_dimension");
-			whiteList.add("modifier_dimension");
-			whiteList.add("concept_dimension");
-			whiteList.add("qt_patient_set_collection");
-			whiteList.add("qt_patient_env_collection");
-			whiteList.add("avk_fdb_t_leistungskosten");
-    	}
-    }
-    
 	public boolean execute(String sqlStatement) throws SQLException {
+		this.sqlStatement = sqlStatement;
 		if (this.closed){
 			log(Level.SEVERE, "Statement is closed! Cannot execute query!");
 			if (warnings == null){
@@ -66,12 +66,23 @@ public class HPCCStatement implements Statement{
 		}
 		
 		result = null;
-		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
+		log("currentQuery: "+sqlStatement);
 		
 		if (checkFederatedDatabase(sqlStatement)) {
-			return executeQueryOnPostgreSQL(sqlStatement);
+			Long before = System.nanoTime();
+			boolean result = executeQueryOnPostgreSQL(sqlStatement);
+			Long after = System.nanoTime();
+			Long difference = after-before;
+			HPCCJDBCUtils.traceoutln(Level.INFO, "executionTime: "+difference/1000000);
+			return result;
+			
 		} else {
-			return executeQueryOnHPCC(sqlStatement);
+			Long before = System.nanoTime();
+			boolean result = executeQueryOnHPCC(sqlStatement);
+			Long after = System.nanoTime();
+			Long difference = after-before;
+			HPCCJDBCUtils.traceoutln(Level.INFO, "executionTime: "+difference/1000000);
+			return result;
 		}
 	}
 	
@@ -92,6 +103,7 @@ public class HPCCStatement implements Statement{
 			this.parser = new ECLParser(layouts);
 			String eclCode = parser.parse(sqlStatement);
 			connection.sendRequest(eclCode);
+			
 			NodeList rowList;
 			rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
 			if (rowList != null) {
@@ -109,7 +121,7 @@ public class HPCCStatement implements Statement{
 		try {
 			Class.forName("org.postgresql.Driver");
 			Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
-			HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to PostgreSQL");
+			log("Query sent to PostgreSQL");
 			Statement stmt = connection.createStatement();
 			result = stmt.executeQuery(sqlStatement);
 			return result != null;
@@ -147,11 +159,14 @@ public class HPCCStatement implements Statement{
         log("Statement closed");
     }
 	
+	protected String getSqlStatement() {
+		return this.sqlStatement;
+	}
+	
 	public ResultSet getResultSet() throws SQLException{
 	    return this.result;
 	}
 
-	 
 	public int getFetchDirection() throws SQLException{
 		return ResultSet.FETCH_FORWARD;
 	}
@@ -193,13 +208,18 @@ public class HPCCStatement implements Statement{
     	return 0;
     }
     
-    public void setCursorName(String name) throws SQLException{
-    	if (!this.connection.add(name)) {
+    public void setCursorName(String cursorName) throws SQLException{
+    	if (!this.connection.isUniqueCursorName(name)) {
     		log(Level.SEVERE, "Cursor name not unique!");
     		throw new HPCCException();
     	} else {
-    		this.name = name;
+    		this.name = cursorName;
+    		this.connection.addName(cursorName);
     	}
+    }
+    
+    public String getCursorName() {
+    	return this.name;
     }
     
     //Methods for subclasses
