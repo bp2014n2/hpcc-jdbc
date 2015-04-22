@@ -1,6 +1,7 @@
 package de.hpi.hpcc.parsing;
 
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.statement.Statement;
 
 abstract public class ECLBuilder {
 //	private boolean hasAlias = false;
@@ -14,9 +15,11 @@ abstract public class ECLBuilder {
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
 	
-	public ECLBuilder(ECLLayouts eclLayouts) {
+	public ECLBuilder(Statement statement, ECLLayouts eclLayouts) {
 		this.eclLayouts = eclLayouts;
 	}
+	
+	public abstract String generateECL();
 	
 	/**
 	 * This methods surrounds a given ECL string with a Table definition. 

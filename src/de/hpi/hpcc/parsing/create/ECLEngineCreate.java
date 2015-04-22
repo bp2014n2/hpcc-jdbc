@@ -3,10 +3,9 @@ package de.hpi.hpcc.parsing.create;
 import java.sql.SQLException;
 import java.util.LinkedList;
 
+import net.sf.jsqlparser.statement.create.table.CreateTable;
 import de.hpi.hpcc.main.HPCCColumnMetaData;
-import de.hpi.hpcc.main.HPCCConnection;
 import de.hpi.hpcc.main.HPCCDFUFile;
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
 
@@ -14,25 +13,25 @@ public class ECLEngineCreate extends ECLEngine {
 
 	private StringBuilder eclCode = new StringBuilder();	
 	private SQLParserCreate sqlParser;
+	private CreateTable create;
 	
 	
-	public ECLEngineCreate(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
-		super(conn, dbmetadata);
+	public ECLEngineCreate(CreateTable create, ECLLayouts layouts) {
+		super(create, layouts);
+		this.create = create;
 	}
 
-	public String generateECL(String sqlQuery) throws SQLException {
+	public String generateECL() throws SQLException {
 		
-		sqlParser = getSQLParserInstance(sqlQuery);
+		sqlParser = new SQLParserCreate(create, layouts);
 		
 		String tablePath = sqlParser.getFullName();
-		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(tablePath);
+		HPCCDFUFile dfuFile = layouts.getDFUFile(tablePath);
 		if(dfuFile == null) {
-			ECLBuilderCreate eclBuilder = new ECLBuilderCreate(eclLayouts);
-			eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
+			ECLBuilderCreate eclBuilder = new ECLBuilderCreate(create, layouts);
 	    	eclCode.append(generateImports());
-	    	eclCode.append("TIMESTAMP := STRING25;\n");
 			String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
-			eclCode.append(eclBuilder.generateECL(sqlQuery).toString().replace("%NEWTABLE%",newTablePath));
+			eclCode.append(eclBuilder.generateECL().toString().replace("%NEWTABLE%",newTablePath));
 			eclCode.append("\nSEQUENTIAL(Std.File.CreateSuperFile('~"+tablePath+"'),\n");
 			eclCode.append("Std.File.StartSuperFileTransaction(),\n");
 			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
@@ -50,14 +49,6 @@ public class ECLEngineCreate extends ECLEngine {
 		
 		return eclCode.toString();
 	}
-
-
-
-	@Override
-	public SQLParserCreate getSQLParserInstance(String sqlQuery) {
-		return new SQLParserCreate(sqlQuery, eclLayouts);
-	}
-
 
 
 	@Override

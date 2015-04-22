@@ -271,7 +271,7 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(SubSelect subSelect) {
-		SQLParserSelect selectParser = new SQLParserSelect(subSelect.getSelectBody().toString(), eclLayouts);
+		SQLParserSelect selectParser = new SQLParserSelect(subSelect.getSelectBody(), eclLayouts);
 		for (SelectItem selectItem : selectParser.getSelectItems()) {
 			columns.addAll(find(((SelectExpressionItem) selectItem).getExpression()));
 		}

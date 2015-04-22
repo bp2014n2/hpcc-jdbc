@@ -26,7 +26,7 @@ public class ECLItemsListParser implements ItemsListVisitor {
 	@Override
 	public void visit(SubSelect subSelect) {
 		StringBuilder expressionBuilder = new StringBuilder();
-		expressionBuilder.append(new ECLBuilderSelect(eclLayouts).generateECL(subSelect.getSelectBody().toString()));
+		expressionBuilder.append(new ECLBuilderSelect(subSelect.getSelectBody(), eclLayouts).generateECL());
 		expressionBuilder.append(","+inColumn);
 		expressionBuilder = ECLUtils.convertToSet(expressionBuilder);
 		parsed = expressionBuilder.toString();

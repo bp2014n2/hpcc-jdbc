@@ -155,6 +155,14 @@ public class ECLLayouts {
 		return dbMetadata.getDFUFile(getFullTableName(tableName)).hasRelatedIndexes();
 	}
 
+	public HPCCDFUFile getDFUFile(String tableName) {
+		return dbMetadata.getDFUFile(tableName);
+	}
+
+	public void removeDFUFile(String tablePath) {
+		dbMetadata.removeDFUFile(tablePath);
+	}
+
 //	public String getLayoutOrdered(String table, List<String> orderedColumns) {
 //		String name = getFullTableName(table);
 //		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");

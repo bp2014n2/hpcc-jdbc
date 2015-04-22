@@ -7,6 +7,7 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
 import net.sf.jsqlparser.statement.select.SubSelect;
+import net.sf.jsqlparser.statement.update.Update;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
@@ -18,11 +19,12 @@ public class ECLBuilderUpdate extends ECLBuilder {
 
 	
 	SQLParserUpdate sqlParser;
+	private Update update;
 	
 	
-	public ECLBuilderUpdate(ECLLayouts eclLayouts) {
-		super(eclLayouts);
-		// TODO Auto-generated constructor stub
+	public ECLBuilderUpdate(Update update, ECLLayouts eclLayouts) {
+		super(update, eclLayouts);
+		this.update = update;
 	}
 	
 	
@@ -33,8 +35,8 @@ public class ECLBuilderUpdate extends ECLBuilder {
 	 * @param sql
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
-	public String generateECL(String sql) {
-		sqlParser = new SQLParserUpdate(sql, eclLayouts);
+	public String generateECL() {
+		sqlParser = new SQLParserUpdate(update, eclLayouts);
 
 		StringBuilder eclCode = new StringBuilder();
 		
@@ -46,7 +48,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 		Expression exist = sqlParser.getExist(sqlParser.getWhere());
 		//TODO: check for empty exist
 		if (exist != null) {
-			SQLParserSelect subParser = new SQLParserSelect(((SubSelect)((ExistsExpression) exist).getRightExpression()).getSelectBody().toString(), eclLayouts);
+			SQLParserSelect subParser = new SQLParserSelect(((SubSelect)((ExistsExpression) exist).getRightExpression()).getSelectBody(), eclLayouts);
 			
 			Expression where = subParser.getWhere();
 			String joinColumn = null;

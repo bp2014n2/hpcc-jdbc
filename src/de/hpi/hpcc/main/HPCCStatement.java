@@ -12,15 +12,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.w3c.dom.NodeList;
+
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.ECLParser;
 import de.hpi.hpcc.parsing.SQLParser;
 
 public class HPCCStatement implements Statement{
 	protected static final Logger logger = HPCCLogger.getLogger();
 	protected HPCCConnection connection;
-	protected ECLEngine eclEngine;
+	protected ECLParser parser;
     protected boolean closed = false;
     protected SQLWarning warnings;
     protected ResultSet result = null;
@@ -86,13 +88,14 @@ public class HPCCStatement implements Statement{
 	
 	private boolean executeQueryOnHPCC(String sqlStatement) throws SQLException {
 		try {
-			this.eclEngine = ECLEngine.getInstance(connection, connection.getDatabaseMetaData(), sqlStatement);
-			String eclCode = eclEngine.parseEclCode(sqlStatement);
+			ECLLayouts layouts = new ECLLayouts(connection.getDatabaseMetaData());
+			this.parser = new ECLParser(layouts);
+			String eclCode = parser.parse(sqlStatement);
 			connection.sendRequest(eclCode);
 			NodeList rowList;
 			rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
 			if (rowList != null) {
-				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(eclEngine.getExpectedRetCols(),	"HPCC Result"));
+				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(parser.getExpectedRetCols(),	"HPCC Result"));
 			}
 			return result != null;
 		} catch (HPCCException exception) {
@@ -139,7 +142,7 @@ public class HPCCStatement implements Statement{
             closed = true;
             connection = null;
             result = null;
-            eclEngine = null;
+            parser = null;
         }
         log("Statement closed");
     }

@@ -1,6 +1,5 @@
 package de.hpi.hpcc.parsing.create;
 
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -8,21 +7,13 @@ import java.util.regex.Pattern;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
-import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public class SQLParserCreate extends SQLParser {
 	
-	public SQLParserCreate(String sql, ECLLayouts eclLayouts) {
-		super(sql, eclLayouts);
-		try {
-			if (parserManager.parse(new StringReader(sql)) instanceof CreateTable) {
-				statement = parserManager.parse(new StringReader(sql));
-			} 
-		} catch (JSQLParserException e) {
-			e.printStackTrace();
-		}
+	public SQLParserCreate(CreateTable statement, ECLLayouts eclLayouts) {
+		super(statement, eclLayouts);
 	}
 	
 	public String getTableName() {
