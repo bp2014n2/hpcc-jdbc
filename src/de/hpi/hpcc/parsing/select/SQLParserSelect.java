@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.ECLNameParser;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
@@ -89,12 +91,9 @@ public class SQLParserSelect extends SQLParser {
 					allSelects.add(((SelectExpressionItem) selectItem).getAlias().getName());
 				} else {
 					Expression expression = ((SelectExpressionItem) selectItem).getExpression();
-					if (expression instanceof Column) {
-						allSelects.add(expression.toString());
-					} else if (expression instanceof Function) {
-						String function = expression.toString().replace("(", "_").replace(")", "").toLowerCase();
-						allSelects.add(function);
-					}
+					ECLNameParser nameParser = new ECLNameParser();
+					String name = nameParser.name(expression);
+					allSelects.add(name);
 				}
 			}
 			else if (selectItem instanceof AllColumns) {
