@@ -4,13 +4,15 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
-import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLNameParser;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.Join;
@@ -22,26 +24,24 @@ import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
-import net.sf.jsqlparser.statement.select.WithItem;
+import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserSelect extends SQLParser {
 
 	private PlainSelect plain;
+	private Select select;
 
 	public SQLParserSelect(SelectBody expression, ECLLayouts layouts) {
 		super(null, layouts);
-		try {
-			statement = SQLParser.parse(expression.toString());
-		} catch (HPCCException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		this.select = new Select();
+		this.select.setSelectBody(expression);
 		plain = (PlainSelect) expression;
 	}
 	
 	public SQLParserSelect(Select statement, ECLLayouts layouts) {
 		super(statement, layouts);
 		plain = (PlainSelect) statement.getSelectBody();
+		select = statement;
 	}
 	/*
 	public SQLParserSelect (Statement statement) {
@@ -178,5 +178,36 @@ public class SQLParserSelect extends SQLParser {
 			return selectItemStrings;
 		}
 		return null;
+	}
+
+	@Override
+	protected Statement getStatement() {
+		return select;
+	}
+
+	@Override
+	protected Set<String> primitiveGetAllTables() {
+		Set<String> tableList = new HashSet<String>();
+		boolean nextval = false;
+		if (select.getSelectBody() instanceof PlainSelect) {
+			PlainSelect sb = (PlainSelect) select.getSelectBody();
+			
+			for (SelectItem si : sb.getSelectItems()) {
+				if (si instanceof SelectExpressionItem) {
+					Expression ex = ((SelectExpressionItem) si).getExpression();
+					if (ex instanceof Function) {
+						if (((Function) ex).getName().equalsIgnoreCase("nextval")) {
+							tableList.add("sequences");
+							nextval = true;
+						}
+					}
+				}
+			}
+		}
+		if (!nextval) {
+			TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
+			tableList = new HashSet<String>(tablesNamesFinder.getTableList(select));
+		}
+		return tableList;
 	}
 }

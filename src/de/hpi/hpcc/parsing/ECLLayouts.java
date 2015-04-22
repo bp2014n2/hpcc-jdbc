@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,7 +92,7 @@ public class ECLLayouts {
 		return column.getEclType().toString().toLowerCase().matches("(unsigned.*|integer.*)");
 	}
 	
-	public boolean isColumnOfIntInAnyTable(List<String> tables, String column) {
+	public boolean isColumnOfIntInAnyTable(Set<String> tables, String column) {
 		for (String table : tables) {
 			table = getFullTableName(table);
 			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
@@ -105,7 +106,7 @@ public class ECLLayouts {
 		return false;
 	}
 	
-	public int getSqlTypeOfColumn (List<String> tables, String column) {
+	public int getSqlTypeOfColumn (Set<String> tables, String column) {
 		for (String table : tables) {
 			table = getFullTableName(table);
 			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);

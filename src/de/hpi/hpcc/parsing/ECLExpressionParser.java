@@ -1,6 +1,6 @@
 package de.hpi.hpcc.parsing;
 
-import java.util.List;
+import java.util.Set;
 
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
@@ -70,7 +70,7 @@ import net.sf.jsqlparser.statement.select.ValuesList;
 public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	private String parsed;
-	private List<String> allTables;
+	private Set<String> allTables;
 	private ECLLayouts eclLayouts;
 	
 	public ECLExpressionParser(ECLLayouts eclLayouts) {
@@ -87,7 +87,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 		return parsed;
 	}
 	
-	public void setAllTables(List<String> allTables) {
+	public void setAllTables(Set<String> allTables) {
 		this.allTables = allTables;
 	}
 	

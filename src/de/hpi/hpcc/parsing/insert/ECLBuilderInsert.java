@@ -57,21 +57,17 @@ public class ECLBuilderInsert extends ECLBuilder {
 	private void generateNewDataset(SQLParserInsert sqlParser) {
 		if (sqlParser.getColumns() == null || sqlParser.getColumns().size() == eclLayouts.getAllColumns(sqlParser.getTable().getName()).size()) {
 			if (sqlParser.getItemsList() instanceof SubSelect) {
-			eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
+				eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
 			} else {
 				eclCode.append("DATASET([{");
-				String valueString = "";
-				LinkedHashSet<String> layout = eclLayouts.getAllColumns(sqlParser.getTable().getName());
-				List<Expression> expressions = sqlParser.getExpressions();
 				List<String> columns = sqlParser.getColumnNames();
-				for(String column : layout) {
-					for(int index = 0; index < columns.size(); index++) {
-						if(column.equalsIgnoreCase(columns.get(index))) {
-							Expression expression = expressions.get(index);
-							valueString += (valueString=="" ? "":", ")+parseExpressionECL(expression);
-							break;
-						}
-						
+				LinkedHashSet<String> orderedColumns = eclLayouts.getAllColumns(sqlParser.getTable().getName());
+				String valueString = "";
+				List<Expression> expressions = sqlParser.getExpressions();
+				for (String column : orderedColumns) {
+					for (int i = 0; i < columns.size(); i++) {
+						if (!columns.get(i).equalsIgnoreCase(column)) continue;
+						valueString += (valueString=="" ? "":", ")+parseExpressionECL(expressions.get(i));
 					}
 				}
 				eclCode.append(valueString);

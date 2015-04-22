@@ -1,28 +1,33 @@
 package de.hpi.hpcc.parsing.create;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public class SQLParserCreate extends SQLParser {
 	
+	private CreateTable create;
+
 	public SQLParserCreate(CreateTable statement, ECLLayouts eclLayouts) {
 		super(statement, eclLayouts);
+		this.create = statement;
 	}
 	
 	public String getTableName() {
-		return ((CreateTable) statement).getTable().getName();
+		return create.getTable().getName();
 	}
 	
 	public boolean isTempTable() {
-		CreateTable create = (CreateTable) statement;
+		CreateTable create = (CreateTable) getStatement();
 		List<String> createOptions = create.getCreateOptionsStrings();
 		if (createOptions != null && HPCCJDBCUtils.containsStringCaseInsensitive(createOptions, "temp")) {
 			return true;
@@ -31,7 +36,7 @@ public class SQLParserCreate extends SQLParser {
 	}
 	
 	public String getRecord() {
-		List<ColumnDefinition> columns = ((CreateTable) statement).getColumnDefinitions();
+		List<ColumnDefinition> columns = create.getColumnDefinitions();
 		String records = "";
 		for(ColumnDefinition column : columns) {
 			records += (records == ""?"":", ");
@@ -81,5 +86,17 @@ public class SQLParserCreate extends SQLParser {
 
 	public String getFullName() {
 		return "i2b2demodata::"+getTableName();
+	}
+
+	@Override
+	protected Statement getStatement() {
+		return create;
+	}
+
+	@Override
+	protected Set<String> primitiveGetAllTables() {		
+		Set<String> tables = new HashSet<String>();
+		tables.add(create.getTable().getName());
+		return tables;
 	}
 }

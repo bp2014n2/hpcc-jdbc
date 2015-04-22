@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,7 +30,7 @@ public class ECLLayoutsStub extends ECLLayouts {
 		
 	}
 	
-	
+	@Override
 	public String getECLDataType(String table, String columnName){
 		String layout = getStubbedLayout(table);
 		if(layout != null) {
@@ -52,6 +53,7 @@ public class ECLLayoutsStub extends ECLLayouts {
 		return layouts.get(table.toLowerCase());
 	}
 	
+	@Override
 	public LinkedHashSet<String> getAllColumns(String table) {	
 		String layout = getStubbedLayout(table);
 		
@@ -82,8 +84,8 @@ public class ECLLayoutsStub extends ECLLayouts {
 	}
 
 	
-	
-	public boolean isColumnOfIntInAnyTable(List<String> tables, String column) {
+	@Override
+	public boolean isColumnOfIntInAnyTable(Set<String> tables, String column) {
 		for (String table : tables) {
 			String type = getECLDataType(table, column);
 			if (type == null) {
@@ -95,7 +97,8 @@ public class ECLLayoutsStub extends ECLLayouts {
 		return false;
 	}
 	
-	public int getSqlTypeOfColumn (List<String> tables, String column) {
+	@Override
+	public int getSqlTypeOfColumn (Set<String> tables, String column) {
 		for (String table : tables) {
 			String type = getECLDataType(table, column);
 			if (type != null) {
@@ -103,21 +106,6 @@ public class ECLLayoutsStub extends ECLLayouts {
 			}
 		}
 		return java.sql.Types.OTHER;
-	}
-
-	
-	public static int getSqlType(String dataType) {
-		String eclType = dataType.toLowerCase().replaceAll("(\\D*).*", "$1");
-		switch (eclType) {
-		case "integer":
-			return java.sql.Types.INTEGER;
-		case "unsigned":
-			return java.sql.Types.INTEGER;
-		case "timestamp":
-			return java.sql.Types.TIMESTAMP;
-		default: 
-			return java.sql.Types.VARCHAR;
-		}
 	}
 
 }

@@ -2,7 +2,6 @@ package de.hpi.hpcc.parsing.drop;
 
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 
 import net.sf.jsqlparser.statement.drop.Drop;
@@ -36,9 +35,7 @@ public class ECLEngineDrop extends ECLEngine {
     	eclCode.append(generateImports());
 //		eclCode.append(eclBuilder.generateECL(sqlQuery));
     	
-    	String tablePath = ((SQLParserDrop) sqlParser).getFullName();
-    	
-    	//tablePath = checkForTempTable(tablePath);
+    	String tablePath = sqlParser.getFullName();
 		
 		availablecols = new HashMap<String, HPCCColumnMetaData>();
 
@@ -53,22 +50,23 @@ public class ECLEngineDrop extends ECLEngine {
    			}
    			
    			// TODO: replace with much, much, much better solution
-   			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
+   			eclCode.append(EMPTY_QUERY);
    			
    	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-   	    	HashSet<String> columns = layouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
-   	    	int i=0;
-   	    	for (String column : columns) {
-   	    		i++;
-   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, layouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
-   	    	}  	
-   	    	layouts.removeDFUFile(tablePath);
-   	    	layouts.removeTempTable(layouts.getFullTableName(originalTableName));
+
+//   	    	HashSet<String> columns = eclLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
+//   	    	int i=0;
+//   	    	for (String column : columns) {
+//   	    		i++;
+//   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, eclLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
+//   	    	}  	
+			layouts.removeDFUFile(tablePath);
+			layouts.removeTempTable(layouts.getFullTableName(originalTableName));
    		} else {
    			/*
    			 * TODO: replace with much, much, much better solution
    			 */
-   			eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
+   			eclCode.append(EMPTY_QUERY);
    		}
    		return eclCode.toString();
 	}

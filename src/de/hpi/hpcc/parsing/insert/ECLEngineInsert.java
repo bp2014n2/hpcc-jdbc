@@ -37,7 +37,7 @@ public class ECLEngineInsert extends ECLEngine {
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	
     	eclCode.append(generateImports());
-		eclCode.append(generateLayouts(sqlParser.getColumnNames()));
+		eclCode.append(generateLayouts());
 		eclCode.append(generateTables());
 		
 		String tablePath = "i2b2demodata::"+ sqlParser.getTable().getName();
@@ -91,4 +91,16 @@ public class ECLEngineInsert extends ECLEngine {
 	protected SQLParserInsert getSQLParser() {
 		return sqlParser;
 	}
+	
+	protected String generateLayouts() {
+    	StringBuilder layoutsString = new StringBuilder();
+    	String table = getSQLParser().getTable().getName();
+		layoutsString.append(layouts.getLayout(table));
+		layoutsString.append("\n");
+		for (String otherTable : getSQLParser().getAllTables()) {
+			layoutsString.append(layouts.getLayout(otherTable));
+			layoutsString.append("\n");
+		}
+		return layoutsString.toString();
+    }
 }
