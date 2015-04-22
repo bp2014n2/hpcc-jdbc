@@ -159,10 +159,17 @@ public abstract class ECLEngine
     
     protected String generateLayouts(List<String> orderedColumns) {
     	StringBuilder layoutsString = new StringBuilder();
-		for (String table : getSQLParser().getAllTables()) {
-			layoutsString.append(eclLayouts.getLayout(table));
+    	List<String> allTables = new ArrayList<String>(getSQLParser().getAllTables());
+    	String table = allTables.get(0);
+		layoutsString.append(eclLayouts.getLayoutOrdered(table, orderedColumns));
+		layoutsString.append("\n");
+		
+		for (int i = 1; i<allTables.size(); i++) {
+			String otherTable = allTables.get(i);
+			layoutsString.append(eclLayouts.getLayout(otherTable));
 			layoutsString.append("\n");
 		}
+		
 		return layoutsString.toString();
     }
     

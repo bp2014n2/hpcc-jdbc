@@ -55,22 +55,13 @@ public class ECLBuilderInsert extends ECLBuilder {
 	private void generateNewDataset(SQLParserInsert sqlParser) {
 		if (sqlParser.getColumns() == null || sqlParser.getColumns().size() == eclLayouts.getAllColumns(sqlParser.getTable().getName()).size()) {
 			if (sqlParser.getItemsList() instanceof SubSelect) {
-			eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
+				eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
 			} else {
 				eclCode.append("DATASET([{");
 				String valueString = "";
-				LinkedHashSet<String> layout = eclLayouts.getAllColumns(sqlParser.getTable().getName());
 				List<Expression> expressions = sqlParser.getExpressions();
-				List<String> columns = sqlParser.getColumnNames();
-				for(String column : layout) {
-					for(int index = 0; index < columns.size(); index++) {
-						if(column.equalsIgnoreCase(columns.get(index))) {
-							Expression expression = expressions.get(index);
-							valueString += (valueString=="" ? "":", ")+parseExpressionECL(expression);
-							break;
-						}
-						
-					}
+				for(Expression expression : expressions) {
+						valueString += (valueString=="" ? "":", ")+parseExpressionECL(expression);
 				}
 				eclCode.append(valueString);
 				eclCode.append("}], ");

@@ -3,6 +3,7 @@ package de.hpi.hpcc.parsing;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -171,28 +172,28 @@ public class ECLLayouts {
 		return dbMetadata.getDFUFile(getFullTableName(tableName)).hasRelatedIndexes();
 	}
 
-//	public String getLayoutOrdered(String table, List<String> orderedColumns) {
-//		String name = getFullTableName(table);
-//		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");
-//		
-//		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
-//		List<Object> fields = Collections.list(dfuFile.getAllFields());
-//		
-//		for (String columnName : orderedColumns) {
-//			for (Object field : fields) {
-//				HPCCColumnMetaData column = (HPCCColumnMetaData) field;
-//				if (!column.getColumnName().equalsIgnoreCase(columnName)) {
-//					continue;
-//				}
-//				layout.append(column.getEclType());
-//				layout.append(" ");
-//				layout.append(column.getColumnName());
-//				layout.append("; ");
-//			}
-//		}
-//		layout.append("END;");
-//		
-//		return layout.toString();
-//	}
+	public String getLayoutOrdered(String table, List<String> orderedColumns) {
+		String name = getFullTableName(table);
+		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");
+		
+		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
+		List<Object> fields = Collections.list(dfuFile.getAllFields());
+		
+		for (String columnName : orderedColumns) {
+			for (Object field : fields) {
+				HPCCColumnMetaData column = (HPCCColumnMetaData) field;
+				if (!column.getColumnName().equalsIgnoreCase(columnName)) {
+					continue;
+				}
+				layout.append(column.getEclType());
+				layout.append(" ");
+				layout.append(column.getColumnName());
+				layout.append("; ");
+			}
+		}
+		layout.append("END;");
+		
+		return layout.toString();
+	}
 
 }
