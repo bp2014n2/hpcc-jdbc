@@ -27,7 +27,7 @@ public class HPCCStatement implements Statement{
     protected String name;
     private List<String> whiteList;
     
-    private boolean federatedDatabase = false;
+    private boolean federatedDatabase = true;
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;
@@ -67,9 +67,20 @@ public class HPCCStatement implements Statement{
 		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
 		
 		if (checkFederatedDatabase(sqlStatement)) {
-			return executeQueryOnPostgreSQL(sqlStatement);
+			Long before = System.nanoTime();
+			boolean result = executeQueryOnPostgreSQL(sqlStatement);
+			Long after = System.nanoTime();
+			Long difference = after-before;
+			HPCCJDBCUtils.traceoutln(Level.INFO, "executionTime: "+difference/1000000);
+			return result;
+			
 		} else {
-			return executeQueryOnHPCC(sqlStatement);
+			Long before = System.nanoTime();
+			boolean result = executeQueryOnHPCC(sqlStatement);
+			Long after = System.nanoTime();
+			Long difference = after-before;
+			HPCCJDBCUtils.traceoutln(Level.INFO, "executionTime: "+difference/1000000);
+			return result;
 		}
 	}
 	
@@ -87,8 +98,19 @@ public class HPCCStatement implements Statement{
 	private boolean executeQueryOnHPCC(String sqlStatement) throws SQLException {
 		try {
 			this.eclEngine = ECLEngine.getInstance(connection, connection.getDatabaseMetaData(), sqlStatement);
+			
+			Long before1 = System.nanoTime();
 			String eclCode = eclEngine.parseEclCode(sqlStatement);
+			Long after1 = System.nanoTime();
+			Long difference1 = after1-before1;
+			HPCCJDBCUtils.traceoutln(Level.INFO, "timeForParsing: "+difference1/1000000);
+			
+			long before = System.nanoTime();
 			connection.sendRequest(eclCode);
+			Long after = System.nanoTime();
+			Long difference = after-before;
+			HPCCJDBCUtils.traceoutln(Level.INFO, "timeForExecuting: "+difference/1000000);
+			
 			NodeList rowList;
 			rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
 			if (rowList != null) {

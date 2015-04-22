@@ -27,9 +27,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.main.*;

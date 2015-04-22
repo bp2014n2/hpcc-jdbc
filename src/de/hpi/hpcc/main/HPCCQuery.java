@@ -188,7 +188,7 @@ public class HPCCQuery
 
     public ArrayList<HPCCColumnMetaData> getAllNonInFields()
     {
-        ArrayList<HPCCColumnMetaData> expectedretcolumns = new ArrayList();
+        ArrayList<HPCCColumnMetaData> expectedretcolumns = new ArrayList<HPCCColumnMetaData>();
 
         Iterator<HPCCColumnMetaData> it = defaultfields.iterator();
         while (it.hasNext())
@@ -203,7 +203,7 @@ public class HPCCQuery
 
     public ArrayList<HPCCColumnMetaData> getAllInFields()
     {
-        ArrayList<HPCCColumnMetaData> inparams = new ArrayList();
+        ArrayList<HPCCColumnMetaData> inparams = new ArrayList<HPCCColumnMetaData>();
 
         Iterator<HPCCColumnMetaData> it = defaultfields.iterator();
         while (it.hasNext())
