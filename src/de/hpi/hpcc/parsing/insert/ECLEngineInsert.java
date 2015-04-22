@@ -1,9 +1,11 @@
 package de.hpi.hpcc.parsing.insert;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 
 import de.hpi.hpcc.main.HPCCColumnMetaData;
@@ -33,7 +35,7 @@ public class ECLEngineInsert extends ECLEngine {
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	
     	eclCode.append(generateImports());
-		eclCode.append(generateLayouts(sqlParser.getColumnNames()));
+		eclCode.append(generateLayouts());
 		eclCode.append(generateTables());
 		
 		String tablePath = "i2b2demodata::"+ sqlParser.getTable().getName();
@@ -90,5 +92,17 @@ public class ECLEngineInsert extends ECLEngine {
 	@Override
 	public SQLParserInsert getSQLParserInstance(String sqlQuery) {
 		return new SQLParserInsert(sqlQuery, eclLayouts);
-	}
+	}    
+	
+    protected String generateLayouts() {
+    	StringBuilder layoutsString = new StringBuilder();
+    	String table = getSQLParser().getTable().getName();
+		layoutsString.append(eclLayouts.getLayout(table));
+		layoutsString.append("\n");
+		for (String otherTable : getSQLParser().getAllTables()) {
+			layoutsString.append(eclLayouts.getLayout(otherTable));
+			layoutsString.append("\n");
+		}
+		return layoutsString.toString();
+    }
 }

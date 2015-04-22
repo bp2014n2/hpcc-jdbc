@@ -83,6 +83,7 @@ public class SQLParserInsert extends SQLParser {
 		tableList = tablesNamesFinder.getTableList((Insert) statement);
 		if (getSelect() != null)
 			tableList.addAll(tablesNamesFinder.getTableList(getSelect()));
+		tableList.remove(getTable().getName()); //the inserted table doesn't need to be load into a dataset
 		Set<String> lowerTableList = new HashSet<String>();
 		for (String table : tableList) {
 			if (table.contains(".")) table = table.substring(table.indexOf(".")+1);
