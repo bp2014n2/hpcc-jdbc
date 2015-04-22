@@ -20,9 +20,4 @@ public class SQLParserDrop extends SQLParser {
 	public String getFullName() {
 		return "i2b2demodata::"+getName();
 	}
-
-	@Override
-	public List<String> getQueriedColumns(String table) {
-		return new ArrayList<String>();
-	}
 }

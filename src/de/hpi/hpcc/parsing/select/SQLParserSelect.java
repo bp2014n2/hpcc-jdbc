@@ -179,24 +179,4 @@ public class SQLParserSelect extends SQLParser {
 		}
 		return null;
 	}
-
-	@Override
-	public List<String> getQueriedColumns(String table) {
-		List<String> columns = new ArrayList<String>();
-		for (SelectItem selectItem : getSelectItems()) {
-			columns.addAll(findColumns(getTableNameAndAlias(table),((SelectExpressionItem) selectItem).getExpression()));
-		}
-		if (plain.getWhere() != null) {
-			columns.addAll(findColumns(getTableNameAndAlias(table), plain.getWhere()));
-		}
-		List<WithItem> withItems = null;
-		if((withItems = ((Select) statement).getWithItemsList()) != null) {
-			for(WithItem with : withItems) {
-				SQLParserSelect subParser = new SQLParserSelect(with.getSelectBody(), eclLayouts);
-				columns.addAll(subParser.getQueriedColumns(table));
-			}
-		}
-		
-		return columns;
-	}
 }

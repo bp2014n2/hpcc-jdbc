@@ -72,9 +72,4 @@ public class SQLParserCreate extends SQLParser {
 	public String getFullName() {
 		return "i2b2demodata::"+getTableName();
 	}
-
-	@Override
-	public List<String> getQueriedColumns(String table) {
-		return new ArrayList<String>();
-	}
 }

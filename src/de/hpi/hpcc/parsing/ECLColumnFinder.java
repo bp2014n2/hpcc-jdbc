@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
@@ -48,39 +47,71 @@ import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.Between;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
+import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.expression.operators.relational.IsNullExpression;
+import net.sf.jsqlparser.expression.operators.relational.ItemsListVisitor;
 import net.sf.jsqlparser.expression.operators.relational.LikeExpression;
 import net.sf.jsqlparser.expression.operators.relational.Matches;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.expression.operators.relational.MinorThanEquals;
+import net.sf.jsqlparser.expression.operators.relational.MultiExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.PostgreSQLFromForExpression;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMatchOperator;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.SetStatement;
 import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.StatementVisitor;
+import net.sf.jsqlparser.statement.Statements;
+import net.sf.jsqlparser.statement.alter.Alter;
+import net.sf.jsqlparser.statement.create.index.CreateIndex;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.statement.create.view.CreateView;
+import net.sf.jsqlparser.statement.delete.Delete;
+import net.sf.jsqlparser.statement.drop.Drop;
+import net.sf.jsqlparser.statement.execute.Execute;
+import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.replace.Replace;
+import net.sf.jsqlparser.statement.select.AllColumns;
+import net.sf.jsqlparser.statement.select.AllTableColumns;
+import net.sf.jsqlparser.statement.select.FromItemVisitor;
+import net.sf.jsqlparser.statement.select.LateralSubSelect;
+import net.sf.jsqlparser.statement.select.OrderByElement;
+import net.sf.jsqlparser.statement.select.OrderByVisitor;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
+import net.sf.jsqlparser.statement.select.SelectItemVisitor;
+import net.sf.jsqlparser.statement.select.SelectVisitor;
+import net.sf.jsqlparser.statement.select.SetOperationList;
+import net.sf.jsqlparser.statement.select.SubJoin;
 import net.sf.jsqlparser.statement.select.SubSelect;
+import net.sf.jsqlparser.statement.select.ValuesList;
+import net.sf.jsqlparser.statement.select.WithItem;
+import net.sf.jsqlparser.statement.truncate.Truncate;
+import net.sf.jsqlparser.statement.update.Update;
 
-public class ECLColumnFinder implements ExpressionVisitor {
+public class ECLColumnFinder implements ExpressionVisitor, StatementVisitor, SelectItemVisitor, SelectVisitor, FromItemVisitor, OrderByVisitor, ItemsListVisitor {
 
 	private List<String> columns = new ArrayList<String>();
 	private List<String> tableNameAndAlias;
-	private ECLLayouts eclLayouts;
 	private Statement statement;
+	private ECLLayouts layouts;
 
-	public List<String> find(Expression expression) {
-		expression.accept(this);
+	public List<String> find(Statement statement) {
+		this.statement = statement;
+		statement.accept(this);
 		return columns;
 	}
 	
-	public ECLColumnFinder(ECLLayouts eclLayouts, Statement statement, List<String> tableNameAndAlias) {
-		this.eclLayouts = eclLayouts;
-		this.statement = statement;
+	public ECLColumnFinder(ECLLayouts layouts, List<String> tableNameAndAlias) {
+		this.layouts = layouts;
 		this.tableNameAndAlias = tableNameAndAlias;
 	}
 
@@ -146,7 +177,9 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(Parenthesis parenthesis) {
-		parenthesis.getExpression().accept(this);
+		if(parenthesis.getExpression() != null) {
+			parenthesis.getExpression().accept(this);
+		}
 	}
 
 	@Override
@@ -191,8 +224,15 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(Between between) {
-		// TODO Auto-generated method stub
-		
+		if(between.getLeftExpression() != null) {
+			between.getLeftExpression().accept(this);
+		}
+		if(between.getBetweenExpressionStart() != null) {
+			between.getBetweenExpressionStart().accept(this);
+		}
+		if(between.getBetweenExpressionEnd() != null) {
+			between.getBetweenExpressionEnd().accept(this);
+		}
 	}
 
 	@Override
@@ -212,22 +252,27 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(InExpression inExpression) {
-		inExpression.getLeftExpression().accept(this);
-		if (inExpression.getRightItemsList() instanceof SubSelect) {
-			((SubSelect) inExpression.getRightItemsList()).accept(this);
+		if(inExpression.getLeftExpression() != null) {
+			inExpression.getLeftExpression().accept(this);
+		}
+		if(inExpression.getRightItemsList() != null) {
+			inExpression.getRightItemsList().accept(this);
+		}
+		if(inExpression.getLeftItemsList() != null) {
+			inExpression.getLeftItemsList().accept(this);
 		}
 	}
 
 	@Override
 	public void visit(IsNullExpression isNullExpression) {
-		// TODO Auto-generated method stub
-		
+		if(isNullExpression.getLeftExpression() != null) {
+			isNullExpression.getLeftExpression().accept(this);
+		}
 	}
 
 	@Override
 	public void visit(LikeExpression likeExpression) {
-		// TODO Auto-generated method stub
-		
+		visitBinaryExpression(likeExpression);
 	}
 
 	@Override
@@ -271,15 +316,8 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(SubSelect subSelect) {
-		SQLParserSelect selectParser = new SQLParserSelect(subSelect.getSelectBody(), eclLayouts);
-		for (SelectItem selectItem : selectParser.getSelectItems()) {
-			columns.addAll(find(((SelectExpressionItem) selectItem).getExpression()));
-		}
-		if (selectParser.getWhere() != null) {
-			columns.addAll(find((Expression) selectParser.getWhere()));
-		}
-		if (selectParser.getFromItem() instanceof SubSelect) {
-			columns.addAll(find((Expression) selectParser.getFromItem()));
+		if(subSelect.getSelectBody() != null) {
+			subSelect.getSelectBody().accept(this);
 		}
 	}
 
@@ -297,7 +335,9 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(ExistsExpression existsExpression) {
-		existsExpression.getRightExpression().accept(this);
+		if (existsExpression.getRightExpression() != null) {
+			existsExpression.getRightExpression().accept(this);
+		}
 	}
 
 	@Override
@@ -415,8 +455,12 @@ public class ECLColumnFinder implements ExpressionVisitor {
 	}
 	
 	private void visitBinaryExpression(BinaryExpression binaryExpression) {
-		binaryExpression.getLeftExpression().accept(this);
-		binaryExpression.getRightExpression().accept(this);
+		if(binaryExpression.getLeftExpression() != null) {
+			binaryExpression.getLeftExpression().accept(this);
+		}
+		if(binaryExpression.getRightExpression() != null) {
+			binaryExpression.getRightExpression().accept(this);
+		}
 	}
 
 	@Override
@@ -424,6 +468,222 @@ public class ECLColumnFinder implements ExpressionVisitor {
 		postgreSQLFromForExpression.getSourceExpression().accept(this);
 		postgreSQLFromForExpression.getFromExpression().accept(this);
 		postgreSQLFromForExpression.getForExpression().accept(this);
+	}
+
+	@Override
+	public void visit(Select select) {
+		if(select.getSelectBody() != null) {
+			select.getSelectBody().accept(this);
+		}
+		if(select.getWithItemsList() != null) {
+			for(WithItem withItem : select.getWithItemsList()) {
+				withItem.accept(this);
+			}
+		}
+	}
+
+	@Override
+	public void visit(Delete delete) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(Update update) {
+		if(update.getColumns() != null) {
+			for(Column column : update.getColumns()) {
+				column.accept(this);
+			}
+		}
+		if(update.getFromItem() != null) {
+			update.getFromItem().accept(this);
+		}
+		if(update.getSelect() != null) {
+			update.getSelect().accept(this);
+		}
+		if(update.getSelect() != null) {
+			update.getSelect().accept(this);
+		}
+		if(update.getWhere() != null) {
+			update.getWhere().accept(this);
+		}
+	}
+
+	@Override
+	public void visit(Insert insert) {
+		if(insert.getColumns() != null) {
+			for(Column column : insert.getColumns()) {
+				column.accept(this);
+			}
+		}
+		if(insert.getSelect() != null) {
+			insert.getSelect().accept(this);
+		}
+	}
+
+	@Override
+	public void visit(Replace replace) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(Drop drop) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(Truncate truncate) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(CreateIndex createIndex) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(CreateTable createTable) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(CreateView createView) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(Alter alter) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(Statements stmts) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(Execute execute) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(SetStatement set) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(AllColumns allColumns) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(AllTableColumns allTableColumns) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(SelectExpressionItem selectExpressionItem) {
+		if(selectExpressionItem.getExpression() != null) {
+			selectExpressionItem.getExpression().accept(this);
+		}
+	}
+
+	@Override
+	public void visit(PlainSelect plainSelect) {
+		if(plainSelect.getSelectItems() != null) {
+			for(SelectItem selectItem : plainSelect.getSelectItems()) {
+				selectItem.accept(this);
+			}
+		}
+		if(plainSelect.getGroupByColumnReferences() != null) {
+			for(Expression groupBy : plainSelect.getGroupByColumnReferences()) {
+				groupBy.accept(this);
+			}
+		}
+		if(plainSelect.getFromItem() != null) {
+			plainSelect.getFromItem().accept(this);
+		}
+		if(plainSelect.getHaving() != null) {
+			plainSelect.getHaving().accept(this);
+		}
+		if(plainSelect.getOrderByElements() != null) {
+			for(OrderByElement orderBy : plainSelect.getOrderByElements()) {
+				orderBy.accept(this);
+			}
+		}
+		if(plainSelect.getWhere() != null) {
+			plainSelect.getWhere().accept(this);
+		}
+	}
+
+	@Override
+	public void visit(SetOperationList setOpList) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(WithItem withItem) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(Table tableName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(SubJoin subjoin) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(LateralSubSelect lateralSubSelect) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(ValuesList valuesList) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(OrderByElement orderBy) {
+		if(orderBy.getExpression() != null) {
+			orderBy.getExpression().accept(this);
+		}
+	}
+
+	@Override
+	public void visit(ExpressionList expressionList) {
+		if(expressionList.getExpressions() != null) {
+			for(Expression expression : expressionList.getExpressions()) {
+				expression.accept(this);
+			}
+		}
+	}
+
+	@Override
+	public void visit(MultiExpressionList multiExprList) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

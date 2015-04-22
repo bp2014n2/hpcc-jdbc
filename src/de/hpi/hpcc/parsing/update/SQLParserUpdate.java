@@ -96,10 +96,4 @@ public class SQLParserUpdate extends SQLParser {
 		}
 		return columnNames;
 	}
-
-	@Override
-	public List<String> getQueriedColumns(String table) {
-		List<String> columns = findColumns(getTableNameAndAlias(table), ((Update) statement).getWhere());
-		return columns;
-	}
 }

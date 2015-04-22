@@ -57,7 +57,9 @@ public abstract class SQLParser{
 		}
 	}
 
-	public abstract List<String> getQueriedColumns(String table);
+	public List<String> getQueriedColumns(String table) {
+		return findColumns(getTableNameAndAlias(table), statement);
+	};
 	
 	public List<String> getAllTables() {
 		List<String> tableList = new ArrayList<String>();
@@ -111,11 +113,11 @@ public abstract class SQLParser{
 
 	public int getParameterizedCount() {
 		return statement.toString().length() - statement.toString().replace("?", "").length();
-	}	
+	}
 	
-	protected List<String> findColumns(List<String> tableNameAndAlias, Expression expr) {
-		ECLColumnFinder finder = new ECLColumnFinder(eclLayouts, statement, tableNameAndAlias);
-		return finder.find(expr);
+	protected List<String> findColumns(List<String> tableNameAndAlias, Statement statement) {
+		ECLColumnFinder finder = new ECLColumnFinder(eclLayouts, tableNameAndAlias);
+		return finder.find(statement);
 			
 	}
 	
