@@ -7,21 +7,26 @@ import java.util.regex.Pattern;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserCreate extends SQLParser {
 	
+	private CreateTable create;
+
 	public SQLParserCreate(CreateTable statement, ECLLayouts eclLayouts) {
 		super(statement, eclLayouts);
+		this.create = statement;
 	}
 	
 	public String getTableName() {
-		return ((CreateTable) statement).getTable().getName();
+		return create.getTable().getName();
 	}
 	
 	public String getRecord() {
-		List<ColumnDefinition> columns = ((CreateTable) statement).getColumnDefinitions();
+		List<ColumnDefinition> columns = create.getColumnDefinitions();
 		String records = "";
 		for(ColumnDefinition column : columns) {
 			records += (records == ""?"":", ");
@@ -71,5 +76,17 @@ public class SQLParserCreate extends SQLParser {
 
 	public String getFullName() {
 		return "i2b2demodata::"+getTableName();
+	}
+
+	@Override
+	protected Statement getStatement() {
+		return create;
+	}
+
+	@Override
+	protected List<String> primitiveGetAllTables() {		
+		List<String> tables = new ArrayList<String>();
+		tables.add(create.getTable().getName());
+		return tables;
 	}
 }

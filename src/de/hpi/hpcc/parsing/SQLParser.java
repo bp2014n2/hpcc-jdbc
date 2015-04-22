@@ -9,36 +9,25 @@ import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.operators.relational.MinorThan;
-import net.sf.jsqlparser.parser.CCJSqlParserManager;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.Statement;
-import net.sf.jsqlparser.statement.create.table.CreateTable;
-import net.sf.jsqlparser.statement.drop.Drop;
-import net.sf.jsqlparser.statement.insert.Insert;
-import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
-import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
-import net.sf.jsqlparser.statement.update.Update;
-import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public abstract class SQLParser{
 	
-	//public static final String parameterizedPrefix = "var";
-	protected static CCJSqlParserManager parserManager = new CCJSqlParserManager();
-	protected Statement statement;
 	protected ECLLayouts eclLayouts;
 	
 	public SQLParser(Statement sql, ECLLayouts eclLayouts) {
 		this.eclLayouts = eclLayouts;
-		this.statement = sql;
 	}
 	
+	protected abstract Statement getStatement();
+	
+	protected abstract List<String> primitiveGetAllTables();
 	
 	protected static String expressionIsInstanceOf(Expression expression) {
 		if (expression instanceof SubSelect) {
@@ -58,45 +47,11 @@ public abstract class SQLParser{
 	}
 
 	public List<String> getQueriedColumns(String table) {
-		return findColumns(getTableNameAndAlias(table), statement);
+		return findColumns(getTableNameAndAlias(table), getStatement());
 	};
 	
 	public List<String> getAllTables() {
-		List<String> tableList = new ArrayList<String>();
-		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
-		if (statement instanceof Select) {
-			boolean nextval = false;
-			if (((Select) statement).getSelectBody() instanceof PlainSelect) {
-				PlainSelect sb = (PlainSelect) ((Select) statement).getSelectBody();
-				
-				for (SelectItem si : sb.getSelectItems()) {
-					if (si instanceof SelectExpressionItem) {
-						Expression ex = ((SelectExpressionItem) si).getExpression();
-						if (ex instanceof Function) {
-							if (((Function) ex).getName().equalsIgnoreCase("nextval")) {
-								tableList.add("sequences");
-								nextval = true;
-							}
-						}
-					}
-				}
-			}
-			if (!nextval) {
-				tableList = tablesNamesFinder.getTableList((Select) statement);
-			}
-			
-			
-		} else if (statement instanceof Insert) {
-			tableList = tablesNamesFinder.getTableList((Insert) statement);
-		} else if (statement instanceof Update) {
-			tableList = tablesNamesFinder.getTableList((Update) statement);
-		} else if (statement instanceof CreateTable) {
-			tableList.add(((CreateTable) statement).getTable().getName());
-		} else if (statement instanceof Drop) {
-			tableList.add(((Drop) statement).getName());
-		} else {
-			tableList = null;
-		}
+		List<String> tableList = primitiveGetAllTables();
 		List<String> lowerTableList = new ArrayList<String>();
 		for (String table : tableList) {
 			if (table.contains(".")) {
@@ -108,11 +63,11 @@ public abstract class SQLParser{
 	}
 
 	public boolean hasWhereOf(String table, String column) {
-		return statement.toString().contains(table) && statement.toString().contains(column);
+		return getStatement().toString().contains(table) && getStatement().toString().contains(column);
 	}
 
 	public int getParameterizedCount() {
-		return statement.toString().length() - statement.toString().replace("?", "").length();
+		return getStatement().toString().length() - getStatement().toString().replace("?", "").length();
 	}
 	
 	protected List<String> findColumns(List<String> tableNameAndAlias, Statement statement) {
@@ -125,7 +80,7 @@ public abstract class SQLParser{
 		List<String> tableNameAndAlias = new ArrayList<String>();
 		tableNameAndAlias.add(table);
 		Pattern findAlias = Pattern.compile("from\\s*(\\w+(\\s*(i2b2demodata\\.)?\\w+)?\\s*,\\s*)*(i2b2demodata\\.)?" + table + "\\s*(\\w+)\\s*", Pattern.CASE_INSENSITIVE);
-		Matcher alias = findAlias.matcher(((Select) statement).toString());
+		Matcher alias = findAlias.matcher(((Select) getStatement()).toString());
 		while (alias.find()) {
 			String aliasName = alias.group(5);
 			if (isValidAlias(aliasName)) {

@@ -3,22 +3,28 @@ package de.hpi.hpcc.parsing.update;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.update.Update;
+import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserUpdate extends SQLParser {
 
+	private Update update;
+
 	public SQLParserUpdate(Update update, ECLLayouts eclLayouts) {
 		super(update, eclLayouts);
+		this.update = update;
 	}
 	
 	public String getName() {
-		return ((Update) statement).getTables().get(0).getName();
+		return update.getTables().get(0).getName();
 	}
 	
 	public String getFullName() {
@@ -26,11 +32,11 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	public Expression getWhere() {
-		return ((Update) statement).getWhere();
+		return update.getWhere();
 	}
 	
 	public Expression getWhereWithoutExists() {
-		return deleteExist(((Update) statement).getWhere());
+		return deleteExist(update.getWhere());
 	}
 	
 	private Expression deleteExist(Expression expr) {
@@ -52,7 +58,7 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	public boolean hasExist() {
-		return getExist(((Update) statement).getWhere()) == null;
+		return getExist(update.getWhere()) == null;
 	}
 	
 	public Expression getExist(Expression expr) {
@@ -67,12 +73,12 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	public LinkedHashSet<String> getAllCoumns() {
-		String table = ((Update) statement).getTables().get(0).getName();
+		String table = update.getTables().get(0).getName();
 		return eclLayouts.getAllColumns(table);
 	}
 	
 	public List<String> getColumns() {
-		List<Column> columns = ((Update) statement).getColumns();
+		List<Column> columns = update.getColumns();
 		List<String> columnNames = new ArrayList<String>();
 		for (Column column : columns) {
 			columnNames.add(column.getColumnName());
@@ -81,7 +87,7 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	public ArrayList<Expression> getExpressions() {
-		return (ArrayList<Expression>) ((Update) statement).getExpressions();
+		return (ArrayList<Expression>) update.getExpressions();
 	}
 
 	public boolean isIncrement() {
@@ -89,11 +95,22 @@ public class SQLParserUpdate extends SQLParser {
 	}
 
 	public List<String> getColumnsToLowerCase() {
-		List<Column> columns = ((Update) statement).getColumns();
+		List<Column> columns = update.getColumns();
 		List<String> columnNames = new ArrayList<String>();
 		for (Column column : columns) {
 			columnNames.add(column.getColumnName().toLowerCase());
 		}
 		return columnNames;
+	}
+
+	@Override
+	protected Statement getStatement() {
+		return update;
+	}
+
+	@Override
+	protected List<String> primitiveGetAllTables() {
+		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
+		return tablesNamesFinder.getTableList(update);
 	}
 }

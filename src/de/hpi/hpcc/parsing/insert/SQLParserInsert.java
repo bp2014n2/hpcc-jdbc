@@ -11,6 +11,7 @@ import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.ItemsList;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.WithItem;
@@ -18,24 +19,27 @@ import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserInsert extends SQLParser {
 	
+	private Insert insert;
+
 	public SQLParserInsert(Insert insert, ECLLayouts layouts) {
 		super(insert, layouts);
+		this.insert = insert;
 	}
 	
 	public List<Column> getColumns() {
-		return ((Insert) statement).getColumns();
+		return insert.getColumns();
 	}
 	
 	public Table getTable() {
-		return ((Insert) statement).getTable();
+		return insert.getTable();
 	}
 	
 	public List<Expression> getExpressions() {
-		return ((ExpressionList) ((Insert) statement).getItemsList()).getExpressions();
+		return ((ExpressionList) insert.getItemsList()).getExpressions();
 	}
 	
 	public List<String> getColumnNames() {
-		List<Column> columns = ((Insert) statement).getColumns();
+		List<Column> columns = insert.getColumns();
 		List<String> columnNames = new ArrayList<String>();
 		if (columns == null) {
 			for(String column : eclLayouts.getAllColumns(getTable().getName())) {
@@ -50,26 +54,26 @@ public class SQLParserInsert extends SQLParser {
 	}
 
 	public ItemsList getItemsList() {
-		return ((Insert) statement).getItemsList();
+		return insert.getItemsList();
 	}
 
 	public boolean hasWith() {
-		try {return ((Insert) statement).getSelect().getWithItemsList() != null;} catch (NullPointerException e) {}
+		try {return insert.getSelect().getWithItemsList() != null;} catch (NullPointerException e) {}
 		return false;
 	}
 
 	public List<WithItem> getWithItemsList() {
-		return ((Insert) statement).getSelect().getWithItemsList();
+		return insert.getSelect().getWithItemsList();
 	}
 
 	public Select getSelect() {
-		return ((Insert) statement).getSelect();
+		return insert.getSelect();
 	}
 	
 	public List<String> getAllTables() {
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
 		List<String> tableList = new ArrayList<String>();
-		tableList = tablesNamesFinder.getTableList((Insert) statement);
+		tableList = tablesNamesFinder.getTableList(insert);
 		if (getSelect() != null)
 			tableList.addAll(tablesNamesFinder.getTableList(getSelect()));
 		List<String> lowerTableList = new ArrayList<String>();
@@ -78,5 +82,16 @@ public class SQLParserInsert extends SQLParser {
 			lowerTableList.add(table.toLowerCase());
 		}
 		return lowerTableList;
+	}
+
+	@Override
+	protected Statement getStatement() {
+		return insert;
+	}
+
+	@Override
+	protected List<String> primitiveGetAllTables() {
+		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
+		return tablesNamesFinder.getTableList(insert);
 	}
 }

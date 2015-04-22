@@ -10,7 +10,9 @@ import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLNameParser;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.Join;
@@ -22,16 +24,17 @@ import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
-import net.sf.jsqlparser.statement.select.WithItem;
+import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserSelect extends SQLParser {
 
 	private PlainSelect plain;
+	private Select select;
 
 	public SQLParserSelect(SelectBody expression, ECLLayouts layouts) {
 		super(null, layouts);
 		try {
-			statement = SQLParser.parse(expression.toString());
+			select = (Select) SQLParser.parse(expression.toString());
 		} catch (HPCCException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -42,6 +45,7 @@ public class SQLParserSelect extends SQLParser {
 	public SQLParserSelect(Select statement, ECLLayouts layouts) {
 		super(statement, layouts);
 		plain = (PlainSelect) statement.getSelectBody();
+		select = statement;
 	}
 	/*
 	public SQLParserSelect (Statement statement) {
@@ -178,5 +182,36 @@ public class SQLParserSelect extends SQLParser {
 			return selectItemStrings;
 		}
 		return null;
+	}
+
+	@Override
+	protected Statement getStatement() {
+		return select;
+	}
+
+	@Override
+	protected List<String> primitiveGetAllTables() {
+		List<String> tableList = new ArrayList<String>();
+		boolean nextval = false;
+		if (select.getSelectBody() instanceof PlainSelect) {
+			PlainSelect sb = (PlainSelect) select.getSelectBody();
+			
+			for (SelectItem si : sb.getSelectItems()) {
+				if (si instanceof SelectExpressionItem) {
+					Expression ex = ((SelectExpressionItem) si).getExpression();
+					if (ex instanceof Function) {
+						if (((Function) ex).getName().equalsIgnoreCase("nextval")) {
+							tableList.add("sequences");
+							nextval = true;
+						}
+					}
+				}
+			}
+		}
+		if (!nextval) {
+			TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
+			tableList = tablesNamesFinder.getTableList(select);
+		}
+		return tableList;
 	}
 }
