@@ -45,7 +45,7 @@ public class HPCCStatement implements Statement{
     	
     }};
     
-    private boolean federatedDatabase = true;
+    private boolean federatedDatabase = false;
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;

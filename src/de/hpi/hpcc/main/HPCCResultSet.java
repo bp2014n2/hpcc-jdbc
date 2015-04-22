@@ -51,7 +51,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.logging.HPCCLogger;
-import de.hpi.hpcc.parsing.ECLLayouts;
 
 /**
  *
