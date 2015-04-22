@@ -1,11 +1,12 @@
 package de.hpi.hpcc.parsing.insert;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
-import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.ItemsList;
@@ -69,20 +70,6 @@ public class SQLParserInsert extends SQLParser {
 	public Select getSelect() {
 		return insert.getSelect();
 	}
-	
-	public List<String> getAllTables() {
-		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
-		List<String> tableList = new ArrayList<String>();
-		tableList = tablesNamesFinder.getTableList(insert);
-		if (getSelect() != null)
-			tableList.addAll(tablesNamesFinder.getTableList(getSelect()));
-		List<String> lowerTableList = new ArrayList<String>();
-		for (String table : tableList) {
-			if (table.contains(".")) table = table.substring(table.indexOf(".")+1);
-			lowerTableList.add(table.toLowerCase());
-		}
-		return lowerTableList;
-	}
 
 	@Override
 	protected Statement getStatement() {
@@ -90,8 +77,8 @@ public class SQLParserInsert extends SQLParser {
 	}
 
 	@Override
-	protected List<String> primitiveGetAllTables() {
+	protected Set<String> primitiveGetAllTables() {
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
-		return tablesNamesFinder.getTableList(insert);
+		return new HashSet<String>(tablesNamesFinder.getTableList(insert));
 	}
 }

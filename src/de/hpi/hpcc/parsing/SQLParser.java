@@ -1,7 +1,9 @@
 package de.hpi.hpcc.parsing;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,7 +16,6 @@ import net.sf.jsqlparser.expression.operators.relational.MinorThan;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.Statement;
-import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
 public abstract class SQLParser{
@@ -27,7 +28,7 @@ public abstract class SQLParser{
 	
 	protected abstract Statement getStatement();
 	
-	protected abstract List<String> primitiveGetAllTables();
+	protected abstract Set<String> primitiveGetAllTables();
 	
 	protected static String expressionIsInstanceOf(Expression expression) {
 		if (expression instanceof SubSelect) {
@@ -50,9 +51,9 @@ public abstract class SQLParser{
 		return findColumns(getTableNameAndAlias(table), getStatement());
 	};
 	
-	public List<String> getAllTables() {
-		List<String> tableList = primitiveGetAllTables();
-		List<String> lowerTableList = new ArrayList<String>();
+	public Set<String> getAllTables() {
+		Set<String> tableList = primitiveGetAllTables();
+		Set<String> lowerTableList = new HashSet<String>();
 		for (String table : tableList) {
 			if (table.contains(".")) {
 				table = table.split("\\.")[1];

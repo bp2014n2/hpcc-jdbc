@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
-import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLNameParser;
 import de.hpi.hpcc.parsing.SQLParser;
@@ -186,8 +186,8 @@ public class SQLParserSelect extends SQLParser {
 	}
 
 	@Override
-	protected List<String> primitiveGetAllTables() {
-		List<String> tableList = new ArrayList<String>();
+	protected Set<String> primitiveGetAllTables() {
+		Set<String> tableList = new HashSet<String>();
 		boolean nextval = false;
 		if (select.getSelectBody() instanceof PlainSelect) {
 			PlainSelect sb = (PlainSelect) select.getSelectBody();
@@ -206,7 +206,7 @@ public class SQLParserSelect extends SQLParser {
 		}
 		if (!nextval) {
 			TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
-			tableList = tablesNamesFinder.getTableList(select);
+			tableList = new HashSet<String>(tablesNamesFinder.getTableList(select));
 		}
 		return tableList;
 	}

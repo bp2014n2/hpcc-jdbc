@@ -1,7 +1,8 @@
 package de.hpi.hpcc.parsing.create;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,7 +11,6 @@ import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
-import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserCreate extends SQLParser {
 	
@@ -84,8 +84,8 @@ public class SQLParserCreate extends SQLParser {
 	}
 
 	@Override
-	protected List<String> primitiveGetAllTables() {		
-		List<String> tables = new ArrayList<String>();
+	protected Set<String> primitiveGetAllTables() {		
+		Set<String> tables = new HashSet<String>();
 		tables.add(create.getTable().getName());
 		return tables;
 	}

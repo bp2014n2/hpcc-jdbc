@@ -1,7 +1,7 @@
 package de.hpi.hpcc.parsing.drop;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
@@ -31,8 +31,8 @@ public class SQLParserDrop extends SQLParser {
 	}
 
 	@Override
-	protected List<String> primitiveGetAllTables() {
-		List<String> tables = new ArrayList<String>();
+	protected Set<String> primitiveGetAllTables() {
+		Set<String> tables = new HashSet<String>();
 		tables.add(drop.getName());
 		return tables;
 	}

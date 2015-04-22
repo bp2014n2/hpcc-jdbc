@@ -4,7 +4,6 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.Statement;
 
 abstract public class ECLBuilder {
-//	private boolean hasAlias = false;
 	protected ECLLayouts eclLayouts;
 	protected StringBuilder eclCode;
 	/**

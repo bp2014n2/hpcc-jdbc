@@ -1,8 +1,10 @@
 package de.hpi.hpcc.parsing.update;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
@@ -109,8 +111,8 @@ public class SQLParserUpdate extends SQLParser {
 	}
 
 	@Override
-	protected List<String> primitiveGetAllTables() {
+	protected Set<String> primitiveGetAllTables() {
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
-		return tablesNamesFinder.getTableList(update);
+		return new HashSet<String>(tablesNamesFinder.getTableList(update));
 	}
 }
