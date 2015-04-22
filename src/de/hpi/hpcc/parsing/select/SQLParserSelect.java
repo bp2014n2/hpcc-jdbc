@@ -22,6 +22,7 @@ import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
+import net.sf.jsqlparser.statement.select.WithItem;
 
 public class SQLParserSelect extends SQLParser {
 
@@ -187,6 +188,13 @@ public class SQLParserSelect extends SQLParser {
 		}
 		if (plain.getWhere() != null) {
 			columns.addAll(findColumns(getTableNameAndAlias(table), plain.getWhere()));
+		}
+		List<WithItem> withItems = null;
+		if((withItems = ((Select) statement).getWithItemsList()) != null) {
+			for(WithItem with : withItems) {
+				SQLParserSelect subParser = new SQLParserSelect(with.getSelectBody(), eclLayouts);
+				columns.addAll(subParser.getQueriedColumns(table));
+			}
 		}
 		
 		return columns;

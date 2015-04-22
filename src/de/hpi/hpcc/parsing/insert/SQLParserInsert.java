@@ -86,7 +86,7 @@ public class SQLParserInsert extends SQLParser {
 		if (getAllTables().contains(table.toLowerCase())) {
 			Select select = ((Insert) statement).getSelect();
 			if (select != null) {
-				SQLParser subParser = new SQLParserSelect(select.getSelectBody(), eclLayouts);
+				SQLParser subParser = new SQLParserSelect(select, eclLayouts);
 				columns.addAll(subParser.getQueriedColumns(table));
 				if (select.getWithItemsList() != null) {
 					SQLParser withParser = new SQLParserSelect(select.getWithItemsList().get(0).getSelectBody(), eclLayouts);
