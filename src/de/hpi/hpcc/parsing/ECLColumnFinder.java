@@ -6,7 +6,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
-
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
@@ -61,23 +60,24 @@ import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMatchOperator;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
 public class ECLColumnFinder implements ExpressionVisitor {
 
-	private List<String> columns;
+	private List<String> columns = new ArrayList<String>();
 	private List<String> tableNameAndAlias;
-	private ECLLayouts  eclLayouts;
-	private String statement;
+	private ECLLayouts eclLayouts;
+	private Statement statement;
 
 	public List<String> find(Expression expression) {
 		expression.accept(this);
 		return columns;
 	}
 	
-	public ECLColumnFinder(ECLLayouts eclLayouts, String statement, List<String> tableNameAndAlias) {
+	public ECLColumnFinder(ECLLayouts eclLayouts, Statement statement, List<String> tableNameAndAlias) {
 		this.eclLayouts = eclLayouts;
 		this.statement = statement;
 		this.tableNameAndAlias = tableNameAndAlias;
@@ -145,7 +145,7 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(Parenthesis parenthesis) {
-		columns = find(parenthesis.getExpression());
+		parenthesis.getExpression().accept(this);
 	}
 
 	@Override
@@ -211,12 +211,10 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(InExpression inExpression) {
-		List<String> tmpcolumns = find(inExpression.getLeftExpression());
+		inExpression.getLeftExpression().accept(this);
 		if (inExpression.getRightItemsList() instanceof SubSelect) {
-			//TODO: fix cast (Expression) ItemsList
-			tmpcolumns.addAll(find((Expression) inExpression.getRightItemsList()));
+			((SubSelect) inExpression.getRightItemsList()).accept(this);
 		}
-		columns = tmpcolumns;
 	}
 
 	@Override
@@ -250,10 +248,9 @@ public class ECLColumnFinder implements ExpressionVisitor {
 	public void visit(Column tableColumn) {
 		String columnName = tableColumn.getColumnName();
 		String tableName = tableColumn.getTable().getName();
-		List<String> tmpcolumns = new ArrayList<String>();
 		if (tableName != null) {
-			if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase()) && !tmpcolumns.contains(columnName)) {
-				tmpcolumns.add(columnName);
+			if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase()) && !columns.contains(columnName)) {
+				columns.add(columnName);
 			}
 		} else {
 			Pattern selectPattern = Pattern.compile("select\\s*(distinct\\s*)?((((count|sum|avg)\\(\\w*\\))|\\w*)\\s*,\\s*)*("+ columnName +"\\s*|(count|sum|avg)\\(\\s*"+ columnName +"\\s*\\))\\s*(as\\s*\\w*\\s*)?(,\\s*((count|sum|avg)\\(\\w*\\)|\\w*)\\s*(as\\s*\\w*\\s*)?)*from\\s*(\\w*\\.)?(\\w*)",Pattern.CASE_INSENSITIVE);
@@ -266,10 +263,9 @@ public class ECLColumnFinder implements ExpressionVisitor {
 				tableName = whereMatcher.group(2);
 			}
 			if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase())) {
-				tmpcolumns.add(columnName);
+				columns.add(columnName);
 			}
 		}
-		columns = tmpcolumns;
 	}
 
 	@Override
@@ -300,7 +296,7 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(ExistsExpression existsExpression) {
-		columns = find(existsExpression.getRightExpression());
+		existsExpression.getRightExpression().accept(this);
 	}
 
 	@Override
@@ -418,9 +414,8 @@ public class ECLColumnFinder implements ExpressionVisitor {
 	}
 	
 	private void visitBinaryExpression(BinaryExpression binaryExpression) {
-		List<String> tmpcolumns = find(binaryExpression.getLeftExpression());
-		tmpcolumns.addAll(find(binaryExpression.getRightExpression()));
-		columns = tmpcolumns;
+		binaryExpression.getLeftExpression().accept(this);
+		binaryExpression.getRightExpression().accept(this);
 	}
 
 }

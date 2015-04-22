@@ -162,7 +162,7 @@ abstract public class SQLParser{
 	}	
 	
 	protected List<String> findColumns(List<String> tableNameAndAlias, Expression expr) {
-		ECLColumnFinder finder = new ECLColumnFinder(eclLayouts, this.statement.toString(), tableNameAndAlias);
+		ECLColumnFinder finder = new ECLColumnFinder(eclLayouts, statement, tableNameAndAlias);
 		return finder.find(expr);
 			
 	}

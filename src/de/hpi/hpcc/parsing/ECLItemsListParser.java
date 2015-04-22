@@ -26,24 +26,23 @@ public class ECLItemsListParser implements ItemsListVisitor {
 	@Override
 	public void visit(SubSelect subSelect) {
 		StringBuilder expressionBuilder = new StringBuilder();
-		expressionBuilder.append("SET(");
 		expressionBuilder.append(new ECLBuilderSelect(eclLayouts).generateECL(subSelect.getSelectBody().toString()));
-		expressionBuilder.append(","+inColumn+")");
-		
+		expressionBuilder.append(","+inColumn);
+		expressionBuilder = ECLUtils.convertToSet(expressionBuilder);
 		parsed = expressionBuilder.toString();
 	}
 
 	@Override
 	public void visit(ExpressionList expressionList) {
 		StringBuilder expressionBuilder = new StringBuilder();
-		expressionBuilder.append("[");
 		String expressions = "";
 		for (Expression expression : expressionList.getExpressions()) {
 			expressions += (expressions.equals("")?"":", ");
 			ECLExpressionParser expressionParser = new ECLExpressionParser(eclLayouts);
 			expressions += expressionParser.parse(expression);
 		}
-		expressionBuilder.append(expressionList).append("]");
+		expressionBuilder.append(expressions);
+		parsed = ECLUtils.encapsulateWithSquareBrackets(expressionBuilder).toString();
 		
 	}
 

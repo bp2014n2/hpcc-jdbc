@@ -1,6 +1,5 @@
 package de.hpi.hpcc.parsing;
 
-import de.hpi.hpcc.main.HPCCJDBCUtils;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
@@ -82,7 +81,9 @@ public class ECLDataTypeParser implements ExpressionVisitor {
 	public void visit(Function function) {
 		String functionName = function.getName().toLowerCase();
 		switch (functionName) {
-		case "sum": dataType = "INTEGER8"; break;
+		case "substring": dataType = "STRING50"; break;
+		case "sum":
+		case "count":
 		default: dataType = "INTEGER8"; break;
 		}
 	}

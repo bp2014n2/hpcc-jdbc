@@ -6,6 +6,10 @@ public class ECLUtils {
 		return new StringBuilder(convertToTable(eclCode.toString()));
 	}
 	
+	public static StringBuilder convertToSet(StringBuilder string) {
+		return new StringBuilder(convertToSet(string.toString()));
+	}
+	
 	/**
 	 * Modifies input StringBuilder and surrounds it with brackets
 	 * @param eclCode
@@ -95,6 +99,10 @@ public class ECLUtils {
 
 	public static String convertToSort(String eclCode) {
 		return prepend(encapsulateWithBrackets(eclCode), "SORT");
+	}
+
+	public static String convertToSet(String string) {
+		return prepend(encapsulateWithBrackets(string), "SET");
 	}
 	
 }
