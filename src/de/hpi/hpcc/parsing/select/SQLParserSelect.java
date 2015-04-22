@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLNameParser;
 import de.hpi.hpcc.parsing.SQLParser;
@@ -28,6 +29,12 @@ public class SQLParserSelect extends SQLParser {
 
 	public SQLParserSelect(SelectBody expression, ECLLayouts layouts) {
 		super(null, layouts);
+		try {
+			statement = SQLParser.parse(expression.toString());
+		} catch (HPCCException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		plain = (PlainSelect) expression;
 	}
 	

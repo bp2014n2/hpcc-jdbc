@@ -1,7 +1,10 @@
 package de.hpi.hpcc.parsing;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.hpi.hpcc.main.HPCCColumnMetaData;
 
@@ -13,8 +16,30 @@ public class ECLParser {
 	public ECLParser(ECLLayouts layouts) {
 		this.layouts = layouts;
 	}
+	
+	public List<String> parse(String sql) throws SQLException {
+		List<String> eclCodes = new ArrayList<String>();
+		for(String query : convertToAppropriateSQL(sql)) {
+			eclCodes.add(primitiveParse(query));
+		}
+		return eclCodes;
+	}
+    
+    private List<String> convertToAppropriateSQL(String sql) throws SQLException {
+    	List<String> queries = new ArrayList<String>();
+    	Matcher matcher = Pattern.compile("select\\s+nextval\\(\\s*'(\\w+)'\\s*\\)", Pattern.CASE_INSENSITIVE).matcher(sql);
+    	if(matcher.find()){
+			String sequence = matcher.group(1);
+			queries.add("update sequences set value = value + 1 where name = '"+sequence+"'");
+			queries.add("select value as nextval from sequences where name = '"+sequence+"'");
+    		//TODO: implement in ONE Query
+		} else {
+			queries.add(sql);
+		}
+		return queries;
+	}
 
-	public String parse(String sql) throws SQLException {
+	private String primitiveParse(String sql) throws SQLException {
 		StringBuilder eclCode = new StringBuilder();
 		
 		eclCode.append("&eclText=\n");

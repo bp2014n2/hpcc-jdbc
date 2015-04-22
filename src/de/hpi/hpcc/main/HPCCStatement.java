@@ -106,9 +106,8 @@ public class HPCCStatement implements Statement{
 			ECLLayouts layouts = new ECLLayouts(connection.getDatabaseMetaData());
 			this.parser = new ECLParser(layouts);
 			NodeList rowList = null;
-			for(String query : convertToAppropriateSQL(sqlStatement)) {
-				String eclCode = parser.parse(query);
-				connection.sendRequest(eclCode);
+			for(String query : parser.parse(sqlStatement)) {
+				connection.sendRequest(query);
 				rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
 			}
 			
@@ -121,20 +120,6 @@ public class HPCCStatement implements Statement{
 			this.close();
 			throw exception;
 		}
-	}
-    
-    private List<String> convertToAppropriateSQL(String sql) throws SQLException {
-    	List<String> queries = new ArrayList<String>();
-    	Matcher matcher = Pattern.compile("select\\s+nextval\\(\\s*'(\\w+)'\\s*\\)", Pattern.CASE_INSENSITIVE).matcher(sql);
-    	if(matcher.find()){
-			String sequence = matcher.group(1);
-			queries.add("update sequences set value = value + 1 where name = '"+sequence+"'");
-			queries.add("select value as nextval from sequences where name = '"+sequence+"'");
-    		//TODO: implement in ONE Query
-		} else {
-			queries.add(sql);
-		}
-		return queries;
 	}
 	
 	private boolean executeQueryOnPostgreSQL(String sqlStatement) throws SQLException {
