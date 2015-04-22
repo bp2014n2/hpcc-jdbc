@@ -3,6 +3,7 @@ package de.hpi.hpcc.parsing.drop;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
@@ -33,5 +34,11 @@ public class SQLParserDrop extends SQLParser {
 	@Override
 	public List<String> getQueriedColumns(String table) {
 		return new ArrayList<String>();
+	}
+
+	@Override
+	public Set<String> getAllTables() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

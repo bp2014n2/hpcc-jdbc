@@ -3,7 +3,6 @@ package de.hpi.hpcc.parsing;
 import net.sf.jsqlparser.expression.Expression;
 
 abstract public class ECLBuilder {
-//	private boolean hasAlias = false;
 	protected ECLLayouts eclLayouts;
 	protected StringBuilder eclCode;
 	/**

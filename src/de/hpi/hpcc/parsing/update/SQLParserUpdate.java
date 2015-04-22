@@ -2,8 +2,11 @@ package de.hpi.hpcc.parsing.update;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.JSQLParserException;
@@ -12,6 +15,7 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.update.Update;
+import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserUpdate extends SQLParser {
 
@@ -110,5 +114,20 @@ public class SQLParserUpdate extends SQLParser {
 	public List<String> getQueriedColumns(String table) {
 		List<String> columns = findColumns(getTableNameAndAlias(table), ((Update) statement).getWhere());
 		return columns;
+	}
+
+	@Override
+	public Set<String> getAllTables() {
+		List<String> tableList = new ArrayList<String>();
+		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
+		tableList = tablesNamesFinder.getTableList((Update) statement);
+		Set<String> lowerTableList = new HashSet<String>();
+		for (String table : tableList) {
+			if (table.contains(".")) {
+				table = table.split("\\.")[1];
+			}
+			lowerTableList.add(table.toLowerCase());
+		}
+		return lowerTableList;
 	}
 }

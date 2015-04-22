@@ -2,7 +2,10 @@ package de.hpi.hpcc.parsing;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -101,52 +104,54 @@ abstract public class SQLParser{
     	}
 	}
 	public abstract List<String> getQueriedColumns(String table);
+
+	public abstract Set<String> getAllTables();
 	
-	public List<String> getAllTables() {
-		List<String> tableList = new ArrayList<String>();
-		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
-		if (statement instanceof Select) {
-			boolean nextval = false;
-			if (((Select) statement).getSelectBody() instanceof PlainSelect) {
-				PlainSelect sb = (PlainSelect) ((Select) statement).getSelectBody();
-				
-				for (SelectItem si : sb.getSelectItems()) {
-					if (si instanceof SelectExpressionItem) {
-						Expression ex = ((SelectExpressionItem) si).getExpression();
-						if (ex instanceof Function) {
-							if (((Function) ex).getName().equalsIgnoreCase("nextval")) {
-								tableList.add("sequences");
-								nextval = true;
-							}
-						}
-					}
-				}
-			}
-			if (!nextval) {
-				tableList = tablesNamesFinder.getTableList((Select) statement);
-			}
-			
-			
-		} else if (statement instanceof Insert) {
-			tableList = tablesNamesFinder.getTableList((Insert) statement);
-		} else if (statement instanceof Update) {
-			tableList = tablesNamesFinder.getTableList((Update) statement);
-		} else if (statement instanceof CreateTable) {
-			tableList.add(((CreateTable) statement).getTable().getName());
-		} else if (statement instanceof Drop) {
-			tableList.add(((Drop) statement).getName());
-		} else {
-			tableList = null;
-		}
-		List<String> lowerTableList = new ArrayList<String>();
-		for (String table : tableList) {
-			if (table.contains(".")) {
-				table = table.split("\\.")[1];
-			}
-			lowerTableList.add(table.toLowerCase());
-		}
-		return lowerTableList;
-	}
+//	public List<String> getAllTables() {
+//		List<String> tableList = new ArrayList<String>();
+//		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
+//		if (statement instanceof Select) {
+//			boolean nextval = false;
+//			if (((Select) statement).getSelectBody() instanceof PlainSelect) {
+//				PlainSelect sb = (PlainSelect) ((Select) statement).getSelectBody();
+//				
+//				for (SelectItem si : sb.getSelectItems()) {
+//					if (si instanceof SelectExpressionItem) {
+//						Expression ex = ((SelectExpressionItem) si).getExpression();
+//						if (ex instanceof Function) {
+//							if (((Function) ex).getName().equalsIgnoreCase("nextval")) {
+//								tableList.add("sequences");
+//								nextval = true;
+//							}
+//						}
+//					}
+//				}
+//			}
+//			if (!nextval) {
+//				tableList = tablesNamesFinder.getTableList((Select) statement);
+//			}
+//			
+//			
+//		} else if (statement instanceof Insert) {
+//			tableList = tablesNamesFinder.getTableList((Insert) statement);
+//		} else if (statement instanceof Update) {
+//			tableList = tablesNamesFinder.getTableList((Update) statement);
+//		} else if (statement instanceof CreateTable) {
+//			tableList.add(((CreateTable) statement).getTable().getName());
+//		} else if (statement instanceof Drop) {
+//			tableList.add(((Drop) statement).getName());
+//		} else {
+//			tableList = null;
+//		}
+//		Set<String> lowerTableList = new HashSet<String>();
+//		for (String table : tableList) {
+//			if (table.contains(".")) {
+//				table = table.split("\\.")[1];
+//			}
+//			lowerTableList.add(table.toLowerCase());
+//		}
+//		return new ArrayList<String>(lowerTableList);
+//	}
 
 	public boolean hasWhereOf(String table, String column) {
 		return statement.toString().contains(table) && statement.toString().contains(column);

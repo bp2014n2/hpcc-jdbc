@@ -2,7 +2,9 @@ package de.hpi.hpcc.parsing.insert;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
@@ -75,13 +77,13 @@ public class SQLParserInsert extends SQLParser {
 		return ((Insert) statement).getSelect();
 	}
 	
-	public List<String> getAllTables() {
+	public Set<String> getAllTables() {
 		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
 		List<String> tableList = new ArrayList<String>();
 		tableList = tablesNamesFinder.getTableList((Insert) statement);
 		if (getSelect() != null)
 			tableList.addAll(tablesNamesFinder.getTableList(getSelect()));
-		List<String> lowerTableList = new ArrayList<String>();
+		Set<String> lowerTableList = new HashSet<String>();
 		for (String table : tableList) {
 			if (table.contains(".")) table = table.substring(table.indexOf(".")+1);
 			lowerTableList.add(table.toLowerCase());

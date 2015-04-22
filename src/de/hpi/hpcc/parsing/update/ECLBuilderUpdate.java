@@ -1,7 +1,9 @@
 package de.hpi.hpcc.parsing.update;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
@@ -38,9 +40,9 @@ public class ECLBuilderUpdate extends ECLBuilder {
 
 		StringBuilder eclCode = new StringBuilder();
 		
-		String tableName = sqlParser.getAllTables().get(0).toLowerCase();
-		String fullTableName = tableName.contains(".") ? tableName.replace(".", "::") : "i2b2demodata::" + tableName;
-		ArrayList<String> tableList = new ArrayList<String>();
+		String tableName = sqlParser.getName();
+		String fullTableName = sqlParser.getFullName();
+		Set<String> tableList = new HashSet<String>();
 		tableList.add(fullTableName);
 
 		Expression exist = sqlParser.getExist(sqlParser.getWhere());

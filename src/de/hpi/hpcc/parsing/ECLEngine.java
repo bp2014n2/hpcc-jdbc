@@ -26,7 +26,9 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
+
 import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.main.*;
@@ -157,25 +159,10 @@ public abstract class ECLEngine
     
     protected String generateLayouts(List<String> orderedColumns) {
     	StringBuilder layoutsString = new StringBuilder();
-    	List<String> allTables = getSQLParser().getAllTables();
-    	String table = allTables.get(0);
-		if (table.contains(".")) {
-			table = table.split("\\.")[1];
-		}
-//		layoutsString.append(table+"_record := ");
-		layoutsString.append(eclLayouts.getLayout(table));
-		layoutsString.append("\n");
-		
-		for (int i = 1; i<allTables.size(); i++) {
-			String otherTable = allTables.get(i);
-			if (otherTable.contains(".")) {
-				otherTable = otherTable.split("\\.")[1];
-			}
-//			layoutsString.append(otherTable+"_record := ");
-			layoutsString.append(eclLayouts.getLayout(otherTable));
+		for (String table : getSQLParser().getAllTables()) {
+			layoutsString.append(eclLayouts.getLayout(table));
 			layoutsString.append("\n");
 		}
-		
 		return layoutsString.toString();
     }
     
@@ -184,18 +171,11 @@ public abstract class ECLEngine
     	StringBuilder indicesString = new StringBuilder();
     	boolean usingIndices = false;
     	for (String table : getSQLParser().getAllTables()) {
-    		usingIndices = false;
-    		String tableName = table;
-    		if (table.contains(".")) {
-    			tableName = tableName.split("\\.")[1];
-			} else {
-//				tableName = table;
-				table = "i2b2demodata::"+tableName;
-			}
-    		usingIndices = getIndex(tableName, indicesString);
-			datasetsString.append(tableName).append(usingIndices?"_table":"").append(" := ").append("DATASET(");
-			datasetsString.append("'~").append(table.replaceAll("\\.", "::")).append("'");
-			datasetsString.append(", ").append(tableName+"_record").append(",").append(HPCCEngine).append(");\n");			
+    		String fullTableName = "i2b2demodata::"+table; //TODO: avoid hard coded i2b2demodata
+    		usingIndices = getIndex(table, indicesString);
+			datasetsString.append(table).append(usingIndices?"_table":"").append(" := ").append("DATASET(");
+			datasetsString.append("'~").append(fullTableName).append("'");
+			datasetsString.append(", ").append(table+"_record").append(",").append(HPCCEngine).append(");\n");			
 		}
     	return datasetsString.toString() + indicesString.toString();
     }

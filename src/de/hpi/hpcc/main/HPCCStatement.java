@@ -8,6 +8,7 @@ import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -88,7 +89,7 @@ public class HPCCStatement implements Statement{
 	private boolean checkFederatedDatabase(String sqlStatement) throws SQLException {
 		ECLLayouts eclLayouts = new ECLLayouts(connection.getDatabaseMetaData());
 		SQLParser sqlParser = SQLParser.getInstance(sqlStatement, eclLayouts);
-		List<String> tables = sqlParser.getAllTables();
+		Set<String> tables = sqlParser.getAllTables();
 		
 		if (!federatedDatabase || whiteList.containsAll(tables)) {
 			return false;

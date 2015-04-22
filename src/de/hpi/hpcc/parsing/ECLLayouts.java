@@ -1,9 +1,11 @@
 package de.hpi.hpcc.parsing;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,8 +93,8 @@ public class ECLLayouts {
 		return column.getEclType().toString().toLowerCase().matches("(unsigned.*|integer.*)");
 	}
 	
-	public boolean isColumnOfIntInAnyTable(List<String> tables, String column) {
-		for (String table : tables) {
+	public boolean isColumnOfIntInAnyTable(Set<String> allTables, String column) {
+		for (String table : allTables) {
 			table = getFullTableName(table);
 			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
 			for(String field : dfuFile.getAllTableFieldsStringArray()){
@@ -105,8 +107,8 @@ public class ECLLayouts {
 		return false;
 	}
 	
-	public int getSqlTypeOfColumn (List<String> tables, String column) {
-		for (String table : tables) {
+	public int getSqlTypeOfColumn (Set<String> set, String column) {
+		for (String table : set) {
 			table = getFullTableName(table);
 			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
 			if (dfuFile == null) {

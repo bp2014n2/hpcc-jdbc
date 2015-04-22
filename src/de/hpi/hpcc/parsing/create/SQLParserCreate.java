@@ -3,6 +3,7 @@ package de.hpi.hpcc.parsing.create;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,5 +86,11 @@ public class SQLParserCreate extends SQLParser {
 	@Override
 	public List<String> getQueriedColumns(String table) {
 		return new ArrayList<String>();
+	}
+
+	@Override
+	public Set<String> getAllTables() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

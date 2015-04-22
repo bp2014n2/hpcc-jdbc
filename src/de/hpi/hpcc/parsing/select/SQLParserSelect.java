@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLNameParser;
@@ -26,6 +27,7 @@ import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
+import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserSelect extends SQLParser {
 
@@ -205,5 +207,38 @@ public class SQLParserSelect extends SQLParser {
 		}
 		
 		return columns;
+	}
+
+	@Override
+	public Set<String> getAllTables() {
+		List<String> tableList = new ArrayList<String>();
+		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
+		boolean nextval = false;
+		if (((Select) statement).getSelectBody() instanceof PlainSelect) {
+			PlainSelect sb = (PlainSelect) ((Select) statement).getSelectBody();
+			
+			for (SelectItem si : sb.getSelectItems()) {
+				if (si instanceof SelectExpressionItem) {
+					Expression ex = ((SelectExpressionItem) si).getExpression();
+					if (ex instanceof Function) {
+						if (((Function) ex).getName().equalsIgnoreCase("nextval")) {
+							tableList.add("sequences");
+							nextval = true;
+						}
+					}
+				}
+			}
+		}
+		if (!nextval) {
+			tableList.addAll(tablesNamesFinder.getTableList((Select) statement));
+		}
+		Set<String> lowerTableList = new HashSet<String>();
+		for (String table : tableList) {
+			if (table.contains(".")) {
+				table = table.split("\\.")[1];
+			}
+			lowerTableList.add(table.toLowerCase());
+		}
+		return lowerTableList;
 	}
 }
