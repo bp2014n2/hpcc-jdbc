@@ -16,6 +16,7 @@ public class SQLParserDrop extends SQLParser {
 		try {
 			if (parserManager.parse(new StringReader(sql)) instanceof Drop) {
 				statement = parserManager.parse(new StringReader(sql));
+				((Drop) statement).setName(eclLayouts.getTempTableName(getFullName()));
 			} 
 		} catch (JSQLParserException e) {
 			e.printStackTrace();

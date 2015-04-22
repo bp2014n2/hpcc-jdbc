@@ -152,7 +152,6 @@ public class ECLBuilderSelect extends ECLBuilder {
 	private void generateSelects(SQLParserSelect sqlParser, Boolean inner) {
 		LinkedHashSet<String> selectItemsStrings = new LinkedHashSet<String>();
 		eclCode.append(", ");
-		eclCode.append("{");
 		if(inner) {
 			selectItemsStrings.addAll(createInnerSelectItemsString(sqlParser));
 		}
@@ -164,14 +163,9 @@ public class ECLBuilderSelect extends ECLBuilder {
 				selectItemsStrings.addAll(sqlParser.getAllColumns());
 			}
 		} else {
-			selectItemsStrings.addAll(createSelectItems(sqlParser));	
-	   	}
-	   	String selectItemString = "";
-    	for (String selectItem : selectItemsStrings) {
-    		selectItemString += (selectItemString=="" ? "":", ")+selectItem;
-    	}
-    	eclCode.append(selectItemString);
-    	eclCode.append("}");
+			selectItemsStrings.addAll(createSelectItems(sqlParser));
+		}
+    	eclCode.append(ECLUtils.encapsulateWithCurlyBrackets(ECLUtils.join(selectItemsStrings, ", ")));
 	}
 	
 	private Collection<? extends String> createSelectItems(SQLParserSelect sqlParser) {

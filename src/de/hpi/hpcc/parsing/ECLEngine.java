@@ -41,7 +41,7 @@ public abstract class ECLEngine
 
     private NodeList                resultSchema = null;
     protected HPCCDatabaseMetaData    dbMetadata;
-    private StringBuilder           eclCode = new StringBuilder();
+    protected StringBuilder           eclCode = new StringBuilder();
 	private HPCCConnection			conn;
 	protected List<HPCCColumnMetaData>    expectedretcolumns = null;
     protected HashMap<String, HPCCColumnMetaData> availablecols = null;
@@ -142,8 +142,8 @@ public abstract class ECLEngine
     }
     
     protected String generateLayouts() {
-		StringBuilder layoutsString = new StringBuilder("TIMESTAMP := STRING25;\n");
-		
+		StringBuilder layoutsString = new StringBuilder();
+//		layoutsString.append("TIMESTAMP := STRING25;\n");
 		for (String table : getSQLParser().getAllTables()) {
 			if (table.contains(".")) {
 				table = table.split("\\.")[1];

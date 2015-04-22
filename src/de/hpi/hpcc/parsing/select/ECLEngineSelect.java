@@ -12,7 +12,7 @@ import de.hpi.hpcc.parsing.ECLEngine;
 
 public class ECLEngineSelect extends ECLEngine {
 
-	private StringBuilder           eclCode = new StringBuilder();
+	//private StringBuilder           eclCode = new StringBuilder();
 	private SQLParserSelect sqlParser;
 	
 	public ECLEngineSelect(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
