@@ -80,7 +80,7 @@ public abstract class SQLParser{
 		List<String> tableNameAndAlias = new ArrayList<String>();
 		tableNameAndAlias.add(table);
 		Pattern findAlias = Pattern.compile("from\\s*(\\w+(\\s*(i2b2demodata\\.)?\\w+)?\\s*,\\s*)*(i2b2demodata\\.)?" + table + "\\s*(\\w+)\\s*", Pattern.CASE_INSENSITIVE);
-		Matcher alias = findAlias.matcher(((Select) getStatement()).toString());
+		Matcher alias = findAlias.matcher(getStatement().toString());
 		while (alias.find()) {
 			String aliasName = alias.group(5);
 			if (isValidAlias(aliasName)) {
