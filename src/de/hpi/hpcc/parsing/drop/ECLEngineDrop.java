@@ -34,7 +34,7 @@ public class ECLEngineDrop extends ECLEngine {
    		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(tablePath);
 //   		addFileColsToAvailableCols(hpccQueryFile, availablecols);
    		if(hpccQueryFile != null) {
-   			dbMetadata.removeDFUFile(tablePath);
+   			
    			if(hpccQueryFile.isSuperFile()) {
    				eclCode.append("Std.File.DeleteSuperFile('~"+tablePath+"', TRUE);\n");
    			} else {
@@ -51,6 +51,7 @@ public class ECLEngineDrop extends ECLEngine {
    	    		i++;
    	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, eclLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
    	    	}  	
+   	    	dbMetadata.removeDFUFile(tablePath);
    		} else {
    			/*
    			 * TODO: replace with much, much, much better solution

@@ -2992,6 +2992,18 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 	}
 	
 	public void removeDFUFile(String fullyQualifiedName) {
-		dfuFiles.removeFile(fullyQualifiedName);
+		
+		
+		if (tableExists("", fullyQualifiedName))
+        {
+            HPCCDFUFile file = dfuFiles.getFile(fullyQualifiedName);
+            if (file.isSuperFile() && file.containsSubfiles())
+            {
+                for (String subfile : file.getSubfiles()) {
+                	dfuFiles.removeFile(subfile);
+                }
+            }
+        }
+        dfuFiles.removeFile(fullyQualifiedName);
 	}
 }
