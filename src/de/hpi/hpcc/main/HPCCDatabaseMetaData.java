@@ -16,6 +16,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -66,6 +67,8 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     private int                         pageOffset;
 
     private DocumentBuilderFactory      dbf;
+    
+    private LinkedList<String> tempTables = new LinkedList<String>();
 
     final static String                 PROCEDURE_NAME           = "PROCEDURE_NAME";
     final static String                 TABLE_NAME               = "TABLE_NAME";
@@ -3005,5 +3008,21 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             }
         }
         dfuFiles.removeFile(fullyQualifiedName);
+	}
+	
+	public boolean isTempTable(String tableName) {
+		return tempTables.contains(tableName);
+	}
+
+	public void addTempTable(String tableName) {
+		tempTables.add(tableName);
+	}
+
+	public void removeTempTable(String tableName) {
+		tempTables.remove(tableName);
+	}
+	
+	public String getTableWithSessionID(String tableName) {
+		return tableName+this.connection.getSessionID();
 	}
 }
