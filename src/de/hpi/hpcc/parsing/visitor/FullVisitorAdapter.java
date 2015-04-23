@@ -74,6 +74,7 @@ import net.sf.jsqlparser.statement.replace.Replace;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.AllTableColumns;
 import net.sf.jsqlparser.statement.select.FromItemVisitor;
+import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.LateralSubSelect;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.OrderByVisitor;
@@ -580,6 +581,13 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 		if(plainSelect.getFromItem() != null) {
 			plainSelect.getFromItem().accept(this);
 		}
+		
+		if(plainSelect.getJoins() != null) {
+			for (Join join : plainSelect.getJoins()) {
+				join.getRightItem().accept(this);
+			}
+		}
+		
 		if(plainSelect.getSelectItems() != null) {
 			for(SelectItem selectItem : plainSelect.getSelectItems()) {
 				selectItem.accept(this);
@@ -590,6 +598,7 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 				groupBy.accept(this);
 			}
 		}
+		
 		if(plainSelect.getHaving() != null) {
 			plainSelect.getHaving().accept(this);
 		}
