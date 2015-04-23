@@ -1,34 +1,37 @@
 package de.hpi.hpcc.parsing.insert;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
+import net.sf.jsqlparser.statement.insert.Insert;
 import de.hpi.hpcc.main.HPCCColumnMetaData;
-import de.hpi.hpcc.main.HPCCConnection;
 import de.hpi.hpcc.main.HPCCDFUFile;
-import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLEngine;
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
 public class ECLEngineInsert extends ECLEngine {
 
 	private StringBuilder eclCode = new StringBuilder();
 	private SQLParserInsert sqlParser;
+	private Insert insert;
 	
-	public ECLEngineInsert(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
-		super(conn, dbmetadata);
+	public ECLEngineInsert(Insert insert, ECLLayouts layouts) {
+		super(insert, layouts);
+		this.insert = insert;
 	}
 	
-	public String generateECL(String sqlQuery) throws SQLException{
-		this.sqlParser = getSQLParserInstance(sqlQuery);
+	public String generateECL() throws SQLException{
+		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
+		tempTableParser.replace(insert);
+		this.sqlParser = new SQLParserInsert(insert, layouts);
 		
-    	ECLBuilderInsert eclBuilder = new ECLBuilderInsert(eclLayouts);
-    	eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sqlQuery)+"');\n");
+    	ECLBuilderInsert eclBuilder = new ECLBuilderInsert(insert, layouts);
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'thor');\n");
 //    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
@@ -39,10 +42,11 @@ public class ECLEngineInsert extends ECLEngine {
 		eclCode.append(generateTables());
 		
 		String tablePath = "i2b2demodata::"+ sqlParser.getTable().getName();
-		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
+		//tablePath = checkForTempTable(tablePath);
+		String newTablePath = tablePath + "_" + Long.toString(System.currentTimeMillis());
 		
 		
-		eclCode.append(eclBuilder.generateECL(sqlQuery).replace("%NEWTABLE%",newTablePath));
+		eclCode.append(eclBuilder.generateECL().replace("%NEWTABLE%",newTablePath));
 		
 //		add new subfile to superfile
 		eclCode.append("SEQUENTIAL(\n Std.File.StartSuperFileTransaction(),\n"
@@ -61,7 +65,7 @@ public class ECLEngineInsert extends ECLEngine {
     		}
     		
     		long timeBeforeDFUFile = System.nanoTime();
-    		HPCCDFUFile hpccQueryFile = dbMetadata.getDFUFile(tableName);
+    		HPCCDFUFile hpccQueryFile = layouts.getDFUFile(tableName);
     		long timeAfterDFUFile = System.nanoTime();
     		long timeDifferenceDFUFile = (timeAfterDFUFile-timeBeforeDFUFile)/1000000;
     		HPCCJDBCUtils.traceoutln(Level.INFO, "Time for getting DFUFile: "+timeDifferenceDFUFile);
@@ -73,11 +77,11 @@ public class ECLEngineInsert extends ECLEngine {
     	}
 
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	HashSet<String> columns = eclLayouts.getAllColumns(((SQLParserInsert) sqlParser).getTable().getName());
+    	HashSet<String> columns = layouts.getAllColumns(((SQLParserInsert) sqlParser).getTable().getName());
     	int i=0;
     	for (String column : columns) {
     		i++;
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, eclLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
+    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, layouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
     		
     	} 
     	
@@ -88,19 +92,15 @@ public class ECLEngineInsert extends ECLEngine {
 	protected SQLParserInsert getSQLParser() {
 		return sqlParser;
 	}
-
-	@Override
-	public SQLParserInsert getSQLParserInstance(String sqlQuery) {
-		return new SQLParserInsert(sqlQuery, eclLayouts);
-	}    
 	
-    protected String generateLayouts() {
+	protected String generateLayouts() {
     	StringBuilder layoutsString = new StringBuilder();
-    	String table = getSQLParser().getTable().getName();
-		layoutsString.append(eclLayouts.getLayout(table));
-		layoutsString.append("\n");
-		for (String otherTable : getSQLParser().getAllTables()) {
-			layoutsString.append(eclLayouts.getLayout(otherTable));
+//    	String table = getSQLParser().getTable().getName();
+//		layoutsString.append(layouts.getLayout(table));
+//		layoutsString.append("\n");
+    	Set<String> allTables = getSQLParser().getAllTables();
+		for (String table : allTables) {
+			layoutsString.append(layouts.getLayout(table));
 			layoutsString.append("\n");
 		}
 		return layoutsString.toString();

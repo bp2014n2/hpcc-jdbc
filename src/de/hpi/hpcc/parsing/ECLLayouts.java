@@ -1,9 +1,7 @@
 package de.hpi.hpcc.parsing;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,7 +29,7 @@ public class ECLLayouts {
 	//TODO: isTmpTable, addTmpTable, removeTmpTable
 	
 	public boolean isTempTable(String tableName) {
-		return this.dbMetadata.isTempTable(tableName);
+		return this.dbMetadata.isTempTable(getFullTableName(tableName));
 	}
 	
 	public void addTempTable(String tableName) {
@@ -94,8 +92,8 @@ public class ECLLayouts {
 		return column.getEclType().toString().toLowerCase().matches("(unsigned.*|integer.*)");
 	}
 	
-	public boolean isColumnOfIntInAnyTable(Set<String> allTables, String column) {
-		for (String table : allTables) {
+	public boolean isColumnOfIntInAnyTable(Set<String> tables, String column) {
+		for (String table : tables) {
 			table = getFullTableName(table);
 			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
 			for(String field : dfuFile.getAllTableFieldsStringArray()){
@@ -108,8 +106,8 @@ public class ECLLayouts {
 		return false;
 	}
 	
-	public int getSqlTypeOfColumn (Set<String> set, String column) {
-		for (String table : set) {
+	public int getSqlTypeOfColumn (Set<String> tables, String column) {
+		for (String table : tables) {
 			table = getFullTableName(table);
 			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
 			if (dfuFile == null) {
@@ -125,8 +123,8 @@ public class ECLLayouts {
 		return java.sql.Types.OTHER;
 	}
 	
-	private String getFullTableName(String tableName) {
-		Matcher matcher = Pattern.compile("(~?(\\w+)::)?(\\w+)", Pattern.CASE_INSENSITIVE).matcher(tableName);
+	public String getFullTableName(String tableName) {
+		Matcher matcher = Pattern.compile("(~?(\\w+)::)?([\\w\\-]+)", Pattern.CASE_INSENSITIVE).matcher(tableName);
 		String schema = "i2b2demodata";
 		if (matcher.find()) {
 			if (matcher.group(2) != null) {
@@ -169,31 +167,62 @@ public class ECLLayouts {
     }
 	
 	public boolean hasIndex(String tableName) {
-		return dbMetadata.getDFUFile(getFullTableName(tableName)).hasRelatedIndexes();
+		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(getFullTableName(tableName));
+		if (dfuFile != null) {
+			return dfuFile.hasRelatedIndexes();
+		}
+		return false;
 	}
 
-	public String getLayoutOrdered(String table, List<String> orderedColumns) {
-		String name = getFullTableName(table);
-		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");
-		
-		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
-		List<Object> fields = Collections.list(dfuFile.getAllFields());
-		
-		for (String columnName : orderedColumns) {
-			for (Object field : fields) {
-				HPCCColumnMetaData column = (HPCCColumnMetaData) field;
-				if (!column.getColumnName().equalsIgnoreCase(columnName)) {
-					continue;
-				}
-				layout.append(column.getEclType());
-				layout.append(" ");
-				layout.append(column.getColumnName());
-				layout.append("; ");
-			}
-		}
-		layout.append("END;");
-		
-		return layout.toString();
+	public HPCCDFUFile getDFUFile(String hpccfilename) {
+		return dbMetadata.getDFUFile(hpccfilename);
 	}
+
+	public void removeDFUFile(String hpccfilename) {
+		dbMetadata.removeDFUFile(hpccfilename);
+	}
+	
+	public String checkForTempTable(String tablePath) {
+    	if (isTempTable(tablePath)) {
+    		tablePath = getFullTempTableName(tablePath);
+    	}
+    	return tablePath;
+    }
+	
+	public String getFullTempTableName(String tableName) {
+		return this.dbMetadata.getTableWithSessionID(tableName);
+	}
+	
+	public String getShortTempTableName(String tableName) {
+		String[] fullTempTableName = getFullTempTableName(tableName).split("::");
+		if (fullTempTableName.length > 1) {
+			return fullTempTableName[1];
+		}
+		return fullTempTableName[0];
+	}
+	
+//	public String getLayoutOrdered(String table, List<String> orderedColumns) {
+//		String name = getFullTableName(table);
+//		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");
+//		
+//		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
+//		List<Object> fields = Collections.list(dfuFile.getAllFields());
+//		
+//		for (String columnName : orderedColumns) {
+//			for (Object field : fields) {
+//				HPCCColumnMetaData column = (HPCCColumnMetaData) field;
+//				if (!column.getColumnName().equalsIgnoreCase(columnName)) {
+//					continue;
+//				}
+//				layout.append(column.getEclType());
+//				layout.append(" ");
+//				layout.append(column.getColumnName());
+//				layout.append("; ");
+//			}
+//		}
+//		layout.append("END;");
+//		
+//		return layout.toString();
+//	}
 
 }

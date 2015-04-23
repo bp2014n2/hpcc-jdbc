@@ -1,30 +1,21 @@
 package de.hpi.hpcc.parsing.drop;
 
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
-import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.drop.Drop;
 
 public class SQLParserDrop extends SQLParser {
 
-	public SQLParserDrop(String sql, ECLLayouts layouts) {
-		super(sql, layouts);
-		try {
-			if (parserManager.parse(new StringReader(sql)) instanceof Drop) {
-				statement = parserManager.parse(new StringReader(sql));
-			} 
-		} catch (JSQLParserException e) {
-			e.printStackTrace();
-		}
+	private Drop drop;
+
+	public SQLParserDrop(Drop statement, ECLLayouts layouts) {
+		super(statement, layouts);
+		this.drop = statement;
 	}
 	
 	public String getName() {
-		return ((Drop) statement).getName();
+		return drop.getName();
 	}
 	
 	public String getFullName() {
@@ -32,13 +23,7 @@ public class SQLParserDrop extends SQLParser {
 	}
 
 	@Override
-	public List<String> getQueriedColumns(String table) {
-		return new ArrayList<String>();
-	}
-
-	@Override
-	public Set<String> getAllTables() {
-		// TODO Auto-generated method stub
-		return null;
+	protected Statement getStatement() {
+		return drop;
 	}
 }

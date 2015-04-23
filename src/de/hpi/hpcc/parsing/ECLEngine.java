@@ -18,98 +18,41 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package de.hpi.hpcc.parsing;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
+
+import net.sf.jsqlparser.statement.Statement;
 
 import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.main.*;
-import de.hpi.hpcc.parsing.create.ECLEngineCreate;
-import de.hpi.hpcc.parsing.drop.ECLEngineDrop;
-import de.hpi.hpcc.parsing.insert.ECLEngineInsert;
-import de.hpi.hpcc.parsing.select.ECLEngineSelect;
-import de.hpi.hpcc.parsing.update.ECLEngineUpdate;
 
 public abstract class ECLEngine
 {
 
     private NodeList                resultSchema = null;
-    protected HPCCDatabaseMetaData    dbMetadata;
-    private StringBuilder           eclCode = new StringBuilder();
-	private HPCCConnection			conn;
 	protected List<HPCCColumnMetaData>    expectedretcolumns = null;
     protected HashMap<String, HPCCColumnMetaData> availablecols = null;
     private static final String			HPCCEngine = "THOR";
-    protected ECLLayouts eclLayouts;
+	protected ECLLayouts layouts;
+	protected final static String EMPTY_QUERY = "OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n";
 
-    public ECLEngine(HPCCConnection conn, HPCCDatabaseMetaData dbmetadata) {
-        this.dbMetadata = dbmetadata;
-        this.conn = conn;
-        this.eclLayouts = new ECLLayouts(dbMetadata);
-    }
-    
-    abstract protected SQLParser getSQLParser();
-    abstract public SQLParser getSQLParserInstance(String sqlQuery);
-    
-    public static ECLEngine getInstance (HPCCConnection conn, HPCCDatabaseMetaData dbMetadata, String sqlQuery) throws SQLException{
-    	switch(SQLParser.sqlIsInstanceOf(sqlQuery)) {
-    	case SELECT:
-    		return new ECLEngineSelect(conn, dbMetadata);
-    	case INSERT:
-    		return new ECLEngineInsert(conn, dbMetadata);
-    	case UPDATE:
-    		return new ECLEngineUpdate(conn, dbMetadata);
-    	case DROP:
-    		return new ECLEngineDrop(conn, dbMetadata);
-    	case CREATE:
-    		return new ECLEngineCreate(conn, dbMetadata);
-    	default:
-    		System.out.println("type of sql not recognized"+SQLParser.sqlIsInstanceOf(sqlQuery));
-    		throw new SQLException();
-    	}
+    public ECLEngine(Statement statement, ECLLayouts layouts) {
+        this.layouts = layouts;
     }
 
-    public String parseEclCode(String sqlQuery) throws SQLException{
-		sqlQuery = convertToAppropriateSQL(sqlQuery);
-		eclCode = new StringBuilder(generateECL(sqlQuery));
-		StringBuilder sb = new StringBuilder();
-
-		sb.append("&eclText=\n");
-		sb.append(eclCode.toString());
-		sb.append("\n\n//"+eclMetaEscape(sqlQuery));
-//			System.out.println(sb.toString());
-		return sb.toString();
-    }
+	public abstract String generateECL() throws SQLException;
     
-    public String convertToAppropriateSQL(String sql) throws SQLException {
-    	if(sql.toLowerCase().contains("nextval")){
-			String sequence = sql.substring(sql.indexOf('(')+2, sql.indexOf(')')-1);
-			ECLEngine updateEngine = new ECLEngineUpdate(conn, dbMetadata);
-			conn.sendRequest(updateEngine.parseEclCode("update sequences set value = value + 1 where name = '"+sequence+"'"));
-			sql = "select value as nextval from sequences where name = '"+sequence+"'";
-		}
-		return sql;
-	}
+    protected abstract SQLParser getSQLParser();
 	
 	 public List<HPCCColumnMetaData> getExpectedRetCols() {
         return expectedretcolumns;
     }
-    
-    /**
-     * Returns the current ECLCode as String. Is used in tests to check the correctness of the code generation. 
-     * @return		eclCode as String
-     */
-    public String getEclCode() {
-		return eclCode.toString();
-	}
 
     protected void addFileColsToAvailableCols(HPCCDFUFile dfufile, HashMap<String, HPCCColumnMetaData> availablecols) {
     	Enumeration<?> fields = dfufile.getAllFields();
@@ -118,40 +61,20 @@ public abstract class ECLEngine
 	        availablecols.put(col.getTableName().toLowerCase() + "." + col.getColumnName().toLowerCase(), col);
 	    }
     }
-
-    public NodeList executeSelectConstant() throws HPCCException{
-        try {
-            long startTime = System.currentTimeMillis();
-
-            HttpURLConnection conn = this.conn.createHPCCESPConnection(this.conn.generateUrl());
-            return this.conn.parseDataset(conn.getInputStream(), startTime);
-        }
-        catch (IOException e){
-            throw new HPCCException("Failed to initialize Connection");
-        }
-    }
-    
-    public abstract String generateECL(String sqlQuery) throws SQLException;
-    
-	protected String eclMetaEscape(String sqlQuery) {
-		sqlQuery = sqlQuery.replace("'", "\\'");
-		sqlQuery = sqlQuery.replace("\n", " ");
-		return sqlQuery;
-	}
     
     protected String generateImports() {
     	return "IMPORT STD;\n";
     }
     
     protected String generateLayouts() {
-		StringBuilder layoutsString = new StringBuilder("TIMESTAMP := STRING25;\n");
-		
+		StringBuilder layoutsString = new StringBuilder();
+
 		for (String table : getSQLParser().getAllTables()) {
 			if (table.contains(".")) {
 				table = table.split("\\.")[1];
 			}
 			
-			layoutsString.append(eclLayouts.getLayout(table));
+			layoutsString.append(layouts.getLayout(table));
 			layoutsString.append("\n");	
 		}
 		return layoutsString.toString();
@@ -178,9 +101,9 @@ public abstract class ECLEngine
     	 
 		case "observation_fact":
 			indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd,encounter_num,patient_num,provider_id,start_date,modifier_cd,instance_num,valtype_cd,tval_char,valueflag_cd,vunits_cd,end_date,location_cd,update_date,download_date,import_date,sourcesystem_cd,upload_id}, {}, '~i2b2demodata::observation_fact_idx_all');\n");
-//			if(sqlParser.hasWhereOf("observation_fact","concept_cd") && !sqlParser.hasWhereOf("observation_fact","provider_id")) {
+//			if(getSQLParser().hasWhereOf("observation_fact","concept_cd") && !getSQLParser().hasWhereOf("observation_fact","provider_id")) {
 //				indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd}, {patient_num, modifier_cd, valtype_cd, tval_char, start_date}, '~i2b2demodata::observation_fact_idx_inverted_concept_cd');\n");
-//			} else if(sqlParser.hasWhereOf("observation_fact","provider_id")) {
+//			} else if(getSQLParser().hasWhereOf("observation_fact","provider_id")) {
 //				indicesString.append("observation_fact := INDEX(observation_fact_table, {provider_id}, {modifier_cd, valtype_cd, tval_char, start_date, patient_num}, '~i2b2demodata::observation_fact_idx_inverted_provider_id_all');\n");
 //			} else
 //				indicesString.append("observation_fact := INDEX(observation_fact_table, {start_date,concept_cd, modifier_cd,valtype_cd,tval_char,patient_num},{}, '~i2b2demodata::observation_fact_idx_start_date');\n");
@@ -195,14 +118,14 @@ public abstract class ECLEngine
 		default: return false; 
 		}
 		*/
-    	boolean hasIndex = eclLayouts.hasIndex(tableName);
+    	boolean hasIndex = layouts.hasIndex(tableName);
     	if (hasIndex) {
-        	List<String> indexes = eclLayouts.getListOfIndexes(tableName);
+        	List<String> indexes = layouts.getListOfIndexes(tableName);
     		List<String> columns = getSQLParser().getQueriedColumns(tableName);
         	ArrayList<Integer> scores = new ArrayList<Integer>();
         	for (String index : indexes) {
-            	List<Object> indexColumns = new ArrayList<Object>(eclLayouts.getKeyedColumns(index));
-            	List<Object> nonKeyedColumns = new ArrayList<Object>(eclLayouts.getNonKeyedColumns(index));
+            	List<Object> indexColumns = new ArrayList<Object>(layouts.getKeyedColumns(index));
+            	List<Object> nonKeyedColumns = new ArrayList<Object>(layouts.getNonKeyedColumns(index));
             	indexColumns.addAll(nonKeyedColumns);
             	if (!indexColumns.containsAll(columns)) scores.add(0);
             	else scores.add(10 + columns.size() - indexColumns.size());
@@ -218,10 +141,10 @@ public abstract class ECLEngine
     private String getIndexString(String tableName, String index) {
     	List<String> indexParameters = new ArrayList<String>();
     	indexParameters.add(tableName+"_table");
-    	String keyedColumnList = ECLUtils.join(eclLayouts.getKeyedColumns(index), ", ");
+    	String keyedColumnList = ECLUtils.join(layouts.getKeyedColumns(index), ", ");
     	keyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(keyedColumnList);
     	indexParameters.add(keyedColumnList);
-    	String nonKeyedColumnList = ECLUtils.join(eclLayouts.getNonKeyedColumns(index), ", ");
+    	String nonKeyedColumnList = ECLUtils.join(layouts.getNonKeyedColumns(index), ", ");
     	nonKeyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(nonKeyedColumnList);
     	indexParameters.add(nonKeyedColumnList);
     	indexParameters.add(ECLUtils.encapsulateWithSingleQuote("~"+index));
@@ -253,4 +176,13 @@ public abstract class ECLEngine
     {
         return resultSchema;
     }
+    
+    /*
+    public String checkForTempTable(String tablePath) {
+    	if (eclLayouts.isTempTable(tablePath)) {
+    		tablePath = eclLayouts.getTempTableName(tablePath);
+    	}
+    	return tablePath;
+    }
+    */
 }

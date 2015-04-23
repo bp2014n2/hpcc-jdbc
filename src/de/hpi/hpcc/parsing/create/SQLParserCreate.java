@@ -1,37 +1,40 @@
 package de.hpi.hpcc.parsing.create;
 
-import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
-import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 public class SQLParserCreate extends SQLParser {
 	
-	public SQLParserCreate(String sql, ECLLayouts eclLayouts) {
-		super(sql, eclLayouts);
-		try {
-			if (parserManager.parse(new StringReader(sql)) instanceof CreateTable) {
-				statement = parserManager.parse(new StringReader(sql));
-			} 
-		} catch (JSQLParserException e) {
-			e.printStackTrace();
-		}
+	private CreateTable create;
+
+	public SQLParserCreate(CreateTable statement, ECLLayouts eclLayouts) {
+		super(statement, eclLayouts);
+		this.create = statement;
 	}
 	
 	public String getTableName() {
-		return ((CreateTable) statement).getTable().getName();
+		return create.getTable().getName();
+	}
+	
+	public boolean isTempTable() {
+		CreateTable create = (CreateTable) getStatement();
+		List<String> createOptions = create.getCreateOptionsStrings();
+		if (createOptions != null && HPCCJDBCUtils.containsStringCaseInsensitive(createOptions, "temp")) {
+			return true;
+		}
+		return false;
 	}
 	
 	public String getRecord() {
-		List<ColumnDefinition> columns = ((CreateTable) statement).getColumnDefinitions();
+		List<ColumnDefinition> columns = create.getColumnDefinitions();
 		String records = "";
 		for(ColumnDefinition column : columns) {
 			records += (records == ""?"":", ");
@@ -84,13 +87,7 @@ public class SQLParserCreate extends SQLParser {
 	}
 
 	@Override
-	public List<String> getQueriedColumns(String table) {
-		return new ArrayList<String>();
-	}
-
-	@Override
-	public Set<String> getAllTables() {
-		// TODO Auto-generated method stub
-		return null;
+	protected Statement getStatement() {
+		return create;
 	}
 }

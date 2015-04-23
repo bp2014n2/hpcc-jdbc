@@ -1,37 +1,28 @@
 package de.hpi.hpcc.parsing.update;
 
-import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
-import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.update.Update;
-import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserUpdate extends SQLParser {
 
-	public SQLParserUpdate(String sql, ECLLayouts eclLayouts) {
-		super(sql, eclLayouts);
-		try {
-			if (parserManager.parse(new StringReader(sql)) instanceof Update) {
-				statement = parserManager.parse(new StringReader(sql));
-			} 
-		} catch (JSQLParserException e) {
-			e.printStackTrace();
-		}
+	private Update update;
+
+	public SQLParserUpdate(Update update, ECLLayouts eclLayouts) {
+		super(update, eclLayouts);
+		this.update = update;
 	}
 	
 	public String getName() {
-		return ((Update) statement).getTables().get(0).getName();
+		return update.getTables().get(0).getName();
 	}
 	
 	public String getFullName() {
@@ -39,24 +30,25 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	public Expression getWhere() {
-		return ((Update) statement).getWhere();
+		return update.getWhere();
 	}
 	
 	public Expression getWhereWithoutExists() {
-		return deleteExist(((Update) statement).getWhere());
+		return deleteExist(update.getWhere());
 	}
 	
 	private Expression deleteExist(Expression expr) {
 		if (expr instanceof BinaryExpression) {
-			Expression l = deleteExist(((BinaryExpression) expr).getLeftExpression());
-			Expression r = deleteExist(((BinaryExpression) expr).getRightExpression());
+			BinaryExpression be = (BinaryExpression) expr;
+			Expression l = deleteExist(be.getLeftExpression());
+			Expression r = deleteExist(be.getRightExpression());
 			if (l == null) {
-				expr = ((BinaryExpression) expr).getRightExpression();
+				expr = be.getRightExpression();
 			} else if (r == null) {
-				expr = ((BinaryExpression) expr).getLeftExpression();
+				expr = be.getLeftExpression();
 			} else {
-				((BinaryExpression)expr).setLeftExpression(l);
-				((BinaryExpression)expr).setRightExpression(r);
+				be.setLeftExpression(l);
+				be.setRightExpression(r);
 			}
 		} else if (expr instanceof ExistsExpression) {
 			return null;
@@ -65,27 +57,31 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	public boolean hasExist() {
-		return getExist(((Update) statement).getWhere()) == null;
+		return getExist(update.getWhere()) == null;
 	}
 	
 	public Expression getExist(Expression expr) {
-		if (expr instanceof ExistsExpression) 
+		if (expr instanceof ExistsExpression) {
 			return expr;
-		else if (expr instanceof BinaryExpression) 
-			if (getExist(((BinaryExpression) expr).getLeftExpression()) != null)
-				return getExist(((BinaryExpression) expr).getLeftExpression());
-			else if (getExist(((BinaryExpression) expr).getRightExpression()) != null)
-				return getExist(((BinaryExpression) expr).getRightExpression());
+		} else if (expr instanceof BinaryExpression) {
+			BinaryExpression be = (BinaryExpression) expr;
+			if (getExist(be.getLeftExpression()) != null) {
+				return getExist(be.getLeftExpression());
+			}
+			else if (getExist(be.getRightExpression()) != null) {
+				return getExist(be.getRightExpression());
+			}
+		}
 		return null;
 	}
 	
 	public LinkedHashSet<String> getAllCoumns() {
-		String table = ((Update) statement).getTables().get(0).getName();
+		String table = update.getTables().get(0).getName();
 		return eclLayouts.getAllColumns(table);
 	}
 	
 	public List<String> getColumns() {
-		List<Column> columns = ((Update) statement).getColumns();
+		List<Column> columns = update.getColumns();
 		List<String> columnNames = new ArrayList<String>();
 		for (Column column : columns) {
 			columnNames.add(column.getColumnName());
@@ -94,7 +90,7 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	public ArrayList<Expression> getExpressions() {
-		return (ArrayList<Expression>) ((Update) statement).getExpressions();
+		return (ArrayList<Expression>) update.getExpressions();
 	}
 
 	public boolean isIncrement() {
@@ -102,7 +98,7 @@ public class SQLParserUpdate extends SQLParser {
 	}
 
 	public List<String> getColumnsToLowerCase() {
-		List<Column> columns = ((Update) statement).getColumns();
+		List<Column> columns = update.getColumns();
 		List<String> columnNames = new ArrayList<String>();
 		for (Column column : columns) {
 			columnNames.add(column.getColumnName().toLowerCase());
@@ -111,23 +107,7 @@ public class SQLParserUpdate extends SQLParser {
 	}
 
 	@Override
-	public List<String> getQueriedColumns(String table) {
-		List<String> columns = findColumns(getTableNameAndAlias(table), ((Update) statement).getWhere());
-		return columns;
-	}
-
-	@Override
-	public Set<String> getAllTables() {
-		List<String> tableList = new ArrayList<String>();
-		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
-		tableList = tablesNamesFinder.getTableList((Update) statement);
-		Set<String> lowerTableList = new HashSet<String>();
-		for (String table : tableList) {
-			if (table.contains(".")) {
-				table = table.split("\\.")[1];
-			}
-			lowerTableList.add(table.toLowerCase());
-		}
-		return lowerTableList;
+	protected Statement getStatement() {
+		return update;
 	}
 }

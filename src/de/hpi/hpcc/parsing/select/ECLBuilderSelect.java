@@ -10,29 +10,49 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.Limit;
 import net.sf.jsqlparser.statement.select.OrderByElement;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
+import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.ECLNameParser;
-import de.hpi.hpcc.parsing.ECLSelectParser;
 import de.hpi.hpcc.parsing.ECLUtils;
+import de.hpi.hpcc.parsing.SQLParser;
+import de.hpi.hpcc.parsing.visitor.ECLNameParser;
+import de.hpi.hpcc.parsing.visitor.ECLSelectParser;
 
 public class ECLBuilderSelect extends ECLBuilder {
 
 	
 	protected SQLParserSelect sqlParser;
+	private Select select;
 	
 	
-	public ECLBuilderSelect(ECLLayouts eclLayouts) {
-		super(eclLayouts);
-		// TODO Auto-generated constructor stub
+	public ECLBuilderSelect(Select select, ECLLayouts eclLayouts) {
+		super(select, eclLayouts);
+		this.select = select;
 	}
 	
+
+	public ECLBuilderSelect(SelectBody table, ECLLayouts eclLayouts) {
+		super(null, eclLayouts);
+		try {
+			Statement statement = SQLParser.parse(table.toString());
+			if(statement instanceof Select) {
+				this.select = (Select) statement;
+			}
+		} catch (HPCCException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 
 	//	private boolean hasAlias = false;
 	/**
@@ -42,8 +62,8 @@ public class ECLBuilderSelect extends ECLBuilder {
 	 * @param sql
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
-	public String generateECL(String sql) {
-		sqlParser = new SQLParserSelect(sql, eclLayouts);
+	public String generateECL() {
+		sqlParser = new SQLParserSelect(select, eclLayouts);
 		eclCode = new StringBuilder();
 		
     	generateFrom(sqlParser);
@@ -126,8 +146,7 @@ public class ECLBuilderSelect extends ECLBuilder {
 				eclCode.append(((Table) table).getName());
 	    	} else if (table instanceof SubSelect){
 	    		eclCode.append("(");
-	    		String innerStatement = sqlParser.trimInnerStatement(table.toString());
-	    		eclCode.append(new ECLBuilderSelect(eclLayouts).generateECL(innerStatement));
+	    		eclCode.append(new ECLBuilderSelect(((SubSelect) table).getSelectBody(), eclLayouts).generateECL());
 	    		eclCode.append(")");
 	    	}
 		}
@@ -152,7 +171,6 @@ public class ECLBuilderSelect extends ECLBuilder {
 	private void generateSelects(SQLParserSelect sqlParser, Boolean inner) {
 		LinkedHashSet<String> selectItemsStrings = new LinkedHashSet<String>();
 		eclCode.append(", ");
-		eclCode.append("{");
 		if(inner) {
 			selectItemsStrings.addAll(createInnerSelectItemsString(sqlParser));
 		}
@@ -164,14 +182,9 @@ public class ECLBuilderSelect extends ECLBuilder {
 				selectItemsStrings.addAll(sqlParser.getAllColumns());
 			}
 		} else {
-			selectItemsStrings.addAll(createSelectItems(sqlParser));	
-	   	}
-	   	String selectItemString = "";
-    	for (String selectItem : selectItemsStrings) {
-    		selectItemString += (selectItemString=="" ? "":", ")+selectItem;
-    	}
-    	eclCode.append(selectItemString);
-    	eclCode.append("}");
+			selectItemsStrings.addAll(createSelectItems(sqlParser));
+		}
+    	eclCode.append(ECLUtils.encapsulateWithCurlyBrackets(ECLUtils.join(selectItemsStrings, ", ")));
 	}
 	
 	private Collection<? extends String> createSelectItems(SQLParserSelect sqlParser) {

@@ -1,15 +1,8 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.visitor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
-import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.CaseExpression;
 import net.sf.jsqlparser.expression.CastExpression;
 import net.sf.jsqlparser.expression.DateValue;
@@ -61,29 +54,12 @@ import net.sf.jsqlparser.expression.operators.relational.PostgreSQLFromForExpres
 import net.sf.jsqlparser.expression.operators.relational.RegExpMatchOperator;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.statement.Statement;
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
-import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
-public class ECLColumnFinder implements ExpressionVisitor {
+public class ECLNameParser implements ExpressionVisitor {
 
-	private List<String> columns = new ArrayList<String>();
-	private List<String> tableNameAndAlias;
-	private ECLLayouts eclLayouts;
-	private Statement statement;
-
-	public List<String> find(Expression expression) {
-		expression.accept(this);
-		return columns;
-	}
+	private String name = "";
 	
-	public ECLColumnFinder(ECLLayouts eclLayouts, Statement statement, List<String> tableNameAndAlias) {
-		this.eclLayouts = eclLayouts;
-		this.statement = statement;
-		this.tableNameAndAlias = tableNameAndAlias;
-	}
-
 	@Override
 	public void visit(NullValue nullValue) {
 		// TODO Auto-generated method stub
@@ -92,8 +68,7 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(Function function) {
-		// TODO Auto-generated method stub
-		
+		name = "func_" + function.getName();
 	}
 
 	@Override
@@ -146,7 +121,8 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(Parenthesis parenthesis) {
-		parenthesis.getExpression().accept(this);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
@@ -181,12 +157,14 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(AndExpression andExpression) {
-		visitBinaryExpression(andExpression);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(OrExpression orExpression) {
-		visitBinaryExpression(orExpression);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
@@ -197,25 +175,26 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(EqualsTo equalsTo) {
-		visitBinaryExpression(equalsTo);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(GreaterThan greaterThan) {
-		visitBinaryExpression(greaterThan);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(GreaterThanEquals greaterThanEquals) {
-		visitBinaryExpression(greaterThanEquals);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(InExpression inExpression) {
-		inExpression.getLeftExpression().accept(this);
-		if (inExpression.getRightItemsList() instanceof SubSelect) {
-			((SubSelect) inExpression.getRightItemsList()).accept(this);
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
@@ -232,55 +211,31 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(MinorThan minorThan) {
-		visitBinaryExpression(minorThan);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(MinorThanEquals minorThanEquals) {
-		visitBinaryExpression(minorThanEquals);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(NotEqualsTo notEqualsTo) {
-		visitBinaryExpression(notEqualsTo);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(Column tableColumn) {
-		String columnName = tableColumn.getColumnName();
-		String tableName = tableColumn.getTable().getName();
-		if (tableName != null) {
-			if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase()) && !columns.contains(columnName)) {
-				columns.add(columnName);
-			}
-		} else {
-			Pattern selectPattern = Pattern.compile("select\\s*(distinct\\s*)?((((count|sum|avg)\\(\\w*\\))|\\w*)\\s*,\\s*)*("+ columnName +"\\s*|(count|sum|avg)\\(\\s*"+ columnName +"\\s*\\))\\s*(as\\s*\\w*\\s*)?(,\\s*((count|sum|avg)\\(\\w*\\)|\\w*)\\s*(as\\s*\\w*\\s*)?)*from\\s*(\\w*\\.)?(\\w*)",Pattern.CASE_INSENSITIVE);
-			Pattern wherePattern = Pattern.compile("from\\s*(\\w*\\.)?(\\w*)(\\s*\\w*)?\\s*where\\s*(\\(?(\\w*\\.)?\\w*\\s*((=|<=|>=)\\s*'?\\w*'?|in\\s*\\([\\w\\s\\\\'%\\.\\-]*\\))\\s*\\)?\\s*(and|or)\\s*)*\\(?" + columnName,Pattern.CASE_INSENSITIVE);
-			Matcher selectMatcher = selectPattern.matcher(statement.toString());
-			Matcher whereMatcher = wherePattern.matcher(statement.toString());
-			if (selectMatcher.find()) {
-				tableName = selectMatcher.group(14);
-			} else if (whereMatcher.find()) {
-				tableName = whereMatcher.group(2);
-			}
-			if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase())) {
-				columns.add(columnName);
-			}
-		}
+		name = tableColumn.getColumnName();
 	}
 
 	@Override
 	public void visit(SubSelect subSelect) {
-		SQLParserSelect selectParser = new SQLParserSelect(subSelect.getSelectBody().toString(), eclLayouts);
-		for (SelectItem selectItem : selectParser.getSelectItems()) {
-			columns.addAll(find(((SelectExpressionItem) selectItem).getExpression()));
-		}
-		if (selectParser.getWhere() != null) {
-			columns.addAll(find((Expression) selectParser.getWhere()));
-		}
-		if (selectParser.getFromItem() instanceof SubSelect) {
-			columns.addAll(find((Expression) selectParser.getFromItem()));
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
@@ -297,7 +252,8 @@ public class ECLColumnFinder implements ExpressionVisitor {
 
 	@Override
 	public void visit(ExistsExpression existsExpression) {
-		existsExpression.getRightExpression().accept(this);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
@@ -414,16 +370,15 @@ public class ECLColumnFinder implements ExpressionVisitor {
 		
 	}
 	
-	private void visitBinaryExpression(BinaryExpression binaryExpression) {
-		binaryExpression.getLeftExpression().accept(this);
-		binaryExpression.getRightExpression().accept(this);
+	public String name(Expression expression) {
+		expression.accept(this);
+		return name;
 	}
 
 	@Override
 	public void visit(PostgreSQLFromForExpression postgreSQLFromForExpression) {
-		postgreSQLFromForExpression.getSourceExpression().accept(this);
-		postgreSQLFromForExpression.getFromExpression().accept(this);
-		postgreSQLFromForExpression.getForExpression().accept(this);
+		// TODO Auto-generated method stub
+		
 	}
 
 }

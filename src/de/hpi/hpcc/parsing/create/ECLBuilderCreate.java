@@ -1,13 +1,17 @@
 package de.hpi.hpcc.parsing.create;
 
+import net.sf.jsqlparser.statement.create.table.CreateTable;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
 
 
 public class ECLBuilderCreate extends ECLBuilder {
 	
-	public ECLBuilderCreate(ECLLayouts eclLayouts) {
-		super(eclLayouts);
+	private CreateTable create;
+
+	public ECLBuilderCreate(CreateTable create, ECLLayouts eclLayouts) {
+		super(create, eclLayouts);
+		this.create = create;
 	}
 	private SQLParserCreate sqlParser;
 	
@@ -16,8 +20,8 @@ public class ECLBuilderCreate extends ECLBuilder {
 	 * @param sql
 	 * @return returns ECL code as String, including layout definitions and imports 
 	 */
-	public String generateECL(String sql) {
-		sqlParser = new SQLParserCreate(sql, eclLayouts);
+	public String generateECL() {
+		sqlParser = new SQLParserCreate(create, eclLayouts);
 		eclCode = new StringBuilder();
 		eclCode.append("OUTPUT(DATASET([],{");
 		String recordString = sqlParser.getRecord();
