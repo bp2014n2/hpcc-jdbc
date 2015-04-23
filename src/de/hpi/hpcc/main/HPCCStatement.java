@@ -21,6 +21,7 @@ import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLParser;
 import de.hpi.hpcc.parsing.SQLParser;
+import de.hpi.hpcc.parsing.visitor.ECLTableFinder;
 
 public class HPCCStatement implements Statement{
 	protected static final Logger logger = HPCCLogger.getLogger();
@@ -91,8 +92,8 @@ public class HPCCStatement implements Statement{
 	
 	private boolean checkFederatedDatabase(String sqlStatement) throws SQLException {
 		ECLLayouts eclLayouts = new ECLLayouts(connection.getDatabaseMetaData());
-		SQLParser sqlParser = SQLParser.getInstance(sqlStatement, eclLayouts);
-		Set<String> tables = sqlParser.getAllTables();
+		ECLTableFinder tableFinder = new ECLTableFinder();
+		Set<String> tables = tableFinder.find(SQLParser.parse(sqlStatement));
 		
 		if (!federatedDatabase || whiteList.containsAll(tables)) {
 			return false;

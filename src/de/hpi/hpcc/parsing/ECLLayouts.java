@@ -167,7 +167,11 @@ public class ECLLayouts {
     }
 	
 	public boolean hasIndex(String tableName) {
-		return dbMetadata.getDFUFile(getFullTableName(tableName)).hasRelatedIndexes();
+		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(getFullTableName(tableName));
+		if (dfuFile != null) {
+			return dfuFile.hasRelatedIndexes();
+		}
+		return false;
 	}
 
 	public HPCCDFUFile getDFUFile(String hpccfilename) {

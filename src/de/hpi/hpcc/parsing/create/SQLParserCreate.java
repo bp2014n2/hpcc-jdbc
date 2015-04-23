@@ -1,8 +1,6 @@
 package de.hpi.hpcc.parsing.create;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,12 +89,5 @@ public class SQLParserCreate extends SQLParser {
 	@Override
 	protected Statement getStatement() {
 		return create;
-	}
-
-	@Override
-	protected Set<String> primitiveGetAllTables() {		
-		Set<String> tables = new HashSet<String>();
-		tables.add(create.getTable().getName());
-		return tables;
 	}
 }

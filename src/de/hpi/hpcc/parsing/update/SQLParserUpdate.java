@@ -1,11 +1,8 @@
 package de.hpi.hpcc.parsing.update;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.expression.BinaryExpression;
@@ -14,7 +11,6 @@ import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.update.Update;
-import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserUpdate extends SQLParser {
 
@@ -43,15 +39,16 @@ public class SQLParserUpdate extends SQLParser {
 	
 	private Expression deleteExist(Expression expr) {
 		if (expr instanceof BinaryExpression) {
-			Expression l = deleteExist(((BinaryExpression) expr).getLeftExpression());
-			Expression r = deleteExist(((BinaryExpression) expr).getRightExpression());
+			BinaryExpression be = (BinaryExpression) expr;
+			Expression l = deleteExist(be.getLeftExpression());
+			Expression r = deleteExist(be.getRightExpression());
 			if (l == null) {
-				expr = ((BinaryExpression) expr).getRightExpression();
+				expr = be.getRightExpression();
 			} else if (r == null) {
-				expr = ((BinaryExpression) expr).getLeftExpression();
+				expr = be.getLeftExpression();
 			} else {
-				((BinaryExpression)expr).setLeftExpression(l);
-				((BinaryExpression)expr).setRightExpression(r);
+				be.setLeftExpression(l);
+				be.setRightExpression(r);
 			}
 		} else if (expr instanceof ExistsExpression) {
 			return null;
@@ -64,13 +61,17 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	public Expression getExist(Expression expr) {
-		if (expr instanceof ExistsExpression) 
+		if (expr instanceof ExistsExpression) {
 			return expr;
-		else if (expr instanceof BinaryExpression) 
-			if (getExist(((BinaryExpression) expr).getLeftExpression()) != null)
-				return getExist(((BinaryExpression) expr).getLeftExpression());
-			else if (getExist(((BinaryExpression) expr).getRightExpression()) != null)
-				return getExist(((BinaryExpression) expr).getRightExpression());
+		} else if (expr instanceof BinaryExpression) {
+			BinaryExpression be = (BinaryExpression) expr;
+			if (getExist(be.getLeftExpression()) != null) {
+				return getExist(be.getLeftExpression());
+			}
+			else if (getExist(be.getRightExpression()) != null) {
+				return getExist(be.getRightExpression());
+			}
+		}
 		return null;
 	}
 	
@@ -108,11 +109,5 @@ public class SQLParserUpdate extends SQLParser {
 	@Override
 	protected Statement getStatement() {
 		return update;
-	}
-
-	@Override
-	protected Set<String> primitiveGetAllTables() {
-		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
-		return new HashSet<String>(tablesNamesFinder.getTableList(update));
 	}
 }

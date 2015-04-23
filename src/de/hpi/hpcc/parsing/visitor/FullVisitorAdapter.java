@@ -79,6 +79,7 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.OrderByVisitor;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SelectItemVisitor;
@@ -467,6 +468,11 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 		if(update.getWhere() != null) {
 			update.getWhere().accept(this);
 		}
+		if(update.getTables() != null) {
+			for(Table table : update.getTables()) {
+				table.accept(this);
+			}
+		}
 	}
 
 	@Override
@@ -602,8 +608,10 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(WithItem withItem) {
-		// TODO Auto-generated method stub
-		
+		SelectBody sb = withItem.getSelectBody();		
+		if (sb != null) {		
+			sb.accept(this);		
+		}
 	}
 
 	@Override
@@ -614,8 +622,17 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(SubJoin subjoin) {
-		// TODO Auto-generated method stub
-		
+		if(subjoin.getLeft() != null) {
+			subjoin.getLeft().accept(this);
+		}
+        if(subjoin.getJoin() != null) {
+        	if(subjoin.getJoin().getRightItem() != null) {
+        		subjoin.getJoin().getRightItem().accept(this);
+        	}
+        	if(subjoin.getJoin().getOnExpression() != null) {
+        		subjoin.getJoin().getOnExpression().accept(this);
+        	}
+        }
 	}
 
 	@Override

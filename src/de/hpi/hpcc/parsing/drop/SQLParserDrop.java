@@ -1,8 +1,5 @@
 package de.hpi.hpcc.parsing.drop;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.statement.Statement;
@@ -28,12 +25,5 @@ public class SQLParserDrop extends SQLParser {
 	@Override
 	protected Statement getStatement() {
 		return drop;
-	}
-
-	@Override
-	protected Set<String> primitiveGetAllTables() {
-		Set<String> tables = new HashSet<String>();
-		tables.add(drop.getName());
-		return tables;
 	}
 }

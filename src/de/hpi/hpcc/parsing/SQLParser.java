@@ -11,6 +11,7 @@ import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.visitor.ECLColumnFinder;
 import de.hpi.hpcc.parsing.visitor.ECLStatementParser;
+import de.hpi.hpcc.parsing.visitor.ECLTableFinder;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
@@ -29,8 +30,6 @@ public abstract class SQLParser{
 	}
 	
 	protected abstract Statement getStatement();
-	
-	protected abstract Set<String> primitiveGetAllTables();
 	
 	protected static String expressionIsInstanceOf(Expression expression) {
 		if (expression instanceof SubSelect) {
@@ -54,7 +53,8 @@ public abstract class SQLParser{
 	};
 	
 	public Set<String> getAllTables() {
-		Set<String> tableList = primitiveGetAllTables();
+		ECLTableFinder finder = new ECLTableFinder();
+		Set<String> tableList = finder.find(getStatement());
 		Set<String> lowerTableList = new HashSet<String>();
 		for (String table : tableList) {
 			if (table.contains(".")) {

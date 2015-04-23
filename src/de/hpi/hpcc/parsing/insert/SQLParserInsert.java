@@ -1,10 +1,7 @@
 package de.hpi.hpcc.parsing.insert;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.expression.Expression;
@@ -16,7 +13,6 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.WithItem;
-import net.sf.jsqlparser.util.TablesNamesFinder;
 
 public class SQLParserInsert extends SQLParser {
 	
@@ -74,11 +70,5 @@ public class SQLParserInsert extends SQLParser {
 	@Override
 	protected Statement getStatement() {
 		return insert;
-	}
-
-	@Override
-	protected Set<String> primitiveGetAllTables() {
-		TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
-		return new HashSet<String>(tablesNamesFinder.getTableList(insert));
 	}
 }
