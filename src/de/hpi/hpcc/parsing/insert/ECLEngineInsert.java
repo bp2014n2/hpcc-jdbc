@@ -23,11 +23,11 @@ public class ECLEngineInsert extends ECLEngine {
 	public ECLEngineInsert(Insert insert, ECLLayouts layouts) {
 		super(insert, layouts);
 		this.insert = insert;
-		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
-		tempTableParser.replace(insert);
 	}
 	
 	public String generateECL() throws SQLException{
+		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
+		tempTableParser.replace(insert);
 		this.sqlParser = new SQLParserInsert(insert, layouts);
 		
     	ECLBuilderInsert eclBuilder = new ECLBuilderInsert(insert, layouts);

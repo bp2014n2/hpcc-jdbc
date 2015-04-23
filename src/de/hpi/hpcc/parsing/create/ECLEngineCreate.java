@@ -20,15 +20,15 @@ public class ECLEngineCreate extends ECLEngine {
 	public ECLEngineCreate(CreateTable create, ECLLayouts layouts) {
 		super(create, layouts);
 		this.create = create;
+	}
+
+	public String generateECL() throws SQLException {
 		sqlParser = new SQLParserCreate(create, layouts);
 		if (sqlParser.isTempTable()) {
 			layouts.addTempTable(layouts.getFullTableName(create.getTable().getName()));
 			ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
 			tempTableParser.replace(create);
 		}
-	}
-
-	public String generateECL() throws SQLException {
 		String tablePath = sqlParser.getFullName();
 		
 		/*

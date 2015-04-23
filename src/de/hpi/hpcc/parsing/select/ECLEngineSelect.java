@@ -21,12 +21,13 @@ public class ECLEngineSelect extends ECLEngine {
 	public ECLEngineSelect(Select select, ECLLayouts layouts) {
 		super(select, layouts);
 		this.select = select;
-		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
-		tempTableParser.replace(select);
 	}
 	
 	public String generateECL() throws SQLException
     {
+
+		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
+		tempTableParser.replace(select);
 		this.sqlParser = new SQLParserSelect(select, layouts);
 		
     	ECLBuilderSelect eclBuilder = new ECLBuilderSelect(select, layouts);

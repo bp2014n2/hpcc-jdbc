@@ -22,15 +22,15 @@ public class ECLEngineDrop extends ECLEngine {
 		super(drop, layouts);
 		this.drop = drop;
 		originalTableName = drop.getName();
-		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
-		tempTableParser.replace(drop);
 		
 		// TODO: remove later due to double initialization
 		
 	}
 
 	public String generateECL() throws SQLException {
-		
+
+		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
+		tempTableParser.replace(drop);
 		this.sqlParser = new SQLParserDrop(drop, layouts);
     	eclCode.append(generateImports());
 //		eclCode.append(eclBuilder.generateECL(sqlQuery));
