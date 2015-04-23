@@ -91,7 +91,7 @@ import net.sf.jsqlparser.statement.select.WithItem;
 import net.sf.jsqlparser.statement.truncate.Truncate;
 import net.sf.jsqlparser.statement.update.Update;
 
-public class FullVisitorAdapter implements ExpressionVisitor, StatementVisitor, SelectItemVisitor, SelectVisitor, FromItemVisitor, OrderByVisitor, ItemsListVisitor {
+public abstract class FullVisitorAdapter implements ExpressionVisitor, StatementVisitor, SelectItemVisitor, SelectVisitor, FromItemVisitor, OrderByVisitor, ItemsListVisitor {
 
 	@Override
 	public void visit(NullValue nullValue) {
