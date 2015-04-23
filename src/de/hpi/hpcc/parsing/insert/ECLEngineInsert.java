@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.logging.Level;
 
 import net.sf.jsqlparser.statement.insert.Insert;
@@ -97,7 +98,8 @@ public class ECLEngineInsert extends ECLEngine {
 //    	String table = getSQLParser().getTable().getName();
 //		layoutsString.append(layouts.getLayout(table));
 //		layoutsString.append("\n");
-		for (String table : getSQLParser().getAllTables()) {
+    	Set<String> allTables = getSQLParser().getAllTables();
+		for (String table : allTables) {
 			layoutsString.append(layouts.getLayout(table));
 			layoutsString.append("\n");
 		}

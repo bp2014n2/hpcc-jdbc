@@ -3,6 +3,7 @@ package de.hpi.hpcc.parsing.visitor;
 import java.util.HashSet;
 import java.util.Set;
 
+import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
@@ -36,6 +37,10 @@ public class ECLTableFinder extends FullVisitorAdapter {
 	@Override
 	public void visit(Table tableName) {
 		if(!otherItemNames.contains(tableName.getName().toLowerCase())) {
+			Alias alias = tableName.getAlias();
+			if (alias != null) {
+				otherItemNames.add(alias.getName().toLowerCase());
+			}
 			tables.add(tableName.getName().toLowerCase());
 		}
 	}
