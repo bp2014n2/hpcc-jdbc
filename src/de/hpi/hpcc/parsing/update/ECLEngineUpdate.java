@@ -10,6 +10,7 @@ import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
 public class ECLEngineUpdate extends ECLEngine {
 	
@@ -23,6 +24,9 @@ public class ECLEngineUpdate extends ECLEngine {
 	}
 
 	public String generateECL() throws SQLException {
+		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
+		tempTableParser.replace(update);
+		
 		this.sqlParser = new SQLParserUpdate(update, layouts);
 		
 		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate(update, layouts);

@@ -268,11 +268,13 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 	public void visit(NotEqualsTo notEqualsTo) {
 		visitBinaryExpression(notEqualsTo);
 	}
-
+	
 	@Override
 	public void visit(Column tableColumn) {
-		// TODO Auto-generated method stub
-		
+		Table table = tableColumn.getTable();
+		if (table != null && table.getName() != null) {
+			table.accept(this);
+		}
 	}
 
 	@Override
