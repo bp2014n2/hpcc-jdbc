@@ -7,15 +7,24 @@ import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.drop.Drop;
+import net.sf.jsqlparser.statement.select.WithItem;
 
 public class ECLTableFinder extends FullVisitorAdapter {
 
-	Set<String> tables = new HashSet<String>();
+	private Set<String> tables = new HashSet<String>();
+	
+	private Set<String> otherItemNames = new HashSet<String>();
 	
 	public Set<String> find(Statement statement) {
 		statement.accept(this);
 		return tables;
 	}
+	
+	@Override
+    public void visit(WithItem withItem) {
+        otherItemNames.add(withItem.getName().toLowerCase());
+        super.visit(withItem);
+    }
 	
 	@Override
 	public void visit(Function function) {
@@ -26,7 +35,9 @@ public class ECLTableFinder extends FullVisitorAdapter {
 	
 	@Override
 	public void visit(Table tableName) {
-		tables.add(tableName.getName().toLowerCase());
+		if(!otherItemNames.contains(tableName.getName().toLowerCase())) {
+			tables.add(tableName.getName().toLowerCase());
+		}
 	}
 	
 	@Override

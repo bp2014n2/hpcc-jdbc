@@ -433,13 +433,13 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(Select select) {
-		if(select.getSelectBody() != null) {
-			select.getSelectBody().accept(this);
-		}
 		if(select.getWithItemsList() != null) {
 			for(WithItem withItem : select.getWithItemsList()) {
 				withItem.accept(this);
 			}
+		}
+		if(select.getSelectBody() != null) {
+			select.getSelectBody().accept(this);
 		}
 	}
 
