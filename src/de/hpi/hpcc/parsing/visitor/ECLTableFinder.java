@@ -9,6 +9,7 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.drop.Drop;
+import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.WithItem;
 
 public class ECLTableFinder extends FullVisitorAdapter {
@@ -25,6 +26,7 @@ public class ECLTableFinder extends FullVisitorAdapter {
 	@Override
     public void visit(WithItem withItem) {
         otherItemNames.add(withItem.getName().toLowerCase());
+        tables.remove(withItem.getName().toLowerCase());
         super.visit(withItem);
     }
 	
@@ -36,8 +38,7 @@ public class ECLTableFinder extends FullVisitorAdapter {
 	}
 	
 	@Override
-	public void visit(Table tableName) {
-		
+	public void visit(Table tableName) {		
 		String table = tableName.getFullyQualifiedName();
 		if(!otherItemNames.contains(table.toLowerCase())) {
 			Alias alias = tableName.getAlias();

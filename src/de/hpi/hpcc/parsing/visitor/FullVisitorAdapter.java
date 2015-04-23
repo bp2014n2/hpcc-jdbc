@@ -27,6 +27,7 @@ import net.sf.jsqlparser.expression.TimeValue;
 import net.sf.jsqlparser.expression.TimestampValue;
 import net.sf.jsqlparser.expression.UserVariable;
 import net.sf.jsqlparser.expression.WhenClause;
+import net.sf.jsqlparser.expression.WindowOffset;
 import net.sf.jsqlparser.expression.WithinGroupExpression;
 import net.sf.jsqlparser.expression.operators.arithmetic.Addition;
 import net.sf.jsqlparser.expression.operators.arithmetic.BitwiseAnd;
@@ -60,6 +61,7 @@ import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.SetStatement;
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.StatementVisitor;
 import net.sf.jsqlparser.statement.Statements;
 import net.sf.jsqlparser.statement.alter.Alter;
@@ -103,14 +105,16 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(Function function) {
-		// TODO Auto-generated method stub
-		
+		if(function.getParameters() != null) {
+			function.getParameters().accept(this);
+		}
 	}
 
 	@Override
 	public void visit(SignedExpression signedExpression) {
-		// TODO Auto-generated method stub
-		
+		if(signedExpression.getExpression() != null) {
+			signedExpression.accept(this);
+		}
 	}
 
 	@Override
@@ -170,26 +174,22 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(Addition addition) {
-		// TODO Auto-generated method stub
-		
+		visitBinaryExpression(addition);
 	}
 
 	@Override
 	public void visit(Division division) {
-		// TODO Auto-generated method stub
-		
+		visitBinaryExpression(division);
 	}
 
 	@Override
 	public void visit(Multiplication multiplication) {
-		// TODO Auto-generated method stub
-		
+		visitBinaryExpression(multiplication);
 	}
 
 	@Override
 	public void visit(Subtraction subtraction) {
-		// TODO Auto-generated method stub
-		
+		visitBinaryExpression(subtraction);
 	}
 
 	@Override
@@ -287,14 +287,27 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(CaseExpression caseExpression) {
-		// TODO Auto-generated method stub
-		
+		if(caseExpression.getElseExpression() != null) {
+			caseExpression.getElseExpression().accept(this);
+		}
+		if(caseExpression.getSwitchExpression() != null) {
+			caseExpression.getSwitchExpression().accept(this);
+		}
+		if(caseExpression.getWhenClauses() != null) {
+			for(Expression whenClause : caseExpression.getWhenClauses()) {
+				whenClause.accept(this);
+			}
+		}
 	}
 
 	@Override
 	public void visit(WhenClause whenClause) {
-		// TODO Auto-generated method stub
-		
+		if(whenClause.getThenExpression() != null) {
+			whenClause.getThenExpression().accept(this);
+		}
+		if(whenClause.getWhenExpression() != null) {
+			whenClause.getWhenExpression().accept(this);
+		}
 	}
 
 	@Override
@@ -306,74 +319,106 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(AllComparisonExpression allComparisonExpression) {
-		// TODO Auto-generated method stub
-		
+		if(allComparisonExpression.getSubSelect() != null) {
+			visit(allComparisonExpression.getSubSelect());
+		}
 	}
 
 	@Override
 	public void visit(AnyComparisonExpression anyComparisonExpression) {
-		// TODO Auto-generated method stub
-		
+		if(anyComparisonExpression.getSubSelect() != null) {
+			visit(anyComparisonExpression.getSubSelect());
+		}
 	}
 
 	@Override
 	public void visit(Concat concat) {
-		// TODO Auto-generated method stub
-		
+		visitBinaryExpression(concat);
 	}
 
 	@Override
 	public void visit(Matches matches) {
-		// TODO Auto-generated method stub
-		
+		visitBinaryExpression(matches);
 	}
 
 	@Override
 	public void visit(BitwiseAnd bitwiseAnd) {
-		// TODO Auto-generated method stub
-		
+		visitBinaryExpression(bitwiseAnd);
 	}
 
 	@Override
 	public void visit(BitwiseOr bitwiseOr) {
-		// TODO Auto-generated method stub
-		
+		visitBinaryExpression(bitwiseOr);
 	}
 
 	@Override
 	public void visit(BitwiseXor bitwiseXor) {
-		// TODO Auto-generated method stub
-		
+		visitBinaryExpression(bitwiseXor);
 	}
 
 	@Override
 	public void visit(CastExpression cast) {
-		// TODO Auto-generated method stub
-		
+		if(cast.getLeftExpression() != null) {
+			cast.accept(this);
+		}
 	}
 
 	@Override
 	public void visit(Modulo modulo) {
-		// TODO Auto-generated method stub
-		
+		visitBinaryExpression(modulo);
 	}
 
 	@Override
 	public void visit(AnalyticExpression aexpr) {
-		// TODO Auto-generated method stub
-		
+		if(aexpr.getDefaultValue() != null) {
+			aexpr.getDefaultValue().accept(this);
+		}
+		if(aexpr.getExpression() != null) {
+			aexpr.getExpression().accept(this);
+		}
+		if(aexpr.getOffset() != null) {
+			aexpr.getOffset().accept(this);
+		}
+		if(aexpr.getOrderByElements() != null) {
+			for(OrderByElement orderBy : aexpr.getOrderByElements()) {
+				orderBy.accept(this);
+			}
+		}
+		if(aexpr.getPartitionExpressionList() != null) {
+			aexpr.getPartitionExpressionList().accept(this);
+		}
+		if(aexpr.getWindowElement() != null) {
+			if(aexpr.getWindowElement().getOffset() != null) {
+				visit(aexpr.getWindowElement().getOffset());
+			}
+			if(aexpr.getWindowElement().getRange() != null) {
+				if(aexpr.getWindowElement().getRange().getStart() != null) {
+					visit(aexpr.getWindowElement().getRange().getStart());
+				}
+				if(aexpr.getWindowElement().getRange().getEnd() != null) {
+					visit(aexpr.getWindowElement().getRange().getEnd());
+				}
+			}
+		}
 	}
 
 	@Override
 	public void visit(WithinGroupExpression wgexpr) {
-		// TODO Auto-generated method stub
-		
+		if(wgexpr.getExprList() != null) {
+			wgexpr.getExprList().accept(this);
+		}
+		if(wgexpr.getOrderByElements() != null) {
+			for(OrderByElement orderBy : wgexpr.getOrderByElements()) {
+				orderBy.accept(this);
+			}
+		}
 	}
 
 	@Override
 	public void visit(ExtractExpression eexpr) {
-		// TODO Auto-generated method stub
-		
+		if(eexpr.getExpression() != null) {
+			eexpr.getExpression().accept(this);
+		}
 	}
 
 	@Override
@@ -390,14 +435,14 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(RegExpMatchOperator rexpr) {
-		// TODO Auto-generated method stub
-		
+		visitBinaryExpression(rexpr);
 	}
 
 	@Override
 	public void visit(JsonExpression jsonExpr) {
-		// TODO Auto-generated method stub
-		
+		if(jsonExpr.getColumn() != null) {
+			jsonExpr.getColumn().accept(this);
+		}
 	}
 
 	@Override
@@ -429,9 +474,15 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(PostgreSQLFromForExpression postgreSQLFromForExpression) {
-		postgreSQLFromForExpression.getSourceExpression().accept(this);
-		postgreSQLFromForExpression.getFromExpression().accept(this);
-		postgreSQLFromForExpression.getForExpression().accept(this);
+		if(postgreSQLFromForExpression.getSourceExpression() != null) {
+			postgreSQLFromForExpression.getSourceExpression().accept(this);
+		}
+		if(postgreSQLFromForExpression.getFromExpression() != null) {
+			postgreSQLFromForExpression.getFromExpression().accept(this);
+		}
+		if(postgreSQLFromForExpression.getForExpression() != null) {
+			postgreSQLFromForExpression.getForExpression().accept(this);
+		}
 	}
 
 	@Override
@@ -448,8 +499,12 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(Delete delete) {
-		// TODO Auto-generated method stub
-		
+		if(delete.getTable() != null) {
+			delete.getTable().accept(this);
+		}
+		if(delete.getWhere() != null) {
+			delete.getWhere().accept(this);
+		}
 	}
 
 	@Override
@@ -458,21 +513,18 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 			for(Column column : update.getColumns()) {
 				column.accept(this);
 			}
-		}
-		
+		}		
 		if(update.getTables() != null) {
 			for(Table table : update.getTables()) {
 				table.accept(this);
 			}
-		}
-		
+		}		
 		if(update.getFromItem() != null) {
 			update.getFromItem().accept(this);
 		}
 		if(update.getSelect() != null) {
 			update.getSelect().accept(this);
-		}
-	
+		}	
 		if(update.getWhere() != null) {
 			update.getWhere().accept(this);
 		}
@@ -489,16 +541,29 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 		if(insert.getSelect() != null) {
 			insert.getSelect().accept(this);
 		}
-		Table table = insert.getTable();		
-		if (table != null) {		
-			table.accept(this);		
+		if (insert.getTable() != null) {		
+			insert.getTable().accept(this);		
 		}
 	}
 
 	@Override
 	public void visit(Replace replace) {
-		// TODO Auto-generated method stub
-		
+		if(replace.getColumns() != null) {
+			for(Column column : replace.getColumns()) {
+				column.accept(this);
+			}
+		}
+		if(replace.getExpressions() != null) {
+			for(Expression expression : replace.getExpressions()) {
+				expression.accept(this);
+			}
+		}
+		if(replace.getItemsList() != null) {
+			replace.getItemsList().accept(this);
+		}
+		if(replace.getTable() != null) {
+			replace.getTable().accept(this);
+		}
 	}
 
 	@Override
@@ -509,52 +574,66 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(Truncate truncate) {
-		// TODO Auto-generated method stub
-		
+		if(truncate.getTable() != null) {
+			truncate.getTable().accept(this);
+		}
 	}
 
 	@Override
 	public void visit(CreateIndex createIndex) {
-		// TODO Auto-generated method stub
-		
+		if(createIndex.getTable() != null) {
+			createIndex.getTable().accept(this);
+		}
 	}
 
 	@Override
 	public void visit(CreateTable createTable) {
-		Table table = createTable.getTable();
-		if (table != null) {
-			table.accept(this);
+		if (createTable.getTable() != null) {
+			createTable.getTable().accept(this);
+		}
+		if(createTable.getSelect() != null) {
+			createTable.getSelect().accept(this);
 		}
 	}
 
 	@Override
 	public void visit(CreateView createView) {
-		// TODO Auto-generated method stub
-		
+		if(createView.getSelectBody() != null) {
+			createView.getSelectBody().accept(this);
+		}
+		if (createView.getView() != null) {
+			createView.getView().accept(this);
+		}
 	}
 
 	@Override
 	public void visit(Alter alter) {
-		// TODO Auto-generated method stub
-		
+		if(alter.getTable() != null) {
+			alter.getTable().accept(this);
+		}
 	}
 
 	@Override
 	public void visit(Statements stmts) {
-		// TODO Auto-generated method stub
-		
+		if(stmts.getStatements() != null) {
+			for(Statement statement : stmts.getStatements()) {
+				statement.accept(this);
+			}
+		}
 	}
 
 	@Override
 	public void visit(Execute execute) {
-		// TODO Auto-generated method stub
-		
+		if(execute.getExprList() != null) {
+			execute.getExprList().accept(this);
+		}
 	}
 
 	@Override
 	public void visit(SetStatement set) {
-		// TODO Auto-generated method stub
-		
+		if(set.getExpression() != null) {
+			set.getExpression().accept(this);
+		}
 	}
 
 	@Override
@@ -565,8 +644,9 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(AllTableColumns allTableColumns) {
-		// TODO Auto-generated method stub
-		
+		if(allTableColumns.getTable() != null) {
+			allTableColumns.getTable().accept(this);
+		}
 	}
 
 	@Override
@@ -610,19 +690,44 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 		if(plainSelect.getWhere() != null) {
 			plainSelect.getWhere().accept(this);
 		}
+		if(plainSelect.getDistinct() != null && plainSelect.getDistinct().getOnSelectItems() != null) {
+			for(SelectItem selectItem : plainSelect.getDistinct().getOnSelectItems()) {
+				selectItem.accept(this);
+			}
+		}
+		if(plainSelect.getForUpdateTable() != null) {
+			plainSelect.getForUpdateTable().accept(this);
+		}
+		if(plainSelect.getIntoTables() != null) {
+			for(Table table : plainSelect.getIntoTables()) {
+				table.accept(this);
+			}
+		}
 	}
 
 	@Override
 	public void visit(SetOperationList setOpList) {
-		// TODO Auto-generated method stub
-		
+		if(setOpList.getOrderByElements() != null) {
+			for(OrderByElement orderBy : setOpList.getOrderByElements()) {
+				orderBy.accept(this);
+			}
+		}
+		if(setOpList.getSelects() != null) {
+			for(SelectBody selectBody : setOpList.getSelects()) {
+				selectBody.accept(this);
+			}
+		}
 	}
 
 	@Override
 	public void visit(WithItem withItem) {
-		SelectBody sb = withItem.getSelectBody();		
-		if (sb != null) {		
-			sb.accept(this);		
+		if (withItem.getSelectBody() != null) {		
+			withItem.getSelectBody().accept(this);		
+		}
+		if(withItem.getWithItemList() != null) {
+			for(SelectItem selectItem : withItem.getWithItemList()) {
+				selectItem.accept(this);
+			}
 		}
 	}
 
@@ -644,19 +749,26 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
         	if(subjoin.getJoin().getOnExpression() != null) {
         		subjoin.getJoin().getOnExpression().accept(this);
         	}
+        	if(subjoin.getJoin().getUsingColumns() != null) {
+        		for(Column column : subjoin.getJoin().getUsingColumns()) {
+        			column.accept(this);
+        		}
+        	}
         }
 	}
 
 	@Override
 	public void visit(LateralSubSelect lateralSubSelect) {
-		// TODO Auto-generated method stub
-		
+		if(lateralSubSelect.getSubSelect() != null) {
+			visit(lateralSubSelect.getSubSelect());
+		}
 	}
 
 	@Override
 	public void visit(ValuesList valuesList) {
-		// TODO Auto-generated method stub
-		
+		if(valuesList.getMultiExpressionList() != null) {
+			valuesList.getMultiExpressionList().accept(this);
+		}
 	}
 
 	@Override
@@ -677,8 +789,17 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(MultiExpressionList multiExprList) {
-		// TODO Auto-generated method stub
-		
+		if(multiExprList.getExprList() != null) {
+			for(ExpressionList expressionList : multiExprList.getExprList()) {
+				expressionList.accept(this);
+			}
+		}
+	}
+	
+	public void visit(WindowOffset windowOffset) {
+		if(windowOffset.getExpression() != null) {
+			windowOffset.getExpression().accept(this);
+		}
 	}
 
 }
