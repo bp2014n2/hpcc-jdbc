@@ -325,7 +325,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(SubSelect subSelect) {
-		ECLUtils.encapsulateWithBrackets(new ECLBuilderSelect(subSelect.getSelectBody(), eclLayouts).generateECL());
+		parsed = ECLUtils.encapsulateWithBrackets(new ECLBuilderSelect(subSelect.getSelectBody(), eclLayouts).generateECL());
 	}
 
 	@Override

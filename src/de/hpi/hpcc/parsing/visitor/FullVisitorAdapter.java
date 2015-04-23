@@ -271,8 +271,10 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 	
 	@Override
 	public void visit(Column tableColumn) {
-		// TODO Auto-generated method stub
-		
+		Table table = tableColumn.getTable();
+		if (table != null && table.getName() != null) {
+			table.accept(this);
+		}
 	}
 
 	@Override
@@ -456,23 +458,24 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 				column.accept(this);
 			}
 		}
+		
+		if(update.getTables() != null) {
+			for(Table table : update.getTables()) {
+				table.accept(this);
+			}
+		}
+		
 		if(update.getFromItem() != null) {
 			update.getFromItem().accept(this);
 		}
 		if(update.getSelect() != null) {
 			update.getSelect().accept(this);
 		}
-		if(update.getSelect() != null) {
-			update.getSelect().accept(this);
-		}
+	
 		if(update.getWhere() != null) {
 			update.getWhere().accept(this);
 		}
-		if(update.getTables() != null) {
-			for(Table table : update.getTables()) {
-				table.accept(this);
-			}
-		}
+		
 	}
 
 	@Override
@@ -577,7 +580,6 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 		if(plainSelect.getFromItem() != null) {
 			plainSelect.getFromItem().accept(this);
 		}
-		
 		if(plainSelect.getSelectItems() != null) {
 			for(SelectItem selectItem : plainSelect.getSelectItems()) {
 				selectItem.accept(this);
@@ -588,7 +590,6 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 				groupBy.accept(this);
 			}
 		}
-		
 		if(plainSelect.getHaving() != null) {
 			plainSelect.getHaving().accept(this);
 		}

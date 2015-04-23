@@ -41,12 +41,4 @@ public class ECLTempTableParser extends FullVisitorAdapter {
     	}
 		drop.setName(name);
 	}
-	
-	@Override
-	public void visit(Column tableColumn) {
-		Table table = tableColumn.getTable();
-		if (table != null && table.getName() != null) {
-			table.accept(this);
-		}
-	}
 }
