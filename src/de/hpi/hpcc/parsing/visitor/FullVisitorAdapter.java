@@ -576,6 +576,9 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(PlainSelect plainSelect) {
+		if(plainSelect.getFromItem() != null) {
+			plainSelect.getFromItem().accept(this);
+		}
 		if(plainSelect.getSelectItems() != null) {
 			for(SelectItem selectItem : plainSelect.getSelectItems()) {
 				selectItem.accept(this);
@@ -585,9 +588,6 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 			for(Expression groupBy : plainSelect.getGroupByColumnReferences()) {
 				groupBy.accept(this);
 			}
-		}
-		if(plainSelect.getFromItem() != null) {
-			plainSelect.getFromItem().accept(this);
 		}
 		if(plainSelect.getHaving() != null) {
 			plainSelect.getHaving().accept(this);

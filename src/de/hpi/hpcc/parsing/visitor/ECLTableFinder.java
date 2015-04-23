@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.drop.Drop;
@@ -35,14 +36,20 @@ public class ECLTableFinder extends FullVisitorAdapter {
 	
 	@Override
 	public void visit(Table tableName) {
-		if(!otherItemNames.contains(tableName.getName().toLowerCase())) {
-			tables.add(tableName.getName().toLowerCase());
+		String table = tableName.getFullyQualifiedName();
+		if(!otherItemNames.contains(table.toLowerCase())) {
+			tables.add(table.toLowerCase());
 		}
 	}
 	
 	@Override
 	public void visit(Drop drop) {
 		tables.add(drop.getName().toLowerCase());
+	}
+	
+	@Override
+	public void visit(Column tableColumn) {
+
 	}
 	
 }
