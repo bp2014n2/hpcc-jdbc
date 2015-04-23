@@ -20,7 +20,7 @@ public class ECLTableFinderTest {
 		try {
 			Statement statement = SQLParser.parse(sql);
 			Set<String> foundTables = finder.find(statement);
-			assertEquals(foundTables, expectedTables);
+			assertEquals(expectedTables, foundTables);
 		} catch (HPCCException e) {
 
 		}
@@ -30,22 +30,30 @@ public class ECLTableFinderTest {
 	public void shouldFindFromItems() {
 		Set<String> expectedTables = new HashSet<String>();
 		expectedTables.add("mytable");
-		assertAllTablesAreFound(expectedTables, "SELECT * from myTable");
+		assertAllTablesAreFound(expectedTables, "SELECT * FROM myTable");
 	}
 	
 	@Test
 	public void shouldNotFindWithAliases() {
 		Set<String> expectedTables = new HashSet<String>();
 		expectedTables.add("mytable");
-		assertAllTablesAreFound(expectedTables, "WITH t AS(SELECT * FROM myTable) SELECT * from t");
+		assertAllTablesAreFound(expectedTables, "WITH t AS (SELECT * FROM myTable) SELECT * FROM t");
 	}
 	
 	@Test
 	public void shouldNotFindAliases() {
 		Set<String> expectedTables = new HashSet<String>();
 		expectedTables.add("mytable");
-		assertAllTablesAreFound(expectedTables, "SELECT * from myTable t");
-		assertAllTablesAreFound(expectedTables, "SELECT t.myColumn from myTable t");
+		assertAllTablesAreFound(expectedTables, "SELECT * FROM myTable t");
+		assertAllTablesAreFound(expectedTables, "SELECT t.myColumn FROM myTable t");
+	}
+	
+	@Test
+	public void shouldFindWhereIns() {
+		Set<String> expectedTables = new HashSet<String>();
+		expectedTables.add("mytable");
+		expectedTables.add("anothertable");
+		assertAllTablesAreFound(expectedTables, "SELECT * FROM myTable WHERE myColumn IN (SELECT anotherColumn FROM anotherTable)");
 	}
 	
 }

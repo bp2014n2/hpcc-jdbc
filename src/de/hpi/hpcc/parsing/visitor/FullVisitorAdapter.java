@@ -48,6 +48,7 @@ import net.sf.jsqlparser.expression.operators.relational.GreaterThan;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.expression.operators.relational.IsNullExpression;
+import net.sf.jsqlparser.expression.operators.relational.ItemsList;
 import net.sf.jsqlparser.expression.operators.relational.ItemsListVisitor;
 import net.sf.jsqlparser.expression.operators.relational.LikeExpression;
 import net.sf.jsqlparser.expression.operators.relational.Matches;
@@ -75,6 +76,7 @@ import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.replace.Replace;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.AllTableColumns;
+import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.FromItemVisitor;
 import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.LateralSubSelect;
@@ -105,16 +107,12 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(Function function) {
-		if(function.getParameters() != null) {
-			function.getParameters().accept(this);
-		}
+		tryAccept(function.getParameters());
 	}
 
 	@Override
 	public void visit(SignedExpression signedExpression) {
-		if(signedExpression.getExpression() != null) {
-			signedExpression.accept(this);
-		}
+		tryAccept(signedExpression);
 	}
 
 	@Override
@@ -161,9 +159,7 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(Parenthesis parenthesis) {
-		if(parenthesis.getExpression() != null) {
-			parenthesis.getExpression().accept(this);
-		}
+		tryAccept(parenthesis.getExpression());
 	}
 
 	@Override
@@ -204,15 +200,9 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(Between between) {
-		if(between.getLeftExpression() != null) {
-			between.getLeftExpression().accept(this);
-		}
-		if(between.getBetweenExpressionStart() != null) {
-			between.getBetweenExpressionStart().accept(this);
-		}
-		if(between.getBetweenExpressionEnd() != null) {
-			between.getBetweenExpressionEnd().accept(this);
-		}
+		tryAccept(between.getLeftExpression());
+		tryAccept(between.getBetweenExpressionStart());
+		tryAccept(between.getBetweenExpressionEnd());
 	}
 
 	@Override
@@ -232,22 +222,14 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(InExpression inExpression) {
-		if(inExpression.getLeftExpression() != null) {
-			inExpression.getLeftExpression().accept(this);
-		}
-		if(inExpression.getRightItemsList() != null) {
-			inExpression.getRightItemsList().accept(this);
-		}
-		if(inExpression.getLeftItemsList() != null) {
-			inExpression.getLeftItemsList().accept(this);
-		}
+		tryAccept(inExpression.getLeftExpression());
+		tryAccept(inExpression.getRightItemsList());
+		tryAccept(inExpression.getLeftItemsList());
 	}
 
 	@Override
 	public void visit(IsNullExpression isNullExpression) {
-		if(isNullExpression.getLeftExpression() != null) {
-			isNullExpression.getLeftExpression().accept(this);
-		}
+		tryAccept(isNullExpression.getLeftExpression());
 	}
 
 	@Override
@@ -272,27 +254,18 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 	
 	@Override
 	public void visit(Column tableColumn) {
-		Table table = tableColumn.getTable();
-		if (table != null && table.getName() != null) {
-			table.accept(this);
-		}
+		tryAccept(tableColumn.getTable());
 	}
 
 	@Override
 	public void visit(SubSelect subSelect) {
-		if(subSelect.getSelectBody() != null) {
-			subSelect.getSelectBody().accept(this);
-		}
+		tryAccept(subSelect.getSelectBody());
 	}
 
 	@Override
 	public void visit(CaseExpression caseExpression) {
-		if(caseExpression.getElseExpression() != null) {
-			caseExpression.getElseExpression().accept(this);
-		}
-		if(caseExpression.getSwitchExpression() != null) {
-			caseExpression.getSwitchExpression().accept(this);
-		}
+		tryAccept(caseExpression.getElseExpression());
+		tryAccept(caseExpression.getSwitchExpression());
 		if(caseExpression.getWhenClauses() != null) {
 			for(Expression whenClause : caseExpression.getWhenClauses()) {
 				whenClause.accept(this);
@@ -302,33 +275,23 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(WhenClause whenClause) {
-		if(whenClause.getThenExpression() != null) {
-			whenClause.getThenExpression().accept(this);
-		}
-		if(whenClause.getWhenExpression() != null) {
-			whenClause.getWhenExpression().accept(this);
-		}
+		tryAccept(whenClause.getThenExpression());
+		tryAccept(whenClause.getWhenExpression());
 	}
 
 	@Override
 	public void visit(ExistsExpression existsExpression) {
-		if (existsExpression.getRightExpression() != null) {
-			existsExpression.getRightExpression().accept(this);
-		}
+		tryAccept(existsExpression.getRightExpression());
 	}
 
 	@Override
 	public void visit(AllComparisonExpression allComparisonExpression) {
-		if(allComparisonExpression.getSubSelect() != null) {
-			visit(allComparisonExpression.getSubSelect());
-		}
+		tryAccept((Expression) allComparisonExpression.getSubSelect());
 	}
 
 	@Override
 	public void visit(AnyComparisonExpression anyComparisonExpression) {
-		if(anyComparisonExpression.getSubSelect() != null) {
-			visit(anyComparisonExpression.getSubSelect());
-		}
+		tryAccept((Expression) anyComparisonExpression.getSubSelect());
 	}
 
 	@Override
@@ -358,9 +321,7 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(CastExpression cast) {
-		if(cast.getLeftExpression() != null) {
-			cast.accept(this);
-		}
+		tryAccept(cast);
 	}
 
 	@Override
@@ -370,23 +331,15 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(AnalyticExpression aexpr) {
-		if(aexpr.getDefaultValue() != null) {
-			aexpr.getDefaultValue().accept(this);
-		}
-		if(aexpr.getExpression() != null) {
-			aexpr.getExpression().accept(this);
-		}
-		if(aexpr.getOffset() != null) {
-			aexpr.getOffset().accept(this);
-		}
+		tryAccept(aexpr.getDefaultValue());
+		tryAccept(aexpr.getExpression());
+		tryAccept(aexpr.getOffset());
 		if(aexpr.getOrderByElements() != null) {
 			for(OrderByElement orderBy : aexpr.getOrderByElements()) {
 				orderBy.accept(this);
 			}
 		}
-		if(aexpr.getPartitionExpressionList() != null) {
-			aexpr.getPartitionExpressionList().accept(this);
-		}
+		tryAccept(aexpr.getPartitionExpressionList());
 		if(aexpr.getWindowElement() != null) {
 			if(aexpr.getWindowElement().getOffset() != null) {
 				visit(aexpr.getWindowElement().getOffset());
@@ -404,9 +357,7 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(WithinGroupExpression wgexpr) {
-		if(wgexpr.getExprList() != null) {
-			wgexpr.getExprList().accept(this);
-		}
+		tryAccept(wgexpr.getExprList());
 		if(wgexpr.getOrderByElements() != null) {
 			for(OrderByElement orderBy : wgexpr.getOrderByElements()) {
 				orderBy.accept(this);
@@ -416,9 +367,7 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(ExtractExpression eexpr) {
-		if(eexpr.getExpression() != null) {
-			eexpr.getExpression().accept(this);
-		}
+		tryAccept(eexpr.getExpression());
 	}
 
 	@Override
@@ -440,9 +389,7 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(JsonExpression jsonExpr) {
-		if(jsonExpr.getColumn() != null) {
-			jsonExpr.getColumn().accept(this);
-		}
+		tryAccept(jsonExpr.getColumn());
 	}
 
 	@Override
@@ -462,27 +409,12 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 		// TODO Auto-generated method stub
 		
 	}
-	
-	private void visitBinaryExpression(BinaryExpression binaryExpression) {
-		if(binaryExpression.getLeftExpression() != null) {
-			binaryExpression.getLeftExpression().accept(this);
-		}
-		if(binaryExpression.getRightExpression() != null) {
-			binaryExpression.getRightExpression().accept(this);
-		}
-	}
 
 	@Override
 	public void visit(PostgreSQLFromForExpression postgreSQLFromForExpression) {
-		if(postgreSQLFromForExpression.getSourceExpression() != null) {
-			postgreSQLFromForExpression.getSourceExpression().accept(this);
-		}
-		if(postgreSQLFromForExpression.getFromExpression() != null) {
-			postgreSQLFromForExpression.getFromExpression().accept(this);
-		}
-		if(postgreSQLFromForExpression.getForExpression() != null) {
-			postgreSQLFromForExpression.getForExpression().accept(this);
-		}
+		tryAccept(postgreSQLFromForExpression.getSourceExpression());
+		tryAccept(postgreSQLFromForExpression.getFromExpression());
+		tryAccept(postgreSQLFromForExpression.getForExpression());
 	}
 
 	@Override
@@ -492,19 +424,13 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 				withItem.accept(this);
 			}
 		}
-		if(select.getSelectBody() != null) {
-			select.getSelectBody().accept(this);
-		}
+		tryAccept(select.getSelectBody());
 	}
 
 	@Override
 	public void visit(Delete delete) {
-		if(delete.getTable() != null) {
-			delete.getTable().accept(this);
-		}
-		if(delete.getWhere() != null) {
-			delete.getWhere().accept(this);
-		}
+		tryAccept(delete.getTable());
+		tryAccept(delete.getWhere());
 	}
 
 	@Override
@@ -519,15 +445,9 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 				table.accept(this);
 			}
 		}		
-		if(update.getFromItem() != null) {
-			update.getFromItem().accept(this);
-		}
-		if(update.getSelect() != null) {
-			update.getSelect().accept(this);
-		}	
-		if(update.getWhere() != null) {
-			update.getWhere().accept(this);
-		}
+		tryAccept(update.getFromItem());
+		tryAccept(update.getSelect());	
+		tryAccept(update.getWhere());
 		
 	}
 
@@ -538,12 +458,8 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 				column.accept(this);
 			}
 		}
-		if(insert.getSelect() != null) {
-			insert.getSelect().accept(this);
-		}
-		if (insert.getTable() != null) {		
-			insert.getTable().accept(this);		
-		}
+		tryAccept(insert.getSelect());
+		tryAccept(insert.getTable());
 	}
 
 	@Override
@@ -558,12 +474,8 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 				expression.accept(this);
 			}
 		}
-		if(replace.getItemsList() != null) {
-			replace.getItemsList().accept(this);
-		}
-		if(replace.getTable() != null) {
-			replace.getTable().accept(this);
-		}
+		tryAccept(replace.getItemsList());
+		tryAccept(replace.getTable());
 	}
 
 	@Override
@@ -574,16 +486,12 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(Truncate truncate) {
-		if(truncate.getTable() != null) {
-			truncate.getTable().accept(this);
-		}
+		tryAccept(truncate.getTable());
 	}
 
 	@Override
 	public void visit(CreateIndex createIndex) {
-		if(createIndex.getTable() != null) {
-			createIndex.getTable().accept(this);
-		}
+		tryAccept(createIndex.getTable());
 	}
 
 	@Override
@@ -591,16 +499,12 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 		if (createTable.getTable() != null) {
 			createTable.getTable().accept(this);
 		}
-		if(createTable.getSelect() != null) {
-			createTable.getSelect().accept(this);
-		}
+		tryAccept(createTable.getSelect());
 	}
 
 	@Override
 	public void visit(CreateView createView) {
-		if(createView.getSelectBody() != null) {
-			createView.getSelectBody().accept(this);
-		}
+		tryAccept(createView.getSelectBody());
 		if (createView.getView() != null) {
 			createView.getView().accept(this);
 		}
@@ -608,9 +512,7 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(Alter alter) {
-		if(alter.getTable() != null) {
-			alter.getTable().accept(this);
-		}
+		tryAccept(alter.getTable());
 	}
 
 	@Override
@@ -624,16 +526,12 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(Execute execute) {
-		if(execute.getExprList() != null) {
-			execute.getExprList().accept(this);
-		}
+		tryAccept(execute.getExprList());
 	}
 
 	@Override
 	public void visit(SetStatement set) {
-		if(set.getExpression() != null) {
-			set.getExpression().accept(this);
-		}
+		tryAccept(set.getExpression());
 	}
 
 	@Override
@@ -644,30 +542,22 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(AllTableColumns allTableColumns) {
-		if(allTableColumns.getTable() != null) {
-			allTableColumns.getTable().accept(this);
-		}
+		tryAccept(allTableColumns.getTable());
 	}
 
 	@Override
 	public void visit(SelectExpressionItem selectExpressionItem) {
-		if(selectExpressionItem.getExpression() != null) {
-			selectExpressionItem.getExpression().accept(this);
-		}
+		tryAccept(selectExpressionItem.getExpression());
 	}
 
 	@Override
 	public void visit(PlainSelect plainSelect) {
-		if(plainSelect.getFromItem() != null) {
-			plainSelect.getFromItem().accept(this);
-		}
-		
+		tryAccept(plainSelect.getFromItem());		
 		if(plainSelect.getJoins() != null) {
 			for (Join join : plainSelect.getJoins()) {
 				join.getRightItem().accept(this);
 			}
-		}
-		
+		}		
 		if(plainSelect.getSelectItems() != null) {
 			for(SelectItem selectItem : plainSelect.getSelectItems()) {
 				selectItem.accept(this);
@@ -677,27 +567,20 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 			for(Expression groupBy : plainSelect.getGroupByColumnReferences()) {
 				groupBy.accept(this);
 			}
-		}
-		
-		if(plainSelect.getHaving() != null) {
-			plainSelect.getHaving().accept(this);
-		}
+		}		
+		tryAccept(plainSelect.getHaving());
 		if(plainSelect.getOrderByElements() != null) {
 			for(OrderByElement orderBy : plainSelect.getOrderByElements()) {
 				orderBy.accept(this);
 			}
 		}
-		if(plainSelect.getWhere() != null) {
-			plainSelect.getWhere().accept(this);
-		}
+		tryAccept(plainSelect.getWhere());
 		if(plainSelect.getDistinct() != null && plainSelect.getDistinct().getOnSelectItems() != null) {
 			for(SelectItem selectItem : plainSelect.getDistinct().getOnSelectItems()) {
 				selectItem.accept(this);
 			}
 		}
-		if(plainSelect.getForUpdateTable() != null) {
-			plainSelect.getForUpdateTable().accept(this);
-		}
+		tryAccept(plainSelect.getForUpdateTable());
 		if(plainSelect.getIntoTables() != null) {
 			for(Table table : plainSelect.getIntoTables()) {
 				table.accept(this);
@@ -721,9 +604,7 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(WithItem withItem) {
-		if (withItem.getSelectBody() != null) {		
-			withItem.getSelectBody().accept(this);		
-		}
+		tryAccept(withItem.getSelectBody());
 		if(withItem.getWithItemList() != null) {
 			for(SelectItem selectItem : withItem.getWithItemList()) {
 				selectItem.accept(this);
@@ -739,16 +620,10 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(SubJoin subjoin) {
-		if(subjoin.getLeft() != null) {
-			subjoin.getLeft().accept(this);
-		}
+		tryAccept(subjoin.getLeft());
         if(subjoin.getJoin() != null) {
-        	if(subjoin.getJoin().getRightItem() != null) {
-        		subjoin.getJoin().getRightItem().accept(this);
-        	}
-        	if(subjoin.getJoin().getOnExpression() != null) {
-        		subjoin.getJoin().getOnExpression().accept(this);
-        	}
+        	tryAccept(subjoin.getJoin().getRightItem());
+        	tryAccept(subjoin.getJoin().getOnExpression());
         	if(subjoin.getJoin().getUsingColumns() != null) {
         		for(Column column : subjoin.getJoin().getUsingColumns()) {
         			column.accept(this);
@@ -759,23 +634,17 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(LateralSubSelect lateralSubSelect) {
-		if(lateralSubSelect.getSubSelect() != null) {
-			visit(lateralSubSelect.getSubSelect());
-		}
+		tryAccept((Expression) lateralSubSelect.getSubSelect());
 	}
 
 	@Override
 	public void visit(ValuesList valuesList) {
-		if(valuesList.getMultiExpressionList() != null) {
-			valuesList.getMultiExpressionList().accept(this);
-		}
+		tryAccept(valuesList.getMultiExpressionList());
 	}
 
 	@Override
 	public void visit(OrderByElement orderBy) {
-		if(orderBy.getExpression() != null) {
-			orderBy.getExpression().accept(this);
-		}
+		tryAccept(orderBy.getExpression());
 	}
 
 	@Override
@@ -796,9 +665,42 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 		}
 	}
 	
+	protected void visitBinaryExpression(BinaryExpression binaryExpression) {
+		tryAccept(binaryExpression.getLeftExpression());
+		tryAccept(binaryExpression.getRightExpression());
+	}
+	
 	public void visit(WindowOffset windowOffset) {
-		if(windowOffset.getExpression() != null) {
-			windowOffset.getExpression().accept(this);
+		tryAccept(windowOffset.getExpression());
+	}
+	
+	protected void tryAccept(Expression expression) {
+		if(expression != null) {
+			expression.accept(this);
+		}
+	}
+	
+	protected void tryAccept(ItemsList itemsList) {
+		if(itemsList != null) {
+			itemsList.accept(this);
+		}
+	}
+	
+	protected void tryAccept(FromItem fromItem) {
+		if(fromItem != null) {
+			fromItem.accept(this);
+		}
+	}
+	
+	protected void tryAccept(SelectBody selectBody) {
+		if(selectBody != null) {
+			selectBody.accept(this);
+		}
+	}
+	
+	protected void tryAccept(Statement statement) {
+		if(statement != null) {
+			statement.accept(this);
 		}
 	}
 
