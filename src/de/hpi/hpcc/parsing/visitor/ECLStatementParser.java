@@ -1,6 +1,10 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.visitor;
 
 import de.hpi.hpcc.main.HPCCException;
+import de.hpi.hpcc.parsing.ECLBuilder;
+import de.hpi.hpcc.parsing.ECLEngine;
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.SQLParser;
 import de.hpi.hpcc.parsing.create.ECLBuilderCreate;
 import de.hpi.hpcc.parsing.create.ECLEngineCreate;
 import de.hpi.hpcc.parsing.create.SQLParserCreate;

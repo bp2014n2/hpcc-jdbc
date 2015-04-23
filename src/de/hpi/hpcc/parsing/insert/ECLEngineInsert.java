@@ -12,7 +12,7 @@ import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.ECLTempTableParser;
+import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
 public class ECLEngineInsert extends ECLEngine {
 

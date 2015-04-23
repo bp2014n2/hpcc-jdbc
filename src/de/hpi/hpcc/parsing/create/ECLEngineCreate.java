@@ -14,7 +14,7 @@ import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.ECLTempTableParser;
+import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
 public class ECLEngineCreate extends ECLEngine {
 
@@ -30,7 +30,7 @@ public class ECLEngineCreate extends ECLEngine {
 		if (sqlParser.isTempTable()) {
 			layouts.addTempTable(layouts.getFullTableName(create.getTable().getName()));
 			ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
-			tempTableParser.replace(create.getTable());
+			tempTableParser.replace(create);
 		}
 	}
 

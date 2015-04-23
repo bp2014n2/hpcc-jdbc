@@ -1,5 +1,7 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.visitor;
 
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;

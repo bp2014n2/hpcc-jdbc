@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 
 import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
+import de.hpi.hpcc.parsing.visitor.ECLColumnFinder;
+import de.hpi.hpcc.parsing.visitor.ECLStatementParser;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;

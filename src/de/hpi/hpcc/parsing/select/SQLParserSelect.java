@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Set;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.ECLNameParser;
 import de.hpi.hpcc.parsing.SQLParser;
+import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Table;

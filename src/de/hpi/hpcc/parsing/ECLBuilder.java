@@ -1,5 +1,6 @@
 package de.hpi.hpcc.parsing;
 
+import de.hpi.hpcc.parsing.visitor.ECLExpressionParser;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.Statement;
 

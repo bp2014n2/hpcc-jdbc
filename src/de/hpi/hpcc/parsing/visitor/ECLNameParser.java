@@ -1,4 +1,4 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.visitor;
 
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;

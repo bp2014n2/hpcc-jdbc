@@ -1,7 +1,7 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.visitor;
 
-import de.hpi.hpcc.parsing.select.SQLParserSelect;
-import net.sf.jsqlparser.expression.Alias;
+import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
@@ -56,42 +56,22 @@ import net.sf.jsqlparser.expression.operators.relational.PostgreSQLFromForExpres
 import net.sf.jsqlparser.expression.operators.relational.RegExpMatchOperator;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
-public class ECLSelectParser implements ExpressionVisitor {
+public class ECLDataTypeParser implements ExpressionVisitor {
 
-	private String parsed = "";
+	private String dataType = "string50";
 	private ECLLayouts eclLayouts;
-	private SQLParserSelect sqlParser;
-	
-	public ECLSelectParser(ECLLayouts eclLayouts, SQLParserSelect sqlParser) {
+	private SQLParser sqlParser;
+
+	public ECLDataTypeParser(ECLLayouts eclLayouts, SQLParser sqlParser) {
 		this.eclLayouts = eclLayouts;
 		this.sqlParser = sqlParser;
 	}
 
-	public String parse(SelectExpressionItem sei) {
-		Alias alias = sei.getAlias();
-		Expression expression = sei.getExpression();
-		if(alias != null) {
-			ECLDataTypeParser dataTypeParser = new ECLDataTypeParser(eclLayouts, sqlParser);
-			parsed = dataTypeParser.parse(expression) + " ";
-			parsed += alias.getName();
-			parsed += " := ";
-			return(primitiveParse(expression));
-		}
-		return parse(expression);
-	}
-	
-	private String primitiveParse(Expression expression) {
-		ECLExpressionParser ep = new ECLExpressionParser(eclLayouts);
-		parsed += ep.parse(expression);
-		return parsed;
-	}
-
 	public String parse(Expression expression) {
 		expression.accept(this);
-		return primitiveParse(expression);
+		return dataType;
 	}
 	
 	@Override
@@ -102,11 +82,13 @@ public class ECLSelectParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(Function function) {
-		ECLDataTypeParser dataTypeParser = new ECLDataTypeParser(eclLayouts, sqlParser);
-		ECLNameParser nameParser = new ECLNameParser();
-		parsed = dataTypeParser.parse(function) + " ";
-		parsed += nameParser.name(function);
-		parsed += " := "; 
+		String functionName = function.getName().toLowerCase();
+		switch (functionName) {
+		case "substring": dataType = "STRING50"; break;
+		case "sum":
+		case "count":
+		default: dataType = "INTEGER8"; break;
+		}
 	}
 
 	@Override
@@ -135,8 +117,7 @@ public class ECLSelectParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(LongValue longValue) {
-		// TODO Auto-generated method stub
-		
+		dataType = "integer5";
 	}
 
 	@Override
@@ -267,8 +248,13 @@ public class ECLSelectParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(Column tableColumn) {
-		// TODO Auto-generated method stub
-		
+		for(String table : sqlParser.getAllTables()) {
+			for(String column : sqlParser.getQueriedColumns(table)) {
+				if(column.equalsIgnoreCase(tableColumn.getColumnName())) {
+					dataType = eclLayouts.getECLDataType(table, column);
+				}
+			}
+		}
 	}
 
 	@Override

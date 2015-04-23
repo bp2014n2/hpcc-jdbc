@@ -9,7 +9,7 @@ import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.ECLTempTableParser;
+import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
 public class ECLEngineDrop extends ECLEngine {
 	

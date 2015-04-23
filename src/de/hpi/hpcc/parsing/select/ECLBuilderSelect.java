@@ -22,10 +22,10 @@ import net.sf.jsqlparser.statement.select.SubSelect;
 import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.ECLNameParser;
-import de.hpi.hpcc.parsing.ECLSelectParser;
 import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.SQLParser;
+import de.hpi.hpcc.parsing.visitor.ECLNameParser;
+import de.hpi.hpcc.parsing.visitor.ECLSelectParser;
 
 public class ECLBuilderSelect extends ECLBuilder {
 

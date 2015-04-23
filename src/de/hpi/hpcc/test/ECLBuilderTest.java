@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.parsing.ECLBuilder;
-import de.hpi.hpcc.parsing.ECLStatementParser;
+import de.hpi.hpcc.parsing.visitor.ECLStatementParser;
 
 public class ECLBuilderTest {
 	

@@ -1,11 +1,11 @@
-package de.hpi.hpcc.parsing;
+package de.hpi.hpcc.parsing.visitor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import de.hpi.hpcc.parsing.visitor.FullVisitorAdapter;
+import de.hpi.hpcc.parsing.ECLLayouts;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.Statement;
 

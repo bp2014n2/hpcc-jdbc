@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.hpi.hpcc.main.HPCCColumnMetaData;
+import de.hpi.hpcc.parsing.visitor.ECLStatementParser;
 
 public class ECLParser {
 
