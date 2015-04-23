@@ -94,11 +94,11 @@ public class ECLEngineInsert extends ECLEngine {
 	
 	protected String generateLayouts() {
     	StringBuilder layoutsString = new StringBuilder();
-    	String table = getSQLParser().getTable().getName();
-		layoutsString.append(layouts.getLayout(table));
-		layoutsString.append("\n");
-		for (String otherTable : getSQLParser().getAllTables()) {
-			layoutsString.append(layouts.getLayout(otherTable));
+//    	String table = getSQLParser().getTable().getName();
+//		layoutsString.append(layouts.getLayout(table));
+//		layoutsString.append("\n");
+		for (String table : getSQLParser().getAllTables()) {
+			layoutsString.append(layouts.getLayout(table));
 			layoutsString.append("\n");
 		}
 		return layoutsString.toString();

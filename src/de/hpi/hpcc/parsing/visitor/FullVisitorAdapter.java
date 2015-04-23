@@ -479,6 +479,10 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 		if(insert.getSelect() != null) {
 			insert.getSelect().accept(this);
 		}
+		Table table = insert.getTable();		
+		if (table != null) {		
+			table.accept(this);		
+		}
 	}
 
 	@Override
@@ -507,8 +511,10 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(CreateTable createTable) {
-		// TODO Auto-generated method stub
-		
+		Table table = createTable.getTable();
+		if (table != null) {
+			table.accept(this);
+		}
 	}
 
 	@Override
