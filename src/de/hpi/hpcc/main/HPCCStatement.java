@@ -50,13 +50,15 @@ public class HPCCStatement implements Statement{
     	
     }};
     
-    private boolean federatedDatabase = false;
+    private boolean federatedDatabase = true;
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;
         this.connection = (HPCCConnection) connection;
         this.connection.addName(name);
         log("Statement created");
+        Long difference = System.nanoTime()-HPCCDriver.beginTime;
+		HPCCJDBCUtils.traceoutln(Level.INFO, "created statement at: "+difference/1000000);
     }
     
 	public boolean execute(String sqlStatement) throws SQLException {
@@ -70,22 +72,18 @@ public class HPCCStatement implements Statement{
 		}
 		
 		result = null;
-		log("currentQuery: "+sqlStatement);
-		
+		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
+		Long difference = System.nanoTime()-HPCCDriver.beginTime;
+		HPCCJDBCUtils.traceoutln(Level.INFO, "started query at: "+difference/1000000);
 		if (checkFederatedDatabase(sqlStatement)) {
-			Long before = System.nanoTime();
-			boolean result = executeQueryOnPostgreSQL(sqlStatement);
-			Long after = System.nanoTime();
-			Long difference = after-before;
-			HPCCJDBCUtils.traceoutln(Level.INFO, "executionTime: "+difference/1000000);
+			boolean result = executeQueryOnPostgreSQL(sqlStatement); 
+			difference = System.nanoTime()-HPCCDriver.beginTime;
+			HPCCJDBCUtils.traceoutln(Level.INFO, "finished Postgresql query at: "+difference/1000000);
 			return result;
-			
 		} else {
-			Long before = System.nanoTime();
 			boolean result = executeQueryOnHPCC(sqlStatement);
-			Long after = System.nanoTime();
-			Long difference = after-before;
-			HPCCJDBCUtils.traceoutln(Level.INFO, "executionTime: "+difference/1000000);
+			difference = System.nanoTime()-HPCCDriver.beginTime;
+			HPCCJDBCUtils.traceoutln(Level.INFO, "finished HPCC query at: "+difference/1000000);
 			return result;
 		}
 	}
