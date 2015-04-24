@@ -77,7 +77,7 @@ public class ECLBuilderSelect extends ECLBuilder {
     	}
     	generateOrderBys(sqlParser);
     	if(sqlParser.getOrderBys() != null) {
-    		generateSelects(sqlParser, false);
+    		generateSelects(sqlParser, false); //TODO: just select name of function here, as already selected
     		if (sqlParser.getGroupBys() != null || sqlParser.getSelectItems() != null) {
         		eclCode = ECLUtils.convertToTable(eclCode);
         	}

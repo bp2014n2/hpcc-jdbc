@@ -48,8 +48,8 @@ public abstract class SQLParser{
 		}
 	}
 
-	public List<String> getQueriedColumns(String table) {
-		return findColumns(getTableNameAndAlias(table), getStatement());
+	public Set<String> getQueriedColumns(String table) {
+		return findColumns(table, getStatement());
 	};
 	
 	public Set<String> getAllTables() {
@@ -73,33 +73,10 @@ public abstract class SQLParser{
 		return getStatement().toString().length() - getStatement().toString().replace("?", "").length();
 	}
 	
-	protected List<String> findColumns(List<String> tableNameAndAlias, Statement statement) {
-		ECLColumnFinder finder = new ECLColumnFinder(eclLayouts, tableNameAndAlias);
+	protected Set<String> findColumns(String tableName, Statement statement) {
+		ECLColumnFinder finder = new ECLColumnFinder(eclLayouts, tableName);
 		return finder.find(statement);
 			
-	}
-	
-	protected List<String> getTableNameAndAlias(String table) {
-		List<String> tableNameAndAlias = new ArrayList<String>();
-		tableNameAndAlias.add(table);
-		Pattern findAlias = Pattern.compile("from\\s*(\\w+(\\s*(i2b2demodata\\.)?\\w+)?\\s*,\\s*)*(i2b2demodata\\.)?" + table + "\\s*(\\w+)\\s*", Pattern.CASE_INSENSITIVE);
-		Matcher alias = findAlias.matcher(getStatement().toString());
-		while (alias.find()) {
-			String aliasName = alias.group(5);
-			if (isValidAlias(aliasName)) {
-				tableNameAndAlias.add(aliasName);
-			}
-		}
-		return tableNameAndAlias;
-	}
-
-	private boolean isValidAlias(String aliasName) {
-		List<String> invalidAlias = new ArrayList<String>();
-		invalidAlias.add("where");
-		if (!HPCCJDBCUtils.containsStringCaseInsensitive(invalidAlias, aliasName)) {
-			return true;
-		}
-		return false;
 	}
 
 	public static SQLParser getInstance(String sql, ECLLayouts eclLayouts) throws HPCCException {

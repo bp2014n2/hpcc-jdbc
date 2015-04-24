@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
 import net.sf.jsqlparser.statement.Statement;
@@ -121,7 +122,7 @@ public abstract class ECLEngine
     	boolean hasIndex = layouts.hasIndex(tableName);
     	if (hasIndex) {
         	List<String> indexes = layouts.getListOfIndexes(tableName);
-    		List<String> columns = getSQLParser().getQueriedColumns(tableName);
+    		Set<String> columns = getSQLParser().getQueriedColumns(tableName);
         	ArrayList<Integer> scores = new ArrayList<Integer>();
         	for (String index : indexes) {
             	List<Object> indexColumns = new ArrayList<Object>(layouts.getKeyedColumns(index));

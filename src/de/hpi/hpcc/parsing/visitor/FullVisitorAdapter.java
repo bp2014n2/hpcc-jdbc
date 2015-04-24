@@ -552,7 +552,7 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(PlainSelect plainSelect) {
-		tryAccept(plainSelect.getFromItem());		
+		tryAccept(plainSelect.getFromItem());
 		if(plainSelect.getJoins() != null) {
 			for (Join join : plainSelect.getJoins()) {
 				join.getRightItem().accept(this);

@@ -1,54 +1,143 @@
 package de.hpi.hpcc.parsing.visitor;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.test.ECLLayoutsStub;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.select.AllColumns;
+import net.sf.jsqlparser.statement.select.FromItem;
+import net.sf.jsqlparser.statement.select.Join;
+import net.sf.jsqlparser.statement.select.OrderByElement;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.SelectItem;
+import net.sf.jsqlparser.statement.update.Update;
 
 public class ECLColumnFinder extends FullVisitorAdapter {
 
-	private List<String> columns = new ArrayList<String>();
-	private List<String> tableNameAndAlias;
-	private Statement statement;
-	private ECLLayouts layouts;
+	private Set<String> columns = new HashSet<String>();
+	private ECLLayouts eclLayouts;
+	private String tableName;
+	private Stack<List<String>> tables;
 
-	public List<String> find(Statement statement) {
-		this.statement = statement;
+	public Set<String> find(Statement statement) {
+		tables = new Stack<List<String>>();
+		tables.push(new ArrayList<String>());
 		statement.accept(this);
 		return columns;
 	}
 	
-	public ECLColumnFinder(ECLLayouts layouts, List<String> tableNameAndAlias) {
-		this.layouts = layouts;
-		this.tableNameAndAlias = tableNameAndAlias;
+	public ECLColumnFinder(ECLLayouts eclLayouts, String tableName) {
+		this.tableName = tableName;
+		this.eclLayouts = eclLayouts;
 	}
 
 	@Override
 	public void visit(Column tableColumn) {
-		String columnName = tableColumn.getColumnName();
-		String tableName = tableColumn.getTable().getName();
-		if (tableName != null) {
-			if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase()) && !columns.contains(columnName)) {
-				columns.add(columnName);
-			}
-		} else {
-			Pattern selectPattern = Pattern.compile("select\\s*(distinct\\s*)?((((count|sum|avg)\\(\\w*\\))|\\w*)\\s*,\\s*)*("+ columnName +"\\s*|(count|sum|avg)\\(\\s*"+ columnName +"\\s*\\))\\s*(as\\s*\\w*\\s*)?(,\\s*((count|sum|avg)\\(\\w*\\)|\\w*)\\s*(as\\s*\\w*\\s*)?)*from\\s*(\\w*\\.)?(\\w*)",Pattern.CASE_INSENSITIVE);
-			Pattern wherePattern = Pattern.compile("from\\s*(\\w*\\.)?(\\w*)(\\s*\\w*)?\\s*where\\s*(\\(?(\\w*\\.)?\\w*\\s*((=|<=|>=)\\s*'?\\w*'?|in\\s*\\([\\w\\s\\\\'%\\.\\-]*\\))\\s*\\)?\\s*(and|or)\\s*)*\\(?" + columnName,Pattern.CASE_INSENSITIVE);
-			Matcher selectMatcher = selectPattern.matcher(statement.toString());
-			Matcher whereMatcher = wherePattern.matcher(statement.toString());
-			if (selectMatcher.find()) {
-				tableName = selectMatcher.group(14);
-			} else if (whereMatcher.find()) {
-				tableName = whereMatcher.group(2);
-			}
-			if (tableNameAndAlias.contains(tableName==null ? "" : tableName.toLowerCase())) {
-				columns.add(columnName);
+		String columnName = tableColumn.getColumnName().toLowerCase();
+		if (!tables.empty() && HPCCJDBCUtils.containsStringCaseInsensitive(eclLayouts.getAllColumns(tableName),columnName) && tables.peek().contains(tableName)) {
+			columns.add(columnName);
+		}
+	}
+	
+	@Override
+	public void visit(AllColumns allColumns) {
+		if (!tables.empty() && tables.peek().contains(tableName)) {
+			Set<String> allColumnsSet = eclLayouts.getAllColumns(tableName);
+			for(String column : allColumnsSet) {
+				columns.add(column.toLowerCase());
 			}
 		}
 	}
-
+	
+	@Override
+	public void visit(Table tableName) {
+		tables.peek().add(tableName.getName().toLowerCase());
+	}
+	
+	@Override
+	public void visit(PlainSelect plainSelect) {
+		boolean isFrom = plainSelect.getFromItem() != null && plainSelect.getFromItem() instanceof Table;
+		if (isFrom) {
+			tables.push(new ArrayList<String>());
+		}
+		tryAccept(plainSelect.getFromItem());  	//important to get Tables before Columns
+		if(plainSelect.getJoins() != null) {
+			for (Join join : plainSelect.getJoins()) {
+				join.getRightItem().accept(this);
+			}
+		}		
+		if(plainSelect.getSelectItems() != null) {
+			for(SelectItem selectItem : plainSelect.getSelectItems()) {
+				selectItem.accept(this);
+			}
+		}
+		if(plainSelect.getGroupByColumnReferences() != null) {
+			for(Expression groupBy : plainSelect.getGroupByColumnReferences()) {
+				groupBy.accept(this);
+			}
+		}		
+		tryAccept(plainSelect.getHaving());
+		if(plainSelect.getOrderByElements() != null) {
+			for(OrderByElement orderBy : plainSelect.getOrderByElements()) {
+				orderBy.accept(this);
+			}
+		}
+		tryAccept(plainSelect.getWhere());
+		if(plainSelect.getDistinct() != null && plainSelect.getDistinct().getOnSelectItems() != null) {
+			for(SelectItem selectItem : plainSelect.getDistinct().getOnSelectItems()) {
+				selectItem.accept(this);
+			}
+		}
+		tryAccept(plainSelect.getForUpdateTable());
+		if(plainSelect.getIntoTables() != null) {
+			for(Table table : plainSelect.getIntoTables()) {
+				table.accept(this);
+			}
+		}
+		if (isFrom) {
+			tables.pop();
+		}
+	}
+	
+	@Override
+	public void visit(Update update) {	
+		if(update.getTables() != null) {		//order is important to get tables first
+			for(Table table : update.getTables()) {
+				table.accept(this);
+			}
+		}
+		if(update.getColumns() != null) {
+			for(Column column : update.getColumns()) {
+				column.accept(this);
+			}
+		}		
+		tryAccept(update.getFromItem());
+		tryAccept(update.getSelect());	
+		tryAccept(update.getWhere());
+		
+	}
+	
+	@Override
+	public void visit(Insert insert) {
+		if(insert.getColumns() != null) {
+			for(Column column : insert.getColumns()) {
+				column.accept(this);
+			}
+		}
+		tryAccept(insert.getTable());  //need to visit Tables first
+		tryAccept(insert.getSelect());
+	}
 }

@@ -36,11 +36,11 @@ public class ECLLayoutsStub extends ECLLayouts {
 		if(layout != null) {
 			String[] columns = layout.split(";\\s+");
 			for (String column : columns) {
-				Matcher matcher = Pattern.compile("(\\w+)\\s+(\\w+)").matcher(column);
+				Matcher matcher = Pattern.compile("(\\w+)\\s+(\\w+)", Pattern.CASE_INSENSITIVE).matcher(column);
 				if (matcher.find()) {
 					String type = matcher.group(1);
 					String name = matcher.group(2);
-					if (name.equals(columnName)) {
+					if (name.equalsIgnoreCase(columnName)) {
 						return type;
 					}
 				}
