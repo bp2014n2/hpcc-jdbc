@@ -46,11 +46,6 @@ public class ECLBuilderInsert extends ECLBuilder {
 		generateNewDataset(sqlParser);
 		eclCode.append(",,'~%NEWTABLE%', overwrite);\n");
 		
-		
-		/*
-			 * TODO: replace with much, much, much better solution
-			 */
-		//eclCode.append("OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n");
 		return eclCode.toString();
 	}
 
@@ -58,6 +53,8 @@ public class ECLBuilderInsert extends ECLBuilder {
 		if (sqlParser.getColumns() == null || sqlParser.getColumns().size() == eclLayouts.getAllColumns(sqlParser.getTable().getName()).size()) {
 			if (sqlParser.getItemsList() instanceof SubSelect) {
 				eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
+			} else if (sqlParser.getSelect() != null) {
+				eclCode.append(new ECLBuilderSelect(sqlParser.getSelect(), eclLayouts).generateECL());
 			} else {
 				eclCode.append("DATASET([{");
 				List<String> columns = sqlParser.getColumnNames();

@@ -136,10 +136,19 @@ public class ECLBuilderSelect extends ECLBuilder {
 
 		FromItem table = sqlParser.getFromItem();
 		if (sqlParser.getJoins() != null) {
+			StringBuilder joinString = new StringBuilder();
+			// TODO: Joins with more than two tables
+			joinString.append("JOIN("+((Table)table).getName()+", "+((Table) sqlParser.getJoins().get(0).getRightItem()).getName());
+						
 			EqualsTo joinCondition = findJoinCondition(sqlParser.getWhere());
-			String joinColumn = ((Column) joinCondition.getRightExpression()).getColumnName();
-			eclCode.append("JOIN("+((Table)table).getName()+", "+((Table) sqlParser.getJoins().get(0).getRightItem()).getName());
-			eclCode.append(", LEFT."+joinColumn+" = RIGHT."+joinColumn+", LOOKUP)");
+			if (joinCondition != null) {
+				String joinColumn = ((Column) joinCondition.getRightExpression()).getColumnName();
+				joinString.append(", LEFT."+joinColumn+" = RIGHT."+joinColumn+", LOOKUP)");
+			} else {
+				joinString.append(", 1=1, ALL)");
+				
+			}
+			eclCode.append(joinString.toString());
 		} else {
 			
 			if (table instanceof Table) {
