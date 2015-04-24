@@ -106,7 +106,6 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 		expressionBuilder.append(parseFunction(function));
 		parsed = expressionBuilder.toString();
-		
 	}
 	
 	private String parseFunction(Function function) {
@@ -416,8 +415,11 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(AnalyticExpression aexpr) {
-		// TODO Auto-generated method stub
-		
+		switch(aexpr.getName().toLowerCase()) {
+		// TODO: better (need to implement a counter in order to enumerate the tuples)
+		case "row_number": parsed = "0"; break;
+		default: break;
+		}
 	}
 
 	@Override

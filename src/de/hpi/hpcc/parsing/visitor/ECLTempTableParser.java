@@ -27,7 +27,7 @@ public class ECLTempTableParser extends FullVisitorAdapter {
 	@Override
 	public void visit(Table tableName) {
 		String name = tableName.getName();
-		if (layouts.isTempTable(name)) {
+		if (name != null && layouts.isTempTable(name)) {
     		name = layouts.getShortTempTableName(name);
     	}
 		tableName.setName(name);

@@ -337,8 +337,10 @@ public class ECLDataTypeParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(AnalyticExpression aexpr) {
-		// TODO Auto-generated method stub
-		
+		switch (aexpr.getName().toLowerCase()) {
+		case "row_number": dataType = "INTEGER5"; break;
+		default: dataType = "INTEGER5"; break;
+		}
 	}
 
 	@Override
