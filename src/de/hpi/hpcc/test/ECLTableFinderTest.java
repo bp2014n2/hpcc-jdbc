@@ -14,33 +14,29 @@ import de.hpi.hpcc.parsing.visitor.ECLTableFinder;
 
 public class ECLTableFinderTest {
 	
-	public static void assertAllTablesAreFound(Set<String> expectedTables, String sql) {
-		try {
-			ECLTableFinder finder = new ECLTableFinder();
-			Statement statement = SQLParser.parse(sql);
-			Set<String> foundTables = finder.find(statement);
-			assertEquals(expectedTables, foundTables);
-		} catch (HPCCException e) {
-
-		}
+	public static void assertAllTablesAreFound(Set<String> expectedTables, String sql) throws HPCCException {
+		ECLTableFinder finder = new ECLTableFinder();
+		Statement statement = SQLParser.parse(sql);
+		Set<String> foundTables = finder.find(statement);
+		assertEquals(expectedTables, foundTables);
     }
 	
 	@Test
-	public void shouldFindFromItems() {
+	public void shouldFindFromItems() throws HPCCException {
 		Set<String> expectedTables = new HashSet<String>();
 		expectedTables.add("mytable");
 		assertAllTablesAreFound(expectedTables, "SELECT * FROM myTable");
 	}
 	
 	@Test
-	public void shouldNotFindWithAliases() {
+	public void shouldNotFindWithAliases() throws HPCCException {
 		Set<String> expectedTables = new HashSet<String>();
 		expectedTables.add("mytable");
 		assertAllTablesAreFound(expectedTables, "WITH t AS (SELECT * FROM myTable) SELECT * FROM t");
 	}
 	
 	@Test
-	public void shouldNotFindAliases() {
+	public void shouldNotFindAliases() throws HPCCException {
 		Set<String> expectedTables = new HashSet<String>();
 		expectedTables.add("mytable");
 		assertAllTablesAreFound(expectedTables, "SELECT * FROM myTable t");
@@ -48,7 +44,7 @@ public class ECLTableFinderTest {
 	}
 	
 	@Test
-	public void shouldFindWhereIns() {
+	public void shouldFindWhereIns() throws HPCCException {
 		Set<String> expectedTables = new HashSet<String>();
 		expectedTables.add("mytable");
 		expectedTables.add("anothertable");

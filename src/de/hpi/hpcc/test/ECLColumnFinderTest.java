@@ -15,19 +15,15 @@ public class ECLColumnFinderTest {
 	
 	private static ECLLayoutsStub layouts = new ECLLayoutsStub(null);
 	
-	public static void assertAllColumnsAreFound(List<String> expectedTables, List<String> tableNameAndAlias, String sql) {
-		try {
-			ECLColumnFinder finder = new ECLColumnFinder(layouts, tableNameAndAlias);
-			Statement statement = SQLParser.parse(sql);
-			List<String> foundTables = finder.find(statement);
-			assertEquals(foundTables, expectedTables);
-		} catch (HPCCException e) {
-
-		}
+	public static void assertAllColumnsAreFound(List<String> expectedTables, List<String> tableNameAndAlias, String sql) throws HPCCException {
+		ECLColumnFinder finder = new ECLColumnFinder(layouts, tableNameAndAlias);
+		Statement statement = SQLParser.parse(sql);
+		List<String> foundTables = finder.find(statement);
+		assertEquals(foundTables, expectedTables);
     }
 	
 	@Test
-	public void shouldFindColumns() {
+	public void shouldFindColumns() throws HPCCException {
 		List<String> tableNameAndAlias = new ArrayList<String>();
 		tableNameAndAlias.add("mytable");
 		List<String> expectedColumns = new ArrayList<String>();

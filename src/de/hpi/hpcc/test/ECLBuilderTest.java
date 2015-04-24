@@ -16,15 +16,11 @@ public class ECLBuilderTest {
 	
 	private static ECLLayoutsStub eclLayouts = new ECLLayoutsStub(null);
 	
-	public static void assertStatementCanBeParsedAs(String expected, String sql) {
+	public static void assertStatementCanBeParsedAs(String expected, String sql) throws HPCCException {
 		ECLStatementParser typeParser = new ECLStatementParser(eclLayouts);
 		ECLBuilder builder;
-		try {
-			builder = typeParser.getBuilder(sql);
-			assertEquals(expected, builder.generateECL());
-		} catch (HPCCException e) {
-
-		}
+		builder = typeParser.getBuilder(sql);
+		assertEquals(expected, builder.generateECL());
     }
 	
 	@BeforeClass
@@ -36,7 +32,7 @@ public class ECLBuilderTest {
 	}
 	
 	@Test
-	public void shouldTranslateSimpleSelect() throws SQLException {
+	public void shouldTranslateSimpleSelect() throws HPCCException {
 		assertStatementCanBeParsedAs("TABLE(myTable, {myColumn, myColumnA, myColumnB})", "select * from mySchema.myTable");
 		assertStatementCanBeParsedAs("TABLE(myTable, {myColumn})", "select myColumn from mySchema.myTable");
 		assertStatementCanBeParsedAs("DEDUP(TABLE(myTable, {myColumn, myColumnA, myColumnB}), All)", "select distinct * from mySchema.myTable");
@@ -45,20 +41,20 @@ public class ECLBuilderTest {
 	}
 
 	@Test
-	public void shouldTranslateSelectWithWhere() {
+	public void shouldTranslateSelectWithWhere() throws HPCCException {
 		assertStatementCanBeParsedAs("TABLE(myTable(myColumn = 'foo'), {myColumn, myColumnA, myColumnB})", "select * from mySchema.myTable where myColumn = 'foo'");
 		assertStatementCanBeParsedAs("TABLE(myTable(myColumn = 'foo'), {myColumn})", "select myColumn from mySchema.myTable where myColumn = 'foo'");
 		assertStatementCanBeParsedAs("TABLE(myTable(myColumn = ''), {myColumn})", "select myColumn from mySchema.myTable where myColumn is NULL");
 	}
 	
 	@Test
-	public void shouldTranslateSelectWithLike() {
+	public void shouldTranslateSelectWithLike() throws HPCCException {
 		assertStatementCanBeParsedAs("TABLE(myTable(myColumn[1..3] = 'foo'), {myColumn, myColumnA, myColumnB})", "select * from mySchema.myTable where myColumn like 'foo%'");
 		assertStatementCanBeParsedAs("TABLE(myTable(myColumn[1..3] = 'foo'), {myColumn, myColumnA, myColumnB})", "select * from mySchema.myTable where myColumn like 'foo'");
 	}
 	
 	@Test
-	public void shouldTranslateSelectWithOrderBy() {
+	public void shouldTranslateSelectWithOrderBy() throws HPCCException {
 		assertStatementCanBeParsedAs("TABLE(SORT(TABLE(myTable, {myColumn, myColumnA, myColumnB}), myColumn), {myColumn, myColumnA, myColumnB})", "select * from mySchema.myTable order by myColumn");
 		assertStatementCanBeParsedAs("TABLE(SORT(TABLE(myTable, {myColumn}), myColumn), {myColumn})", "select myColumn from mySchema.myTable order by myColumn");
 		assertStatementCanBeParsedAs("DEDUP(TABLE(SORT(TABLE(myTable, {myColumn}), myColumn), {myColumn}), All)", "select distinct myColumn from mySchema.myTable order by myColumn");
@@ -67,7 +63,7 @@ public class ECLBuilderTest {
 	}
 	
 	@Test 
-	public void shouldTranslateSelectWithGroupBy() {
+	public void shouldTranslateSelectWithGroupBy() throws HPCCException {
 		assertStatementCanBeParsedAs("TABLE(myTable, {myColumn}, myColumn)", "select myColumn from mySchema.myTable group by myColumn");
 		assertStatementCanBeParsedAs("TABLE(myTable, {myColumn}, myColumnA, myColumnB)", "select myColumn from mySchema.myTable group by myColumnA, myColumnB");
 		assertStatementCanBeParsedAs("TABLE(myTable, {INTEGER8 func_count := COUNT(GROUP)}, myColumn)", "select count(myColumn) from mySchema.myTable group by myColumn");
@@ -75,29 +71,28 @@ public class ECLBuilderTest {
 	}
 		
 	@Test
-	public void shouldTranslateSelectWithLimit() {
+	public void shouldTranslateSelectWithLimit() throws HPCCException {
 		assertStatementCanBeParsedAs("CHOOSEN(TABLE(myTable, {myColumn}), 1)", "select myColumn from mySchema.myTable limit 1");
 	}
 	
 	@Test @Ignore
-	public void shouldTranslateSelectWithJoin() {
-//		not implemented yet
+	public void shouldTranslateSelectWithJoin() throws HPCCException {
 		assertStatementCanBeParsedAs("JOIN(myTableA, myTableB, left.myColumnA = right.myColumnB), {myColumn}", "select myColumn from mySchema.myTableA, mySchema.myTableB where myTableA.columnA = myTableB.columnB");
 	}
 	
 	@Test
-	public void shouldTranslateSelectWithSubselectInFrom() {
+	public void shouldTranslateSelectWithSubselectInFrom() throws HPCCException {
 		assertStatementCanBeParsedAs("TABLE((TABLE(myTable, {myColumnA, myColumnB})), {myColumnA})", "select myColumnA from (select myColumnA, myColumnB from myTable)");
 	}
 	
 	@Test
-	public void shouldTranslateSelectWithSubselectInWhere() {
+	public void shouldTranslateSelectWithSubselectInWhere() throws HPCCException {
 		assertStatementCanBeParsedAs("TABLE(myTableA(myColumnB IN SET(TABLE(myTableB, {myColumnC}),myColumnB)), {myColumnA})", "select myColumnA from myTableA where myColumnB in (select myColumnC from myTableB)");
 //		assertStatementCanBeParsedAs("Table(myTableA(myColumnB in dictionary([{'myValue1'}, {'myValue2'}], {STRING15 myColumnB})), {myColumnA})", "select myColumnA from myTableA where myColumnB in ('myValue1', 'myValue2')");
 	}
 	
 	@Test
-	public void shouldTranslateSelectWithFunction() {
+	public void shouldTranslateSelectWithFunction() throws HPCCException {
 		//assertStatementCanBeParsedAs("", "select nextval('mySequence')");
 		assertStatementCanBeParsedAs("TABLE(myTable, {INTEGER8 func_count := COUNT(GROUP)})", "select count(*) from mySchema.myTable");
 		assertStatementCanBeParsedAs("TABLE(myTable, {INTEGER8 func_count := COUNT(GROUP)})", "select count(myColumn) from mySchema.myTable");
@@ -109,7 +104,7 @@ public class ECLBuilderTest {
 	}
 	
 	@Test
-	public void shouldTranslateInsertInto() {
+	public void shouldTranslateInsertInto() throws HPCCException {
 		assertStatementCanBeParsedAs("OUTPUT(DATASET([{valueA, valueB, valueC}], myTable_record),,'~%NEWTABLE%', overwrite);\n","insert into myTable values (valueA, valueB, valueC)");
 		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueA}], {STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA) values (valueA)");
 		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING25 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA, myColumnB) values (valueA, valueB)");
@@ -120,19 +115,19 @@ public class ECLBuilderTest {
 	}
 	
 	@Test
-	public void shouldTranslateUpdate() {
+	public void shouldTranslateUpdate() throws HPCCException {
 		assertStatementCanBeParsedAs("toUpdate := TABLE(TABLE(myTable, {myColumnA, myColumnB}), {STRING50 myColumn := 'myValue', myColumnA, myColumnB});\nOUTPUT(toUpdate,, '~%NEWTABLE%', overwrite);\n","update myTable set myColumn = 'myValue'");
 		assertStatementCanBeParsedAs("toUpdate := TABLE(TABLE(myTable(myColumnB = 'anotherValue'), {myColumn, myColumnB}), {myColumn, STRING50 myColumnA := 'myValue', myColumnB});\nOUTPUT(myTable(NOT(myColumnB = 'anotherValue'))+toUpdate,, '~%NEWTABLE%', overwrite);\n", "update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'");	
 		assertStatementCanBeParsedAs("join_record := RECORD STRING25 myColumnB; STRING50 myColumnA; END;\nmyTable_record update(myTable_record l, join_record r) := TRANSFORM\n  SELF.myColumn := l.myColumn;\n  SELF.myColumnA := IF(r.myColumnA = '', l.myColumnA, r.myColumnA);\n  SELF.myColumnB := l.myColumnB;\nEND;\nOUTPUT(JOIN(myTable(myColumnA = 'anotherValue'), TABLE(, {myColumnB, STRING50 myColumnA := 'myValue'}), LEFT.myColumnB = RIGHT.myColumnB, update(LEFT, RIGHT), LEFT OUTER) + myTable(NOT myColumnA = 'anotherValue'),,'~%NEWTABLE%',OVERWRITE);", "update myTable set myColumnA = 'myValue' where myColumnA = 'anotherValue' and exists (select 1 from myTableA where myTable.myColumnB = myTableA.myColumnB)");
 	} 
 	
 	@Test
-	public void shouldTranslateDropTable() {
+	public void shouldTranslateDropTable() throws HPCCException {
 		assertStatementCanBeParsedAs("Std.File.DeleteLogicalFile('~i2b2demodata::myTable', true)", "drop table myTable");		
 	}
 	
 	@Test
-	public void shouldCreateTable() {
+	public void shouldCreateTable() throws HPCCException {
 		assertStatementCanBeParsedAs("OUTPUT(DATASET([],{INTEGER5 myColumnA, STRING37 myColumnB, STRING25 myColumnC}),,'~%NEWTABLE%',OVERWRITE);", "create table newTable (myColumnA int, myColumnB varchar(37), myColumnC timestamp)");
 		assertStatementCanBeParsedAs("OUTPUT(DATASET([],{INTEGER5 myColumnA, STRING12 myColumnB}),,'~%NEWTABLE%',OVERWRITE);", "create temp table newTable (myColumnA int, myColumnB varchar(12))");
 	}

@@ -77,8 +77,8 @@ public class HPCCDriverTest {
 		assertEquals("//localhost", connection.getClientInfo("WsECLDirectAddress"));
 		assertEquals("", connection.getClientInfo("username"));
 		assertEquals("", connection.getClientInfo("password"));
-		assertEquals("5000", connection.getClientInfo("ConnectTimeoutMilli"));
-		assertEquals("15000", connection.getClientInfo("ReadTimeoutMilli"));
+		assertEquals("500000", connection.getClientInfo("ConnectTimeoutMilli"));
+		assertEquals("1500000", connection.getClientInfo("ReadTimeoutMilli"));
 		assertEquals("true", connection.getClientInfo("LazyLoad"));
 		assertEquals("100", connection.getClientInfo("EclResultLimit"));
 		assertEquals(Level.INFO.getName(), connection.getClientInfo("TraceLevel"));
@@ -112,8 +112,8 @@ public class HPCCDriverTest {
 		assertEquals("//localhost", connection.getClientInfo("WsECLDirectAddress"));
 		assertEquals("100", connection.getClientInfo("PageSize"));
 		assertEquals("0", connection.getClientInfo("PageOffset"));
-		assertEquals("5000", connection.getClientInfo("ConnectTimeoutMilli"));
-		assertEquals("15000", connection.getClientInfo("ReadTimeoutMilli"));
+		assertEquals("500000", connection.getClientInfo("ConnectTimeoutMilli"));
+		assertEquals("1500000", connection.getClientInfo("ReadTimeoutMilli"));
 		assertEquals("100", connection.getClientInfo("EclResultLimit"));
 		
 		connection.close();
