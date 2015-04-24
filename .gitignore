@@ -2,4 +2,7 @@
 *.log*
 *.settings*
 .idea*
-/built_jars/
+/build/
+/dist/
+/report/
+/service/

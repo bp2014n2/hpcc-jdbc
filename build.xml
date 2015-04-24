@@ -1,60 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="hpcc-jdbc_makejar" default="clean" basedir=".">
-	<property name="driverName" value="de.hpi.hpcc.main.HPCCDriver"/>
-	
-	<property name="src" location="src/de/hpi/hpcc"/>
-	
-	<property name="main" location="${src}/main"/>
-	<property name="parsing" location="${src}/parsing"/>
-	<property name="logging" location="${src}/logging"/>
-	
-	<property name="build" location="build"/>
-	<property name="extra" location="build_extra"/>
-	<property name="destination" location="built_jars"/>
-	
-	<property name="libLocation" location="lib"/>
-	<property name="sqlParserVersion" value="0.9.3-SNAPSHOT"/>
-	<property name="sqlParser" value="jsqlparser-${sqlParserVersion}.jar"/>
-	
-	<property name="postgres" value="postgresql-9.3-1102.jdbc4.jar"/>
-	
+<project name="hpcc-jdbc" default="dist" basedir=".">
+	<description>
+		Build HPCC JDBC Driver
+	</description>
+	<!-- set global properties for this build -->
+	<property name="driverClass" value="de.hpi.hpcc.main.HPCCDriver" />
+	<property name="src.dir" location="src/main" />
+	<property name="lib.dir" location="lib" />
+	<property name="test.dir" location="src/test" />
+	<property name="build.dir" location="build" />
+	<property name="service.dir" location="service" />
+	<property name="dist.dir" location="dist" />
+	<property name="report.dir" location="report" />
+	<property name="sqlParserVersion" value="0.9.3-SNAPSHOT" />
+	<property name="sqlParser" value="jsqlparser-${sqlParserVersion}.jar" />
+	<property name="postgresqlVersion" value="9.3-1102" />
+	<property name="postgresql" value="postgresql-${postgresqlVersion}.jdbc4.jar" />
+
 	<target name="init">
-		<tstamp/>
-		<mkdir dir="${build}" />
-		<mkdir dir="${extra}" />
-		<mkdir dir="${destination}"/>
-	</target>
-	
-	<target name="initDriverFile" depends="init">
-		<mkdir dir="${extra}/services" />
-		<touch file="${extra}/services/java.sql.Driver" />
-		<echo file="${extra}/services/java.sql.Driver" append="false">${driverName}</echo>
+		<mkdir dir="${build.dir}" />
 	</target>
 
-	<target name="compile" depends="initDriverFile" description="Compile the source" >
-		<javac includeantruntime="false" debug="true" destdir="${build}">
-			<src path="${main}"/>
-			<src path="${parsing}"/>
-			<src path="${logging}"/>
+	<target name="compile" depends="init" description="compile the source ">
+		<javac includeantruntime="false" debug="true" srcdir="${src.dir}"
+			destdir="${build.dir}">
 			<classpath>
-				<pathelement path="${libLocation}/${sqlParser}"/>
+				<pathelement path="${classpath}" />
+				<pathelement location="${lib.dir}/${sqlParser}" />
 			</classpath>
 		</javac>
 	</target>
 
-	<target name="makejar" depends="compile" description="Make jar">
-		<jar jarfile="${destination}/jdbc-hpcc.jar" basedir="${build}" duplicate="preserve">
-			<fileset dir="${build}" includes="${main}/*.class" />
-			<fileset dir="${build}" includes="${parsing}/*.class" />
-			<fileset dir="${build}" includes="${logging}/*.class" />
-			<zipgroupfileset dir="lib" includes="${sqlParser}" />
-			<zipgroupfileset dir="lib" includes="${postgres}" />
-			<metainf dir="${extra}" includes="**/java.sql.Driver"/>
-		</jar>
+	<target name="compile_test" depends="compile" description="compile the source ">
+		<javac includeantruntime="false" debug="true" srcdir="${test.dir}"
+			destdir="${build.dir}">
+			<classpath>
+				<pathelement path="${classpath}" />
+				<pathelement location="${lib.dir}/${sqlParser}" />
+				<pathelement location="${lib.dir}/junit-4.12.jar" />
+				<pathelement location="${lib.dir}/hamcrest-core-1.3.jar" />
+			</classpath>
+		</javac>
 	</target>
 
-	<target name="clean" depends="makejar" description="Clean up">
-		<delete dir="${build}" />
-		<delete dir="${extra}" />
+	<target name="dist" depends="test" description="generate the distribution">
+		<mkdir dir="${dist.dir}" />
+		<mkdir dir="${service.dir}" />
+		<mkdir dir="${service.dir}/services" />
+		<touch file="${service.dir}/services/java.sql.Driver" />
+		<echo file="${service.dir}/services/java.sql.Driver" append="false">${driverClass}</echo>
+
+		<jar jarfile="${dist.dir}/jdbc-hpcc.jar" basedir="${build.dir}">
+			<zipgroupfileset dir="lib" includes="${sqlParser}" />
+			<zipgroupfileset dir="lib" includes="${postgresql}" />
+			<metainf dir="${service.dir}" includes="**/java.sql.Driver" />
+		</jar>
+		<delete dir="${service.dir}" />
 	</target>
+
+	<target name="clean" description="clean up">
+		<delete dir="${build.dir}" />
+		<delete dir="${dist.dir}" />
+	</target>
+
+	<target name="test" depends="compile_test">
+		<mkdir dir="${report.dir}" />
+		<junit printsummary="yes" haltonfailure="no">
+		    
+			<classpath>
+				<pathelement path="${classpath}" />
+				<pathelement path="${build.dir}" />
+				<pathelement location="${lib.dir}/${sqlParser}" />
+				<pathelement location="${lib.dir}/junit-4.12.jar" />
+				<pathelement location="${lib.dir}/hamcrest-core-1.3.jar" />
+			</classpath>
+
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${report.dir}">
+				<fileset dir="${test.dir}">
+					<include name="**/*Test.java" />
+				</fileset>
+			</batchtest>
+
+		</junit>
+	</target>
+
 </project>
