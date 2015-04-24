@@ -32,6 +32,7 @@ public class ECLBuilderSelect extends ECLBuilder {
 	
 	protected SQLParserSelect sqlParser;
 	private Select select;
+	private ECLSelectParser selectParser;
 	
 	
 	public ECLBuilderSelect(Select select, ECLLayouts eclLayouts) {
@@ -64,6 +65,7 @@ public class ECLBuilderSelect extends ECLBuilder {
 	 */
 	public String generateECL() {
 		sqlParser = new SQLParserSelect(select, eclLayouts);
+		selectParser = new ECLSelectParser(eclLayouts, sqlParser);
 		eclCode = new StringBuilder();
 		
     	generateFrom(sqlParser);
@@ -194,7 +196,6 @@ public class ECLBuilderSelect extends ECLBuilder {
 			if (selectItem instanceof SelectExpressionItem) {
 				StringBuilder selectItemString = new StringBuilder();
 				SelectExpressionItem sei = (SelectExpressionItem) selectItem;
-				ECLSelectParser selectParser = new ECLSelectParser(eclLayouts, sqlParser);
 				selectItemString.append(selectParser.parse(sei));
    				selectItemsStrings.add(selectItemString.toString());
    			}

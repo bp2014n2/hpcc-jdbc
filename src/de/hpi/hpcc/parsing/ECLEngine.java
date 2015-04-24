@@ -96,29 +96,6 @@ public abstract class ECLEngine
     }
     
     private boolean getIndex(String tableName, StringBuilder indicesString) {
-		
-    	/*
-    	switch(tableName) {
-    	 
-		case "observation_fact":
-			indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd,encounter_num,patient_num,provider_id,start_date,modifier_cd,instance_num,valtype_cd,tval_char,valueflag_cd,vunits_cd,end_date,location_cd,update_date,download_date,import_date,sourcesystem_cd,upload_id}, {}, '~i2b2demodata::observation_fact_idx_all');\n");
-//			if(getSQLParser().hasWhereOf("observation_fact","concept_cd") && !getSQLParser().hasWhereOf("observation_fact","provider_id")) {
-//				indicesString.append("observation_fact := INDEX(observation_fact_table, {concept_cd}, {patient_num, modifier_cd, valtype_cd, tval_char, start_date}, '~i2b2demodata::observation_fact_idx_inverted_concept_cd');\n");
-//			} else if(getSQLParser().hasWhereOf("observation_fact","provider_id")) {
-//				indicesString.append("observation_fact := INDEX(observation_fact_table, {provider_id}, {modifier_cd, valtype_cd, tval_char, start_date, patient_num}, '~i2b2demodata::observation_fact_idx_inverted_provider_id_all');\n");
-//			} else
-//				indicesString.append("observation_fact := INDEX(observation_fact_table, {start_date,concept_cd, modifier_cd,valtype_cd,tval_char,patient_num},{}, '~i2b2demodata::observation_fact_idx_start_date');\n");
-			return true;
-		case "provider_dimension": 
-			indicesString.append("provider_dimension := INDEX(provider_dimension_table, {provider_path}, {provider_id}, '~i2b2demodata::provider_dimension_idx_inverted');\n");
-			return true;
-		case "concept_dimension": 
-//			indicesString.append("concept_dimension := INDEX(concept_dimension_table, {concept_cd}, {}, '~i2b2demodata::concept_dimension_idx_concept_cd');\n");
-			indicesString.append("concept_dimension := INDEX(concept_dimension_table, {concept_path}, {concept_cd}, '~i2b2demodata::concept_dimension_idx_inverted');\n");
-			return true;
-		default: return false; 
-		}
-		*/
     	boolean hasIndex = layouts.hasIndex(tableName);
     	if (hasIndex) {
         	List<String> indexes = layouts.getListOfIndexes(tableName);
@@ -131,8 +108,12 @@ public abstract class ECLEngine
             	if (!indexColumns.containsAll(columns)) scores.add(0);
             	else scores.add(10 + columns.size() - indexColumns.size());
         	}
-        	String selectedIndex = indexes.get(scores.indexOf(Collections.max(scores)));
-        	indicesString.append(getIndexString(tableName, selectedIndex)+"\n");
+        	if (Collections.max(scores) == 0) {
+        		return false;
+        	} else {
+            	String selectedIndex = indexes.get(scores.indexOf(Collections.max(scores)));
+            	indicesString.append(getIndexString(tableName, selectedIndex)+"\n");
+        	}
     	}
     	
     	return hasIndex;

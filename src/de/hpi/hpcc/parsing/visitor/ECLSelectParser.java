@@ -1,5 +1,8 @@
 package de.hpi.hpcc.parsing.visitor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import net.sf.jsqlparser.expression.Alias;
@@ -65,6 +68,8 @@ public class ECLSelectParser implements ExpressionVisitor {
 	private String parsed = "";
 	private ECLLayouts eclLayouts;
 	private SQLParserSelect sqlParser;
+	private List<String> parsedFunctionNames = new ArrayList<String>();
+	private boolean alreadyParsed;
 	
 	public ECLSelectParser(ECLLayouts eclLayouts, SQLParserSelect sqlParser) {
 		this.eclLayouts = eclLayouts;
@@ -72,6 +77,7 @@ public class ECLSelectParser implements ExpressionVisitor {
 	}
 
 	public String parse(SelectExpressionItem sei) {
+		parsed = "";
 		Alias alias = sei.getAlias();
 		Expression expression = sei.getExpression();
 		if(alias != null) {
@@ -85,12 +91,15 @@ public class ECLSelectParser implements ExpressionVisitor {
 	}
 	
 	private String primitiveParse(Expression expression) {
-		ECLExpressionParser ep = new ECLExpressionParser(eclLayouts);
-		parsed += ep.parse(expression);
+		if (!alreadyParsed) {
+			ECLExpressionParser ep = new ECLExpressionParser(eclLayouts);
+			parsed += ep.parse(expression);
+		}
 		return parsed;
 	}
 
 	public String parse(Expression expression) {
+		alreadyParsed = false;
 		expression.accept(this);
 		return primitiveParse(expression);
 	}
@@ -105,9 +114,16 @@ public class ECLSelectParser implements ExpressionVisitor {
 	public void visit(Function function) {
 		ECLDataTypeParser dataTypeParser = new ECLDataTypeParser(eclLayouts, sqlParser);
 		ECLNameParser nameParser = new ECLNameParser();
-		parsed = dataTypeParser.parse(function) + " ";
-		parsed += nameParser.name(function);
-		parsed += " := "; 
+		String functionName = nameParser.name(function);
+		if (!parsedFunctionNames.contains(functionName)) {
+			parsed = dataTypeParser.parse(function) + " ";
+			parsed += nameParser.name(function);
+			parsed += " := ";
+			parsedFunctionNames.add(functionName);
+		} else {
+			parsed += functionName;
+			alreadyParsed = true;
+		}
 	}
 
 	@Override

@@ -50,7 +50,7 @@ public class ECLLayouts {
 		return "";
 	}
 	
-	public Collection<Object> getKeyedColumns(String table) {
+	public Collection<Object> getKeyedColumns(String table) {  //TODO: assure right order of keyed/non-keyed columns
 		table = getFullTableName(table);
 		HPCCDFUFile file = dbMetadata.getDFUFile(table);
 		if(file != null) {
