@@ -14,10 +14,9 @@ import de.hpi.hpcc.parsing.visitor.ECLTableFinder;
 
 public class ECLTableFinderTest {
 	
-	private static ECLTableFinder finder = new ECLTableFinder();
-	
 	public static void assertAllTablesAreFound(Set<String> expectedTables, String sql) {
 		try {
+			ECLTableFinder finder = new ECLTableFinder();
 			Statement statement = SQLParser.parse(sql);
 			Set<String> foundTables = finder.find(statement);
 			assertEquals(expectedTables, foundTables);
