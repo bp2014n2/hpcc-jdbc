@@ -3,7 +3,6 @@
 	<description>
 		Build HPCC JDBC Driver
 	</description>
-	<!-- set global properties for this build -->
 	<property name="driverClass" value="de.hpi.hpcc.main.HPCCDriver" />
 	<property name="src.dir" location="src/main" />
 	<property name="lib.dir" location="lib" />
@@ -16,41 +15,39 @@
 	<property name="sqlParser" value="jsqlparser-${sqlParserVersion}.jar" />
 	<property name="postgresqlVersion" value="9.3-1102" />
 	<property name="postgresql" value="postgresql-${postgresqlVersion}.jdbc4.jar" />
+	<property name="junitVersion" value="4.12" />
+	<property name="junit" value="junit-${junitVersion}.jar" />
+	<property name="hamcrestVersion" value="1.3" />
+	<property name="hamcrest" value="hamcrest-core-${hamcrestVersion}.jar" />
 
 	<target name="init">
 		<mkdir dir="${build.dir}" />
 	</target>
 
 	<target name="compile" depends="init" description="compile the source ">
-		<javac includeantruntime="false" debug="true" srcdir="${src.dir}"
-			destdir="${build.dir}">
+		<javac includeantruntime="false" debug="true" srcdir="${src.dir}" destdir="${build.dir}">
 			<classpath>
 				<pathelement path="${classpath}" />
 				<pathelement location="${lib.dir}/${sqlParser}" />
 			</classpath>
 		</javac>
-	</target>
-
-	<target name="compile_test" depends="compile" description="compile the source ">
-		<javac includeantruntime="false" debug="true" srcdir="${test.dir}"
-			destdir="${build.dir}">
+		<javac includeantruntime="false" debug="true" srcdir="${test.dir}" destdir="${build.dir}">
 			<classpath>
 				<pathelement path="${classpath}" />
 				<pathelement location="${lib.dir}/${sqlParser}" />
-				<pathelement location="${lib.dir}/junit-4.12.jar" />
-				<pathelement location="${lib.dir}/hamcrest-core-1.3.jar" />
+				<pathelement location="${lib.dir}/${junit}" />
+				<pathelement location="${lib.dir}/${hamcrest}" />
 			</classpath>
 		</javac>
 	</target>
 
 	<target name="dist" depends="test" description="generate the distribution">
 		<mkdir dir="${dist.dir}" />
-		<mkdir dir="${service.dir}" />
 		<mkdir dir="${service.dir}/services" />
 		<touch file="${service.dir}/services/java.sql.Driver" />
 		<echo file="${service.dir}/services/java.sql.Driver" append="false">${driverClass}</echo>
 
-		<jar jarfile="${dist.dir}/jdbc-hpcc.jar" basedir="${build.dir}">
+		<jar jarfile="${dist.dir}/jdbc-hpcc.jar" basedir="${build.dir}" excludes="**/de/hpi/hpcc/test/">
 			<zipgroupfileset dir="lib" includes="${sqlParser}" />
 			<zipgroupfileset dir="lib" includes="${postgresql}" />
 			<metainf dir="${service.dir}" includes="**/java.sql.Driver" />
@@ -63,7 +60,7 @@
 		<delete dir="${dist.dir}" />
 	</target>
 
-	<target name="test" depends="compile_test">
+	<target name="test" depends="compile">
 		<mkdir dir="${report.dir}" />
 		<junit printsummary="yes" haltonfailure="no">
 		    
@@ -71,14 +68,15 @@
 				<pathelement path="${classpath}" />
 				<pathelement path="${build.dir}" />
 				<pathelement location="${lib.dir}/${sqlParser}" />
-				<pathelement location="${lib.dir}/junit-4.12.jar" />
-				<pathelement location="${lib.dir}/hamcrest-core-1.3.jar" />
+				<pathelement location="${lib.dir}/${junit}" />
+				<pathelement location="${lib.dir}/${hamcrest}" />
 			</classpath>
 
 			<formatter type="xml" />
 			<batchtest fork="yes" todir="${report.dir}">
 				<fileset dir="${test.dir}">
-					<include name="**/*Test.java" />
+					<include name="**/*Test*.java" />
+					<exclude name="**/AllTests.java" />
 				</fileset>
 			</batchtest>
 
