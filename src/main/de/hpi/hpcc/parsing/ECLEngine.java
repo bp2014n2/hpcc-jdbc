@@ -26,11 +26,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import net.sf.jsqlparser.statement.Statement;
 
 import org.w3c.dom.NodeList;
 
+import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.main.*;
 
 public abstract class ECLEngine
@@ -42,6 +44,7 @@ public abstract class ECLEngine
     private static final String			HPCCEngine = "THOR";
 	protected ECLLayouts layouts;
 	protected final static String EMPTY_QUERY = "OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n";
+	protected static final Logger logger = HPCCLogger.getLogger();
 
     public ECLEngine(Statement statement, ECLLayouts layouts) {
         this.layouts = layouts;
@@ -150,7 +153,7 @@ public abstract class ECLEngine
 
         if (this.resultSchema != null && this.resultSchema.getLength() > 0)
         {
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "contains resultschema");
+            log("contains resultschema");
         }
     }
 
@@ -167,4 +170,13 @@ public abstract class ECLEngine
     	return tablePath;
     }
     */
+    
+    //Logger methods
+  	protected static void log(String infoMessage){
+  		log(Level.INFO, infoMessage);
+  	}
+  	
+  	private static void log(Level loggingLevel, String infoMessage){
+  		logger.log(loggingLevel, ECLEngine.class.getSimpleName()+": "+infoMessage);
+  	}
 }

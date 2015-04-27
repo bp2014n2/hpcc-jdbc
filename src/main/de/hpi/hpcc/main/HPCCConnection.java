@@ -63,10 +63,10 @@ public class HPCCConnection implements Connection{
         if (metadata != null && metadata.hasHPCCTargetBeenReached())
         {
             closed = false;
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection initialized - server: " + this.driverProperties.getProperty("ServerAddress"));
+            log("HPCCConnection initialized - server: " + this.driverProperties.getProperty("ServerAddress"));
         }
         else
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection not initialized - server: " + this.driverProperties.getProperty("ServerAddress"));
+            log("HPCCConnection not initialized - server: " + this.driverProperties.getProperty("ServerAddress"));
     }
     
     public String getSessionID() {
@@ -179,17 +179,17 @@ public class HPCCConnection implements Connection{
 
         long elapsedTime = System.currentTimeMillis() - startTime;
 
-        HPCCJDBCUtils.traceoutln(Level.INFO, "Total elapsed http request/response time in milliseconds: " + elapsedTime);
+        log("Total elapsed http request/response time in milliseconds: " + elapsedTime);
 
         Element docElement = dom.getDocumentElement();
 
         NodeList dsList = docElement.getElementsByTagName("Dataset");
 
-        HPCCJDBCUtils.traceoutln(Level.INFO, "Parsing results...");
+        log("Parsing results...");
 
         int dsCount = 0;
         if (dsList != null && (dsCount = dsList.getLength()) > 0){
-            HPCCJDBCUtils.traceoutln(Level.INFO, "Results datsets found: " + dsList.getLength());
+            log("Results datsets found: " + dsList.getLength());
 
             // The dataset element is encapsulated within a Result element
             // need to fetch appropriate resulst dataset
@@ -236,7 +236,7 @@ public class HPCCConnection implements Connection{
                 rowList = docElement.getElementsByTagName("Row");
             }
         }
-        HPCCJDBCUtils.traceoutln(Level.INFO,  "Finished Parsing results.");
+        log("Finished Parsing results.");
 
         return rowList;
     }

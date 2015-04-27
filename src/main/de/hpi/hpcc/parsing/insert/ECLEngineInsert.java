@@ -9,8 +9,8 @@ import java.util.logging.Level;
 
 import net.sf.jsqlparser.statement.insert.Insert;
 import de.hpi.hpcc.main.HPCCColumnMetaData;
+import de.hpi.hpcc.main.HPCCConnection;
 import de.hpi.hpcc.main.HPCCDFUFile;
-import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
@@ -68,7 +68,7 @@ public class ECLEngineInsert extends ECLEngine {
     		HPCCDFUFile hpccQueryFile = layouts.getDFUFile(tableName);
     		long timeAfterDFUFile = System.nanoTime();
     		long timeDifferenceDFUFile = (timeAfterDFUFile-timeBeforeDFUFile)/1000000;
-    		HPCCJDBCUtils.traceoutln(Level.INFO, "Time for getting DFUFile: "+timeDifferenceDFUFile);
+    		log("Time for getting DFUFile: "+timeDifferenceDFUFile);
     		
  
     		if(hpccQueryFile != null) {
@@ -105,4 +105,9 @@ public class ECLEngineInsert extends ECLEngine {
 		}
 		return layoutsString.toString();
     }
+	
+	//Logger methods
+  	private static void log(Level loggingLevel, String infoMessage){
+  		logger.log(loggingLevel, ECLEngineInsert.class.getSimpleName()+": "+infoMessage);
+  	}
 }

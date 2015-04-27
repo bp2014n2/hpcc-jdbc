@@ -25,8 +25,11 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import de.hpi.hpcc.logging.HPCCLogger;
 
 public class HPCCDFUFile
 {
@@ -73,6 +76,7 @@ public class HPCCDFUFile
     private final static String IDXFILEPOSFIELDTAG  = "XDBC:PosField";
     private final static Pattern IDXPOSPATTERN = Pattern.compile(
             "\\s*" + IDXFILEPOSFIELDTAG + "\\s*=\\s*\\[(.*?)\\s*\\].*",Pattern.DOTALL);
+    private static final Logger logger = HPCCLogger.getLogger();
 
     public enum FileFormat
     {
@@ -235,7 +239,7 @@ public class HPCCDFUFile
             }
         }
         else
-            HPCCJDBCUtils.traceoutln(Level.SEVERE, "Could not determine related index for file: " + this.getFullyQualifiedName());
+            log(Level.SEVERE, "Could not determine related index for file: " + this.getFullyQualifiedName());
     }
 
     public int getParts()
@@ -469,7 +473,7 @@ public class HPCCDFUFile
             }
             catch (Exception e)
             {
-                HPCCJDBCUtils.traceoutln(Level.SEVERE,   "Invalid ECL Record definition found in " + this.getFullyQualifiedName()                        + " details.");
+            	log(Level.SEVERE, "Invalid ECL Record definition found in " + this.getFullyQualifiedName() + " details.");
                 return;
             }
         }
@@ -538,7 +542,7 @@ public class HPCCDFUFile
                 format = HPCCJDBCUtils.findEnumValFromString(FileFormat.class, formatstr.trim());
                 if (format == FileFormat.UTF8N)
                 {
-                    HPCCJDBCUtils.traceoutln(Level.SEVERE, "Found File with reported format UTF8N, treating as CSV format" + (fullyQualifiedName == null ? "!" : ": " + fullyQualifiedName));
+                    log(Level.SEVERE, "Found File with reported format UTF8N, treating as CSV format" + (fullyQualifiedName == null ? "!" : ": " + fullyQualifiedName));
                     format = FileFormat.CSV;
                 }
                 else if (format == FileFormat.KEY)
@@ -546,7 +550,7 @@ public class HPCCDFUFile
             }
             catch (Exception e)
             {
-                HPCCJDBCUtils.traceoutln(Level.SEVERE,   "Invalid file format detected, treating as FLAT format" + (fullyQualifiedName == null ? "!" : ": " + fullyQualifiedName));
+                log(Level.SEVERE,   "Invalid file format detected, treating as FLAT format" + (fullyQualifiedName == null ? "!" : ": " + fullyQualifiedName));
             }
         }
     }
@@ -886,4 +890,13 @@ public class HPCCDFUFile
         return hasKeyedFieldInfoBeenSet;
     }
 
+    
+    //Logger methods
+	private static void log(String infoMessage){
+		log(Level.INFO, infoMessage);
+	}
+	
+	private static void log(Level loggingLevel, String infoMessage){
+		logger.log(loggingLevel, HPCCDFUFile.class.getSimpleName()+": "+infoMessage);
+	}
 }
