@@ -1,0 +1,7 @@
+language: java
+notifications:
+  slack: bp2014n2:h9Ox6z9yGxMn5SZdr7tJVM8y
+jdk:
+  - oraclejdk8
+  - oraclejdk7
+  - openjdk7

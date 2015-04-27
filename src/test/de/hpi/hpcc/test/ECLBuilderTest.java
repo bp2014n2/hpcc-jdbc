@@ -75,9 +75,10 @@ public class ECLBuilderTest {
 		assertStatementCanBeParsedAs("CHOOSEN(TABLE(myTable, {myColumn}), 1)", "select myColumn from mySchema.myTable limit 1");
 	}
 	
-	@Test @Ignore
+	@Test
 	public void shouldTranslateSelectWithJoin() throws HPCCException {
-		assertStatementCanBeParsedAs("JOIN(myTableA, myTableB, left.myColumnA = right.myColumnB), {myColumn}", "select myColumn from mySchema.myTableA, mySchema.myTableB where myTableA.columnA = myTableB.columnB");
+		assertStatementCanBeParsedAs("TABLE(JOIN(myTableA, myTableB, 1=1, ALL)(columnA = columnB), {myColumn})", "select myColumn from mySchema.myTableA, mySchema.myTableB where myTableA.columnA = myTableB.columnB");
+		assertStatementCanBeParsedAs("TABLE(JOIN(myTableA, myTableB, LEFT.columnA = RIGHT.columnA, LOOKUP)(columnA = columnA), {myColumn})", "select myColumn from mySchema.myTableA, mySchema.myTableB where myTableA.columnA = myTableB.columnA");
 	}
 	
 	@Test
@@ -112,7 +113,9 @@ public class ECLBuilderTest {
 		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueB, valueA}], {STRING25 myColumnB, STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnB, myColumnA) values (valueB, valueA)");
 		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING25 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA, myColumnB) values (valueA, valueB) returning *");
 		assertStatementCanBeParsedAs("x := TABLE(anotherTable, {myColumnB});\nOUTPUT(TABLE(TABLE(x, {myColumnB}),{STRING50 myColumn := '', myColumnA, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA) with x as (select myColumnB from anotherTable) select x.myColumnB from x");
-//		assertStatementCanBeParsedAs("OUTPUT(TABLE(TABLE((TABLE(anotherTable, {myColumnA})), {myColumnA}),{STRING50 myColumn := '', myColumnA, STRING50 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA) select * from (select myColumnB from anotherTable)");
+		assertStatementCanBeParsedAs("OUTPUT(TABLE(TABLE((TABLE(anotherTable, {myColumnB})), {myColumnB}),{STRING50 myColumn := '', myColumnA, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA) select * from (select myColumnB from anotherTable)");
+		assertStatementCanBeParsedAs("OUTPUT(TABLE(TABLE((DEDUP(TABLE(myTableA, {myColumnB}), All)), {string50 myColumnA := 'myValue', INTEGER5 myNewColumnB := 0}),{STRING50 myColumn := '', myColumnA, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", "INSERT INTO myTable (myColumnA, myNewColumnB) SELECT 'myValue' AS myColumnA, ROW_NUMBER() OVER(ORDER BY myColumnB) AS myNewColumnB FROM (SELECT DISTINCT myColumnB FROM myTableA) t");
+		assertStatementCanBeParsedAs("OUTPUT(TABLE((DEDUP(TABLE(myTableA, {myColumnB}), All)), {string50 myColumnA := 'myValue', INTEGER5 myNewColumnB := 0, myColumnC}),,'~%NEWTABLE%', overwrite);\n", "INSERT INTO myTable (myColumnA, myNewColumnB, myColumnC) SELECT 'myValue' AS myColumnA, ROW_NUMBER() OVER(ORDER BY myColumnB) AS myNewColumnB, myColumnC FROM (SELECT DISTINCT myColumnB FROM myTableA) t");
 	}
 	
 	@Test

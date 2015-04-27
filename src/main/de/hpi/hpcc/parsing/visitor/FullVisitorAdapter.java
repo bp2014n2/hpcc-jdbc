@@ -112,7 +112,7 @@ public abstract class FullVisitorAdapter implements ExpressionVisitor, Statement
 
 	@Override
 	public void visit(SignedExpression signedExpression) {
-		tryAccept(signedExpression);
+		tryAccept(signedExpression.getExpression());
 	}
 
 	@Override

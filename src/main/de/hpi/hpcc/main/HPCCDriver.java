@@ -21,6 +21,9 @@ public class HPCCDriver implements Driver{
     private static final int PORT 		= 1;
     private static final int CLUSTER 	= 2;
     
+    public static final long beginTime = System.nanoTime();
+    
+    
     static{
     	try{
     		HPCCDriver driver = new HPCCDriver();
@@ -33,6 +36,7 @@ public class HPCCDriver implements Driver{
     }
     
     public HPCCDriver(){
+    	
     	HPCCLogger.initializeLogging();
     	this.driverProperties = new HPCCDriverProperties();
     	this.urlParser = new HPCCUrlParser();
@@ -54,7 +58,7 @@ public class HPCCDriver implements Driver{
     			driverProperties.setProperty("TargetCluster", parsedURL[CLUSTER]);
     		}
     	}else{
-    		log(url +" has the wrong format (e.g. missing protocol)");
+    		//log(url +" has the wrong format (e.g. missing protocol)");
     		return null;
     	}
         
