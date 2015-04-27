@@ -1,9 +1,13 @@
 package de.hpi.hpcc.parsing;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,28 +54,41 @@ public class ECLLayouts {
 		return "";
 	}
 	
-	public Collection<Object> getKeyedColumns(String table) {  //TODO: assure right order of keyed/non-keyed columns
+	public List<Object> getKeyedColumns(String table) {  //TODO: assure right order of keyed/non-keyed columns
 		table = getFullTableName(table);
 		HPCCDFUFile file = dbMetadata.getDFUFile(table);
 		if(file != null) {
-			Collection<Object> list = file.getKeyedColumns().values();
-			return list;
+			return getSortedPropertyValues(file.getKeyedColumns());
 		} else {
 			//throw new Exception("DFUFile not found: "+table);
 			return null;
 		}
 	}
 	
-	public Collection<Object> getNonKeyedColumns(String table) {
+	public List<Object> getNonKeyedColumns(String table) {
 		table = getFullTableName(table);
 		HPCCDFUFile file = dbMetadata.getDFUFile(table);
 		if(file != null) {
-			Collection<Object> list = file.getNonKeyedColumns().values();
-			return list;
+			return getSortedPropertyValues(file.getNonKeyedColumns());
 		} else {
 			//throw new Exception("DFUFile not found: "+table);
 			return null;
 		}
+	}
+	
+	//Properties are used with raw format
+	@SuppressWarnings("unchecked")
+	private List<Object> getSortedPropertyValues(Properties columns) {
+		List<Comparable<Object>> sortedKeys = new ArrayList<Comparable<Object>>();
+		for(Object key : columns.keySet()) {
+			sortedKeys.add((Comparable<Object>) key);
+		}
+		Collections.sort(sortedKeys);
+		List<Object> values = new ArrayList<Object>();
+		for(Comparable<Object> key : sortedKeys) {
+			values.add(columns.get(key));
+		}
+		return values;
 	}
 	
 	public LinkedHashSet<String> getAllColumns(String table) {
