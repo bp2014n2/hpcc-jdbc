@@ -114,7 +114,7 @@ public abstract class ECLEngine
        	for (String index : indexes) {
            	List<Object> indexColumns = layouts.getKeyedColumns(index);
            	indexColumns.addAll(layouts.getNonKeyedColumns(index));
-           	if (!indexColumns.containsAll(columns)) {
+           	if (!HPCCJDBCUtils.containsAllCaseInsensitive(indexColumns, columns)) {
            		scores.add(0);
            	} else {
            		scores.add((int) (100 * (double) columns.size() / (double) indexColumns.size()));

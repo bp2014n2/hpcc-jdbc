@@ -652,4 +652,14 @@ public class HPCCJDBCUtils
     	if (set == null) return false;
     	return containsStringCaseInsensitive(new ArrayList<String>(set), string);
     }
+    
+    public static boolean containsAllCaseInsensitive(List<Object> indexColumns, Set<String> subSet) {
+    	int found = 0;
+    	for (Object item : indexColumns) {
+    		if (HPCCJDBCUtils.containsStringCaseInsensitive(subSet, item.toString())) {
+    			if (++found == subSet.size()) return true;
+    		}
+    	}
+    	return false;
+    }
 }
