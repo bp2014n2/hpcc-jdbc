@@ -62,18 +62,19 @@
 		<delete dir="${dist.dir}" />
 	</target>
 	
-	<target name="i2b2_deploy" description="clean up">
+	<target name="i2b2_deploy" description="deploy to i2b2 server-common project">
 		<copy file="${dist.dir}/jdbc-hpcc.jar" todir="${i2b2_common}/lib/jdbc/">
 		</copy>
 	</target>
 
 	<target name="test" depends="compile">
 		<mkdir dir="${report.dir}" />
-		<junit printsummary="yes" haltonfailure="no">
+		<junit printsummary="yes" haltonfailure="yes">
 		    
 			<classpath>
 				<pathelement path="${classpath}" />
 				<pathelement path="${build.dir}" />
+				<pathelement location="${lib.dir}/${postgresql}" />
 				<pathelement location="${lib.dir}/${sqlParser}" />
 				<pathelement location="${lib.dir}/${junit}" />
 				<pathelement location="${lib.dir}/${hamcrest}" />

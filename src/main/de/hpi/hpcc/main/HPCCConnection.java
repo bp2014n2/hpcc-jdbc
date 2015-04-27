@@ -295,7 +295,9 @@ public class HPCCConnection implements Connection{
     }
 
     public void close() throws SQLException {
-        this.postgreSQLConnection.close();
+        if(this.postgreSQLConnection != null) {
+        	this.postgreSQLConnection.close();
+        }
         this.closed = true;
 //        httpConnection.disconnect();
     }
