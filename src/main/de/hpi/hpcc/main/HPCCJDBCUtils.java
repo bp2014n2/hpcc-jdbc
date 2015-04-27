@@ -535,8 +535,8 @@ public class HPCCJDBCUtils
             }
             catch (Exception e)
             {
-//                HPCCJDBCUtils.traceoutln(Level.WARNING, "HPCC JDBC: Field of type: java.sql.Types-" + type + " could not be cast to native Java type (treat as String).");
-//                HPCCJDBCUtils.traceoutln(Level.WARNING,  e.getLocalizedMessage());
+            		logger.log(Level.WARNING, "HPCC JDBC: Field of type: java.sql.Types-" + type + " could not be cast to native Java type (treat as String).");
+            		logger.log(Level.WARNING,  e.getLocalizedMessage());
                 return strrepresentation;
             }
         }

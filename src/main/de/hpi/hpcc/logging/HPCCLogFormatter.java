@@ -6,8 +6,6 @@ import java.util.Date;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
-import de.hpi.hpcc.main.HPCCJDBCUtils;
-
 public class HPCCLogFormatter  extends Formatter
 {
     private static final ThreadLocal<DateFormat> DF =
@@ -34,8 +32,8 @@ public class HPCCLogFormatter  extends Formatter
                .append(String.format(THREADFORMAT, Thread.currentThread().getId()))
                .append(" ")
                .append(formatMessage(arg0))
-               .append(HPCCJDBCUtils.newLine);
-
+               .append(System.getProperty("line.separator"));
+        
         return builder.toString();
     }
 }
