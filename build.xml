@@ -3,6 +3,8 @@
 	<description>
 		Build HPCC JDBC Driver
 	</description>
+	
+	<property file="build.properties"/>
 	<property name="driverClass" value="de.hpi.hpcc.main.HPCCDriver" />
 	<property name="src.dir" location="src/main" />
 	<property name="lib.dir" location="lib" />
@@ -58,6 +60,11 @@
 	<target name="clean" description="clean up">
 		<delete dir="${build.dir}" />
 		<delete dir="${dist.dir}" />
+	</target>
+	
+	<target name="i2b2_deploy" description="clean up">
+		<copy file="${dist.dir}/jdbc-hpcc.jar" todir="${i2b2_common}/lib/jdbc/">
+		</copy>
 	</target>
 
 	<target name="test" depends="compile">
