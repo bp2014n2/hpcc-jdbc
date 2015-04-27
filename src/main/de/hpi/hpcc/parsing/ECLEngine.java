@@ -26,11 +26,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import net.sf.jsqlparser.statement.Statement;
 
 import org.w3c.dom.NodeList;
 
+import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.main.*;
 
 public abstract class ECLEngine
@@ -42,6 +44,7 @@ public abstract class ECLEngine
     private static final String			HPCCEngine = "THOR";
 	protected ECLLayouts layouts;
 	protected final static String EMPTY_QUERY = "OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n";
+	protected static final Logger logger = HPCCLogger.getLogger();
 
     public ECLEngine(Statement statement, ECLLayouts layouts) {
         this.layouts = layouts;
@@ -50,6 +53,8 @@ public abstract class ECLEngine
 	public abstract String generateECL() throws SQLException;
     
     protected abstract SQLParser getSQLParser();
+    
+	public abstract void setSQLParser(SQLParser parser);
 	
 	 public List<HPCCColumnMetaData> getExpectedRetCols() {
         return expectedretcolumns;
@@ -84,43 +89,42 @@ public abstract class ECLEngine
     protected String generateTables() {
     	StringBuilder datasetsString = new StringBuilder();
     	StringBuilder indicesString = new StringBuilder();
-    	boolean usingIndices = false;
     	for (String table : getSQLParser().getAllTables()) {
     		String fullTableName = "i2b2demodata::"+table; //TODO: avoid hard coded i2b2demodata
-    		usingIndices = getIndex(table, indicesString);
-			datasetsString.append(table).append(usingIndices?"_table":"").append(" := ").append("DATASET(");
+    		boolean hasIndex = layouts.hasIndex(table);
+    		if (hasIndex) {
+    			String index = getIndex(table);
+    			if (index != null) {
+    				indicesString.append(getIndexString(table, index));
+    			} else {
+    				hasIndex = false;
+    			}
+    		}
+			datasetsString.append(table).append(hasIndex?"_table":"").append(" := ").append("DATASET(");
 			datasetsString.append("'~").append(fullTableName).append("'");
 			datasetsString.append(", ").append(table+"_record").append(",").append(HPCCEngine).append(");\n");			
 		}
     	return datasetsString.toString() + indicesString.toString();
     }
     
-    private boolean getIndex(String tableName, StringBuilder indicesString) {
-    	boolean hasIndex = layouts.hasIndex(tableName);
-    	if (hasIndex) {
-        	List<String> indexes = layouts.getListOfIndexes(tableName);
-    		Set<String> columns = getSQLParser().getQueriedColumns(tableName);
-        	ArrayList<Integer> scores = new ArrayList<Integer>();
-        	for (String index : indexes) {
-            	List<Object> indexColumns = new ArrayList<Object>(layouts.getKeyedColumns(index));
-            	List<Object> nonKeyedColumns = new ArrayList<Object>(layouts.getNonKeyedColumns(index));
-            	indexColumns.addAll(nonKeyedColumns);
-            	if (!indexColumns.containsAll(columns)) {
-            		scores.add(0);
-            	} else {
-            		scores.add((int) (100 * (double) columns.size() / (double) indexColumns.size()));
-            	}
-        	}
-        	if (Collections.max(scores) == 0) {
-        		return false;
-        	} else {
-            	String selectedIndex = indexes.get(scores.indexOf(Collections.max(scores)));
-            	indicesString.append(getIndexString(tableName, selectedIndex)+"\n");
-        	}
-    	}
-    	
-    	return hasIndex;
-	
+    private String getIndex(String tableName) {
+       	List<String> indexes = layouts.getListOfIndexes(tableName);
+    	Set<String> columns = getSQLParser().getQueriedColumns(tableName);
+       	ArrayList<Integer> scores = new ArrayList<Integer>();
+       	for (String index : indexes) {
+           	List<Object> indexColumns = layouts.getKeyedColumns(index);
+           	indexColumns.addAll(layouts.getNonKeyedColumns(index));
+           	if (!indexColumns.containsAll(columns)) {
+           		scores.add(0);
+           	} else {
+           		scores.add((int) (100 * (double) columns.size() / (double) indexColumns.size()));
+           	}
+       	}
+       	if (Collections.max(scores) == 0) {
+       		return null;
+       	} else {
+        	return indexes.get(scores.indexOf(Collections.max(scores)));
+       	}	
 	}
    
     private String getIndexString(String tableName, String index) {
@@ -153,7 +157,7 @@ public abstract class ECLEngine
 
         if (this.resultSchema != null && this.resultSchema.getLength() > 0)
         {
-            HPCCJDBCUtils.traceoutln(Level.INFO,  "contains resultschema");
+            log("contains resultschema");
         }
     }
 
@@ -170,4 +174,14 @@ public abstract class ECLEngine
     	return tablePath;
     }
     */
+    
+    //Logger methods
+  	protected static void log(String infoMessage){
+  		log(Level.INFO, infoMessage);
+  	}
+  	
+  	private static void log(Level loggingLevel, String infoMessage){
+  		logger.log(loggingLevel, ECLEngine.class.getSimpleName()+": "+infoMessage);
+  	}
+
 }

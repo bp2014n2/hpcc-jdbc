@@ -10,6 +10,7 @@ import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.SQLParser;
 import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
 public class ECLEngineSelect extends ECLEngine {
@@ -62,6 +63,9 @@ public class ECLEngineSelect extends ECLEngine {
 	protected SQLParserSelect getSQLParser() {
 		return sqlParser;
 	}
-	
-	
+
+	@Override
+	public void setSQLParser(SQLParser parser) {
+		this.sqlParser = (SQLParserSelect) parser;
+	}
 }

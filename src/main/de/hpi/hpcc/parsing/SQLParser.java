@@ -1,14 +1,8 @@
 package de.hpi.hpcc.parsing;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import de.hpi.hpcc.main.HPCCException;
-import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.visitor.ECLColumnFinder;
 import de.hpi.hpcc.parsing.visitor.ECLStatementParser;
 import de.hpi.hpcc.parsing.visitor.ECLTableFinder;

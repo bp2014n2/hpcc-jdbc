@@ -8,6 +8,8 @@ import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.SQLParser;
+import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
 public class ECLEngineCreate extends ECLEngine {
@@ -52,7 +54,7 @@ public class ECLEngineCreate extends ECLEngine {
 			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
 			
-			String recordString = ((SQLParserCreate) sqlParser).getRecord();
+			String recordString = sqlParser.getRecord();
 
 	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
 	    	int i=0;
@@ -71,5 +73,10 @@ public class ECLEngineCreate extends ECLEngine {
 	@Override
 	protected SQLParserCreate getSQLParser() {
 		return sqlParser;
+	}
+
+	@Override
+	public void setSQLParser(SQLParser parser) {
+		this.sqlParser = (SQLParserCreate) parser;
 	}
 }

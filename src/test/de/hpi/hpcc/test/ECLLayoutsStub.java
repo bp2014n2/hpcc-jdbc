@@ -20,6 +20,9 @@ public class ECLLayoutsStub extends ECLLayouts {
 	}
 
 	Map<String, String> layouts = new HashMap<String, String>();
+	Map<String, List<String>> indexes = new HashMap<String, List<String>>();
+	Map<String, List<Object>> keyedColumns = new HashMap<String, List<Object>>();
+	Map<String, List<Object>> nonKeyedColumns = new HashMap<String, List<Object>>();
 	
 	public void setLayout(String table, String layout) {
 		Matcher matcher = Pattern.compile("record\\s+(.*)\\s+end;", Pattern.CASE_INSENSITIVE).matcher(layout);
@@ -63,7 +66,7 @@ public class ECLLayoutsStub extends ECLLayouts {
 			List<String> list = new ArrayList<String>();
 			for (String column : columns) {
 //				String name = Pattern.compile("\\w+\\s+(\\w+)").matcher(column).group(1);
-				Matcher matcher = Pattern.compile("\\w+\\s+(\\w+)", Pattern.CASE_INSENSITIVE).matcher(column);
+				Matcher matcher = Pattern.compile("\\w+\\s+(\\w+)\\s*;?", Pattern.CASE_INSENSITIVE).matcher(column);
 				if (matcher.find()) {
 					String name = matcher.group(1);
 					list.add(name);
@@ -106,6 +109,32 @@ public class ECLLayoutsStub extends ECLLayouts {
 			}
 		}
 		return java.sql.Types.OTHER;
+	}
+	
+	@Override
+	public List<String> getListOfIndexes(String table) {
+		return indexes.get(table);
+	}
+	
+	@Override
+	public List<Object> getKeyedColumns(String indexName) {
+		return keyedColumns.get(indexName);
+	}
+	
+	@Override
+	public List<Object> getNonKeyedColumns(String indexName) {
+		return nonKeyedColumns.get(indexName);
+	}
+
+	public void setIndex(String table, String indexName, List<Object> keyedColumns, List<Object> nonKeyedColumns) {
+		List<String> currentIndexes = indexes.get(table);
+		if (currentIndexes == null) {
+			currentIndexes = new ArrayList<String>();
+		}
+		currentIndexes.add(indexName);
+		indexes.put(table, currentIndexes);
+		this.keyedColumns.put(indexName, keyedColumns);
+		this.nonKeyedColumns.put(indexName, nonKeyedColumns);
 	}
 
 }
