@@ -105,8 +105,11 @@ public abstract class ECLEngine
             	List<Object> indexColumns = new ArrayList<Object>(layouts.getKeyedColumns(index));
             	List<Object> nonKeyedColumns = new ArrayList<Object>(layouts.getNonKeyedColumns(index));
             	indexColumns.addAll(nonKeyedColumns);
-            	if (!indexColumns.containsAll(columns)) scores.add(0);
-            	else scores.add(10 + columns.size() - indexColumns.size());
+            	if (!indexColumns.containsAll(columns)) {
+            		scores.add(0);
+            	} else {
+            		scores.add((int) (100 * (double) columns.size() / (double) indexColumns.size()));
+            	}
         	}
         	if (Collections.max(scores) == 0) {
         		return false;
