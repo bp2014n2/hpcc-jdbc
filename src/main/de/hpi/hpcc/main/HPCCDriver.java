@@ -13,10 +13,8 @@ import java.util.logging.Logger;
 import de.hpi.hpcc.logging.HPCCLogger;
 
 public class HPCCDriver implements Driver{
-    
     private HPCCDriverProperties driverProperties;
     private HPCCUrlParser urlParser;
-	private Connection postgreSQLConnection;
     private static Logger logger = HPCCLogger.getLogger();
     private static final int URI 		= 0;
     private static final int PORT 		= 1;
@@ -111,18 +109,11 @@ public class HPCCDriver implements Driver{
     	}
 
 		log(Level.CONFIG, "Connecting to " + driverProperties.getProperty("Protocol") + driverProperties.getProperty("ServerAddress")+"/");
-        return new HPCCConnection(this);
+        return new HPCCConnection(this.driverProperties);
     }
 
 	public boolean acceptsURL(String url) {
 		return (url.startsWith(HPCCDriverInformation.getDriverProtocol()) && urlParser.isValidUrl(url));
-	}
-	
-	public Connection getPostgreSQLConnection() throws SQLException {
-		if(this.postgreSQLConnection == null) {
-			this.postgreSQLConnection = DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
-		}
-		return this.postgreSQLConnection;
 	}
 	
 	//TODO: find alternative ... (just for test classes needed)
@@ -133,14 +124,6 @@ public class HPCCDriver implements Driver{
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties properties) {
         return driverProperties.getProperties();
     }
-    
-    public String getProperty(String string) {
-		return driverProperties.getProperty(string);
-	}
-    
-	public Properties getProperties() {
-		return driverProperties;
-	}
 
     public int getMajorVersion(){
         return HPCCDriverInformation.getMajorVersion();

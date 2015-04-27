@@ -11,6 +11,7 @@ import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
 import java.sql.NClob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,9 +43,10 @@ import org.xml.sax.SAXException;
 import de.hpi.hpcc.logging.HPCCLogger;
 
 public class HPCCConnection implements Connection{
+	private Connection postgreSQLConnection;
     private boolean closed;
     private HPCCDatabaseMetaData metadata;
-    private HPCCDriver driver;
+    private HPCCDriverProperties driverProperties;
     private SQLWarning warnings;
     private String catalog = HPCCJDBCUtils.HPCCCATALOGNAME;
     private HttpURLConnection httpConnection;
@@ -54,20 +56,20 @@ public class HPCCConnection implements Connection{
     
     protected static final Logger logger = HPCCLogger.getLogger();
 
-    public HPCCConnection(HPCCDriver driver){
+    public HPCCConnection(HPCCDriverProperties driverProperties){
 
     	this.sessionID = UUID.randomUUID();
-        this.driver = driver;
+    	this.driverProperties = driverProperties;
 
-        metadata = new HPCCDatabaseMetaData(driver.getProperties(), this);        
+        metadata = new HPCCDatabaseMetaData(driverProperties, this);        
 
         if (metadata != null && metadata.hasHPCCTargetBeenReached())
         {
             closed = false;
-            log("HPCCConnection initialized - server: " + this.driver.getProperty("ServerAddress"));
+            log("HPCCConnection initialized - server: " + driverProperties.getProperty("ServerAddress"));
         }
         else
-            log("HPCCConnection not initialized - server: " + this.driver.getProperty("ServerAddress"));
+            log("HPCCConnection not initialized - server: " + driverProperties.getProperty("ServerAddress"));
     }
     
     public String getSessionID() {
@@ -105,7 +107,7 @@ public class HPCCConnection implements Connection{
     public PreparedStatement prepareStatement(String sqlStatement, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
     	return prepareStatement(sqlStatement);
     }
-    
+
     public void addName(String statementName) { 
     	this.statementNames.add(statementName);
     }
@@ -128,8 +130,8 @@ public class HPCCConnection implements Connection{
 	}
 
 	public URL generateUrl(){
-    	String urlString = this.driver.getProperty("Protocol")+(this.driver.getProperty("WsECLDirectAddress") + ":"
-                + this.driver.getProperty("WsECLDirectPort") + "/EclDirect/RunEcl?Submit")+"&cluster=" + this.driver.getProperty("TargetCluster");
+    	String urlString = driverProperties.getProperty("Protocol")+(driverProperties.getProperty("WsECLDirectAddress") + ":"
+                + driverProperties.getProperty("WsECLDirectPort") + "/EclDirect/RunEcl?Submit")+"&cluster=" + driverProperties.getProperty("TargetCluster");
 
         URL hpccRequestUrl = HPCCJDBCUtils.makeURL(urlString);
         
@@ -243,7 +245,7 @@ public class HPCCConnection implements Connection{
     }
     
     public HttpURLConnection createHPCCESPConnection(URL theurl) throws IOException {
-    	return createHPCCESPConnection(theurl, Integer.parseInt(this.driver.getProperty("ConnectTimeoutMilli")));
+    	return createHPCCESPConnection(theurl, Integer.parseInt(driverProperties.getProperty("ConnectTimeoutMilli")));
     }
     
     protected HttpURLConnection createHPCCESPConnection(URL url, int connectionTimeout) throws IOException {
@@ -254,13 +256,13 @@ public class HPCCConnection implements Connection{
         conn.setDoOutput(true);
         conn.setDoInput(true);
         conn.setConnectTimeout(connectionTimeout);
-        conn.setReadTimeout(Integer.parseInt(this.driver.getProperty("ReadTimeoutMilli")));
+        conn.setReadTimeout(Integer.parseInt(driverProperties.getProperty("ReadTimeoutMilli")));
 
         return conn;
     }
 
     public String createBasicAuth() {
-        return "Basic " + HPCCJDBCUtils.Base64Encode((this.driver.getProperty("username") + ":" + this.driver.getProperty("password")).getBytes(), false);
+        return "Basic " + HPCCJDBCUtils.Base64Encode((driverProperties.getProperty("username") + ":" + driverProperties.getProperty("password")).getBytes(), false);
     }
 
     public HPCCDatabaseMetaData getDatabaseMetaData() {
@@ -281,7 +283,10 @@ public class HPCCConnection implements Connection{
 	} 
 	
 	ResultSet executePostgreSQLStatement(String sqlStatement) throws SQLException {
-		Statement stmt = driver.getPostgreSQLConnection().createStatement();
+		if(this.postgreSQLConnection == null) {
+			this.postgreSQLConnection = DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
+		}
+		Statement stmt = postgreSQLConnection.createStatement();
 		return stmt.executeQuery(sqlStatement);
 	}
 
@@ -290,7 +295,8 @@ public class HPCCConnection implements Connection{
     }
 
     public void close() throws SQLException {
-        closed = true;
+        this.postgreSQLConnection.close();
+        this.closed = true;
 //        httpConnection.disconnect();
     }
 
@@ -321,11 +327,11 @@ public class HPCCConnection implements Connection{
     }
 
     public String getClientInfo(String property) {
-    	return this.driver.getProperty(property);
+    	return driverProperties.getProperty(property);
     }
 
     public Properties getClientInfo() throws SQLException {
-        return this.driver.getProperties();
+        return driverProperties;
     }
     
     public String getCatalog() throws SQLException{
@@ -341,7 +347,7 @@ public class HPCCConnection implements Connection{
     }
     
 	public int getNetworkTimeout() throws SQLException {
-		return Integer.parseInt(this.driver.getProperty("ConnectTimeoutMilli"));
+		return Integer.parseInt(driverProperties.getProperty("ConnectTimeoutMilli"));
 	}
     
 	public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
