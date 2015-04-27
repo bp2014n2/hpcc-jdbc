@@ -53,7 +53,7 @@ public class HPCCStatement implements Statement{
         this.connection.addName(name);
         log("Statement created");
         Long difference = System.nanoTime()-HPCCDriver.beginTime;
-		HPCCJDBCUtils.traceoutln(Level.INFO, "created statement at: "+difference/1000000);
+		log("created statement at: "+difference/1000000);
     }
     
 	public boolean execute(String sqlStatement) throws SQLException {
@@ -67,18 +67,18 @@ public class HPCCStatement implements Statement{
 		}
 		
 		result = null;
-		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
+		log("currentQuery: "+sqlStatement);
 		Long difference = System.nanoTime()-HPCCDriver.beginTime;
-		HPCCJDBCUtils.traceoutln(Level.INFO, "started query at: "+difference/1000000);
+		log("started query at: "+difference/1000000);
 		if (checkFederatedDatabase(sqlStatement)) {
 			boolean result = executeQueryOnPostgreSQL(sqlStatement); 
 			difference = System.nanoTime()-HPCCDriver.beginTime;
-			HPCCJDBCUtils.traceoutln(Level.INFO, "finished Postgresql query at: "+difference/1000000);
+			log("finished Postgresql query at: "+difference/1000000);
 			return result;
 		} else {
 			boolean result = executeQueryOnHPCC(sqlStatement);
 			difference = System.nanoTime()-HPCCDriver.beginTime;
-			HPCCJDBCUtils.traceoutln(Level.INFO, "finished HPCC query at: "+difference/1000000);
+			log("finished HPCC query at: "+difference/1000000);
 			return result;
 		}
 	}
@@ -135,7 +135,7 @@ public class HPCCStatement implements Statement{
 		try {
 			Class.forName("org.postgresql.Driver");
 			Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
-			HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to PostgreSQL");
+			log("Query sent to PostgreSQL");
 			Statement stmt = connection.createStatement();
 			int number = stmt.executeUpdate(sqlStatement);
 			connection.close();
