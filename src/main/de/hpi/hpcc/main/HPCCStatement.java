@@ -11,17 +11,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.logging.HPCCLogger;
-import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLParser;
 import de.hpi.hpcc.parsing.SQLParser;
-import de.hpi.hpcc.parsing.visitor.ECLTableFinder;
 
 public class HPCCStatement implements Statement{
 	protected static final Logger logger = HPCCLogger.getLogger();
@@ -32,6 +27,8 @@ public class HPCCStatement implements Statement{
     protected ResultSet result = null;
     protected String name;
     protected String sqlStatement;
+    private boolean federatedDatabase = true;
+    
     private static final List<String> whiteList = new ArrayList<String>() {
 		private static final long serialVersionUID = 1L;
 	{
@@ -48,9 +45,7 @@ public class HPCCStatement implements Statement{
 		add("qt_patient_env_collection");
 		add("avk_fdb_t_leistungskosten");
     	
-    }};
-    
-    private boolean federatedDatabase = true;
+    }};    
 
     public HPCCStatement(HPCCConnection connection, String name){
     	this.name = name;
@@ -129,6 +124,7 @@ public class HPCCStatement implements Statement{
 			log("Query sent to PostgreSQL");
 			Statement stmt = connection.createStatement();
 			result = stmt.executeQuery(sqlStatement);
+			connection.close();
 			return result != null;
 		} catch (ClassNotFoundException classNotFoundException) {
 			throw new HPCCException("PostgreSQL driver not found");
@@ -142,6 +138,7 @@ public class HPCCStatement implements Statement{
 			HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to PostgreSQL");
 			Statement stmt = connection.createStatement();
 			int number = stmt.executeUpdate(sqlStatement);
+			connection.close();
 			return number;
 		} catch (ClassNotFoundException classNotFoundException) {
 			throw new HPCCException("PostgreSQL driver not found");
