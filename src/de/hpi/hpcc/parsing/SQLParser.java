@@ -49,8 +49,9 @@ public abstract class SQLParser{
 	}
 
 	public Set<String> getQueriedColumns(String table) {
-		return findColumns(table, getStatement());
-	};
+		ECLColumnFinder finder = new ECLColumnFinder(eclLayouts, table);
+		return finder.find(getStatement());
+	}
 	
 	public Set<String> getAllTables() {
 		ECLTableFinder finder = new ECLTableFinder();
@@ -71,12 +72,6 @@ public abstract class SQLParser{
 
 	public int getParameterizedCount() {
 		return getStatement().toString().length() - getStatement().toString().replace("?", "").length();
-	}
-	
-	protected Set<String> findColumns(String tableName, Statement statement) {
-		ECLColumnFinder finder = new ECLColumnFinder(eclLayouts, tableName);
-		return finder.find(statement);
-			
 	}
 
 	public static SQLParser getInstance(String sql, ECLLayouts eclLayouts) throws HPCCException {
