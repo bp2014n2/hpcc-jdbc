@@ -30,14 +30,6 @@ public class HPCCJDBCUtils
 
     private final static Logger logger = HPCCLogger.getLogger();
 
-    public static void traceoutln(Level level, String message)
-    {
-        if (logger != null)
-        {
-            logger.log(level, message);
-        }
-    }
-
     public static final ThreadLocal <NumberFormat> NUMFORMATTER =
             new ThreadLocal <NumberFormat>()
             {
@@ -543,8 +535,8 @@ public class HPCCJDBCUtils
             }
             catch (Exception e)
             {
-                HPCCJDBCUtils.traceoutln(Level.WARNING, "HPCC JDBC: Field of type: java.sql.Types-" + type + " could not be cast to native Java type (treat as String).");
-                HPCCJDBCUtils.traceoutln(Level.WARNING,  e.getLocalizedMessage());
+//                HPCCJDBCUtils.traceoutln(Level.WARNING, "HPCC JDBC: Field of type: java.sql.Types-" + type + " could not be cast to native Java type (treat as String).");
+//                HPCCJDBCUtils.traceoutln(Level.WARNING,  e.getLocalizedMessage());
                 return strrepresentation;
             }
         }
