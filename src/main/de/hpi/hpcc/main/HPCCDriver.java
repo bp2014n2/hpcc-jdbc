@@ -21,14 +21,16 @@ public class HPCCDriver implements Driver{
     private static final int CLUSTER 	= 2;
     
     public static final long beginTime = System.nanoTime();
+    private static boolean postgresqlAvailable = false;
     
     
     static{
     	try{
     		try {
 				Class.forName("org.postgresql.Driver");
+				postgresqlAvailable = true;
 			} catch (ClassNotFoundException e) {
-				throw new HPCCException("PostgreSQL driver not found");
+				
 			}
     		HPCCDriver driver = new HPCCDriver();
             DriverManager.registerDriver(driver);
@@ -159,5 +161,9 @@ public class HPCCDriver implements Driver{
 	
 	private static void log(String infoMessage, String defaultProperty){
 		log(Level.WARNING, infoMessage+" (now using: "+defaultProperty+")");
+	}
+	
+	public static boolean isPostgreSQLAvailable() {
+		return postgresqlAvailable;
 	}
 }

@@ -14,7 +14,6 @@ import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.NClob;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -53,6 +52,9 @@ public class HPCCConnection implements Connection{
     private boolean autoCommit = true;
     private HashSet<String> statementNames = new HashSet<String>();
 	private UUID sessionID;
+	private final static String POSTGRESQL_USER = "i2b2demodata";
+	private final static String POSTGRESQL_PASS = "demouser";
+	private final static String POSTGRESQL_URL = "jdbc:postgresql://54.93.194.65/i2b2";
     
     protected static final Logger logger = HPCCLogger.getLogger();
 
@@ -282,13 +284,20 @@ public class HPCCConnection implements Connection{
 		return null;
 	} 
 	
-	ResultSet executePostgreSQLStatement(String sqlStatement) throws SQLException {
+	public Connection getPostgreSQLConnection() throws SQLException {
 		if(this.postgreSQLConnection == null) {
-			this.postgreSQLConnection = DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
+			this.postgreSQLConnection = DriverManager.getConnection(POSTGRESQL_URL, POSTGRESQL_USER, POSTGRESQL_PASS);
 		}
-		Statement stmt = postgreSQLConnection.createStatement();
-		return stmt.executeQuery(sqlStatement);
+		return this.postgreSQLConnection;
 	}
+	
+//	ResultSet executePostgreSQLStatement(String sqlStatement) throws SQLException {
+//		if(this.postgreSQLConnection == null) {
+//			this.postgreSQLConnection = DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
+//		}
+//		Statement stmt = postgreSQLConnection.createStatement();
+//		return stmt.executeQuery(sqlStatement);
+//	}
 
     public boolean getAutoCommit() throws SQLException {
         return true;

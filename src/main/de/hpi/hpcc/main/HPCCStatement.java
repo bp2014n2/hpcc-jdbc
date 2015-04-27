@@ -1,7 +1,6 @@
 package de.hpi.hpcc.main;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -28,6 +27,7 @@ public class HPCCStatement implements Statement{
     protected String name;
     protected String sqlStatement;
     private boolean federatedDatabase = true;
+    private Statement postgreSQLStatement;
     
     private static final List<String> whiteList = new ArrayList<String>() {
 		private static final long serialVersionUID = 1L;
@@ -83,15 +83,19 @@ public class HPCCStatement implements Statement{
 		}
 	}
 	
+	protected Statement createPostgreSQLStatement() throws SQLException {
+		if(postgreSQLStatement == null) {
+			postgreSQLStatement = this.connection.getPostgreSQLConnection().createStatement();
+		}
+		return postgreSQLStatement;
+	}
+	
 	private boolean checkFederatedDatabase(String sqlStatement) throws SQLException {
 		ECLLayouts eclLayouts = new ECLLayouts(connection.getDatabaseMetaData());
 		SQLParser sqlParser = SQLParser.getInstance(sqlStatement, eclLayouts);
 		Set<String> tables = sqlParser.getAllTables();
 		
-		if (!federatedDatabase || whiteList.containsAll(tables)) {
-			return false;
-		}
-		return true;
+		return HPCCDriver.isPostgreSQLAvailable() && federatedDatabase && !whiteList.containsAll(tables);
 	}
 	
 
@@ -118,23 +122,14 @@ public class HPCCStatement implements Statement{
 	}
 	
 	private boolean executeQueryOnPostgreSQL(String sqlStatement) throws SQLException {
-			log("Query sent to PostgreSQL");
-			result = this.connection.executePostgreSQLStatement(sqlStatement);
-			return result != null;
+		log("Query sent to PostgreSQL");
+		result = createPostgreSQLStatement().executeQuery(sqlStatement);
+		return result != null;
 	}
 	
 	private int executeUpdateOnPostgreSQL(String sqlStatement) throws SQLException {
-		try {
-			Class.forName("org.postgresql.Driver");
-			Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
-			HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to PostgreSQL");
-			Statement stmt = connection.createStatement();
-			int number = stmt.executeUpdate(sqlStatement);
-			connection.close();
-			return number;
-		} catch (ClassNotFoundException classNotFoundException) {
-			throw new HPCCException("PostgreSQL driver not found");
-		}
+		log("Query sent to PostgreSQL");
+		return createPostgreSQLStatement().executeUpdate(sqlStatement);
 	}
 
 	public ResultSet executeQuery(String sqlQuery) throws SQLException {      
