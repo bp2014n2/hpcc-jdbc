@@ -118,17 +118,9 @@ public class HPCCStatement implements Statement{
 	}
 	
 	private boolean executeQueryOnPostgreSQL(String sqlStatement) throws SQLException {
-		try {
-			Class.forName("org.postgresql.Driver");
-			Connection connection = (Connection) DriverManager.getConnection("jdbc:postgresql://54.93.194.65/i2b2",	"i2b2demodata", "demouser");
 			log("Query sent to PostgreSQL");
-			Statement stmt = connection.createStatement();
-			result = stmt.executeQuery(sqlStatement);
-			connection.close();
+			result = this.connection.executePostgreSQLStatement(sqlStatement);
 			return result != null;
-		} catch (ClassNotFoundException classNotFoundException) {
-			throw new HPCCException("PostgreSQL driver not found");
-		}
 	}
 	
 	private int executeUpdateOnPostgreSQL(String sqlStatement) throws SQLException {
