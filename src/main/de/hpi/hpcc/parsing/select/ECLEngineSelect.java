@@ -6,11 +6,15 @@ import java.util.LinkedList;
 import java.util.List;
 
 import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
+import de.hpi.hpcc.parsing.visitor.ECLDataTypeParser;
+import de.hpi.hpcc.parsing.visitor.ECLNameParser;
+import de.hpi.hpcc.parsing.visitor.ECLSelectItemFinder;
 import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
 public class ECLEngineSelect extends ECLEngine {
@@ -50,10 +54,19 @@ public class ECLEngineSelect extends ECLEngine {
     	}
     	
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	List<String> selectItems = sqlParser.getAllSelectItemsInQuery();
-    	for (int i=0; i<selectItems.size(); i++) {
-    		String column = selectItems.get(i);
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, layouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
+    	ECLSelectItemFinder finder = new ECLSelectItemFinder(layouts);
+    	List<SelectExpressionItem> selectItems = finder.find(select);
+    	ECLDataTypeParser parser = new ECLDataTypeParser(layouts, getSQLParser());
+    	for (int i=0; i < selectItems.size(); i++) {
+    		SelectExpressionItem selectItem = selectItems.get(i);
+    		String dataType = parser.parse(selectItem.getExpression());
+    		ECLNameParser namer = new ECLNameParser();
+    		String name = namer.name(selectItem.getExpression());
+    		if(selectItem.getAlias() != null) {
+    			name = selectItem.getAlias().getName();
+    		}
+    		int sqlType = ECLLayouts.getSqlType(dataType);
+    		expectedretcolumns.add(new HPCCColumnMetaData(name, i, sqlType));
     	}
     	
     	return eclCode.toString();

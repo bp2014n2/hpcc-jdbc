@@ -2,7 +2,6 @@ package de.hpi.hpcc.parsing.visitor;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 
-import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.drop.Drop;
