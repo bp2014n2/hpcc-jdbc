@@ -68,6 +68,9 @@ public class ECLEngineTest {
 		
 		engine = getEngine("SELECT myColumnA FROM myTable WHERE myColumnE = myValue");
 		assertEquals("myTable_idx_big", selectIndex(engine, "myTable"));
+		
+		engine = getEngine("SELECT myColumnA, COUNT(*) FROM myTable WHERE myColumnC = myValue GROUP BY myColumnC");
+		assertEquals("myTable_idx_small", selectIndex(engine, "myTable"));
 
 //		engine = getEngine("SELECT myColumnA FROM myTable WHERE myOhterColumn = undefined");
 //		assertNull(selectIndex(engine, "myTable"));
