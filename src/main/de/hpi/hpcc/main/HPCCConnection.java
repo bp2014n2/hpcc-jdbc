@@ -192,16 +192,19 @@ public class HPCCConnection implements Connection{
 
         HPCCJDBCUtils.traceoutln(Level.INFO, "Parsing results...");
 
+        HPCCNodeListAdapter nodes = new HPCCNodeListAdapter(dsList);
+        
         int dsCount = 0;
-        if (dsList != null && (dsCount = dsList.getLength()) > 0){
-            HPCCJDBCUtils.traceoutln(Level.INFO, "Results datsets found: " + dsList.getLength());
+        if (dsList != null && nodes.iterator().hasNext()){
+//            HPCCJDBCUtils.traceoutln(Level.INFO, "Results datsets found: " + dsList.getLength());
 
             // The dataset element is encapsulated within a Result element
             // need to fetch appropriate resulst dataset
-
-            for (int i = 0; i < dsCount; i++)
-            {
-                Element ds = (Element) dsList.item(i);
+            for (Node node : nodes) {
+            //for (int i = 0; i < dsCount; i++) {
+            
+               // Element ds = (Element) dsList.item(i);
+            	Element ds = (Element) node;
                 String currentdatsetname = ds.getAttribute("name");
                 if (expectedDSName == null || expectedDSName.length() == 0
                         || currentdatsetname.equalsIgnoreCase(expectedDSName))
