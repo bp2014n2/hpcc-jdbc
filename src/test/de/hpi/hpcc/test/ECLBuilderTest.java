@@ -2,10 +2,7 @@ package de.hpi.hpcc.test;
 
 import static org.junit.Assert.assertEquals;
 
-import java.sql.SQLException;
-
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import de.hpi.hpcc.main.HPCCException;

@@ -6,7 +6,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
-import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
@@ -18,7 +17,6 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectBody;
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
@@ -48,31 +46,6 @@ public class SQLParserSelect extends SQLParser {
 	public List<SelectItem> getSelectItems() {
 		if (plain == null) return null;
 		return plain.getSelectItems();
-	}
-	
-	public List<String> getAllSelectItemsInQuery() {
-		ArrayList<String> allSelects = new ArrayList<String>();
-		for (SelectItem selectItem : getSelectItems()) {
-			if (selectItem instanceof SelectExpressionItem) {
-				if (((SelectExpressionItem) selectItem).getAlias() != null) {
-					allSelects.add(((SelectExpressionItem) selectItem).getAlias().getName());
-				} else {
-					Expression expression = ((SelectExpressionItem) selectItem).getExpression();
-					ECLNameParser nameParser = new ECLNameParser();
-					String name = nameParser.name(expression);
-					allSelects.add(name);
-				}
-			}
-			else if (selectItem instanceof AllColumns) {
-				if (getFromItem() instanceof Table) {
-					String tableName = ((Table) getFromItem()).getName();
-					allSelects.addAll(eclLayouts.getAllColumns(tableName));
-				} else if (getFromItem() instanceof SubSelect) {
-					allSelects.addAll(new SQLParserSelect(((SubSelect) getFromItem()).getSelectBody(), eclLayouts).getAllSelectItemsInQuery());
-				}	
-			}		
-		}
-		return allSelects;
 	}
 	
 	public LinkedHashSet<String> getAllColumns() {

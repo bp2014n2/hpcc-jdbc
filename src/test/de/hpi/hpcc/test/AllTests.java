@@ -6,7 +6,7 @@ import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
 @SuiteClasses({ ECLBuilderTest.class, ECLColumnFinderTest.class,
-		ECLEngineTest.class, ECLTableFinderTest.class, HPCCDriverTest.class,
+		ECLEngineTest.class, ECLSelectItemFinderTest.class, ECLTableFinderTest.class, HPCCDriverTest.class,
 		HPCCUrlParserTest.class })
 public class AllTests {
 

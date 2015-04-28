@@ -101,17 +101,6 @@ public class ECLLayoutsStub extends ECLLayouts {
 	}
 	
 	@Override
-	public int getSqlTypeOfColumn (Set<String> tables, String column) {
-		for (String table : tables) {
-			String type = getECLDataType(table, column);
-			if (type != null) {
-				return getSqlType(type);		
-			}
-		}
-		return java.sql.Types.OTHER;
-	}
-	
-	@Override
 	public List<String> getListOfIndexes(String table) {
 		return indexes.get(table);
 	}

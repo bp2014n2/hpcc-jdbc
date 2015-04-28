@@ -121,23 +121,6 @@ public class ECLLayouts {
 		return false;
 	}
 	
-	public int getSqlTypeOfColumn (Set<String> tables, String column) {
-		for (String table : tables) {
-			table = getFullTableName(table);
-			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
-			if (dfuFile == null) {
-				return java.sql.Types.OTHER;
-			}
-			for(String field : dfuFile.getAllTableFieldsStringArray()){
-				if(!field.equalsIgnoreCase(column)) {
-					continue;
-				}
-				return getSqlType(dfuFile.getFieldMetaData(field).getEclType().toString());
-			}
-		}
-		return java.sql.Types.OTHER;
-	}
-	
 	public String getFullTableName(String tableName) {
 		Matcher matcher = Pattern.compile("(~?(\\w+)::)?([\\w\\-]+)", Pattern.CASE_INSENSITIVE).matcher(tableName);
 		String schema = "i2b2demodata";

@@ -2,17 +2,21 @@ package de.hpi.hpcc.parsing.insert;
 
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 
 import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
+import de.hpi.hpcc.parsing.visitor.ECLDataTypeParser;
+import de.hpi.hpcc.parsing.visitor.ECLNameParser;
+import de.hpi.hpcc.parsing.visitor.ECLSelectItemFinder;
 import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
 public class ECLEngineInsert extends ECLEngine {
@@ -77,13 +81,20 @@ public class ECLEngineInsert extends ECLEngine {
     	}
 
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-    	HashSet<String> columns = layouts.getAllColumns(((SQLParserInsert) sqlParser).getTable().getName());
-    	int i=0;
-    	for (String column : columns) {
-    		i++;
-    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, layouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
-    		
-    	} 
+    	ECLSelectItemFinder finder = new ECLSelectItemFinder(layouts);
+    	List<SelectExpressionItem> selectItems = finder.find(insert);
+    	ECLDataTypeParser parser = new ECLDataTypeParser(layouts, getSQLParser());
+    	for (int i=0; i < selectItems.size(); i++) {
+    		SelectExpressionItem selectItem = selectItems.get(i);
+    		String dataType = parser.parse(selectItem.getExpression());
+    		ECLNameParser namer = new ECLNameParser();
+    		String name = namer.name(selectItem.getExpression());
+    		if(selectItem.getAlias() != null) {
+    			name = selectItem.getAlias().getName();
+    		}
+    		int sqlType = ECLLayouts.getSqlType(dataType);
+    		expectedretcolumns.add(new HPCCColumnMetaData(name, i, sqlType));
+    	}
     	
     	return eclCode.toString();
 	}
