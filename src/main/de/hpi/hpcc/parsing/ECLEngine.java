@@ -95,7 +95,7 @@ public abstract class ECLEngine
     		if (hasIndex) {
     			String index = getIndex(table);
     			if (index != null) {
-    				indicesString.append(getIndexString(table, index));
+    				indicesString.append(getIndexString(table, index) + "\n");
     			} else {
     				hasIndex = false;
     			}
