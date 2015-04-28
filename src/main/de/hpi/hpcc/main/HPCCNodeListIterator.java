@@ -24,4 +24,9 @@ public class HPCCNodeListIterator implements Iterator<Node> {
 		return nodeList.item(++currentIndex);
 	}
 
+	@Override
+	public void remove() {
+		throw new UnsupportedOperationException();
+	}
+
 }
