@@ -87,6 +87,9 @@
 				<pathelement location="${lib.dir}/${sqlParser}" />
 				<pathelement location="${lib.dir}/${junit}" />
 				<pathelement location="${lib.dir}/${hamcrest}" />
+				<pathelement location="${lib.dir}/${httpClient}"/>
+				<pathelement location="${lib.dir}/${httpCore}"/>
+				<pathelement location="${lib.dir}/${commonsLogging}"/>
 			</classpath>
 
 			<formatter type="xml" />
