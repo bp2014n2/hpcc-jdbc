@@ -2218,6 +2218,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 
     private boolean fetchHPCCFileInfo(String filename)
     {
+    	HPCCJDBCUtils.traceoutln(Level.INFO, "started fetching dfufile "+filename+": "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
         boolean isSuccess = false;
 
         if (basewseclwatchurl == null || filename.length() <= 0)
@@ -2251,7 +2252,8 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         {
             e.printStackTrace();
         }
-
+        HPCCJDBCUtils.traceoutln(Level.INFO, "finished fetching dfufile "+filename+": "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
+        
         return isSuccess;
     }
 

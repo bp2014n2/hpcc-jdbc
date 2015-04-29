@@ -3,10 +3,13 @@ package de.hpi.hpcc.parsing;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.hpi.hpcc.main.HPCCColumnMetaData;
+import de.hpi.hpcc.main.HPCCDriver;
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.visitor.ECLStatementParser;
 
 public class ECLParser {
@@ -46,7 +49,9 @@ public class ECLParser {
 		eclCode.append("&eclText=\n");
 		eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sql)+"');\n");
 		ECLStatementParser typeParser = new ECLStatementParser(layouts);
+		HPCCJDBCUtils.traceoutln(Level.INFO, "started parsing at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
 		engine = typeParser.getEngine(sql);
+		HPCCJDBCUtils.traceoutln(Level.INFO, "finished parsing at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
 		eclCode.append(engine.generateECL());
 		eclCode.append("\n\n//"+eclMetaEscape(sql));
 		return eclCode.toString();

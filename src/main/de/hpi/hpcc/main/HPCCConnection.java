@@ -136,21 +136,26 @@ public class HPCCConnection implements Connection{
                 + driverProperties.getProperty("WsECLDirectPort") + "/EclDirect/RunEcl?Submit")+"&cluster=" + driverProperties.getProperty("TargetCluster");
 
         URL hpccRequestUrl = HPCCJDBCUtils.makeURL(urlString);
-        
+        HPCCJDBCUtils.traceoutln(Level.INFO, "url for connection: "+hpccRequestUrl);		
         return hpccRequestUrl;
     }
     
     public void sendRequest(String eclCode){
     	int responseCode = -1;
-//      replace "+" in http request body since it is a reserved character representing a space character
+//      TODO: make better: replace "+" in http request body since it is a reserved character representing a space character
     	String body = eclCode.replace("+", "%2B");
 		try {
 			httpConnection = createHPCCESPConnection(generateUrl());
 			OutputStreamWriter wr = new OutputStreamWriter(httpConnection.getOutputStream());
+			HPCCJDBCUtils.traceoutln(Level.INFO, "write to outputstream: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
 			wr.write(body);
 	        wr.flush();
 	        wr.close();
+	        HPCCJDBCUtils.traceoutln(Level.INFO, "close outputstream: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
+			
 	        responseCode = httpConnection.getResponseCode();
+	        HPCCJDBCUtils.traceoutln(Level.INFO, "after response code: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
+			
 		} catch (IOException e) {
 			System.out.println(e.getMessage());
 			if (responseCode != 200){
@@ -162,6 +167,8 @@ public class HPCCConnection implements Connection{
 	        	throw new RuntimeException(e);	
 	        }
 		}
+		HPCCJDBCUtils.traceoutln(Level.INFO, "end of sendRequest: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
+		
     }
 
     public NodeList parseDataset(InputStream xml, long startTime) throws HPCCException {
@@ -196,14 +203,7 @@ public class HPCCConnection implements Connection{
         
         int dsCount = 0;
         if (dsList != null && nodes.iterator().hasNext()){
-//            HPCCJDBCUtils.traceoutln(Level.INFO, "Results datsets found: " + dsList.getLength());
-
-            // The dataset element is encapsulated within a Result element
-            // need to fetch appropriate resulst dataset
             for (Node node : nodes) {
-            //for (int i = 0; i < dsCount; i++) {
-            
-               // Element ds = (Element) dsList.item(i);
             	Element ds = (Element) node;
                 String currentdatsetname = ds.getAttribute("name");
                 if (expectedDSName == null || expectedDSName.length() == 0

@@ -39,6 +39,7 @@ public class HPCCResultSetMetadata implements ResultSetMetaData
     {
         columnListHash = new HashMap<String, HPCCColumnMetaData>();
 
+        // TODO: fill columnList when facing drop statement in order to prevent exception
         int colIndex = 0;
         for (HPCCColumnMetaData col : columnList)
         {

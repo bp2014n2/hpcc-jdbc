@@ -46,7 +46,9 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
     }
 
 	public ResultSet executeQuery() throws SQLException {
+		HPCCJDBCUtils.traceoutln(Level.INFO, "started preparedStatement at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
     	execute();
+    	HPCCJDBCUtils.traceoutln(Level.INFO, "finished preparedStatement at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
         return result;
     }
 

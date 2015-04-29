@@ -57,6 +57,9 @@ public class HPCCStatement implements Statement{
     }
     
 	public boolean execute(String sqlStatement) throws SQLException {
+		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
+		Long difference = System.nanoTime()-HPCCDriver.beginTime;
+		HPCCJDBCUtils.traceoutln(Level.INFO, "started query at: "+difference/1000000);
 		this.sqlStatement = sqlStatement;
 		if (this.closed){
 			log(Level.SEVERE, "Statement is closed! Cannot execute query!");
@@ -65,11 +68,7 @@ public class HPCCStatement implements Statement{
 			}
             warnings.setNextException(new SQLException());
 		}
-		
 		result = null;
-		HPCCJDBCUtils.traceoutln(Level.INFO, "currentQuery: "+sqlStatement);
-		Long difference = System.nanoTime()-HPCCDriver.beginTime;
-		HPCCJDBCUtils.traceoutln(Level.INFO, "started query at: "+difference/1000000);
 		if (checkFederatedDatabase(sqlStatement)) {
 			boolean result = executeQueryOnPostgreSQL(sqlStatement); 
 			difference = System.nanoTime()-HPCCDriver.beginTime;
@@ -102,16 +101,23 @@ public class HPCCStatement implements Statement{
 	
 	private boolean executeQueryOnHPCC(String sqlStatement) throws SQLException {
 		try {
+			HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to HPCC: "+sqlStatement);
 			ECLLayouts layouts = new ECLLayouts(connection.getDatabaseMetaData());
 			this.parser = new ECLParser(layouts);
 			NodeList rowList = null;
 			for(String query : parser.parse(sqlStatement)) {
+				HPCCJDBCUtils.traceoutln(Level.INFO, "sent query to hpcc at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
 				connection.sendRequest(query);
+				HPCCJDBCUtils.traceoutln(Level.INFO, "finished query at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
 				rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+				HPCCJDBCUtils.traceoutln(Level.INFO, "finished parsing dataset at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
+				
 			}
 			
 			if (rowList != null) {
+				HPCCJDBCUtils.traceoutln(Level.INFO, "started creating resultset at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
 				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(parser.getExpectedRetCols(),	"HPCC Result"));
+				HPCCJDBCUtils.traceoutln(Level.INFO, "finished creating resultset at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
 			}
 			return result != null;
 		} catch (HPCCException exception) {
@@ -122,18 +128,29 @@ public class HPCCStatement implements Statement{
 	}
 	
 	private boolean executeQueryOnPostgreSQL(String sqlStatement) throws SQLException {
-		log("Query sent to PostgreSQL");
-		result = createPostgreSQLStatement().executeQuery(sqlStatement);
+		HPCCJDBCUtils.traceoutln(Level.INFO, "Query sent to PostgreSQL: "+sqlStatement);
+		HPCCJDBCUtils.traceoutln(Level.INFO, "started query at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
+		Statement stmt = createPostgreSQLStatement();
+		HPCCJDBCUtils.traceoutln(Level.INFO, "created statement at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
+		result = stmt.executeQuery(sqlStatement);
+		HPCCJDBCUtils.traceoutln(Level.INFO, "finished query at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
 		return result != null;
 	}
 	
 	private int executeUpdateOnPostgreSQL(String sqlStatement) throws SQLException {
-		log("Query sent to PostgreSQL");
-		return createPostgreSQLStatement().executeUpdate(sqlStatement);
+		HPCCJDBCUtils.traceoutln(Level.INFO, sqlStatement);
+		HPCCJDBCUtils.traceoutln(Level.INFO, "started update at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
+		Statement stmt = createPostgreSQLStatement();
+		HPCCJDBCUtils.traceoutln(Level.INFO, "created statement at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
+		int result = stmt.executeUpdate(sqlStatement);
+		HPCCJDBCUtils.traceoutln(Level.INFO, "finished update at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
+		return result;
 	}
 
-	public ResultSet executeQuery(String sqlQuery) throws SQLException {      
+	public ResultSet executeQuery(String sqlQuery) throws SQLException { 
+		HPCCJDBCUtils.traceoutln(Level.INFO, "started query at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
     	execute(sqlQuery);
+    	HPCCJDBCUtils.traceoutln(Level.INFO, "finished query at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
         return result;
 	}
 	
@@ -186,12 +203,17 @@ public class HPCCStatement implements Statement{
     }
     
     public int executeUpdate(String sqlUpdate) throws SQLException{
+    	HPCCJDBCUtils.traceoutln(Level.INFO, "started update at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
     	if (checkFederatedDatabase(sqlUpdate)) {
-			return executeUpdateOnPostgreSQL(sqlUpdate);
+    		int i = executeUpdateOnPostgreSQL(sqlUpdate);
+    		HPCCJDBCUtils.traceoutln(Level.INFO, "finished update at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
+			return i;
 		} else {
-			if (execute(sqlUpdate)) {
+			if(executeQueryOnHPCC(sqlUpdate)) {
 	    		result.last();
-	        	return result.getRow();
+	    		int i = result.getRow();
+	    		HPCCJDBCUtils.traceoutln(Level.INFO, "finished update at: "+((System.nanoTime()-HPCCDriver.beginTime)/1000000));
+	        	return i;
 	    	}
 		}
     	return 0;
@@ -225,7 +247,7 @@ public class HPCCStatement implements Statement{
         throw new UnsupportedOperationException();
 	}    
 	
-	//Unsupported methods!!
+	//TODO: Unsupported methods!!
 	public int getFetchSize() throws SQLException{
     	log("getFetchSize: -1");
         return -1;
