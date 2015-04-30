@@ -54,7 +54,6 @@ public class ECLEngineTest {
 	private static ECLEngine getEngine(String sql) throws HPCCException {
 		ECLStatementParser parser = new ECLStatementParser(layouts);
 		ECLEngine engine = parser.getEngine(sql);
-		engine.setSQLParser(parser.getParser(sql));
 		return engine;
 	}
 	

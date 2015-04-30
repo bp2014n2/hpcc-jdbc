@@ -1,5 +1,6 @@
 package de.hpi.hpcc.parsing.create;
 
+import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
@@ -31,7 +32,7 @@ public class ECLBuilderCreate extends ECLBuilder {
 	}
 
 	@Override
-	protected SQLParserCreate getSqlParser() {
-		return sqlParser;
+	protected CreateTable getStatement() {
+		return create;
 	}
 }

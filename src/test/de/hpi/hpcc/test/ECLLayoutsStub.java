@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import de.hpi.hpcc.parsing.ECLLayouts;
 
@@ -29,8 +30,7 @@ public class ECLLayoutsStub extends ECLLayouts {
 		if (matcher.find()) {
 			layout = matcher.group(1);
 			layouts.put(table.toLowerCase(), layout);
-		}
-		
+		}	
 	}
 	
 	@Override
@@ -124,6 +124,10 @@ public class ECLLayoutsStub extends ECLLayouts {
 		indexes.put(table, currentIndexes);
 		this.keyedColumns.put(indexName, keyedColumns);
 		this.nonKeyedColumns.put(indexName, nonKeyedColumns);
+	}
+	
+	public String getRecord(String tableName) {
+		return getStubbedLayout(tableName);
 	}
 
 }

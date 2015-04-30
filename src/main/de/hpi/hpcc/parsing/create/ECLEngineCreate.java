@@ -21,10 +21,11 @@ public class ECLEngineCreate extends ECLEngine {
 	public ECLEngineCreate(CreateTable create, ECLLayouts layouts) {
 		super(create, layouts);
 		this.create = create;
+		sqlParser = new SQLParserCreate(create, layouts);
 	}
 
 	public String generateECL() throws SQLException {
-		sqlParser = new SQLParserCreate(create, layouts);
+		
 		if (sqlParser.isTempTable()) {
 			layouts.addTempTable(layouts.getFullTableName(create.getTable().getName()));
 			ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
@@ -72,10 +73,5 @@ public class ECLEngineCreate extends ECLEngine {
 	@Override
 	protected SQLParserCreate getSQLParser() {
 		return sqlParser;
-	}
-
-	@Override
-	public void setSQLParser(SQLParser parser) {
-		this.sqlParser = (SQLParserCreate) parser;
 	}
 }

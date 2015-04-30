@@ -2,6 +2,7 @@ package de.hpi.hpcc.parsing;
 
 import java.util.HashSet;
 import java.util.Set;
+
 import de.hpi.hpcc.main.HPCCException;
 import de.hpi.hpcc.parsing.visitor.ECLColumnFinder;
 import de.hpi.hpcc.parsing.visitor.ECLStatementParser;
@@ -47,9 +48,18 @@ public abstract class SQLParser{
 		return finder.find(getStatement());
 	}
 	
+	public static Set<String> getAllTables(String sql) throws HPCCException {
+		Statement statement = parse(sql);
+		return getAllTables(statement);
+	}
+	
 	public Set<String> getAllTables() {
+		return getAllTables(getStatement());
+	}
+
+	public static Set<String> getAllTables(Statement statement) {
 		ECLTableFinder finder = new ECLTableFinder();
-		Set<String> tableList = finder.find(getStatement());
+		Set<String> tableList = finder.find(statement);
 		Set<String> lowerTableList = new HashSet<String>();
 		for (String table : tableList) {
 			if (table.contains(".")) {

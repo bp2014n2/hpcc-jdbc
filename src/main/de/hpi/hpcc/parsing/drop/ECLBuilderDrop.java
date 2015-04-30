@@ -29,7 +29,7 @@ public class ECLBuilderDrop extends ECLBuilder {
 	}
 
 	@Override
-	protected SQLParserDrop getSqlParser() {
-		return sqlParser;
+	protected Drop getStatement() {
+		return drop;
 	}
 }

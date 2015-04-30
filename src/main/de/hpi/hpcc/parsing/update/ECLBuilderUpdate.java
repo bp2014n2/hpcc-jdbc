@@ -236,8 +236,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 	}
 
 	@Override
-	protected SQLParserUpdate getSqlParser() {
-		// TODO Auto-generated method stub
-		return sqlParser;
+	protected Update getStatement() {
+		return update;
 	}
 }

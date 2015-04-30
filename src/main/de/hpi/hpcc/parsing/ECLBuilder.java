@@ -21,12 +21,7 @@ abstract public class ECLBuilder {
 	
 	public abstract String generateECL();
 	
-	/**
-	 * This methods surrounds a given ECL string with a Table definition. 
-	 * The input StringBuilder is modified.
-	 * @param eclCode
-	 */
-	abstract protected SQLParser getSqlParser();
+	abstract protected Statement getStatement();
 	
 	/**
 	 * Generates for a given Expression the ECL code by a recursive approach
@@ -38,7 +33,7 @@ abstract public class ECLBuilder {
 	protected String parseExpressionECL(Expression expressionItem) {
 		StringBuilder expression = new StringBuilder();
 		ECLExpressionParser expressionParser = new ECLExpressionParser(eclLayouts);
-		expressionParser.setAllTables(getSqlParser().getAllTables());
+		expressionParser.setAllTables(SQLParser.getAllTables(getStatement()));
 		expression.append(expressionParser.parse(expressionItem));
 		 
 		return expression.toString();

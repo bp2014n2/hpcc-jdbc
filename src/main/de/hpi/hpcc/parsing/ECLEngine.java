@@ -52,9 +52,8 @@ public abstract class ECLEngine
 
 	public abstract String generateECL() throws SQLException;
     
+	// TODO: remove
     protected abstract SQLParser getSQLParser();
-    
-	public abstract void setSQLParser(SQLParser parser);
 	
 	 public List<HPCCColumnMetaData> getExpectedRetCols() {
         return expectedretcolumns;

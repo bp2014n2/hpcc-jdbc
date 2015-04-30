@@ -132,6 +132,11 @@ public class ECLBuilderTest {
 	}
 	
 	@Test
+	public void shouldTranslateDelete() throws HPCCException {
+		assertStatementCanBeParsedAs("OUTPUT(DATASET([],{STRING50 myColumn; STRING50 myColumnA; STRING25 myColumnB;}),,'~%NEWTABLE%',OVERWRITE);", "delete from myTable");		
+	}
+	
+	@Test
 	public void shouldCreateTable() throws HPCCException {
 		assertStatementCanBeParsedAs("OUTPUT(DATASET([],{INTEGER5 myColumnA, STRING37 myColumnB, STRING25 myColumnC}),,'~%NEWTABLE%',OVERWRITE);", "create table newTable (myColumnA int, myColumnB varchar(37), myColumnC timestamp)");
 		assertStatementCanBeParsedAs("OUTPUT(DATASET([],{INTEGER5 myColumnA, STRING12 myColumnB}),,'~%NEWTABLE%',OVERWRITE);", "create temp table newTable (myColumnA int, myColumnB varchar(12))");

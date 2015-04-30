@@ -28,12 +28,13 @@ public class ECLEngineInsert extends ECLEngine {
 	public ECLEngineInsert(Insert insert, ECLLayouts layouts) {
 		super(insert, layouts);
 		this.insert = insert;
+		this.sqlParser = new SQLParserInsert(insert, layouts);
 	}
 	
 	public String generateECL() throws SQLException{
 		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
 		tempTableParser.replace(insert);
-		this.sqlParser = new SQLParserInsert(insert, layouts);
+		
 		
     	ECLBuilderInsert eclBuilder = new ECLBuilderInsert(insert, layouts);
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
@@ -121,9 +122,4 @@ public class ECLEngineInsert extends ECLEngine {
   	private static void log(Level loggingLevel, String infoMessage){
   		logger.log(loggingLevel, ECLEngineInsert.class.getSimpleName()+": "+infoMessage);
   	}
-
-	@Override
-	public void setSQLParser(SQLParser parser) {
-		this.sqlParser = (SQLParserInsert) parser;
-	}
 }

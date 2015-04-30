@@ -8,6 +8,9 @@ import de.hpi.hpcc.parsing.SQLParser;
 import de.hpi.hpcc.parsing.create.ECLBuilderCreate;
 import de.hpi.hpcc.parsing.create.ECLEngineCreate;
 import de.hpi.hpcc.parsing.create.SQLParserCreate;
+import de.hpi.hpcc.parsing.delete.ECLBuilderDelete;
+import de.hpi.hpcc.parsing.delete.ECLEngineDelete;
+import de.hpi.hpcc.parsing.delete.SQLParserDelete;
 import de.hpi.hpcc.parsing.drop.ECLBuilderDrop;
 import de.hpi.hpcc.parsing.drop.ECLEngineDrop;
 import de.hpi.hpcc.parsing.drop.SQLParserDrop;
@@ -75,8 +78,9 @@ public class ECLStatementParser implements StatementVisitor {
 
 	@Override
 	public void visit(Delete delete) {
-		// TODO Auto-generated method stub
-		
+		parser = new SQLParserDelete(delete, layouts);
+		engine = new ECLEngineDelete(delete, layouts);
+		builder = new ECLBuilderDelete(delete, layouts);
 	}
 
 	@Override

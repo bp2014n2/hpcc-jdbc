@@ -23,6 +23,7 @@ public class ECLEngineDrop extends ECLEngine {
 		super(drop, layouts);
 		this.drop = drop;
 		originalTableName = drop.getName();
+		this.sqlParser = new SQLParserDrop(drop, layouts);
 		
 		// TODO: remove later due to double initialization
 		
@@ -32,7 +33,7 @@ public class ECLEngineDrop extends ECLEngine {
 
 		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
 		tempTableParser.replace(drop);
-		this.sqlParser = new SQLParserDrop(drop, layouts);
+		
     	eclCode.append(generateImports());
 //		eclCode.append(eclBuilder.generateECL(sqlQuery));
     	
@@ -75,10 +76,5 @@ public class ECLEngineDrop extends ECLEngine {
 	@Override
 	protected SQLParserDrop getSQLParser() {
 		return sqlParser;
-	}
-
-	@Override
-	public void setSQLParser(SQLParser parser) {
-		this.sqlParser = (SQLParserDrop) parser;
 	}
 }

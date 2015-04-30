@@ -255,8 +255,7 @@ public class ECLBuilderSelect extends ECLBuilder {
 	}
 
 	@Override
-	protected SQLParserSelect getSqlParser() {
-		// TODO Auto-generated method stub
-		return sqlParser;
+	protected Select getStatement() {
+		return select;
 	}
 }

@@ -26,6 +26,7 @@ public class ECLEngineSelect extends ECLEngine {
 	public ECLEngineSelect(Select select, ECLLayouts layouts) {
 		super(select, layouts);
 		this.select = select;
+		this.sqlParser = new SQLParserSelect(select, layouts);
 	}
 	
 	public String generateECL() throws SQLException
@@ -33,7 +34,7 @@ public class ECLEngineSelect extends ECLEngine {
 
 		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
 		tempTableParser.replace(select);
-		this.sqlParser = new SQLParserSelect(select, layouts);
+		
 		
     	ECLBuilderSelect eclBuilder = new ECLBuilderSelect(select, layouts);
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
@@ -75,10 +76,5 @@ public class ECLEngineSelect extends ECLEngine {
 	@Override
 	protected SQLParserSelect getSQLParser() {
 		return sqlParser;
-	}
-
-	@Override
-	public void setSQLParser(SQLParser parser) {
-		this.sqlParser = (SQLParserSelect) parser;
 	}
 }

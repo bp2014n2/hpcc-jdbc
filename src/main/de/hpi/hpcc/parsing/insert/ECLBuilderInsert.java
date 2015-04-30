@@ -140,8 +140,7 @@ public class ECLBuilderInsert extends ECLBuilder {
 	}
 
 	@Override
-	protected SQLParserInsert getSqlParser() {
-		// TODO Auto-generated method stub
-		return sqlParser;
+	protected Insert getStatement() {
+		return insert;
 	}	
 }

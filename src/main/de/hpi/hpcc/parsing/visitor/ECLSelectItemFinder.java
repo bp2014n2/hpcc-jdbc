@@ -7,6 +7,7 @@ import java.util.Stack;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.delete.Delete;
 import net.sf.jsqlparser.statement.insert.Insert;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.AllTableColumns;
@@ -84,6 +85,12 @@ public class ECLSelectItemFinder extends FullVisitorAdapter {
 			ECLAllColumnCollector collector = new ECLAllColumnCollector(layouts);
 			selectItems.addAll(collector.collect(table));
 		}
+	}
+	
+	@Override
+	public void visit(Delete delete) {
+		ECLAllColumnCollector collector = new ECLAllColumnCollector(layouts);
+		selectItems.addAll(collector.collect(delete.getTable()));
 	}
 	
 	@Override

@@ -198,6 +198,17 @@ public class ECLLayouts {
 		}
 		return fullTempTableName[0];
 	}
+
+	public String getRecord(String tableName) {
+		String name = getFullTableName(tableName);
+		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
+		
+		if (dfuFile != null) {
+			return dfuFile.getRecDef();
+		} else {
+			return null;
+		}
+	}
 	
 //	public String getLayoutOrdered(String table, List<String> orderedColumns) {
 //		String name = getFullTableName(table);
