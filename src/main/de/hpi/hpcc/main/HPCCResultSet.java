@@ -126,20 +126,11 @@ public class HPCCResultSet implements ResultSet
         return rows.size();
     }
 
-    public boolean next() throws SQLException
-    {
-        log(Level.FINEST, "HPCCResultSet next");
-        index++;
-        if (index >= rows.size())
-        {
-            index--;
-            return false;
-        }
-        else
-        {
-            return true;
-        }
-    }
+	public boolean next() throws SQLException {
+		log(Level.FINEST, "HPCCResultSet next");
+		index++;
+		return !(index >= rows.size());
+	}
 
     public void close() throws SQLException
     {
@@ -1699,7 +1690,7 @@ public class HPCCResultSet implements ResultSet
 	}
 	
 	private static void log(Level loggingLevel, String infoMessage){
-		logger.log(loggingLevel, HPCCStatement.class.getSimpleName()+": "+infoMessage);
+		logger.log(loggingLevel, HPCCResultSet.class.getSimpleName()+": "+infoMessage);
 	}
 	
 	private void handleUnsupportedMethod(String methodSignature) throws SQLException {
