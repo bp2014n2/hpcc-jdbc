@@ -111,8 +111,7 @@ public class ECLDataTypeParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(DoubleValue doubleValue) {
-		// TODO Auto-generated method stub
-		
+		dataType = "numeric18_5";
 	}
 
 	@Override
@@ -146,8 +145,7 @@ public class ECLDataTypeParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(StringValue stringValue) {
-		// TODO Auto-generated method stub
-		
+		dataType = "string50";
 	}
 
 	@Override
