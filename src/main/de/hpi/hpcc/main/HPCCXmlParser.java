@@ -2,11 +2,17 @@ package de.hpi.hpcc.main;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.LinkedList;
 import java.util.logging.Level;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -15,7 +21,31 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public class HPCCXmlParser {
+	LinkedList<LinkedList<Object>> rows = new LinkedList<LinkedList<Object>>();
+	
 	public NodeList parseDataset(InputStream xml, long startTime) throws HPCCException {
+		
+		try {
+			XMLStreamReader parser = XMLInputFactory.newInstance().createXMLStreamReader(xml);
+			for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
+				switch (event) {
+					case XMLStreamConstants.START_ELEMENT:
+						if (isRow(parser.getLocalName())) {
+							parseRow(parser);
+				        }
+						break;
+					case XMLStreamConstants.END_ELEMENT:
+						if (isDataset(parser.getLocalName())) {
+							// TODO we are only parsing the first dataset!
+							// TODO return rows;
+						}	
+				}
+			}
+		} catch (XMLStreamException | FactoryConfigurationError e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
     	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
     	String expectedDSName = null;
         NodeList rowList = null;
@@ -99,4 +129,30 @@ public class HPCCXmlParser {
 
         return rowList;
     }
+
+	private void parseRow(XMLStreamReader parser) throws XMLStreamException {
+		LinkedList<Object> row = new LinkedList<Object>();
+		for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
+			switch (event) {
+				case XMLStreamConstants.CHARACTERS:
+				case XMLStreamConstants.CDATA:
+					row.add(parser.getText());
+					break;
+				case XMLStreamConstants.END_ELEMENT:
+					if (isRow(parser.getLocalName())) {
+						System.out.println(row.get(3));
+						rows.add(row);
+						return;
+					}
+			}
+		}
+	}
+
+	private boolean isRow(String localName) {
+		return localName.equals("Row");
+	}
+	
+	private boolean isDataset(String localName) {
+		return localName.equals("Dataset");
+	}
 }
