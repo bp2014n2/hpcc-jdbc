@@ -107,7 +107,7 @@ public class HPCCStatement implements Statement{
 			NodeList rowList = null;
 			for(String query : parser.parse(sqlStatement)) {
 				connection.sendRequest(query);
-				rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+				rowList = new HPCCXmlParser().parseDataset(connection.getInputStream(), System.currentTimeMillis());
 			}
 			
 			if (rowList != null) {
