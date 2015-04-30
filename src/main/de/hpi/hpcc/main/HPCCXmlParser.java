@@ -8,7 +8,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.io.IOUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -17,12 +16,6 @@ import org.xml.sax.SAXException;
 
 public class HPCCXmlParser {
 	public NodeList parseDataset(InputStream xml, long startTime) throws HPCCException {
-    	try {
-			IOUtils.copy(xml, System.out);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
     	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
     	String expectedDSName = null;
         NodeList rowList = null;
