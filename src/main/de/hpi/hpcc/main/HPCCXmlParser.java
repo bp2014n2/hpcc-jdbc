@@ -132,18 +132,20 @@ public class HPCCXmlParser {
 
 	private void parseRow(XMLStreamReader parser) throws XMLStreamException {
 		LinkedList<Object> row = new LinkedList<Object>();
+		String elementValue = "";
 		for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
 			switch (event) {
 				case XMLStreamConstants.CHARACTERS:
 				case XMLStreamConstants.CDATA:
-					row.add(parser.getText());
+					elementValue += parser.getText();
 					break;
 				case XMLStreamConstants.END_ELEMENT:
 					if (isRow(parser.getLocalName())) {
-						System.out.println(row.get(3));
 						rows.add(row);
 						return;
 					}
+					row.add(elementValue);
+					elementValue = "";
 			}
 		}
 	}
