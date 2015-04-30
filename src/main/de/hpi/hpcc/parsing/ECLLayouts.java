@@ -64,13 +64,13 @@ public class ECLLayouts {
 	}
 	
 	/**
-	 * 
-	 * @param table
+	 * returns 
+	 * @param index
 	 * @return
 	 */
-	public List<Object> getKeyedColumns(String table) {  //TODO: assure right order of keyed/non-keyed columns
-		table = getFullTableName(table);
-		HPCCDFUFile file = dbMetadata.getDFUFile(table);
+	public List<Object> getKeyedColumns(String index) {  //TODO: assure right order of keyed/non-keyed columns
+		index = getFullTableName(index);
+		HPCCDFUFile file = dbMetadata.getDFUFile(index);
 		if(file != null) {
 			return getSortedPropertyValues(file.getKeyedColumns());
 		} 
@@ -78,9 +78,9 @@ public class ECLLayouts {
 		
 	}
 	
-	public List<Object> getNonKeyedColumns(String table) {
-		table = getFullTableName(table);
-		HPCCDFUFile file = dbMetadata.getDFUFile(table);
+	public List<Object> getNonKeyedColumns(String index) {
+		index = getFullTableName(index);
+		HPCCDFUFile file = dbMetadata.getDFUFile(index);
 		if(file != null) {
 			return getSortedPropertyValues(file.getNonKeyedColumns());
 		} 
