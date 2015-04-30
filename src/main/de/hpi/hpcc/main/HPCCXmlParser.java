@@ -20,18 +20,16 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-public class HPCCXmlParser {
-	LinkedList<LinkedList<Object>> rows = new LinkedList<LinkedList<Object>>();
-	
+public class HPCCXmlParser {	
 	public NodeList parseDataset(InputStream xml, long startTime) throws HPCCException {
-		
+		LinkedList<LinkedList<String>> rows = new LinkedList<LinkedList<String>>();
 		try {
 			XMLStreamReader parser = XMLInputFactory.newInstance().createXMLStreamReader(xml);
 			for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
 				switch (event) {
 					case XMLStreamConstants.START_ELEMENT:
 						if (isRow(parser.getLocalName())) {
-							parseRow(parser);
+							rows.add(parseRow(parser));
 				        }
 						break;
 					case XMLStreamConstants.END_ELEMENT:
@@ -41,9 +39,9 @@ public class HPCCXmlParser {
 						}	
 				}
 			}
+			parser.close();
 		} catch (XMLStreamException | FactoryConfigurationError e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			throw new HPCCException("Error creating the XML parser!");
 		}
 		
     	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -130,8 +128,8 @@ public class HPCCXmlParser {
         return rowList;
     }
 
-	private void parseRow(XMLStreamReader parser) throws XMLStreamException {
-		LinkedList<Object> row = new LinkedList<Object>();
+	private LinkedList<String> parseRow(XMLStreamReader parser) throws XMLStreamException, HPCCException {
+		LinkedList<String> row = new LinkedList<String>();
 		String elementValue = "";
 		for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
 			switch (event) {
@@ -141,13 +139,13 @@ public class HPCCXmlParser {
 					break;
 				case XMLStreamConstants.END_ELEMENT:
 					if (isRow(parser.getLocalName())) {
-						rows.add(row);
-						return;
+						return row;
 					}
 					row.add(elementValue);
 					elementValue = "";
 			}
 		}
+		throw new HPCCException("Error in parsing rows!");
 	}
 
 	private boolean isRow(String localName) {
