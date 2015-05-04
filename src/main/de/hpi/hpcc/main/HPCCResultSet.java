@@ -69,15 +69,15 @@ public class HPCCResultSet implements ResultSet
     private SQLWarning                          warnings = null;
     private static final Logger	logger = HPCCLogger.getLogger();
 
-    public HPCCResultSet(HPCCStatement hpccStatement, LinkedList<LinkedList<String>> rows2, HPCCResultSetMetadata hpccResultSetMetadata) throws SQLException
+    public HPCCResultSet(List recrows, ArrayList<HPCCColumnMetaData> metadatacols, String tablename) throws SQLException
     {
-        log(Level.FINEST, "HPCCResultSet: HPCCResultSet(recrows, metadatacols, " + hpccResultSetMetadata +")");
-        resultMetadata = new HPCCResultSetMetadata(rows2, hpccResultSetMetadata);
-        rows = new ArrayList<List>(hpccStatement);
+        log(Level.FINEST, "HPCCResultSet: HPCCResultSet(recrows, metadatacols, " + tablename +")");
+        resultMetadata = new HPCCResultSetMetadata(metadatacols, tablename);
+        rows = new ArrayList<List>(recrows);
         lastResult = new Object();
     }
 
-    public HPCCResultSet(Statement statement, NodeList rowList, HPCCResultSetMetadata resultMetadata)
+    public HPCCResultSet(Statement statement, LinkedList<LinkedList<String>> rowList, HPCCResultSetMetadata resultMetadata)
     {
         log(Level.FINEST, "HPCCResultSet: HPCCResultSet(statement, rowList, resultMetadata)");
         this.resultMetadata = resultMetadata;

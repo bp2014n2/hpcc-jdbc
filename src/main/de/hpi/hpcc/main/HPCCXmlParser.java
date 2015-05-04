@@ -12,6 +12,7 @@ import javax.xml.stream.XMLStreamReader;
 public class HPCCXmlParser {	
 	public LinkedList<LinkedList<String>> parseDataset(InputStream xml) throws HPCCException {
 		//TODO track time
+		//TODO use logger :-D
 		LinkedList<LinkedList<String>> rows = new LinkedList<LinkedList<String>>();
 		try {
 			XMLStreamReader parser = XMLInputFactory.newInstance().createXMLStreamReader(xml);
