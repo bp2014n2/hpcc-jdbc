@@ -71,6 +71,15 @@ public class ECLSelectItemFinderTest {
 	}
 	
 	@Test
+	public void shouldFindJoinColumnsOnce() throws HPCCException {
+		List<String> expected = new ArrayList<String>();
+		expected.add("myColumn");
+		expected.add("myColumnA");
+		expected.add("myColumnB");
+		assertAllExpressionsAreFound(expected , "SELECT * FROM myTable, myTableB");
+	}
+	
+	@Test
 	public void shouldFindSubSelects() throws HPCCException {
 		List<String> expected = new ArrayList<String>();
 		expected.add("myColumn");

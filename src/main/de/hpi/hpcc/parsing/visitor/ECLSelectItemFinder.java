@@ -56,10 +56,8 @@ public class ECLSelectItemFinder extends FullVisitorAdapter {
 	@Override
 	public void visit(AllColumns allColumns) {
 		List<FromItem> currentFromItems = fromItems.pop();
-		for(FromItem fromItem : currentFromItems) {
-			ECLAllColumnCollector collector = new ECLAllColumnCollector(layouts);
-			selectItems.addAll(collector.collect(fromItem));
-		}
+		ECLAllColumnCollector collector = new ECLAllColumnCollector(layouts);
+		selectItems.addAll(collector.collect(currentFromItems));
 	}
 	
 	@Override
