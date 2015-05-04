@@ -10,21 +10,22 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 public class HPCCXmlParser {	
-	public LinkedList<LinkedList<String>> parseDataset(InputStream xml, long startTime) throws HPCCException {
+	public LinkedList<LinkedList<String>> parseDataset(InputStream xml) throws HPCCException {
+		//TODO track time
 		LinkedList<LinkedList<String>> rows = new LinkedList<LinkedList<String>>();
 		try {
 			XMLStreamReader parser = XMLInputFactory.newInstance().createXMLStreamReader(xml);
 			loop: for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
 				switch (event) {
 					case XMLStreamConstants.START_ELEMENT:
-						if (isRow(parser.getLocalName())) {
-							rows.add(parseRow(parser));
-				        } else if (isException(parser.getLocalName())) {
-				        	parseException(parser);
+						if (this.isRow(parser.getLocalName())) {
+							rows.add(this.parseRow(parser));
+				        } else if (this.isException(parser.getLocalName())) {
+				        	this.parseException(parser);
 						}
 						break;
 					case XMLStreamConstants.END_ELEMENT:
-						if (isDataset(parser.getLocalName())) {
+						if (this.isDataset(parser.getLocalName())) {
 							/*
 							*	We are only parsing the first dataset!
 							*	Additionally, it is possible that the dataset itself is the root element.
@@ -51,7 +52,7 @@ public class HPCCXmlParser {
 					elementValue += parser.getText();
 					break;
 				case XMLStreamConstants.END_ELEMENT:
-					if (isRow(parser.getLocalName())) {
+					if (this.isRow(parser.getLocalName())) {
 						return row;
 					}
 					row.add(elementValue);

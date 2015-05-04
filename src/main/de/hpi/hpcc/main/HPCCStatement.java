@@ -6,10 +6,12 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.logging.HPCCLogger;
@@ -104,14 +106,15 @@ public class HPCCStatement implements Statement{
 		try {
 			ECLLayouts layouts = new ECLLayouts(connection.getDatabaseMetaData());
 			this.parser = new ECLParser(layouts);
-			NodeList rowList = null;
+			LinkedList<LinkedList<String>> rows = null;
 			for(String query : parser.parse(sqlStatement)) {
 				connection.sendRequest(query);
-				rowList = new HPCCXmlParser().parseDataset(connection.getInputStream(), System.currentTimeMillis());
+				HPCCXmlParser xmlParser = new HPCCXmlParser();
+				rows = xmlParser.parseDataset(connection.getInputStream());
 			}
 			
-			if (rowList != null) {
-				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(parser.getExpectedRetCols(),	"HPCC Result"));
+			if (rows != null) {
+				result = new HPCCResultSet(this, rows, new HPCCResultSetMetadata(parser.getExpectedRetCols(), "HPCC Result"));
 			}
 			return result != null;
 		} catch (HPCCException exception) {

@@ -41,6 +41,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -68,11 +69,11 @@ public class HPCCResultSet implements ResultSet
     private SQLWarning                          warnings = null;
     private static final Logger	logger = HPCCLogger.getLogger();
 
-    public HPCCResultSet(List recrows, ArrayList<HPCCColumnMetaData> metadatacols, String tablename) throws SQLException
+    public HPCCResultSet(HPCCStatement hpccStatement, LinkedList<LinkedList<String>> rows2, HPCCResultSetMetadata hpccResultSetMetadata) throws SQLException
     {
-        log(Level.FINEST, "HPCCResultSet: HPCCResultSet(recrows, metadatacols, " + tablename +")");
-        resultMetadata = new HPCCResultSetMetadata(metadatacols, tablename);
-        rows = new ArrayList<List>(recrows);
+        log(Level.FINEST, "HPCCResultSet: HPCCResultSet(recrows, metadatacols, " + hpccResultSetMetadata +")");
+        resultMetadata = new HPCCResultSetMetadata(rows2, hpccResultSetMetadata);
+        rows = new ArrayList<List>(hpccStatement);
         lastResult = new Object();
     }
 
