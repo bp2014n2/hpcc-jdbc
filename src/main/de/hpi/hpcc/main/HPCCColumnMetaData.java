@@ -21,8 +21,6 @@ package de.hpi.hpcc.main;
 import java.util.List;
 import java.util.regex.Matcher;
 
-import de.hpi.hpcc.parsing.ECLFunction;
-
 /**
  * @author rpastrana
  */
@@ -64,7 +62,6 @@ public class HPCCColumnMetaData
     private String                   alias = null;
     private List<HPCCColumnMetaData> funccols = null;
     private boolean                  isDistinct = false;
-    private ECLFunction              contentModifier = null;
     private boolean                  sortAscending = true;
 
     public HPCCColumnMetaData(String columnName, int index, int sqlType, String constant, String eclType)
@@ -282,26 +279,6 @@ public class HPCCColumnMetaData
     public void setDistinct(boolean isDistinct)
     {
         this.isDistinct = isDistinct;
-    }
-
-    public ECLFunction getContentModifier()
-    {
-        return contentModifier;
-    }
-
-    public String getContentModifierStr()
-    {
-        return contentModifier != null ? contentModifier.getEclFunction() : null;
-    }
-
-    public boolean hasContentModifier()
-    {
-        return contentModifier != null;
-    }
-
-    public void setContentModifier(ECLFunction contentModifier)
-    {
-        this.contentModifier = contentModifier;
     }
 
     public boolean isSortAscending()

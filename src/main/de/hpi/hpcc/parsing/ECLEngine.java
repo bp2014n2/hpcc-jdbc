@@ -37,12 +37,11 @@ import de.hpi.hpcc.main.*;
 
 public abstract class ECLEngine
 {
-
-    private NodeList                resultSchema = null;
+	private static final String	HPCCEngine = "THOR"; // TODO: use property from Connection
+    
 	protected List<HPCCColumnMetaData>    expectedretcolumns = null;
     protected HashMap<String, HPCCColumnMetaData> availablecols = null;
-    private static final String			HPCCEngine = "THOR";
-	protected ECLLayouts layouts;
+    protected ECLLayouts layouts;
 	protected final static String EMPTY_QUERY = "OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n";
 	protected static final Logger logger = HPCCLogger.getLogger();
 
@@ -55,7 +54,7 @@ public abstract class ECLEngine
 	// TODO: remove
     protected abstract SQLParser getSQLParser();
 	
-	 public List<HPCCColumnMetaData> getExpectedRetCols() {
+	public List<HPCCColumnMetaData> getExpectedRetCols() {
         return expectedretcolumns;
     }
 
@@ -71,20 +70,27 @@ public abstract class ECLEngine
     	return "IMPORT STD;\n";
     }
     
+    /**
+     * generates all layout definitions for the current query
+     * @return returns the definitions as String
+     */
     protected String generateLayouts() {
 		StringBuilder layoutsString = new StringBuilder();
 
 		for (String table : getSQLParser().getAllTables()) {
 			if (table.contains(".")) {
 				table = table.split("\\.")[1];
-			}
-			
+			}		
 			layoutsString.append(layouts.getLayout(table));
 			layoutsString.append("\n");	
 		}
 		return layoutsString.toString();
 	}
     
+    /**
+     * generates ECL code for loading the accessed table, if available by using an index
+     * @return return the ECL code as String
+     */
     protected String generateTables() {
     	StringBuilder datasetsString = new StringBuilder();
     	StringBuilder indicesString = new StringBuilder();
@@ -106,6 +112,11 @@ public abstract class ECLEngine
     	return datasetsString.toString() + indicesString.toString();
     }
     
+    /**
+     * checks for a given table whether an appropriate index exists, that covers all necessary columns
+     * @param tableName
+     * @return returns the name of the index or null, if non exists
+     */
     private String getIndex(String tableName) {
        	List<String> indexes = layouts.getListOfIndexes(tableName);
     	Set<String> columns = getSQLParser().getQueriedColumns(tableName);
@@ -126,6 +137,12 @@ public abstract class ECLEngine
        	}	
 	}
    
+    /**
+     * generates the ECL code for loading an index based on the tableName and the indexName
+     * @param tableName
+     * @param index
+     * @return returns the code for loading the index
+     */
     private String getIndexString(String tableName, String index) {
     	List<String> indexParameters = new ArrayList<String>();
     	indexParameters.add(tableName+"_table");
@@ -142,38 +159,8 @@ public abstract class ECLEngine
     	
     	return tableName + " := " + joined + ";";
     }
- 
-	
-
-    public boolean hasResultSchema()
-    {
-        return (this.resultSchema != null && this.resultSchema.getLength() > 0);
-    }
-
-    public void setResultschema(NodeList resultschema)
-    {
-        this.resultSchema = resultschema;
-
-        if (this.resultSchema != null && this.resultSchema.getLength() > 0)
-        {
-            log("contains resultschema");
-        }
-    }
-
-    public NodeList getResultschema()
-    {
-        return resultSchema;
-    }
-    
-    /*
-    public String checkForTempTable(String tablePath) {
-    	if (eclLayouts.isTempTable(tablePath)) {
-    		tablePath = eclLayouts.getTempTableName(tablePath);
-    	}
-    	return tablePath;
-    }
-    */
-    
+   
+   
     //Logger methods
   	protected static void log(String infoMessage){
   		log(Level.INFO, infoMessage);
