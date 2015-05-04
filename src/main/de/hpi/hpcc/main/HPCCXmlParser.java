@@ -95,28 +95,6 @@ public class HPCCXmlParser {
                 }
             }
         }
-        else if (docElement.getElementsByTagName("Exception").getLength() > 0)
-        {
-            NodeList exceptionlist = docElement.getElementsByTagName("Exception");
-
-            if (exceptionlist.getLength() > 0)
-            {
-                HPCCException resexception = null;
-                NodeList currexceptionelements = exceptionlist.item(0).getChildNodes();
-
-                for (int j = 0; j < currexceptionelements.getLength(); j++)
-                {
-                    Node exceptionelement = currexceptionelements.item(j);
-                    if (exceptionelement.getNodeName().equals("Message"))
-                    {
-                        resexception = new HPCCException("HPCCJDBC: Error in response: \'"
-                                + exceptionelement.getTextContent() + "\'");
-                    }
-                }
-                if (dsList == null || dsList.getLength() <= 0)
-                    throw resexception;
-            }
-        }
         else
         {
             // The root element is itself the Dataset element
@@ -159,7 +137,7 @@ public class HPCCXmlParser {
 					exceptionMessage += parser.getText();
 			}
 		}
-		throw new HPCCException(exceptionMessage);
+		throw new HPCCException(HPCCXmlParser.class.getSimpleName()+": Error in server response!!\n"+exceptionMessage);
 	}
 	
 	private boolean isRow(String localName) {
