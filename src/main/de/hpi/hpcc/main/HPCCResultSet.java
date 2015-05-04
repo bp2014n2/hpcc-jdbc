@@ -41,7 +41,6 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -61,7 +60,7 @@ import de.hpi.hpcc.logging.HPCCLogger;
 public class HPCCResultSet implements ResultSet
 {
     private boolean                             closed = false;
-    private List<List>                          rows;
+    private ArrayList<ArrayList<String>>	    rows;
     private int                                 index = -1;
     private HPCCResultSetMetadata               resultMetadata;
     private Statement                           statement = null;
@@ -69,24 +68,19 @@ public class HPCCResultSet implements ResultSet
     private SQLWarning                          warnings = null;
     private static final Logger	logger = HPCCLogger.getLogger();
 
-    public HPCCResultSet(List recrows, ArrayList<HPCCColumnMetaData> metadatacols, String tablename) throws SQLException
-    {
+    public HPCCResultSet(ArrayList<ArrayList<String>> recrows, ArrayList<HPCCColumnMetaData> metadatacols, String tablename) throws SQLException {
         log(Level.FINEST, "HPCCResultSet: HPCCResultSet(recrows, metadatacols, " + tablename +")");
-        resultMetadata = new HPCCResultSetMetadata(metadatacols, tablename);
-        rows = new ArrayList<List>(recrows);
-        lastResult = new Object();
+        this.resultMetadata = new HPCCResultSetMetadata(metadatacols, tablename);
+        this.rows = new ArrayList<ArrayList<String>>(recrows);
+        this.lastResult = new Object();
     }
 
-    public HPCCResultSet(Statement statement, LinkedList<LinkedList<String>> rowList, HPCCResultSetMetadata resultMetadata)
-    {
+    public HPCCResultSet(Statement statement, ArrayList<ArrayList<String>> rows, HPCCResultSetMetadata resultMetadata) {
         log(Level.FINEST, "HPCCResultSet: HPCCResultSet(statement, rowList, resultMetadata)");
         this.resultMetadata = resultMetadata;
-        rows = new ArrayList();
-        lastResult = new Object();
-
+        this.rows = rows;
+        this.lastResult = new Object();
         this.statement = statement;
-
-        encapsulateDataSet(rowList);
     }
 
     public void encapsulateDataSet(NodeList rowList)

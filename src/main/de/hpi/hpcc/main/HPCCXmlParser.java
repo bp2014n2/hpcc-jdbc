@@ -1,7 +1,7 @@
 package de.hpi.hpcc.main;
 
 import java.io.InputStream;
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLInputFactory;
@@ -10,10 +10,10 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 public class HPCCXmlParser {	
-	public LinkedList<LinkedList<String>> parseDataset(InputStream xml) throws HPCCException {
+	public ArrayList<ArrayList<String>> parseDataset(InputStream xml) throws HPCCException {
 		//TODO track time
 		//TODO use logger :-D
-		LinkedList<LinkedList<String>> rows = new LinkedList<LinkedList<String>>();
+		ArrayList<ArrayList<String>> rows = new ArrayList<ArrayList<String>>();
 		try {
 			XMLStreamReader parser = XMLInputFactory.newInstance().createXMLStreamReader(xml);
 			loop: for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
@@ -43,8 +43,8 @@ public class HPCCXmlParser {
 		}
     }
 
-	private LinkedList<String> parseRow(XMLStreamReader parser) throws XMLStreamException, HPCCException {
-		LinkedList<String> row = new LinkedList<String>();
+	private ArrayList<String> parseRow(XMLStreamReader parser) throws XMLStreamException, HPCCException {
+		ArrayList<String> row = new ArrayList<String>();
 		String elementValue = "";
 		for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
 			switch (event) {
