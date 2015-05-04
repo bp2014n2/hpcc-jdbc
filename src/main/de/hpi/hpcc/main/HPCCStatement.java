@@ -104,7 +104,7 @@ public class HPCCStatement implements Statement{
 		try {
 			ECLLayouts layouts = new ECLLayouts(connection.getDatabaseMetaData());
 			this.parser = new ECLParser(layouts);
-			LinkedList<LinkedList<String>> rows = null;
+			List rows = null;
 			for(String query : parser.parse(sqlStatement)) {
 				connection.sendRequest(query);
 				HPCCXmlParser xmlParser = new HPCCXmlParser();

@@ -46,10 +46,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import de.hpi.hpcc.logging.HPCCLogger;
 
 /**
@@ -60,7 +56,7 @@ import de.hpi.hpcc.logging.HPCCLogger;
 public class HPCCResultSet implements ResultSet
 {
     private boolean                             closed = false;
-    private ArrayList<ArrayList<String>>	    rows;
+    private List<List>	    					rows;
     private int                                 index = -1;
     private HPCCResultSetMetadata               resultMetadata;
     private Statement                           statement = null;
@@ -68,14 +64,14 @@ public class HPCCResultSet implements ResultSet
     private SQLWarning                          warnings = null;
     private static final Logger	logger = HPCCLogger.getLogger();
 
-    public HPCCResultSet(ArrayList<ArrayList<String>> recrows, ArrayList<HPCCColumnMetaData> metadatacols, String tablename) throws SQLException {
+    public HPCCResultSet(List procedurecols, ArrayList<HPCCColumnMetaData> metadatacols, String tablename) throws SQLException {
         log(Level.FINEST, "HPCCResultSet: HPCCResultSet(recrows, metadatacols, " + tablename +")");
         this.resultMetadata = new HPCCResultSetMetadata(metadatacols, tablename);
-        this.rows = new ArrayList<ArrayList<String>>(recrows);
+        this.rows = new ArrayList<List>(procedurecols);
         this.lastResult = new Object();
     }
 
-    public HPCCResultSet(Statement statement, ArrayList<ArrayList<String>> rows, HPCCResultSetMetadata resultMetadata) {
+    public HPCCResultSet(Statement statement, List rows, HPCCResultSetMetadata resultMetadata) {
         log(Level.FINEST, "HPCCResultSet: HPCCResultSet(statement, rowList, resultMetadata)");
         this.resultMetadata = resultMetadata;
         this.rows = rows;
@@ -83,37 +79,37 @@ public class HPCCResultSet implements ResultSet
         this.statement = statement;
     }
 
-    public void encapsulateDataSet(NodeList rowList)
-    {
-        log("HPCCResultSet encapsulateDataSet");
-        int rowCount = 0;
-        if (rowList != null && (rowCount = rowList.getLength()) > 0)
-        {
-            log("Results rows found: " + rowCount);
-
-            for (int j = 0; j < rowCount; j++)
-            {
-                ArrayList<String> rowValues = resultMetadata.createDefaultResultRow();
-                rows.add(rowValues);
-
-                Element row = (Element) rowList.item(j);
-
-                NodeList columnList = row.getChildNodes();
-
-                for (int k = 0; k < columnList.getLength(); k++)
-                {
-                    Node resultRowElement = columnList.item(k);
-                    String resultRowElementName = resultRowElement.getNodeName();
-
-                    if (resultMetadata.containsColByNameOrAlias(resultRowElementName))
-                    {
-                        HPCCColumnMetaData col = resultMetadata.getColByNameOrAlias(resultRowElementName);
-                        rowValues.set(col.getIndex(), resultRowElement.getTextContent().trim());
-                    }
-                }
-            }
-        }
-    }
+//    public void encapsulateDataSet(NodeList rowList)
+//    {
+//        log("HPCCResultSet encapsulateDataSet");
+//        int rowCount = 0;
+//        if (rowList != null && (rowCount = rowList.getLength()) > 0)
+//        {
+//            log("Results rows found: " + rowCount);
+//
+//            for (int j = 0; j < rowCount; j++)
+//            {
+//                ArrayList<String> rowValues = resultMetadata.createDefaultResultRow();
+//                rows.add(rowValues);
+//
+//                Element row = (Element) rowList.item(j);
+//
+//                NodeList columnList = row.getChildNodes();
+//
+//                for (int k = 0; k < columnList.getLength(); k++)
+//                {
+//                    Node resultRowElement = columnList.item(k);
+//                    String resultRowElementName = resultRowElement.getNodeName();
+//
+//                    if (resultMetadata.containsColByNameOrAlias(resultRowElementName))
+//                    {
+//                        HPCCColumnMetaData col = resultMetadata.getColByNameOrAlias(resultRowElementName);
+//                        rowValues.set(col.getIndex(), resultRowElement.getTextContent().trim());
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     public int getRowCount()
     {
