@@ -70,9 +70,10 @@ public class HPCCPreparedStatement extends HPCCStatement implements PreparedStat
         			Object param = parameters.get(parameterCount--);
            			if (param != null) {
            				if (param instanceof String) {
-           					param = ((String) param).replace("\n", "");
-           					param = ((String) param).replace("\\\'", "\"");
-           					param = ((String) param).replace("\\", "\\\\");
+           					//param = ((String) param).replace("\n", "");
+           					//param = ((String) param).replace("\\\'", "\"");
+           					param = ((String) param).replace("\\'", "''");
+           					//param = ((String) param).replace("\\", "\\\\");
            				}
                    		if (param instanceof Timestamp) {
                    			param = "'"+param.toString()+"'";

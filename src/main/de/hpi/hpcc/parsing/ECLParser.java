@@ -53,8 +53,9 @@ public class ECLParser {
 	}
     
 	private String eclMetaEscape(String sqlQuery) {
-		sqlQuery = sqlQuery.replace("'", "\\'");
 		sqlQuery = sqlQuery.replace("\n", " ");
+		sqlQuery = sqlQuery.replace("\\", "\\\\");
+		sqlQuery = sqlQuery.replace("'", "\\'");
 		return sqlQuery;
 	}
 

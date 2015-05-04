@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Stack;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.delete.Delete;
@@ -13,10 +14,12 @@ import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.AllTableColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SubJoin;
 import net.sf.jsqlparser.statement.select.SubSelect;
+import net.sf.jsqlparser.statement.select.WithItem;
 import net.sf.jsqlparser.statement.update.Update;
 
 public class ECLSelectItemFinder extends FullVisitorAdapter {
@@ -40,12 +43,28 @@ public class ECLSelectItemFinder extends FullVisitorAdapter {
 	}
 	
 	@Override
+	public void visit(Select select) {
+		/* TODO: save columns of withItems when select *
+		if(select.getWithItemsList() != null) {
+			for(WithItem withItem : select.getWithItemsList()) {
+				withItem.accept(this);
+			}
+		}*/
+		tryAccept(select.getSelectBody());
+	}
+	
+	@Override
 	public void visit(AllColumns allColumns) {
 		List<FromItem> currentFromItems = fromItems.pop();
 		for(FromItem fromItem : currentFromItems) {
 			ECLAllColumnCollector collector = new ECLAllColumnCollector(layouts);
 			selectItems.addAll(collector.collect(fromItem));
 		}
+	}
+	
+	@Override
+	public void visit(Column tableColumn) {
+		
 	}
 
 	@Override

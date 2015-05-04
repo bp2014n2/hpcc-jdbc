@@ -13,6 +13,7 @@ import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
+import de.hpi.hpcc.parsing.visitor.ECLExpressionComparer;
 import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectItemFinder;
 
@@ -47,13 +48,13 @@ public class ECLBuilderInsert extends ECLBuilder {
 		}
 
 		eclCode.append("OUTPUT(");
-		generateNewDataset(sqlParser);
+		generateNewDataset();
 		eclCode.append(",,'~%NEWTABLE%', overwrite);\n");
 		
 		return eclCode.toString();
 	}
 
-	private void generateNewDataset(SQLParserInsert sqlParser) {
+	private void generateNewDataset() {
 		if (sqlParser.getColumns() == null || sqlParser.getColumns().size() == eclLayouts.getAllColumns(sqlParser.getTable().getName()).size()) {
 			if (sqlParser.getItemsList() instanceof SubSelect) {
 				eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
@@ -88,16 +89,18 @@ public class ECLBuilderInsert extends ECLBuilder {
 				
 				for(String tableColumn : allColumns){
 					tableColumnString += (tableColumnString=="" ? "":", ");
-					if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getColumnNames(), tableColumn)) {
-						SelectExpressionItem sei = selectItems.get(0);
+					int indexOfElement = HPCCJDBCUtils.indexOfCaseInsensitive(sqlParser.getColumnNames(), tableColumn);
+					if (indexOfElement != -1) {
+						SelectExpressionItem sei = selectItems.get(indexOfElement);
 						Alias alias = sei.getAlias();
+						String dataType = eclLayouts.getECLDataType(sqlParser.getTable().getName(), tableColumn);
+						tableColumnString += dataType+" "+tableColumn+" := ";
 						if (alias != null) {
 							tableColumnString += alias.getName();
 						} else {
 							ECLNameParser parser = new ECLNameParser();
 							tableColumnString += parser.name(sei.getExpression());
 						}
-						selectItems.remove(0);
 					} else {
 						String dataType = eclLayouts.getECLDataType(sqlParser.getTable().getName(), tableColumn);
 						tableColumnString += dataType+" "+tableColumn+" := "+(dataType.startsWith("UNSIGNED")||dataType.startsWith("integer")?"0":"''");
@@ -138,6 +141,7 @@ public class ECLBuilderInsert extends ECLBuilder {
 				.append("})");
 		}
 	}
+	
 
 	@Override
 	protected Insert getStatement() {

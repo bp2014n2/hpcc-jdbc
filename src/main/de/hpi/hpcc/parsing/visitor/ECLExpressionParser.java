@@ -159,8 +159,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(DoubleValue doubleValue) {
-		// TODO Auto-generated method stub
-		
+		parsed = Double.toString(doubleValue.getValue());
 	}
 
 	@Override
@@ -170,8 +169,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(DateValue dateValue) {
-		// TODO Auto-generated method stub
-		
+		parsed = dateValue.getValue().toString();
 	}
 
 	@Override
@@ -192,30 +190,33 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(StringValue stringValue) {
-		parsed = ECLUtils.encapsulateWithSingleQuote(stringValue.getValue());
+		String stringEscaped = stringValue.getValue();
+		stringEscaped = stringEscaped.replace("\n", "\\n");
+		stringEscaped = stringEscaped.replace("\\", "\\\\");
+		stringEscaped = stringEscaped.replace("\'\'", "\'");
+		stringEscaped = stringEscaped.replace("\'", "\\'");
+		stringEscaped = ECLUtils.encapsulateWithSingleQuote(stringEscaped);
+		parsed = stringEscaped;
 	}
 
 	@Override
 	public void visit(Addition addition) {
-		// TODO Auto-generated method stub
-		
+		parsed = visitBinaryExpression(addition, "+");
 	}
 
 	@Override
 	public void visit(Division division) {
-		// TODO Auto-generated method stub
-		
+		parsed = visitBinaryExpression(division, "/");
 	}
 
 	@Override
 	public void visit(Multiplication multiplication) {
-		// TODO Auto-generated method stub
-		
+		parsed = visitBinaryExpression(multiplication, "*");
 	}
 
 	@Override
 	public void visit(Subtraction subtraction) {
-		// TODO Auto-generated method stub
+		parsed = visitBinaryExpression(subtraction, "-");
 	}
 
 	@Override

@@ -14,6 +14,7 @@ import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
+import de.hpi.hpcc.parsing.visitor.ECLExpressionParser;
 import de.hpi.hpcc.parsing.ECLUtils;
 
 
@@ -143,9 +144,10 @@ public class ECLBuilderUpdate extends ECLBuilder {
 				
 				tableColumnString += (tableColumnString.equals("")? "":", ");
 				if (HPCCJDBCUtils.containsStringCaseInsensitive(columns, column)) {
-					String expr = sqlParser.getExpressions().get(sqlParser.getColumnsToLowerCase().indexOf(column.toLowerCase())).toString();
-					expr = expr.equals("NULL")? "''" : expr;
-					tableColumnString += eclLayouts.getECLDataType(sqlParser.getName(), column)+" "+column+" := "+expr;
+					Expression expr = sqlParser.getExpressions().get(sqlParser.getColumnsToLowerCase().indexOf(column.toLowerCase()));
+					ECLExpressionParser parser = new ECLExpressionParser(eclLayouts);
+					String stringExpr = parser.parse(expr);
+					tableColumnString += eclLayouts.getECLDataType(sqlParser.getName(), column)+" "+column+" := "+stringExpr;
 				} else {
 					tableColumnString += column;
 				}
