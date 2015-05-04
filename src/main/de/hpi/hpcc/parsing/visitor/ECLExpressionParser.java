@@ -191,7 +191,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 	@Override
 	public void visit(StringValue stringValue) {
 		String stringEscaped = stringValue.getValue();
-		stringEscaped = stringEscaped.replace("\n", "\\n");
+		stringEscaped = stringEscaped.replace("\n", "");
 		stringEscaped = stringEscaped.replace("\\", "\\\\");
 		stringEscaped = stringEscaped.replace("\'\'", "\'");
 		stringEscaped = stringEscaped.replace("\'", "\\'");
