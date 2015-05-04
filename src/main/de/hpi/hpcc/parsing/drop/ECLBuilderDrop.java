@@ -7,13 +7,12 @@ import de.hpi.hpcc.parsing.ECLLayouts;
 public class ECLBuilderDrop extends ECLBuilder {
 	
 	private Drop drop;
+	private SQLParserDrop sqlParser;
 
 	public ECLBuilderDrop(Drop drop, ECLLayouts eclLayouts) {
 		super(drop, eclLayouts);
 		this.drop = drop;
 	}
-	
-	SQLParserDrop sqlParser;
 
 	/**
 	 * This method generates ECL code from a given SQL code. 

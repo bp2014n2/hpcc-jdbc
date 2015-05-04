@@ -2,8 +2,6 @@ package de.hpi.hpcc.parsing.delete;
 
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.create.SQLParserCreate;
-import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.delete.Delete;
 
 public class ECLBuilderDelete extends ECLBuilder {
@@ -31,5 +29,4 @@ public class ECLBuilderDelete extends ECLBuilder {
 	protected Delete getStatement() {
 		return delete;
 	}
-
 }

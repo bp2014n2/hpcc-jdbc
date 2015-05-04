@@ -15,33 +15,44 @@ import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 
 public class ECLLayouts {
-     
-	/**
-	 * is only used within tests to add test layouts
-	 * @param key is the name of the corresponding table
-	 * @param value is the layout definition itself
-	 */
-	
+    
 	HPCCDatabaseMetaData dbMetadata;
 	
 	public ECLLayouts (HPCCDatabaseMetaData dbMetadata) {
 		this.dbMetadata = dbMetadata;
 	}
 	
-	//TODO: isTmpTable, addTmpTable, removeTmpTable
-	
+	/**
+	 * checks whether tableName refers to an existing temporary table
+	 * @param tableName
+	 * @return
+	 */
 	public boolean isTempTable(String tableName) {
 		return this.dbMetadata.isTempTable(getFullTableName(tableName));
 	}
 	
+	/**
+	 * adds table with name tableName to list of temporary tables
+	 * @param tableName
+	 */
 	public void addTempTable(String tableName) {
 		this.dbMetadata.addTempTable(tableName);
 	}
 	
+	/**
+	 * removes table from list of temporary tables
+	 * @param tableName
+	 */
 	public void removeTempTable(String tableName) {
 		this.dbMetadata.removeTempTable(tableName);
 	}
 	
+	/**
+	 * returns the ECL datatype of a given column by checking the DFUFile of the corresponding table
+	 * @param table
+	 * @param column
+	 * @return
+	 */
 	public String getECLDataType(String table, String column){
 		table = getFullTableName(table);
 		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
@@ -49,29 +60,31 @@ public class ECLLayouts {
 			HPCCColumnMetaData columnMeta = dfuFile.getFieldMetaData(column);
 			return columnMeta.getEclType();
 		}
-		return "";
+		return ""; //TODO: why not null?
 	}
 	
-	public List<Object> getKeyedColumns(String table) {  //TODO: assure right order of keyed/non-keyed columns
-		table = getFullTableName(table);
-		HPCCDFUFile file = dbMetadata.getDFUFile(table);
+	/**
+	 * returns 
+	 * @param index
+	 * @return
+	 */
+	public List<Object> getKeyedColumns(String index) {  //TODO: assure right order of keyed/non-keyed columns
+		index = getFullTableName(index);
+		HPCCDFUFile file = dbMetadata.getDFUFile(index);
 		if(file != null) {
 			return getSortedPropertyValues(file.getKeyedColumns());
-		} else {
-			//throw new Exception("DFUFile not found: "+table);
-			return null;
-		}
+		} 
+		return null;
+		
 	}
 	
-	public List<Object> getNonKeyedColumns(String table) {
-		table = getFullTableName(table);
-		HPCCDFUFile file = dbMetadata.getDFUFile(table);
+	public List<Object> getNonKeyedColumns(String index) {
+		index = getFullTableName(index);
+		HPCCDFUFile file = dbMetadata.getDFUFile(index);
 		if(file != null) {
 			return getSortedPropertyValues(file.getNonKeyedColumns());
-		} else {
-			//throw new Exception("DFUFile not found: "+table);
-			return null;
-		}
+		} 
+		return null;
 	}
 	
 	//Properties are used with raw format
@@ -95,11 +108,8 @@ public class ECLLayouts {
 		if(file != null) {
 			List<String> list = Arrays.asList(file.getAllTableFieldsStringArray());
 			return new LinkedHashSet<String>(list);
-		} else {
-			//throw new Exception("DFUFile not found: "+table);
-			return null;
 		}
-		
+		return null;	
 	}
 
 	
@@ -112,9 +122,7 @@ public class ECLLayouts {
 			table = getFullTableName(table);
 			HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
 			for(String field : dfuFile.getAllTableFieldsStringArray()){
-				if(!field.equalsIgnoreCase(column)) {
-					continue;
-				}
+				if(!field.equalsIgnoreCase(column)) continue; 
 				if (isInt(dfuFile.getFieldMetaData(field))) return true;
 			}
 		}
@@ -130,7 +138,6 @@ public class ECLLayouts {
 			}
 			tableName = matcher.group(3);
 		}
-		
 		return schema+"::"+tableName.toLowerCase();
 	}
 	
@@ -141,16 +148,14 @@ public class ECLLayouts {
 		
 		if (dfuFile != null) {
 			return dfuFile.getFileRecDef(layout);
-		} else {
-			return null;
-		}
+		} 
+		return null;
 	}
 	
 	public static int getSqlType(String dataType) {
 		String eclType = dataType.toLowerCase().replaceAll("(\\D*).*", "$1");
 		switch (eclType) {
 		case "integer":
-			return java.sql.Types.INTEGER;
 		case "unsigned":
 			return java.sql.Types.INTEGER;
 		case "timestamp":
@@ -161,7 +166,11 @@ public class ECLLayouts {
 	}
 	
 	public List<String> getListOfIndexes(String tableName) {
-    	return dbMetadata.getDFUFile(getFullTableName(tableName)).getRelatedIndexesList();
+		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(getFullTableName(tableName));
+		if (dfuFile != null) {
+			return dfuFile.getRelatedIndexesList();
+		}
+    	return null;
     }
 	
 	public boolean hasIndex(String tableName) {

@@ -11,7 +11,6 @@ import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.SQLParser;
 import de.hpi.hpcc.parsing.visitor.ECLDataTypeParser;
 import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectItemFinder;
@@ -48,13 +47,18 @@ public class ECLEngineSelect extends ECLEngine {
     	
     	for (String table : sqlParser.getAllTables()) {
     		String tableName = table.contains(".")?table.replace(".", "::"):"i2b2demodata::"+table;
-    		//tableName = checkForTempTable(tableName);
-
+    		
     		HPCCDFUFile hpccQueryFile = layouts.getDFUFile(tableName);
     		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	}
     	
-    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
+    	generateExpectedReturnColumns();
+    	
+    	return eclCode.toString();
+    }
+
+	private void generateExpectedReturnColumns() {
+		expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
     	ECLSelectItemFinder finder = new ECLSelectItemFinder(layouts);
     	List<SelectExpressionItem> selectItems = finder.find(select);
     	ECLDataTypeParser parser = new ECLDataTypeParser(layouts, getSQLParser());
@@ -69,9 +73,7 @@ public class ECLEngineSelect extends ECLEngine {
     		int sqlType = ECLLayouts.getSqlType(dataType);
     		expectedretcolumns.add(new HPCCColumnMetaData(name, i, sqlType));
     	}
-    	
-    	return eclCode.toString();
-    }
+	}
 
 	@Override
 	protected SQLParserSelect getSQLParser() {

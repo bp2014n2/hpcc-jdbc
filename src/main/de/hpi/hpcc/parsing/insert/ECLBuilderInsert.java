@@ -1,5 +1,6 @@
 package de.hpi.hpcc.parsing.insert;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import net.sf.jsqlparser.statement.select.WithItem;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
 import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectItemFinder;
@@ -80,64 +82,58 @@ public class ECLBuilderInsert extends ECLBuilder {
 			List<String> columns = sqlParser.getColumnNames();
 			
 			LinkedHashSet<String> allColumns = eclLayouts.getAllColumns(sqlParser.getTable().getName());
-			String tableColumnString = "";
+			List<String> tableColumnStrings = new ArrayList<String>();
 			if (sqlParser.getSelect() != null) {
 				eclCode.append(new ECLBuilderSelect(sqlParser.getSelect(), eclLayouts).generateECL());
 				ECLSelectItemFinder itemFinder = new ECLSelectItemFinder(eclLayouts);
 				List<SelectExpressionItem> selectItems = itemFinder.find(sqlParser.getSelect());
 				
 				for(String tableColumn : allColumns){
-					tableColumnString += (tableColumnString=="" ? "":", ");
 					int indexOfElement = HPCCJDBCUtils.indexOfCaseInsensitive(sqlParser.getColumnNames(), tableColumn);
 					if (indexOfElement != -1) {
 						SelectExpressionItem sei = selectItems.get(indexOfElement);
 						Alias alias = sei.getAlias();
 						String dataType = eclLayouts.getECLDataType(sqlParser.getTable().getName(), tableColumn);
-						tableColumnString += dataType+" "+tableColumn+" := ";
+						String tableColumnString = dataType+" "+tableColumn+" := ";
 						if (alias != null) {
 							tableColumnString += alias.getName();
 						} else {
 							ECLNameParser parser = new ECLNameParser();
 							tableColumnString += parser.name(sei.getExpression());
 						}
+						tableColumnStrings.add(tableColumnString);
 					} else {
 						String dataType = eclLayouts.getECLDataType(sqlParser.getTable().getName(), tableColumn);
-						tableColumnString += dataType+" "+tableColumn+" := "+(dataType.startsWith("UNSIGNED")||dataType.startsWith("integer")?"0":"''");
+						tableColumnStrings.add(dataType+" "+tableColumn+" := "+(dataType.startsWith("UNSIGNED")||dataType.startsWith("integer")?"0":"''"));
 					}
 				}
 				
 			} else if (sqlParser.getItemsList() != null) {
-				eclCode.append("DATASET([{");
-				String valueString = "";
+				eclCode.append("DATASET(");
+				List<String> valueStrings = new ArrayList<String>();
 				for (Expression expression : sqlParser.getExpressions()) {
-					valueString += (valueString=="" ? "":", ")+parseExpressionECL(expression);
+					valueStrings.add(parseExpressionECL(expression));
 				}
-				eclCode.append(valueString);
-				eclCode.append("}], {");
-				String columnString = "";
+				eclCode.append(ECLUtils.encapsulateWithSquareBrackets(ECLUtils.encapsulateWithCurlyBrackets(ECLUtils.join(valueStrings, ", "))));
+				eclCode.append(", ");
+				List<String> columnStrings = new ArrayList<String>();
 				for(String column : columns){
-					columnString += (columnString=="" ? "":", ");
-					columnString += eclLayouts.getECLDataType(sqlParser.getTable().getName(), column)+" ";
-					
-					columnString += column;
+					columnStrings.add(eclLayouts.getECLDataType(sqlParser.getTable().getName(), column)+" "+column);
 				}
-				eclCode.append(columnString + "})");
+				eclCode.append(ECLUtils.encapsulateWithCurlyBrackets(ECLUtils.join(columnStrings, ", ")) + ")");
 				
 				for(String tableColumn : allColumns){
-					tableColumnString += (tableColumnString=="" ? "":", ");
 					if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getColumnNames(), tableColumn)) {
-						tableColumnString += tableColumn;
+						tableColumnStrings.add(tableColumn);
 					} else {
 						String dataType = eclLayouts.getECLDataType(sqlParser.getTable().getName(), tableColumn);
-						tableColumnString += dataType+" "+tableColumn+" := "+(dataType.startsWith("UNSIGNED")||dataType.startsWith("integer")?"0":"''");
+						tableColumnStrings.add(dataType+" "+tableColumn+" := "+(dataType.startsWith("UNSIGNED")||dataType.startsWith("integer")?"0":"''"));
 					}
 				}
 			}
-			eclCode.append(",{");
-			
-			
-			eclCode.append(tableColumnString)
-				.append("})");
+			eclCode.append(",");
+			eclCode.append(ECLUtils.encapsulateWithCurlyBrackets(ECLUtils.join(tableColumnStrings, ", ")))
+				.append(")");
 		}
 	}
 	
