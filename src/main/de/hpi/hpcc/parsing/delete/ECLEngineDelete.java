@@ -5,17 +5,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.delete.Delete;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.SQLParser;
-import de.hpi.hpcc.parsing.drop.SQLParserDrop;
-import de.hpi.hpcc.parsing.insert.SQLParserInsert;
-import de.hpi.hpcc.parsing.update.ECLBuilderUpdate;
 import de.hpi.hpcc.parsing.visitor.ECLDataTypeParser;
 import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectItemFinder;
@@ -38,15 +33,12 @@ public class ECLEngineDelete extends ECLEngine {
 		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
 		tempTableParser.replace(delete);
 		
-		
-		
 		ECLBuilderDelete eclBuilder = new ECLBuilderDelete(delete, layouts);
     	eclCode.append(generateImports());
     	eclCode.append(generateLayouts());
 		eclCode.append(generateTables());
 		
     	String tablePath = sqlParser.getFullName();
-    	//tablePath = checkForTempTable(tablePath);
 		String newTablePath = tablePath + Long.toString(System.currentTimeMillis());
     	
 		eclCode.append(eclBuilder.generateECL().toString().replace("%NEWTABLE%",newTablePath));
@@ -65,7 +57,18 @@ public class ECLEngineDelete extends ECLEngine {
 
    		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     	
-    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
+    	generateExpectedReturnColumns();
+    	
+    	return eclCode.toString();
+	}
+
+	@Override
+	protected SQLParserDelete getSQLParser() {
+		return sqlParser;
+	}
+	
+	private void generateExpectedReturnColumns() {
+		expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
     	ECLSelectItemFinder finder = new ECLSelectItemFinder(layouts);
     	List<SelectExpressionItem> selectItems = finder.find(delete);
     	ECLDataTypeParser parser = new ECLDataTypeParser(layouts, getSQLParser());
@@ -80,12 +83,5 @@ public class ECLEngineDelete extends ECLEngine {
     		int sqlType = ECLLayouts.getSqlType(dataType);
     		expectedretcolumns.add(new HPCCColumnMetaData(name, i, sqlType));
     	}
-    	
-    	return eclCode.toString();
-	}
-
-	@Override
-	protected SQLParserDelete getSQLParser() {
-		return sqlParser;
 	}
 }

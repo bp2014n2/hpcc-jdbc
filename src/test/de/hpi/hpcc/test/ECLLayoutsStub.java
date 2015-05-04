@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 import de.hpi.hpcc.parsing.ECLLayouts;
 

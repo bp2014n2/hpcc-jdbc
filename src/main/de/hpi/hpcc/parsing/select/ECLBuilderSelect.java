@@ -28,7 +28,6 @@ import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectParser;
 
 public class ECLBuilderSelect extends ECLBuilder {
-
 	
 	protected SQLParserSelect sqlParser;
 	private Select select;
@@ -39,7 +38,6 @@ public class ECLBuilderSelect extends ECLBuilder {
 		super(select, eclLayouts);
 		this.select = select;
 	}
-	
 
 	public ECLBuilderSelect(SelectBody table, ECLLayouts eclLayouts) {
 		super(null, eclLayouts);
@@ -54,8 +52,6 @@ public class ECLBuilderSelect extends ECLBuilder {
 		}
 	}
 
-
-	//	private boolean hasAlias = false;
 	/**
 	 * This method generates ECL code from a given SQL code. 
 	 * Therefore it delegates the generation to the appropriate method, 

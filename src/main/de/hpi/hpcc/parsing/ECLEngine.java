@@ -30,8 +30,6 @@ import java.util.logging.Logger;
 
 import net.sf.jsqlparser.statement.Statement;
 
-import org.w3c.dom.NodeList;
-
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.main.*;
 

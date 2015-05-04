@@ -1,6 +1,5 @@
 package de.hpi.hpcc.parsing.create;
 
-import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
@@ -25,8 +24,7 @@ public class ECLBuilderCreate extends ECLBuilder {
 		sqlParser = new SQLParserCreate(create, eclLayouts);
 		eclCode = new StringBuilder();
 		eclCode.append("OUTPUT(DATASET([],{");
-		String recordString = sqlParser.getRecord();
-		eclCode.append(recordString);
+		eclCode.append(sqlParser.getRecord());
 		eclCode.append("}),,'~%NEWTABLE%',OVERWRITE);");
 		return eclCode.toString();
 	}

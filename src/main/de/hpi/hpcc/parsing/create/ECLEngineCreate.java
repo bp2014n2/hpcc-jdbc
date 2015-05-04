@@ -8,7 +8,6 @@ import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.SQLParser;
 import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
 public class ECLEngineCreate extends ECLEngine {
@@ -31,15 +30,7 @@ public class ECLEngineCreate extends ECLEngine {
 			ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
 			tempTableParser.replace(create);
 		}
-		String tablePath = sqlParser.getFullName();
-		
-		/*
-		if (sqlParser.isTempTable()) {
-			tablePath = eclLayouts.getTempTableName(tablePath);
-			eclLayouts.addTempTable(tablePath);
-		}
-		*/
-		
+		String tablePath = sqlParser.getFullName();		
 		HPCCDFUFile dfuFile = layouts.getDFUFile(tablePath);
 
 		if(dfuFile == null) {
