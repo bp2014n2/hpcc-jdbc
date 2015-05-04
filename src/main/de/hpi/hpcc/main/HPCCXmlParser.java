@@ -30,7 +30,9 @@ public class HPCCXmlParser {
 					case XMLStreamConstants.START_ELEMENT:
 						if (isRow(parser.getLocalName())) {
 							rows.add(parseRow(parser));
-				        }
+				        } else if (isException(parser.getLocalName())) {
+				        	parseException(parser);
+						}
 						break;
 					case XMLStreamConstants.END_ELEMENT:
 						if (isDataset(parser.getLocalName())) {
@@ -148,8 +150,24 @@ public class HPCCXmlParser {
 		throw new HPCCException("Error in parsing rows!");
 	}
 
+	private void parseException(XMLStreamReader parser) throws XMLStreamException, HPCCException {
+		String exceptionMessage = "";
+		for (int event = parser.next(); event != XMLStreamConstants.END_ELEMENT; event = parser.next()) {
+			switch (event) {
+				case XMLStreamConstants.CHARACTERS:
+				case XMLStreamConstants.CDATA:
+					exceptionMessage += parser.getText();
+			}
+		}
+		throw new HPCCException(exceptionMessage);
+	}
+	
 	private boolean isRow(String localName) {
 		return localName.equals("Row");
+	}
+	
+	private boolean isException(String localName) {
+		return localName.equals("Exception");
 	}
 	
 	private boolean isDataset(String localName) {
