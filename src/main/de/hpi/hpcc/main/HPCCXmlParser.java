@@ -21,11 +21,11 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public class HPCCXmlParser {	
-	public NodeList parseDataset(InputStream xml, long startTime) throws HPCCException {
+	public LinkedList<LinkedList<String>> parseDataset(InputStream xml, long startTime) throws HPCCException {
 		LinkedList<LinkedList<String>> rows = new LinkedList<LinkedList<String>>();
 		try {
 			XMLStreamReader parser = XMLInputFactory.newInstance().createXMLStreamReader(xml);
-			for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
+			loop: for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
 				switch (event) {
 					case XMLStreamConstants.START_ELEMENT:
 						if (isRow(parser.getLocalName())) {
@@ -36,76 +36,20 @@ public class HPCCXmlParser {
 						break;
 					case XMLStreamConstants.END_ELEMENT:
 						if (isDataset(parser.getLocalName())) {
-							// TODO we are only parsing the first dataset!
-							// TODO return rows;
+							/*
+							*	We are only parsing the first dataset!
+							*	Additionally, it is possible that the dataset itself is the root element.
+							*	So please do not return the rows here! Just break the loop!
+							*/
+							break loop;
 						}	
 				}
 			}
 			parser.close();
+			return rows;
 		} catch (XMLStreamException | FactoryConfigurationError e1) {
 			throw new HPCCException("Error creating the XML parser!");
 		}
-		
-    	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-    	String expectedDSName = null;
-        NodeList rowList = null;
-
-        DocumentBuilder db;
-		try {
-			db = dbf.newDocumentBuilder();
-		} catch (ParserConfigurationException e) {
-			throw new HPCCException("Failed to create DocumentBuilder");
-		}
-        Document dom;
-		try {
-			dom = db.parse(xml);
-		} catch (SAXException | IOException e) {
-			throw new HPCCException("Failed to parse dataset");
-		}
-
-        long elapsedTime = System.currentTimeMillis() - startTime;
-
-        HPCCJDBCUtils.traceoutln(Level.INFO, "Total elapsed http request/response time in milliseconds: " + elapsedTime);
-
-        Element docElement = dom.getDocumentElement();
-
-        NodeList dsList = docElement.getElementsByTagName("Dataset");
-
-        HPCCJDBCUtils.traceoutln(Level.INFO, "Parsing results...");
-
-        HPCCNodeListAdapter nodes = new HPCCNodeListAdapter(dsList);
-        
-        int dsCount = 0;
-        if (dsList != null && nodes.iterator().hasNext()){
-//            HPCCJDBCUtils.traceoutln(Level.INFO, "Results datsets found: " + dsList.getLength());
-
-            // The dataset element is encapsulated within a Result element
-            // need to fetch appropriate resulst dataset
-            for (Node node : nodes) {
-            //for (int i = 0; i < dsCount; i++) {
-            
-               // Element ds = (Element) dsList.item(i);
-            	Element ds = (Element) node;
-                String currentdatsetname = ds.getAttribute("name");
-                if (expectedDSName == null || expectedDSName.length() == 0
-                        || currentdatsetname.equalsIgnoreCase(expectedDSName))
-                {
-                    rowList = ds.getElementsByTagName("Row");
-                    break;
-                }
-            }
-        }
-        else
-        {
-            // The root element is itself the Dataset element
-            if (dsCount == 0)
-            {
-                rowList = docElement.getElementsByTagName("Row");
-            }
-        }
-        HPCCJDBCUtils.traceoutln(Level.INFO,  "Finished Parsing results.");
-
-        return rowList;
     }
 
 	private LinkedList<String> parseRow(XMLStreamReader parser) throws XMLStreamException, HPCCException {
