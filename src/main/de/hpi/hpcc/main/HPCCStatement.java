@@ -20,7 +20,7 @@ import de.hpi.hpcc.parsing.SQLParser;
 public class HPCCStatement implements Statement{
 	protected static final Logger logger = HPCCLogger.getLogger();
 	protected HPCCConnection connection;
-	protected ECLParser parser;
+	protected ECLParser eclParser;
     protected boolean closed = false;
     protected SQLWarning warnings;
     protected ResultSet result = null;
@@ -103,16 +103,16 @@ public class HPCCStatement implements Statement{
 	private boolean executeQueryOnHPCC(String sqlStatement) throws SQLException {
 		try {
 			ECLLayouts layouts = new ECLLayouts(connection.getDatabaseMetaData());
-			this.parser = new ECLParser(layouts);
+			this.eclParser = new ECLParser(layouts);
 			List rows = null;
-			for(String query : parser.parse(sqlStatement)) {
+			for(String query : eclParser.parse(sqlStatement)) {
 				connection.sendRequest(query);
 				HPCCXmlParser xmlParser = new HPCCXmlParser();
 				rows = xmlParser.parseDataset(connection.getInputStream());
 			}
 			
 			if (rows != null) {
-				result = new HPCCResultSet(this, rows, new HPCCResultSetMetadata(parser.getExpectedRetCols(), "HPCC Result"));
+				result = new HPCCResultSet(this, rows, new HPCCResultSetMetadata(eclParser.getExpectedRetCols(), "HPCC Result"));
 			}
 			return result != null;
 		} catch (HPCCException exception) {
@@ -144,7 +144,7 @@ public class HPCCStatement implements Statement{
             closed = true;
             connection = null;
             result = null;
-            parser = null;
+            eclParser = null;
         }
         log("Statement closed");
     }
