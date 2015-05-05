@@ -45,7 +45,7 @@ public class HPCCXmlParser {
     }
 
 	private ArrayList<String> parseRow(XMLStreamReader parser, HPCCResultSetMetadata resultSetMetaData) throws XMLStreamException, HPCCException {
-		ArrayList<String> row = new ArrayList<String>();
+		ArrayList<String> row = resultSetMetaData.createDefaultResultRow();
 		String elementValue = "";
 		String nodeElementName = "";
 		for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
@@ -63,8 +63,8 @@ public class HPCCXmlParser {
 					if (this.isRow(parser.getLocalName())) {
 						return row;
 					}
-					row = resultSetMetaData.createDefaultResultRow();
-					row.set(resultSetMetaData.getColByNameOrAlias(nodeElementName).getIndex(), elementValue);
+					HPCCColumnMetaData columnMetaData = resultSetMetaData.getColByNameOrAlias(nodeElementName);
+					row.set(columnMetaData.getIndex(), elementValue);
 					elementValue = "";
 			}
 		}
