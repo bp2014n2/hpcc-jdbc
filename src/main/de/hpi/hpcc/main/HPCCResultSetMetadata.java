@@ -52,7 +52,7 @@ public class HPCCResultSetMetadata implements ResultSetMetaData
     {
         this.columnList = columnList;
 //        this.tableName = tableName;
-
+        if (this.columnList == null) { return; }
         try
         {
             generateExpectedRetColsHash();
