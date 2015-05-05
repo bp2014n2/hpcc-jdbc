@@ -1,6 +1,11 @@
 package de.hpi.hpcc.parsing.visitor;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
@@ -216,6 +221,22 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(Subtraction subtraction) {
+		if (subtraction.getLeftExpression().toString().equalsIgnoreCase("CURRENT_DATE")) {
+			DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+			Calendar currentDate = Calendar.getInstance();
+			// = dateFormat.format(date); //2014/08/06 15:59:48
+			IntervalExpression interval = (IntervalExpression) subtraction.getRightExpression(); 
+			String parameter = interval.getParameter();
+			Matcher matcher = Pattern.compile("'(\\d+)\\.?\\d+\\s(\\w*)'").matcher(parameter);
+			if (matcher.find()) {
+				int number = Integer.parseInt(matcher.group(1));
+				String type = matcher.group(2);
+				currentDate.add(Calendar.DAY_OF_MONTH, -number);
+			}
+			parsed = ECLUtils.encapsulateWithSingleQuote(dateFormat.format(currentDate.getTime()));
+			return;
+		}
+		
 		parsed = visitBinaryExpression(subtraction, "-");
 	}
 
@@ -237,6 +258,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 		betweenBuilder.append(parse(between.getBetweenExpressionStart()));
 		betweenBuilder.append(" AND ");
 		betweenBuilder.append(parse(between.getBetweenExpressionEnd()));
+		
 		parsed = ECLUtils.encapsulateWithBrackets(betweenBuilder.toString());
 	}
 
@@ -320,7 +342,6 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 	@Override
 	public void visit(Column tableColumn) {
 		parsed = tableColumn.getColumnName();
-		
 	}
 
 	@Override
@@ -438,7 +459,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 	@Override
 	public void visit(IntervalExpression iexpr) {
 		// TODO Auto-generated method stub
-		
+		parsed = "";
 	}
 
 	@Override

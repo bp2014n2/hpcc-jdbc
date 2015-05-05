@@ -91,7 +91,7 @@ public class HPCCStatement implements Statement{
 	}
 	
 	private boolean checkFederatedDatabase(String sqlStatement) throws SQLException {
-		ECLLayouts eclLayouts = new ECLLayouts(connection.getDatabaseMetaData());
+		//ECLLayouts eclLayouts = new ECLLayouts(connection.getDatabaseMetaData());
 		HPCCJDBCUtils.traceoutln(Level.INFO, sqlStatement);
 		Set<String> tables = SQLParser.getAllTables(sqlStatement);
 		
