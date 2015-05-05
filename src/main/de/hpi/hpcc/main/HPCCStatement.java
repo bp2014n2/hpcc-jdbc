@@ -105,14 +105,15 @@ public class HPCCStatement implements Statement{
 			ECLLayouts layouts = new ECLLayouts(connection.getDatabaseMetaData());
 			this.eclParser = new ECLParser(layouts);
 			List rows = null;
+			HPCCResultSetMetadata resultSetMetaData = null;
 			for(String query : eclParser.parse(sqlStatement)) {
 				connection.sendRequest(query);
+				resultSetMetaData = new HPCCResultSetMetadata(eclParser.getExpectedRetCols(), "HPCC Result");
 				HPCCXmlParser xmlParser = new HPCCXmlParser();
-				rows = xmlParser.parseDataset(connection.getInputStream(), new HPCCResultSetMetadata(eclParser.getExpectedRetCols(), "HPCC Result"));
+				rows = xmlParser.parseDataset(connection.getInputStream(), resultSetMetaData);
 			}
-			
 			if (rows != null) {
-				result = new HPCCResultSet(this, rows, new HPCCResultSetMetadata(eclParser.getExpectedRetCols(), "HPCC Result"));
+				result = new HPCCResultSet(this, rows, resultSetMetaData);
 			}
 			return result != null;
 		} catch (HPCCException exception) {
