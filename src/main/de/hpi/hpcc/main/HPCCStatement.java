@@ -108,7 +108,7 @@ public class HPCCStatement implements Statement{
 			for(String query : eclParser.parse(sqlStatement)) {
 				connection.sendRequest(query);
 				HPCCXmlParser xmlParser = new HPCCXmlParser();
-				rows = xmlParser.parseDataset(connection.getInputStream());
+				rows = xmlParser.parseDataset(connection.getInputStream(), new HPCCResultSetMetadata(eclParser.getExpectedRetCols(), "HPCC Result"));
 			}
 			
 			if (rows != null) {

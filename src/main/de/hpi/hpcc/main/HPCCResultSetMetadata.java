@@ -52,6 +52,7 @@ public class HPCCResultSetMetadata implements ResultSetMetaData
     {
         this.columnList = columnList;
 //        this.tableName = tableName;
+        //TODO really necessary?; for drop statements?!
         if (this.columnList == null) { return; }
         try
         {

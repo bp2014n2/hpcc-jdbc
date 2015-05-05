@@ -3,6 +3,7 @@ package de.hpi.hpcc.main;
 import java.io.InputStream;
 import java.util.ArrayList;
 
+import javax.naming.spi.DirStateFactory.Result;
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -10,7 +11,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 public class HPCCXmlParser {	
-	public ArrayList<ArrayList<String>> parseDataset(InputStream xml) throws HPCCException {
+	public ArrayList<ArrayList<String>> parseDataset(InputStream xml, HPCCResultSetMetadata resultSetMetaData) throws HPCCException {
 		//TODO track time
 		//TODO use logger :-D
 		ArrayList<ArrayList<String>> rows = new ArrayList<ArrayList<String>>();
@@ -20,7 +21,7 @@ public class HPCCXmlParser {
 				switch (event) {
 					case XMLStreamConstants.START_ELEMENT:
 						if (this.isRow(parser.getLocalName())) {
-							rows.add(this.parseRow(parser));
+							rows.add(this.parseRow(parser, resultSetMetaData));
 				        } else if (this.isException(parser.getLocalName())) {
 				        	this.parseException(parser);
 						}
@@ -43,11 +44,17 @@ public class HPCCXmlParser {
 		}
     }
 
-	private ArrayList<String> parseRow(XMLStreamReader parser) throws XMLStreamException, HPCCException {
+	private ArrayList<String> parseRow(XMLStreamReader parser, HPCCResultSetMetadata resultSetMetaData) throws XMLStreamException, HPCCException {
 		ArrayList<String> row = new ArrayList<String>();
 		String elementValue = "";
+		String nodeElementName = "";
 		for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
 			switch (event) {
+				case XMLStreamConstants.START_ELEMENT:
+					if (!this.isRow(parser.getLocalName())) {
+						nodeElementName = parser.getLocalName();
+					}
+					break;
 				case XMLStreamConstants.CHARACTERS:
 				case XMLStreamConstants.CDATA:
 					elementValue += parser.getText();
@@ -56,7 +63,8 @@ public class HPCCXmlParser {
 					if (this.isRow(parser.getLocalName())) {
 						return row;
 					}
-					row.add(elementValue);
+					row = resultSetMetaData.createDefaultResultRow();
+					row.set(resultSetMetaData.getColByNameOrAlias(nodeElementName).getIndex(), elementValue);
 					elementValue = "";
 			}
 		}
