@@ -23,7 +23,7 @@ public class HPCCXmlParser {
 						if (this.isRow(parser.getLocalName())) {
 							rows.add(this.parseRow(parser, resultSetMetaData));
 				        } else if (this.isException(parser.getLocalName())) {
-				        	this.parseException(parser);
+//				        	this.parseException(parser);
 						}
 						break;
 					case XMLStreamConstants.END_ELEMENT:
@@ -38,6 +38,9 @@ public class HPCCXmlParser {
 				}
 			}
 			parser.close();
+			if (rows.isEmpty()) {
+				return null;
+			}
 			return rows;
 		} catch (XMLStreamException | FactoryConfigurationError e1) {
 			throw new HPCCException("Error creating the XML parser!");
@@ -77,7 +80,7 @@ public class HPCCXmlParser {
 			switch (event) {
 				case XMLStreamConstants.CHARACTERS:
 				case XMLStreamConstants.CDATA:
-					exceptionMessage += parser.getText();
+					exceptionMessage += parser.getText().trim();
 			}
 		}
 		throw new HPCCException(HPCCXmlParser.class.getSimpleName()+": Error in server response!!\n"+exceptionMessage);
