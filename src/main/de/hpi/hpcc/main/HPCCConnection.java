@@ -178,7 +178,7 @@ public class HPCCConnection implements Connection{
         Document dom;
 		try {
 			dom = db.parse(xml);
-			xml.close();
+//			xml.close();
 			httpConnection.disconnect();
 		} catch (SAXException | IOException e) {
 			throw new HPCCException("Failed to parse dataset");

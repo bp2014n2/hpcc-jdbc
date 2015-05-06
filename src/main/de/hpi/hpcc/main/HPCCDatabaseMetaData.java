@@ -2233,6 +2233,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             HPCCJDBCUtils.traceoutln(Level.INFO, "Fetching file information: " + urlString);
             InputStream is = dfulogfilesConn.getInputStream();
             isSuccess = parseDFULogicalFiles(is, false) > 0 ? true : false;
+//            is.close();
             dfulogfilesConn.disconnect();
         }
         catch (SocketTimeoutException e)
