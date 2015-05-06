@@ -2233,6 +2233,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             HPCCJDBCUtils.traceoutln(Level.INFO, "Fetching file information: " + urlString);
             InputStream is = dfulogfilesConn.getInputStream();
             isSuccess = parseDFULogicalFiles(is, false) > 0 ? true : false;
+            dfulogfilesConn.disconnect();
         }
         catch (SocketTimeoutException e)
         {
@@ -2574,6 +2575,8 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
                     }
                 }
             }
+            xml.close();
+            clusterInfoConnection.disconnect();
         }
         catch (Exception e)
         {

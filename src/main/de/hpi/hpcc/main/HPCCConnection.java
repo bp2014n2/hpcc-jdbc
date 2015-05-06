@@ -178,9 +178,12 @@ public class HPCCConnection implements Connection{
         Document dom;
 		try {
 			dom = db.parse(xml);
+			xml.close();
+			httpConnection.disconnect();
 		} catch (SAXException | IOException e) {
 			throw new HPCCException("Failed to parse dataset");
 		}
+		
 
         long elapsedTime = System.currentTimeMillis() - startTime;
 
@@ -311,7 +314,7 @@ public class HPCCConnection implements Connection{
         	this.postgreSQLConnection.close();
         }
         this.closed = true;
-//        httpConnection.disconnect();
+        //httpConnection.disconnect();
     }
 
     public boolean isClosed() throws SQLException {

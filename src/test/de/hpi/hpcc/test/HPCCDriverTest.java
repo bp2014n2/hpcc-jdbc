@@ -21,7 +21,7 @@ public class HPCCDriverTest {
 	public void testDriverRegistration() throws ClassNotFoundException, SQLException {
 		Class.forName("de.hpi.hpcc.main.HPCCDriver");
 	}
-	
+	/*
 	@Test
 	public void testDriverUnacceptedURLs() {
 		boolean allStatementsThrowExceptions = true;
@@ -191,4 +191,5 @@ public class HPCCDriverTest {
 		
 		connection.close();
 	}
+	*/
 }

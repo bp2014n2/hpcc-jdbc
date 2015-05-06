@@ -1,5 +1,6 @@
 package de.hpi.hpcc.main;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.logging.HPCCLogger;
@@ -72,6 +74,7 @@ public class HPCCStatement implements Statement{
 		HPCCJDBCUtils.traceoutln(Level.INFO, "started query at: "+difference/1000000);
 		if (checkFederatedDatabase(sqlStatement)) {
 			boolean result = executeQueryOnPostgreSQL(sqlStatement); 
+			//postgreSQLStatement.close();
 			difference = System.nanoTime()-HPCCDriver.beginTime;
 			HPCCJDBCUtils.traceoutln(Level.INFO, "finished Postgresql query at: "+difference/1000000);
 			return result;
@@ -109,7 +112,6 @@ public class HPCCStatement implements Statement{
 				connection.sendRequest(query);
 				rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
 			}
-			
 			if (rowList != null) {
 				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(parser.getExpectedRetCols(),	"HPCC Result"));
 			}
@@ -124,12 +126,15 @@ public class HPCCStatement implements Statement{
 	private boolean executeQueryOnPostgreSQL(String sqlStatement) throws SQLException {
 		log("Query sent to PostgreSQL");
 		result = createPostgreSQLStatement().executeQuery(sqlStatement);
+		
 		return result != null;
 	}
 	
 	private int executeUpdateOnPostgreSQL(String sqlStatement) throws SQLException {
 		log("Query sent to PostgreSQL");
-		return createPostgreSQLStatement().executeUpdate(sqlStatement);
+		int i = createPostgreSQLStatement().executeUpdate(sqlStatement);
+		postgreSQLStatement.close();
+		return i;
 	}
 
 	public ResultSet executeQuery(String sqlQuery) throws SQLException {      
