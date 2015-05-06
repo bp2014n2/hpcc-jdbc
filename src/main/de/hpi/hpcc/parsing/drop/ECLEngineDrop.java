@@ -52,8 +52,7 @@ public class ECLEngineDrop extends ECLEngine {
 			layouts.removeDFUFile(tablePath);
 			layouts.removeTempTable(layouts.getFullTableName(originalTableName));
    		} else {
-   			// TODO: replace with much, much, much better solution
-   			eclCode.append(EMPTY_QUERY);
+   			return null;
    		}
    		return eclCode.toString();
 	}

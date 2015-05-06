@@ -54,7 +54,7 @@ public class ECLEngineCreate extends ECLEngine {
 	    		expectedretcolumns.add(new HPCCColumnMetaData(column.split("\\s+")[1], i, ECLLayouts.getSqlType(column.split("\\s+")[0])));
 	    	}  	
 		} else {
-			eclCode.append(EMPTY_QUERY);
+			return null;
 		}
 		
 		return eclCode.toString();

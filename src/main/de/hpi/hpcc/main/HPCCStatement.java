@@ -109,8 +109,10 @@ public class HPCCStatement implements Statement{
 			this.parser = new ECLParser(layouts);
 			NodeList rowList = null;
 			for(String query : parser.parse(sqlStatement)) {
-				connection.sendRequest(query);
-				rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+				if (query != null) {
+					connection.sendRequest(query);
+					rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+				}
 			}
 			if (rowList != null) {
 				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(parser.getExpectedRetCols(),	"HPCC Result"));

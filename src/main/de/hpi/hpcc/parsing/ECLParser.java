@@ -47,7 +47,11 @@ public class ECLParser {
 		eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sql)+"');\n");
 		ECLStatementParser typeParser = new ECLStatementParser(layouts);
 		engine = typeParser.getEngine(sql);
-		eclCode.append(engine.generateECL());
+		String generatedECL = engine.generateECL();
+		if (generatedECL == null) {
+			return null;
+		}
+		eclCode.append(generatedECL);
 		eclCode.append("\n\n//"+eclMetaEscape(sql));
 		return eclCode.toString();
 	}
