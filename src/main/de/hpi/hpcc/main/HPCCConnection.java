@@ -133,7 +133,10 @@ public class HPCCConnection implements Connection{
 
 	public URL generateUrl(){
     	String urlString = driverProperties.getProperty("Protocol")+(driverProperties.getProperty("WsECLDirectAddress") + ":"
-                + driverProperties.getProperty("WsECLDirectPort") + "/EclDirect/RunEclEx?Submit")+"&cluster=" + driverProperties.getProperty("TargetCluster");
+                + driverProperties.getProperty("WsECLDirectPort") + "/EclDirect/RunEclEx?Submit")+
+                "&cluster=" + driverProperties.getProperty("TargetCluster")+
+                "&wait=-1"+
+                "&includeResults=true";
 
         URL hpccRequestUrl = HPCCJDBCUtils.makeURL(urlString);
         

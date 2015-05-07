@@ -308,8 +308,8 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 		if (stringValue.endsWith("%")) {
 			stringValue = stringValue.replace("%", "");
 		}
-		int count = stringValue.replace("\\\\", "\\").length();
-		
+//		int count = stringValue.replace("\\\\", "\\").length();
+		int count = stringValue.length();
 		
 		likeString.append(parse(likeExpression.getLeftExpression()));
 		likeString.append("[1..");

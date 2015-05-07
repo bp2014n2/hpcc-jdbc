@@ -53,7 +53,6 @@ public class ECLParser {
 		}
 		eclCode.append(generatedECL);
 		eclCode.append("\n\n//"+eclMetaEscape(sql));
-		eclCode.append("\n&wait=-1");
 		return eclCode.toString();
 	}
     
