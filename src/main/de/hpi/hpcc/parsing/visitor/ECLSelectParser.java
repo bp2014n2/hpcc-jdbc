@@ -95,6 +95,21 @@ public class ECLSelectParser implements ExpressionVisitor {
 		return parse(expression);
 	}
 	
+	public String parseAlias(SelectExpressionItem sei) {
+		parsed = "";
+		this.sei = sei;
+		Alias alias = sei.getAlias();
+		Expression expression = sei.getExpression();
+		if(alias != null) {
+			if(!parsedFunctionNames.contains(alias.getName())) {
+				parsed += alias.getName();
+				return parsed;
+			}
+			return alias.getName();
+		}
+		return primitiveParse(expression);
+	}
+	
 	private String primitiveParse(Expression expression) {
 		if (!alreadyParsed) {
 			ECLExpressionParser ep = new ECLExpressionParser(eclLayouts);

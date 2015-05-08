@@ -180,17 +180,28 @@ public class ECLBuilderSelect extends ECLBuilder {
 		eclCode.append(", ");
 		if(inner) {
 			selectItemsStrings.addAll(createInnerSelectItemsString(sqlParser));
-		}
-    
-		if (sqlParser.isSelectAll()){
-			if(sqlParser.getFromItem() instanceof SubSelect) {
-				selectItemsStrings.addAll(sqlParser.getFromItemColumns());
+			if (sqlParser.isSelectAll()){
+				if(sqlParser.getFromItem() instanceof SubSelect) {
+					selectItemsStrings.addAll(sqlParser.getFromItemColumns());
+				} else {
+					selectItemsStrings.addAll(sqlParser.getAllColumns());
+				}
 			} else {
-				selectItemsStrings.addAll(sqlParser.getAllColumns());
+				selectItemsStrings.addAll(createSelectItems(sqlParser));
 			}
 		} else {
-			selectItemsStrings.addAll(createSelectItems(sqlParser));
+			if (sqlParser.isSelectAll()){
+				if(sqlParser.getFromItem() instanceof SubSelect) {
+					selectItemsStrings.addAll(sqlParser.getFromItemColumns());
+				} else {
+					selectItemsStrings.addAll(sqlParser.getAllColumns());
+				}
+			} else {
+				selectItemsStrings.addAll(createOuterSelectItemsString(sqlParser));
+			}
 		}
+    
+		
     	eclCode.append(ECLUtils.encapsulateWithCurlyBrackets(ECLUtils.join(selectItemsStrings, ", ")));
 	}
 	
@@ -202,7 +213,7 @@ public class ECLBuilderSelect extends ECLBuilder {
 				StringBuilder selectItemString = new StringBuilder();
 				SelectExpressionItem sei = (SelectExpressionItem) selectItem;
 				selectItemString.append(selectParser.parse(sei));
-   				selectItemsStrings.add(selectItemString.toString());
+   				selectItemsStrings.add(selectItemString.toString().toLowerCase());
    			}
 		}
 		return selectItemsStrings;
@@ -215,10 +226,24 @@ public class ECLBuilderSelect extends ECLBuilder {
 				Expression orderBy = orderByElement.getExpression();
 				ECLSelectParser selectParser = new ECLSelectParser(eclLayouts, sqlParser);
 				String select = selectParser.parse(orderBy);
-				innerItems.add(select);
+				innerItems.add(select.toLowerCase());
 			}
 		}
 		return innerItems;
+	}
+	
+	private LinkedHashSet<String> createOuterSelectItemsString(SQLParserSelect sqlParser) {
+		LinkedHashSet<String> selectItemsStrings = new LinkedHashSet<String>();
+		ArrayList<SelectItem> selectItems = (ArrayList<SelectItem>) sqlParser.getSelectItems();
+		for (SelectItem selectItem : selectItems) {
+			if (selectItem instanceof SelectExpressionItem) {
+				StringBuilder selectItemString = new StringBuilder();
+				SelectExpressionItem sei = (SelectExpressionItem) selectItem;
+				selectItemString.append(selectParser.parseAlias(sei));
+   				selectItemsStrings.add(selectItemString.toString().toLowerCase());
+   			}
+		}
+		return selectItemsStrings;
 	}
 
 	/**
