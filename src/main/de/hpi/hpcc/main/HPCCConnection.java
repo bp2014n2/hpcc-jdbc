@@ -172,6 +172,9 @@ public class HPCCConnection implements Connection{
     	String expectedDSName = null;
         NodeList rowList = null;
 
+     // TODO: parse inputStream in order to get valid XML
+        
+        
         DocumentBuilder db;
 		try {
 			db = dbf.newDocumentBuilder();
