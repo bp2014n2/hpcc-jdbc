@@ -20,6 +20,7 @@ import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import de.hpi.hpcc.main.HPCCException;
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
@@ -210,10 +211,11 @@ public class ECLBuilderSelect extends ECLBuilder {
 		ArrayList<SelectItem> selectItems = (ArrayList<SelectItem>) sqlParser.getSelectItems();
 		for (SelectItem selectItem : selectItems) {
 			if (selectItem instanceof SelectExpressionItem) {
-				StringBuilder selectItemString = new StringBuilder();
 				SelectExpressionItem sei = (SelectExpressionItem) selectItem;
-				selectItemString.append(selectParser.parse(sei));
-   				selectItemsStrings.add(selectItemString.toString().toLowerCase());
+				String selectItemString = selectParser.parse(sei);
+				if (!HPCCJDBCUtils.containsStringCaseInsensitive(selectItemsStrings, selectItemString)) {
+					selectItemsStrings.add(selectItemString);
+				}
    			}
 		}
 		return selectItemsStrings;
@@ -226,7 +228,7 @@ public class ECLBuilderSelect extends ECLBuilder {
 				Expression orderBy = orderByElement.getExpression();
 				ECLSelectParser selectParser = new ECLSelectParser(eclLayouts, sqlParser);
 				String select = selectParser.parse(orderBy);
-				innerItems.add(select.toLowerCase());
+				innerItems.add(select);
 			}
 		}
 		return innerItems;
@@ -237,10 +239,12 @@ public class ECLBuilderSelect extends ECLBuilder {
 		ArrayList<SelectItem> selectItems = (ArrayList<SelectItem>) sqlParser.getSelectItems();
 		for (SelectItem selectItem : selectItems) {
 			if (selectItem instanceof SelectExpressionItem) {
-				StringBuilder selectItemString = new StringBuilder();
 				SelectExpressionItem sei = (SelectExpressionItem) selectItem;
-				selectItemString.append(selectParser.parseAlias(sei));
-   				selectItemsStrings.add(selectItemString.toString().toLowerCase());
+				String selectItemString = selectParser.parseAlias(sei);
+				if (!HPCCJDBCUtils.containsStringCaseInsensitive(selectItemsStrings, selectItemString)) {
+					selectItemsStrings.add(selectItemString);
+				}
+   				
    			}
 		}
 		return selectItemsStrings;
