@@ -56,7 +56,7 @@ import de.hpi.hpcc.logging.HPCCLogger;
 public class HPCCResultSet implements ResultSet
 {
     private boolean                             closed = false;
-    private List<List>	    					rows;
+    private HPCCXmlParser    					parser;
     private int                                 index = -1;
     private HPCCResultSetMetadata               resultMetadata;
     private Statement                           statement = null;
@@ -67,16 +67,16 @@ public class HPCCResultSet implements ResultSet
     public HPCCResultSet(List procedurecols, ArrayList<HPCCColumnMetaData> metadatacols, String tablename) throws SQLException {
         log(Level.FINEST, "HPCCResultSet: HPCCResultSet(recrows, metadatacols, " + tablename +")");
         this.resultMetadata = new HPCCResultSetMetadata(metadatacols, tablename);
-        this.rows = new ArrayList<List>(procedurecols);
+        this.parser = parser;
         this.lastResult = new Object();
     }
 
-    public HPCCResultSet(Statement statement, List rows, HPCCResultSetMetadata resultMetadata) {
+    public HPCCResultSet(Statement statement, HPCCXmlParser parser, HPCCResultSetMetadata resultMetadata) {
         log(Level.FINEST, "HPCCResultSet: HPCCResultSet(statement, rowList, resultMetadata)");
         this.resultMetadata = resultMetadata;
-        this.rows = rows;
         this.lastResult = new Object();
         this.statement = statement;
+        this.parser = parser;
     }
 
     public int getRowCount()
@@ -859,18 +859,7 @@ public class HPCCResultSet implements ResultSet
         return resultMetadata.getColumnIndex(columnLabel);
     }
 
-    public Reader getCharacterStream(int columnIndex) throws SQLException{
-        handleUnsupportedMethod("getCharacterStream(int columnIndex)");
-        return null;
-    }
-
-    public Reader getCharacterStream(String columnLabel) throws SQLException{
-        handleUnsupportedMethod("getCharacterStream(String columnLabel)");
-        return null;
-    }
-
-    public BigDecimal getBigDecimal(int columnIndex) throws SQLException
-    {
+    public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
         log(Level.FINEST, "HPCCResultSet getBigDecimal( " + columnIndex + " )" );
         if (index >= 0 && index <= rows.size())
             if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
@@ -1054,6 +1043,16 @@ public class HPCCResultSet implements ResultSet
     public void setFetchSize(int rows) throws SQLException{
     	return;
     	//TODO: handleUnsupportedMethod("setFetchSize(int rows)");
+    }
+    
+    public Reader getCharacterStream(int columnIndex) throws SQLException{
+        handleUnsupportedMethod("getCharacterStream(int columnIndex)");
+        return null;
+    }
+
+    public Reader getCharacterStream(String columnLabel) throws SQLException{
+        handleUnsupportedMethod("getCharacterStream(String columnLabel)");
+        return null;
     }
     
     public void beforeFirst() throws SQLException {

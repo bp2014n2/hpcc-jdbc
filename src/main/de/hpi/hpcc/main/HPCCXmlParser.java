@@ -10,13 +10,23 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-public class HPCCXmlParser {	
-	public ArrayList<ArrayList<String>> parseDataset(InputStream xml, HPCCResultSetMetadata resultSetMetaData) throws HPCCException {
+public class HPCCXmlParser {
+	private XMLStreamReader 		parser;
+	private HPCCResultSetMetadata	resultSetMetaData;
+	public HPCCXmlParser(InputStream xml, HPCCResultSetMetadata resultSetMetaData) throws HPCCException {
+		try {
+			this.parser = XMLInputFactory.newInstance().createXMLStreamReader(xml);
+		} catch (XMLStreamException | FactoryConfigurationError e) {
+			throw new HPCCException("Error creating the XML parser!");
+		}
+		this.resultSetMetaData = resultSetMetaData;
+	}
+	
+	public ArrayList<ArrayList<String>> parseNext() throws HPCCException {
 		//TODO track time
 		//TODO use logger :-D
 		ArrayList<ArrayList<String>> rows = new ArrayList<ArrayList<String>>();
 		try {
-			XMLStreamReader parser = XMLInputFactory.newInstance().createXMLStreamReader(xml);
 			loop: for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
 				switch (event) {
 					case XMLStreamConstants.START_ELEMENT:

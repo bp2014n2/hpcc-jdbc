@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.management.modelmbean.XMLParseException;
+
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLParser;
@@ -104,17 +106,14 @@ public class HPCCStatement implements Statement{
 		try {
 			ECLLayouts layouts = new ECLLayouts(connection.getDatabaseMetaData());
 			this.eclParser = new ECLParser(layouts);
-			List rows = null;
 			HPCCResultSetMetadata resultSetMetaData = null;
+			HPCCXmlParser xmlParser = null;
 			for(String query : eclParser.parse(sqlStatement)) {
 				connection.sendRequest(query);
 				resultSetMetaData = new HPCCResultSetMetadata(eclParser.getExpectedRetCols(), "HPCC Result");
-				HPCCXmlParser xmlParser = new HPCCXmlParser();
-				rows = xmlParser.parseDataset(connection.getInputStream(), resultSetMetaData);
+				xmlParser = new HPCCXmlParser(connection.getInputStream(), resultSetMetaData);
 			}
-			if (rows != null) {
-				result = new HPCCResultSet(this, rows, resultSetMetaData);
-			}
+			result = new HPCCResultSet(this, xmlParser, resultSetMetaData);
 			return result != null;
 		} catch (HPCCException exception) {
 			exception.printStackTrace();
