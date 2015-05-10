@@ -79,38 +79,6 @@ public class HPCCResultSet implements ResultSet
         this.statement = statement;
     }
 
-//    public void encapsulateDataSet(NodeList rowList)
-//    {
-//        log("HPCCResultSet encapsulateDataSet");
-//        int rowCount = 0;
-//        if (rowList != null && (rowCount = rowList.getLength()) > 0)
-//        {
-//            log("Results rows found: " + rowCount);
-//
-//            for (int j = 0; j < rowCount; j++)
-//            {
-//                ArrayList<String> rowValues = resultMetadata.createDefaultResultRow();
-//                rows.add(rowValues);
-//
-//                Element row = (Element) rowList.item(j);
-//
-//                NodeList columnList = row.getChildNodes();
-//
-//                for (int k = 0; k < columnList.getLength(); k++)
-//                {
-//                    Node resultRowElement = columnList.item(k);
-//                    String resultRowElementName = resultRowElement.getNodeName();
-//
-//                    if (resultMetadata.containsColByNameOrAlias(resultRowElementName))
-//                    {
-//                        HPCCColumnMetaData col = resultMetadata.getColByNameOrAlias(resultRowElementName);
-//                        rowValues.set(col.getIndex(), resultRowElement.getTextContent().trim());
-//                    }
-//                }
-//            }
-//        }
-//    }
-
     public int getRowCount()
     {
         log(Level.FINEST, "HPCCResultSet getRowCount");
@@ -120,7 +88,7 @@ public class HPCCResultSet implements ResultSet
 	public boolean next() throws SQLException {
 		log(Level.FINEST, "HPCCResultSet next");
 		index++;
-		return !(index >= rows.size());
+		return index < rows.size();
 	}
 
     public void close() throws SQLException
@@ -957,8 +925,7 @@ public class HPCCResultSet implements ResultSet
         return (index > rows.size() - 1) ? true : false;
     }
 
-    public boolean isFirst() throws SQLException
-    {
+    public boolean isFirst() throws SQLException {
         log(Level.FINEST, "HPCCResultSet isFirst");
         return index == 0 ? true : false;
     }
@@ -969,27 +936,9 @@ public class HPCCResultSet implements ResultSet
         return (index == rows.size() - 1) ? true : false;
     }
 
-    public void beforeFirst() throws SQLException
-    {
-    	index = -1;
-//        log(Level.FINEST, "HPCCResultSet beforeFirst");
-//        handleUnsupportedMethod(("Not supported");
-    }
-
-    public void afterLast() throws SQLException{
-        handleUnsupportedMethod("afterLast()");
-    }
-
-    public boolean first() throws SQLException
-    {
-        log(Level.FINEST, "HPCCResultSet first");
-        if (rows.size() > 0)
-        {
-            index = 0;
-            return true;
-        }
-        else
-            return false;
+    public boolean first() throws SQLException {
+    	return false;
+    	// not implemented due to parsing
     }
 
     public boolean last() throws SQLException
@@ -1010,71 +959,118 @@ public class HPCCResultSet implements ResultSet
         return index + 1;
     }
 
-    public boolean absolute(int row) throws SQLException
-    {
-        log(Level.FINEST, "HPCCResultSet absolute");
-        if (row > 0 && row <= rows.size())
-        {
-            index = row - 1;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+    public boolean absolute(int row) throws SQLException {
+    	return false;
+    	// not implemented due to parsing
     }
 
-    public boolean relative(int rows) throws SQLException
-    {
-        log(Level.FINEST, "HPCCResultSet relative");
-        int tmpindex = index + rows;
-        if (tmpindex > 0 && tmpindex <= this.rows.size())
-        {
-            index = tmpindex;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+    public boolean relative(int rows) throws SQLException {
+    	return false;
+    	// not implemented due to parsing
     }
 
-    public boolean previous() throws SQLException
-    {
-        log(Level.FINEST, "HPCCResultSet previous");
-        if (index > 1)
-        {
-            index--;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    public void setFetchDirection(int direction) throws SQLException{
-        handleUnsupportedMethod("setFetchDirection(int direction)");
+    public boolean previous() throws SQLException {
+    	return false;
+    	// not implemented due to parsing
     }
 
     public int getFetchDirection() throws SQLException{
         log(Level.FINEST, "HPCCResultSet getFetchDirection");
         return ResultSet.FETCH_FORWARD;
     }
+    
+
+    public int getType() throws SQLException{
+        log(Level.FINEST, "HPCCResultSet getType");
+        return ResultSet.TYPE_SCROLL_INSENSITIVE;
+    }
+    
+    public URL getURL(int columnIndex) throws SQLException
+    {
+        log(Level.FINEST, "HPCCResultSet getURL");
+        try
+        {
+            if (index >= 0 && index <= rows.size())
+                if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
+                {
+                    lastResult = rows.get(index).get(columnIndex - 1);
+                    if (lastResult == null)
+                        return null;
+                    // content of row field is Object string, need to get value
+                    // of string and parse as BigDecimal
+                    return new URL(String.valueOf(lastResult));
+                }
+                else
+                    throw new SQLException("Invalid Column Index");
+            else
+                throw new SQLException("Invalid Row Index");
+        }
+        catch (MalformedURLException e)
+        {
+            throw new SQLException(e.getMessage());
+        }
+    }
+
+    public URL getURL(String columnLabel) throws SQLException
+    {
+        log(Level.FINEST, "HPCCResultSet getURL");
+        if (index >= 0 && index <= rows.size())
+        {
+            int columnIndex = resultMetadata.getColumnIndex(columnLabel);
+            if (columnIndex < 0)
+                throw new SQLException("Invalid Column Label found");
+            List<?> row = rows.get(index);
+            if (row != null)
+            {
+                try
+                {
+                    lastResult = row.get(columnIndex - 1);
+                    if (lastResult == null)
+                        return null;
+                    return new URL(String.valueOf(lastResult));
+                }
+                catch (MalformedURLException e)
+                {
+                    throw new SQLException(e.getMessage());
+                }
+            }
+            else
+                throw new SQLException("Null Row found");
+        }
+        else
+            throw new SQLException("Invalid Row Index");
+    }
+    
+    public boolean isClosed() throws SQLException{
+        log(Level.FINEST, "HPCCResultSet isClosed(): " + this.closed);
+        return this.closed;
+    }
+    
+    public Statement getStatement() throws SQLException{
+        log(Level.FINEST, "HPCCResultSet getStatement()");
+        return this.statement;
+    }
 
     public void setFetchSize(int rows) throws SQLException{
     	return;
-//        handleUnsupportedMethod("setFetchSize(int rows)");
+    	//TODO: handleUnsupportedMethod("setFetchSize(int rows)");
+    }
+    
+    public void beforeFirst() throws SQLException {
+        handleUnsupportedMethod("beforeFirst()");
+    }
+
+    public void afterLast() throws SQLException{
+        handleUnsupportedMethod("afterLast()");
+    }
+    
+    public void setFetchDirection(int direction) throws SQLException{
+        handleUnsupportedMethod("setFetchDirection(int direction)");
     }
 
     public int getFetchSize() throws SQLException{
         handleUnsupportedMethod("getFetchSize()");
         return 0;
-    }
-
-    public int getType() throws SQLException{
-        log(Level.FINEST, "HPCCResultSet getType");
-        return ResultSet.TYPE_SCROLL_INSENSITIVE;
     }
 
     public int getConcurrency() throws SQLException{
@@ -1277,11 +1273,6 @@ public class HPCCResultSet implements ResultSet
         handleUnsupportedMethod("moveToCurrentRow()");
     }
 
-    public Statement getStatement() throws SQLException{
-        log(Level.FINEST, "HPCCResultSet getStatement");
-        return statement;
-    }
-
     public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException{
         handleUnsupportedMethod("getObject(int columnIndex, Map<String, Class<?>> map)");
         return null;
@@ -1362,62 +1353,6 @@ public class HPCCResultSet implements ResultSet
         return null;
     }
 
-    public URL getURL(int columnIndex) throws SQLException
-    {
-        log(Level.FINEST, "HPCCResultSet getURL");
-        try
-        {
-            if (index >= 0 && index <= rows.size())
-                if (columnIndex >= 1 && columnIndex <= rows.get(index).size())
-                {
-                    lastResult = rows.get(index).get(columnIndex - 1);
-                    if (lastResult == null)
-                        return null;
-                    // content of row field is Object string, need to get value
-                    // of string and parse as BigDecimal
-                    return new URL(String.valueOf(lastResult));
-                }
-                else
-                    throw new SQLException("Invalid Column Index");
-            else
-                throw new SQLException("Invalid Row Index");
-        }
-        catch (MalformedURLException e)
-        {
-            throw new SQLException(e.getMessage());
-        }
-    }
-
-    public URL getURL(String columnLabel) throws SQLException
-    {
-        log(Level.FINEST, "HPCCResultSet getURL");
-        if (index >= 0 && index <= rows.size())
-        {
-            int columnIndex = resultMetadata.getColumnIndex(columnLabel);
-            if (columnIndex < 0)
-                throw new SQLException("Invalid Column Label found");
-            List<?> row = rows.get(index);
-            if (row != null)
-            {
-                try
-                {
-                    lastResult = row.get(columnIndex - 1);
-                    if (lastResult == null)
-                        return null;
-                    return new URL(String.valueOf(lastResult));
-                }
-                catch (MalformedURLException e)
-                {
-                    throw new SQLException(e.getMessage());
-                }
-            }
-            else
-                throw new SQLException("Null Row found");
-        }
-        else
-            throw new SQLException("Invalid Row Index");
-    }
-
     public void updateRef(int columnIndex, Ref x) throws SQLException{
         handleUnsupportedMethod("updateRef(int columnIndex, Ref x)");
     }
@@ -1471,11 +1406,6 @@ public class HPCCResultSet implements ResultSet
     public int getHoldability() throws SQLException{
         handleUnsupportedMethod("getHoldability()");
         return 0;
-    }
-
-    public boolean isClosed() throws SQLException{
-        log(Level.FINEST, "HPCCResultSet isClosed");
-        return closed;
     }
 
     public void updateNString(int columnIndex, String nString) throws SQLException{
