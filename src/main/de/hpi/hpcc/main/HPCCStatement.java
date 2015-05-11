@@ -111,8 +111,8 @@ public class HPCCStatement implements Statement{
 			for(String query : eclParser.parse(sqlStatement)) {
 				connection.sendRequest(query);
 				resultSetMetaData = new HPCCResultSetMetadata(eclParser.getExpectedRetCols(), "HPCC Result");
-				xmlParser = new HPCCXmlParser(connection.getInputStream(), resultSetMetaData);
 			}
+			xmlParser = new HPCCXmlParser(connection.getInputStream(), resultSetMetaData);
 			result = new HPCCResultSet(this, xmlParser, resultSetMetaData);
 			return result != null;
 		} catch (HPCCException exception) {

@@ -3,7 +3,6 @@ package de.hpi.hpcc.main;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-import javax.naming.spi.DirStateFactory.Result;
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -32,7 +31,7 @@ public class HPCCXmlParser {
 						if (this.isRow(parser.getLocalName())) {
 							return this.parseRow(parser, resultSetMetaData);
 				        } else if (this.isException(parser.getLocalName())) {
-//				        	this.parseException(parser);
+				        	//TODO: this.parseException(parser);
 						}
 						break;
 					case XMLStreamConstants.END_ELEMENT:
