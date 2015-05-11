@@ -14,7 +14,9 @@ public class HPCCXmlParser {
 	private HPCCResultSetMetadata	resultSetMetaData;
 	public HPCCXmlParser(InputStream xml, HPCCResultSetMetadata resultSetMetaData) throws HPCCException {
 		try {
-			this.parser = XMLInputFactory.newInstance().createXMLStreamReader(xml);
+			XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+			inputFactory.setProperty("javax.xml.stream.isCoalescing", true);
+			this.parser = inputFactory.createXMLStreamReader(xml);
 		} catch (XMLStreamException | FactoryConfigurationError e) {
 			throw new HPCCException("Error creating the XML parser!");
 		}
