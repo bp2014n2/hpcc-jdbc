@@ -100,9 +100,11 @@ public class HPCCResultSet implements ResultSet {
 	}
 
 	public boolean wasNull() throws SQLException {
-		log(Level.FINEST,
-				"HPCCResultSet wasNull: " + String.valueOf(lastResult == null));
 		return lastResult == null;
+	}
+
+	public boolean resultIsNull() throws SQLException {
+		return this.wasNull();
 	}
 
 	public Object getValue(int columnIndex) throws HPCCException {
@@ -113,10 +115,20 @@ public class HPCCResultSet implements ResultSet {
 		}
 	}
 
+	public int getColumnIndex(String columnLabel) throws HPCCException {
+		int columnIndex = resultMetadata.getColumnIndex(columnLabel);
+		if (columnIndex < 0) {
+			throw new HPCCException("Invalid Column Label found: "
+					+ columnLabel);
+		} else {
+			return columnIndex;
+		}
+	}
+
 	public String getString(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet:getString(" + columnIndex + ")");
 		this.lastResult = this.getValue(columnIndex);
-		if (lastResult == null) {
+		if (this.resultIsNull()) {
 			return null;
 		}
 		return lastResult.toString();
@@ -125,7 +137,7 @@ public class HPCCResultSet implements ResultSet {
 	public boolean getBoolean(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getBoolean(" + columnIndex + ")");
 		lastResult = this.getValue(columnIndex);
-		if (lastResult == null) {
+		if (this.resultIsNull()) {
 			return false;
 		}
 		return Boolean.parseBoolean(String.valueOf(lastResult));
@@ -134,7 +146,7 @@ public class HPCCResultSet implements ResultSet {
 	public byte getByte(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getByte(" + columnIndex + ")");
 		lastResult = this.getValue(columnIndex);
-		if (lastResult == null) {
+		if (this.resultIsNull()) {
 			return 0;
 		}
 		return String.valueOf(lastResult).getBytes()[0];
@@ -143,7 +155,7 @@ public class HPCCResultSet implements ResultSet {
 	public short getShort(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getShort(" + columnIndex + ")");
 		lastResult = this.getValue(columnIndex);
-		if (lastResult == null) {
+		if (this.resultIsNull()) {
 			return 0;
 		}
 		return Short.parseShort(String.valueOf(lastResult));
@@ -152,7 +164,7 @@ public class HPCCResultSet implements ResultSet {
 	public int getInt(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getInt(" + columnIndex + ")");
 		lastResult = this.getValue(columnIndex);
-		if (lastResult == null) {
+		if (this.resultIsNull()) {
 			return 0;
 		}
 		return Integer.parseInt(String.valueOf(lastResult));
@@ -161,7 +173,7 @@ public class HPCCResultSet implements ResultSet {
 	public long getLong(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getLong(" + columnIndex + ")");
 		lastResult = this.getValue(columnIndex);
-		if (lastResult == null) {
+		if (this.resultIsNull()) {
 			return 0;
 		}
 		return Long.parseLong(String.valueOf(lastResult));
@@ -170,7 +182,7 @@ public class HPCCResultSet implements ResultSet {
 	public float getFloat(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getFloat(" + columnIndex + ")");
 		lastResult = this.getValue(columnIndex);
-		if (lastResult == null) {
+		if (this.resultIsNull()) {
 			return 0;
 		}
 		return Float.parseFloat(String.valueOf(lastResult));
@@ -179,7 +191,7 @@ public class HPCCResultSet implements ResultSet {
 	public double getDouble(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getDouble(" + columnIndex + ")");
 		lastResult = this.getValue(columnIndex);
-		if (lastResult == null) {
+		if (this.resultIsNull()) {
 			return 0;
 		}
 		return Double.parseDouble(String.valueOf(lastResult));
@@ -189,7 +201,7 @@ public class HPCCResultSet implements ResultSet {
 			throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getBigDecimal(" + columnIndex + ")");
 		lastResult = this.getValue(columnIndex);
-		if (lastResult == null) {
+		if (this.resultIsNull()) {
 			return null;
 		}
 		BigDecimal bd = new BigDecimal(String.valueOf(lastResult));
@@ -199,7 +211,7 @@ public class HPCCResultSet implements ResultSet {
 	public byte[] getBytes(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getBytes(" + columnIndex + ")");
 		lastResult = this.getValue(columnIndex);
-		if (lastResult == null) {
+		if (this.resultIsNull()) {
 			return null;
 		}
 		return String.valueOf(lastResult).getBytes();
@@ -207,315 +219,159 @@ public class HPCCResultSet implements ResultSet {
 
 	public Date getDate(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getDate(" + columnIndex + ")");
-		if (index >= 0 && index <= rows.size())
-			if (columnIndex >= 1 && columnIndex <= rows.get(index).size()) {
-				lastResult = this.getValue(columnIndex);
-				if (lastResult == null)
-					return null;
-				// content of row field is Object string, need to get value of
-				// string and parse as Date
-				return Date.valueOf(String.valueOf(lastResult));
-			} else
-				throw new SQLException("Invalid Column Index");
-		else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(columnIndex);
+		if (this.resultIsNull()) {
+			return null;
+		}
+		return Date.valueOf(String.valueOf(lastResult));
 	}
 
 	public Time getTime(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getTime(" + columnIndex + ")");
-		if (index >= 0 && index <= rows.size())
-			if (columnIndex >= 1 && columnIndex <= rows.get(index).size()) {
-				lastResult = this.getValue(columnIndex);
-				if (lastResult == null)
-					return null;
-				// content of row field is Object string, need to get value of
-				// string and parse as Time
-				return Time.valueOf(String.valueOf(lastResult));
-			} else
-				throw new SQLException("Invalid Column Index");
-		else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(columnIndex);
+		if (this.resultIsNull()) {
+			return null;
+		}
+		return Time.valueOf(String.valueOf(lastResult));
 	}
 
 	public Timestamp getTimestamp(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getTimestamp(" + columnIndex + ")");
-		if (index >= 0 && index <= rows.size())
-			if (columnIndex >= 1 && columnIndex <= rows.get(index).size()) {
-				lastResult = this.getValue(columnIndex);
-				/*
-				 * TODO: why is it an empty string instead of null?!
-				 */
-				if (lastResult == null || lastResult.equals(""))
-					return null;
-				// content of row field is Object string, need to get value of
-				// string and parse as Timestamp
-				return Timestamp.valueOf(String.valueOf(lastResult).trim());
-			} else
-				throw new SQLException("Invalid Column Index");
-		else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(columnIndex);
+		// TODO: why is it an empty string instead of null?!
+		if (this.resultIsNull() || lastResult.equals("")) {
+			return null;
+		}
+		return Timestamp.valueOf(String.valueOf(lastResult).trim());
 	}
 
 	public InputStream getAsciiStream(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getAsciiStream(" + columnIndex + ")");
-		if (index >= 0 && index <= rows.size())
-			if (columnIndex >= 1 && columnIndex <= rows.get(index).size()) {
-				lastResult = this.getValue(columnIndex);
-				if (lastResult == null)
-					return null;
-				return new ByteArrayInputStream(String.valueOf(lastResult)
-						.getBytes());
-			} else
-				throw new SQLException("Invalid Column Index");
-		else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(columnIndex);
+		if (this.resultIsNull()) {
+			return null;
+		}
+		return new ByteArrayInputStream(String.valueOf(lastResult).getBytes());
 	}
 
 	public InputStream getUnicodeStream(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getUnicodeStream(" + columnIndex
 				+ ")");
-		if (index >= 0 && index <= rows.size())
-			if (columnIndex >= 1 && columnIndex <= rows.get(index).size()) {
-				lastResult = this.getValue(columnIndex);
-				if (lastResult == null)
-					return null;
-				return new ByteArrayInputStream(String.valueOf(lastResult)
-						.getBytes());
-			} else
-				throw new SQLException("Invalid Column Index");
-		else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(columnIndex);
+		if (this.resultIsNull()) {
+			return null;
+		}
+		return new ByteArrayInputStream(String.valueOf(lastResult).getBytes());
 	}
 
 	public InputStream getBinaryStream(int columnIndex) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getBinaryStream(" + columnIndex + ")");
-		if (index >= 0 && index <= rows.size())
-			if (columnIndex >= 1 && columnIndex <= rows.get(index).size()) {
-				lastResult = this.getValue(columnIndex);
-				if (lastResult == null)
-					return null;
-				return new ByteArrayInputStream(String.valueOf(lastResult)
-						.getBytes());
-			} else
-				throw new SQLException("Invalid Column Index");
-		else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(columnIndex);
+		if (this.resultIsNull()) {
+			return null;
+		}
+		return new ByteArrayInputStream(String.valueOf(lastResult).getBytes());
 	}
 
 	public String getString(String columnLabel) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet:getString(" + columnLabel + ")");
-		if (index >= 0 && index <= rows.size()) {
-			int column = resultMetadata.getColumnIndex(columnLabel);
-			if (column < 0)
-				throw new SQLException("Invalid Column Label found: "
-						+ columnLabel);
-			List<?> row = rows.get(index);
-			if (row != null) {
-				lastResult = row.get(column - 1);
-				if (lastResult == null)
-					return null;
-
-				return lastResult.toString();
-			} else
-				throw new SQLException("Null Row found");
-		} else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(this.getColumnIndex(columnLabel));
+		if (this.resultIsNull()) {
+			return null;
+		}
+		return lastResult.toString();
 	}
 
 	public boolean getBoolean(String columnLabel) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getBoolean(" + columnLabel + ")");
-		if (index >= 0 && index <= rows.size()) {
-			int column = resultMetadata.getColumnIndex(columnLabel);
-			if (column < 0)
-				throw new SQLException("Invalid Column Label found");
-			List<?> row = rows.get(index);
-			if (row != null) {
-				lastResult = row.get(column - 1);
-				if (lastResult == null)
-					return false;
-				return Boolean.parseBoolean(String.valueOf(lastResult));
-			} else
-				throw new SQLException("Null Row found");
-		} else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(this.getColumnIndex(columnLabel));
+		if (this.resultIsNull()) {
+			return false;
+		}
+		return Boolean.parseBoolean(String.valueOf(lastResult));
 	}
 
 	public byte getByte(String columnLabel) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getByte(" + columnLabel + ")");
-		if (index >= 0 && index <= rows.size()) {
-			int column = resultMetadata.getColumnIndex(columnLabel);
-			if (column < 0)
-				throw new SQLException("Invalid Column Label found");
-			List<?> row = rows.get(index);
-			if (row != null) {
-				lastResult = row.get(column - 1);
-				if (lastResult == null)
-					return 0;
-				return String.valueOf(lastResult).getBytes()[0];
-			} else
-				throw new SQLException("Null Row found");
-		} else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(this.getColumnIndex(columnLabel));
+		if (this.resultIsNull()) {
+			return 0;
+		}
+		return String.valueOf(lastResult).getBytes()[0];
 	}
 
 	public short getShort(String columnLabel) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet:getShort(" + columnLabel + ")");
-		if (index >= 0 && index <= rows.size()) {
-			int column = resultMetadata.getColumnIndex(columnLabel);
-			if (column < 0)
-				throw new SQLException("Invalid Column Label found");
-			List<?> row = rows.get(index);
-			if (row != null) {
-				lastResult = row.get(column - 1);
-				if (lastResult == null)
-					return 0;
-				// content of row field is Object string, need to get value of
-				// string and parse as Short
-				return Short.parseShort(String.valueOf(lastResult));
-			} else
-				throw new SQLException("Null Row found");
-		} else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(this.getColumnIndex(columnLabel));
+		if (this.resultIsNull()) {
+			return 0;
+		}
+		return Short.parseShort(String.valueOf(lastResult));
 	}
 
 	public int getInt(String columnLabel) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getInt(" + columnLabel + ")");
-		if (index >= 0 && index <= rows.size()) {
-			int column = resultMetadata.getColumnIndex(columnLabel);
-			if (column < 0)
-				throw new SQLException("Invalid Column Label found");
-			List<?> row = rows.get(index);
-			if (row != null) {
-				lastResult = row.get(column - 1);
-				if (lastResult == null)
-					return 0;
-				// content of row field is Object string, need to get value of
-				// string and parse as Int
-				return Integer.parseInt(String.valueOf(lastResult));
-			} else
-				throw new SQLException("Null Row found");
-		} else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(this.getColumnIndex(columnLabel));
+		if (this.resultIsNull()) {
+			return 0;
+		}
+		return Integer.parseInt(String.valueOf(lastResult));
 	}
 
 	public long getLong(String columnLabel) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getLong(" + columnLabel + ")");
-		if (index >= 0 && index <= rows.size()) {
-			int column = resultMetadata.getColumnIndex(columnLabel);
-			if (column < 0)
-				throw new SQLException("Invalid Column Label found");
-			List<?> row = rows.get(index);
-			if (row != null) {
-				lastResult = row.get(column - 1);
-				if (lastResult == null)
-					return 0;
-				// content of row field is Object string, need to get value of
-				// string and parse as Long
-				return Long.parseLong(String.valueOf(lastResult));
-			} else
-				throw new SQLException("Null Row found");
-		} else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(this.getColumnIndex(columnLabel));
+		if (this.resultIsNull()) {
+			return 0;
+		}
+		return Long.parseLong(String.valueOf(lastResult));
 	}
 
 	public float getFloat(String columnLabel) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getFloat(" + columnLabel + ")");
-		if (index >= 0 && index <= rows.size()) {
-			int column = resultMetadata.getColumnIndex(columnLabel);
-			if (column < 0)
-				throw new SQLException("Invalid Column Label found");
-			List<?> row = rows.get(index);
-			if (row != null) {
-				lastResult = row.get(column - 1);
-				if (lastResult == null)
-					return 0;
-				// content of row field is Object string, need to get value of
-				// string and parse as Float
-				return Float.parseFloat(String.valueOf(lastResult));
-			} else
-				throw new SQLException("Null Row found");
-		} else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(this.getColumnIndex(columnLabel));
+		if (this.resultIsNull()) {
+			return 0;
+		}
+		return Float.parseFloat(String.valueOf(lastResult));
 	}
 
 	public double getDouble(String columnLabel) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getDouble(" + columnLabel + ")");
-		if (index >= 0 && index <= rows.size()) {
-			int column = resultMetadata.getColumnIndex(columnLabel);
-			if (column < 0)
-				throw new SQLException("Invalid Column Label found");
-			List<?> row = rows.get(index);
-			if (row != null) {
-				lastResult = row.get(column - 1);
-				if (lastResult == null)
-					return 0;
-				// content of row field is Object string, need to get value of
-				// string and parse as Double
-				return Double.parseDouble(String.valueOf(lastResult));
-			} else
-				throw new SQLException("Null Row found");
-		} else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(this.getColumnIndex(columnLabel));
+		if (this.resultIsNull()) {
+			return 0;
+		}
+		return Double.parseDouble(String.valueOf(lastResult));
 	}
 
 	public BigDecimal getBigDecimal(String columnLabel, int scale)
 			throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getBigDecimal(" + columnLabel + ")");
-		if (index >= 0 && index <= rows.size()) {
-			int columnIndex = resultMetadata.getColumnIndex(columnLabel);
-			if (columnIndex < 0)
-				throw new SQLException("Invalid Column Label found");
-			List<?> row = rows.get(index);
-			if (row != null) {
-				lastResult = row.get(columnIndex - 1);
-				if (lastResult == null)
-					return null;
-				// content of row field is Object string, need to get value of
-				// string and parse as BigDecimal
-				BigDecimal bd = new BigDecimal(String.valueOf(lastResult));
-				return bd.setScale(scale);
-			} else
-				throw new SQLException("Null Row found");
-		} else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(this.getColumnIndex(columnLabel));
+		if (this.resultIsNull()) {
+			return null;
+		}
+		BigDecimal bd = new BigDecimal(String.valueOf(lastResult));
+		return bd.setScale(scale);
 	}
 
 	public byte[] getBytes(String columnLabel) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getBytes(" + columnLabel + ")");
-		if (index >= 0 && index <= rows.size()) {
-			int columnIndex = resultMetadata.getColumnIndex(columnLabel);
-			if (columnIndex < 0)
-				throw new SQLException("Invalid Column Label found");
-			List<?> row = rows.get(index);
-			if (row != null) {
-				lastResult = row.get(columnIndex - 1);
-				if (lastResult == null)
-					return null;
-				return String.valueOf(lastResult).getBytes();
-			} else
-				throw new SQLException("Null Row found");
-		} else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(this.getColumnIndex(columnLabel));
+		if (this.resultIsNull()) {
+			return null;
+		}
+		return String.valueOf(lastResult).getBytes();
 	}
 
 	public Date getDate(String columnLabel) throws SQLException {
 		log(Level.FINEST, "HPCCResultSet: getDate(" + columnLabel + ")");
-		if (index >= 0 && index <= rows.size()) {
-			int columnIndex = resultMetadata.getColumnIndex(columnLabel);
-			if (columnIndex < 0)
-				throw new SQLException("Invalid Column Label found");
-			List<?> row = rows.get(index);
-			if (row != null) {
-				lastResult = row.get(columnIndex - 1);
-				if (lastResult == null)
-					return null;
-				// content of row field is Object string, need to get value of
-				// string and parse as Date
-				return Date.valueOf(String.valueOf(lastResult));
-			} else
-				throw new SQLException("Null Row found");
-		} else
-			throw new SQLException("Invalid Row Index");
+		lastResult = this.getValue(this.getColumnIndex(columnLabel));
+		if (this.resultIsNull()) {
+			return null;
+		}
+		return Date.valueOf(String.valueOf(lastResult));
 	}
 
 	public Time getTime(String columnLabel) throws SQLException {
@@ -526,8 +382,8 @@ public class HPCCResultSet implements ResultSet {
 				throw new SQLException("Invalid Column Label found");
 			List<?> row = rows.get(index);
 			if (row != null) {
-				lastResult = row.get(columnIndex - 1);
-				if (lastResult == null)
+				lastResult = this.getValue(this.getColumnIndex(columnLabel));
+				if (this.resultIsNull())
 					return null;
 				// content of row field is Object string, need to get value of
 				// string and parse as Time
@@ -546,11 +402,11 @@ public class HPCCResultSet implements ResultSet {
 				throw new SQLException("Invalid Column Label found");
 			List<?> row = rows.get(index);
 			if (row != null) {
-				lastResult = row.get(columnIndex - 1);
+				lastResult = this.getValue(this.getColumnIndex(columnLabel));
 				/*
 				 * TODO: why is it an empty string instead of null?!
 				 */
-				if (lastResult == null || lastResult.equals(""))
+				if (this.resultIsNull() || lastResult.equals(""))
 					return null;
 				// content of row field is Object string, need to get value of
 				// string and parse as Timestamp
@@ -569,8 +425,8 @@ public class HPCCResultSet implements ResultSet {
 				throw new SQLException("Invalid Column Label found");
 			List<?> row = rows.get(index);
 			if (row != null) {
-				lastResult = row.get(columnIndex - 1);
-				if (lastResult == null)
+				lastResult = this.getValue(this.getColumnIndex(columnLabel));
+				if (this.resultIsNull())
 					return null;
 				return new ByteArrayInputStream(String.valueOf(lastResult)
 						.getBytes());
@@ -589,8 +445,8 @@ public class HPCCResultSet implements ResultSet {
 				throw new SQLException("Invalid Column Label found");
 			List<?> row = rows.get(index);
 			if (row != null) {
-				lastResult = row.get(columnIndex - 1);
-				if (lastResult == null)
+				lastResult = this.getValue(this.getColumnIndex(columnLabel));
+				if (this.resultIsNull())
 					return null;
 				return new ByteArrayInputStream(String.valueOf(lastResult)
 						.getBytes());
@@ -608,8 +464,8 @@ public class HPCCResultSet implements ResultSet {
 				throw new SQLException("Invalid Column Label found");
 			List<?> row = rows.get(index);
 			if (row != null) {
-				lastResult = row.get(columnIndex - 1);
-				if (lastResult == null)
+				lastResult = this.getValue(this.getColumnIndex(columnLabel));
+				if (this.resultIsNull())
 					return null;
 				return new ByteArrayInputStream(String.valueOf(lastResult)
 						.getBytes());
@@ -678,7 +534,7 @@ public class HPCCResultSet implements ResultSet {
 		if (index >= 0 && index <= rows.size())
 			if (columnIndex >= 1 && columnIndex <= rows.get(index).size()) {
 				lastResult = this.getValue(columnIndex);
-				if (lastResult == null)
+				if (this.resultIsNull())
 					return null;
 				// content of row field is Object string, need to get value of
 				// string and parse as BigDecimal
@@ -697,8 +553,8 @@ public class HPCCResultSet implements ResultSet {
 				throw new SQLException("Invalid Column Label found");
 			List<?> row = rows.get(index);
 			if (row != null) {
-				lastResult = row.get(columnIndex - 1);
-				if (lastResult == null)
+				lastResult = this.getValue(this.getColumnIndex(columnLabel));
+				if (this.resultIsNull())
 					return null;
 				// content of row field is Object string, need to get value of
 				// string and parse as BigDecimal
@@ -779,7 +635,7 @@ public class HPCCResultSet implements ResultSet {
 			if (index >= 0 && index <= rows.size())
 				if (columnIndex >= 1 && columnIndex <= rows.get(index).size()) {
 					lastResult = this.getValue(columnIndex);
-					if (lastResult == null)
+					if (this.resultIsNull())
 						return null;
 					// content of row field is Object string, need to get value
 					// of string and parse as BigDecimal
@@ -802,8 +658,9 @@ public class HPCCResultSet implements ResultSet {
 			List<?> row = rows.get(index);
 			if (row != null) {
 				try {
-					lastResult = row.get(columnIndex - 1);
-					if (lastResult == null)
+					lastResult = this
+							.getValue(this.getColumnIndex(columnLabel));
+					if (this.resultIsNull())
 						return null;
 					return new URL(String.valueOf(lastResult));
 				} catch (MalformedURLException e) {
