@@ -22,16 +22,15 @@ public class HPCCXmlParser {
 		this.resultSetMetaData = resultSetMetaData;
 	}
 	
-	public ArrayList<ArrayList<String>> parseNext() throws HPCCException {
+	public ArrayList<String> parseNextRow() throws HPCCException {
 		//TODO track time
 		//TODO use logger :-D
-		ArrayList<ArrayList<String>> rows = new ArrayList<ArrayList<String>>();
 		try {
 			loop: for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
 				switch (event) {
 					case XMLStreamConstants.START_ELEMENT:
 						if (this.isRow(parser.getLocalName())) {
-							rows.add(this.parseRow(parser, resultSetMetaData));
+							return this.parseRow(parser, resultSetMetaData);
 				        } else if (this.isException(parser.getLocalName())) {
 //				        	this.parseException(parser);
 						}
@@ -48,10 +47,7 @@ public class HPCCXmlParser {
 				}
 			}
 			parser.close();
-			if (rows.isEmpty()) {
-				return null;
-			}
-			return rows;
+			return null;
 		} catch (XMLStreamException | FactoryConfigurationError e1) {
 			throw new HPCCException("Error creating the XML parser!");
 		}
