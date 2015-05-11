@@ -1,6 +1,5 @@
 package de.hpi.hpcc.main;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,8 +11,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.w3c.dom.NodeList;
-
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLParser;
@@ -22,7 +19,7 @@ import de.hpi.hpcc.parsing.SQLParser;
 public class HPCCStatement implements Statement{
 	protected static final Logger logger = HPCCLogger.getLogger();
 	protected HPCCConnection connection;
-	protected ECLParser parser;
+	protected ECLParser eclParser;
     protected boolean closed = false;
     protected SQLWarning warnings;
     protected ResultSet result = null;
@@ -106,17 +103,15 @@ public class HPCCStatement implements Statement{
 	private boolean executeQueryOnHPCC(String sqlStatement) throws SQLException {
 		try {
 			ECLLayouts layouts = new ECLLayouts(connection.getDatabaseMetaData());
-			this.parser = new ECLParser(layouts);
-			NodeList rowList = null;
-			for(String query : parser.parse(sqlStatement)) {
-				if (query != null) {
-					connection.sendRequest(query);
-					rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
-				}
+			this.eclParser = new ECLParser(layouts);
+			HPCCResultSetMetadata resultSetMetaData = null;
+			HPCCXmlParser xmlParser = null;
+			for(String query : eclParser.parse(sqlStatement)) {
+				connection.sendRequest(query);
+				resultSetMetaData = new HPCCResultSetMetadata(eclParser.getExpectedRetCols(), "HPCC Result");
 			}
-			if (rowList != null) {
-				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(parser.getExpectedRetCols(),	"HPCC Result"));
-			}
+			xmlParser = new HPCCXmlParser(connection.getInputStream(), resultSetMetaData);
+			result = new HPCCResultSet(this, xmlParser, resultSetMetaData);
 			return result != null;
 		} catch (HPCCException exception) {
 			exception.printStackTrace();
@@ -150,7 +145,7 @@ public class HPCCStatement implements Statement{
             closed = true;
             connection = null;
             result = null;
-            parser = null;
+            eclParser = null;
         }
         log("Statement closed");
     }
