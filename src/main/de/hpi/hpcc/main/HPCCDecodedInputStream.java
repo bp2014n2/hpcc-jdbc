@@ -31,12 +31,11 @@ public class HPCCDecodedInputStream extends InputStream {
                 System.out.println("ERROR in HPCCDecodedInputStream: call setInput(InputStream input) with the source input stream before reading!");
                 throw new IOException();
             }
-
             int nextByte = input.read();
             if((char) nextByte == '&') {
                 String encoded = "";
                 while((char)(nextByte = input.read()) != ';'){
-                    encoded += nextByte; 
+                    encoded += (char) nextByte; 
                 }
                 return entities.get(encoded).intValue();
             }

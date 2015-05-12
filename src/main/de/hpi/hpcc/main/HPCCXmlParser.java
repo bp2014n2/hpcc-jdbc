@@ -30,14 +30,16 @@ public class HPCCXmlParser {
 			loop: for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
 				switch (event) {
 					case XMLStreamConstants.START_ELEMENT:
-						if (this.isRow(parser.getLocalName())) {
+						String localName = parser.getLocalName();
+						if (this.isRow(localName)) {
 							return this.parseRow(parser, resultSetMetaData);
 				        } else if (this.isException(parser.getLocalName())) {
 				        	//TODO: this.parseException(parser);
 						}
 						break;
 					case XMLStreamConstants.END_ELEMENT:
-						if (this.isDataset(parser.getLocalName())) {
+						localName = parser.getLocalName();
+						if (this.isDataset(localName)) {
 							/*
 							*	We are only parsing the first dataset!
 							*	Additionally, it is possible that the dataset itself is the root element.
