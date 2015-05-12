@@ -28,8 +28,7 @@ public class HPCCDecodedInputStream extends InputStream {
 	@Override
 	public int read() throws IOException {
             if(input == null) {
-                System.out.println("ERROR in HPCCDecodedInputStream: call setInput(InputStream input) with the source input stream before reading!");
-                throw new IOException();
+                throw new IOException("HPCCDecodedInputStream: call setInput(InputStream input) with the source input stream before reading!");
             }
             int nextByte = input.read();
             if((char) nextByte == '&') {
