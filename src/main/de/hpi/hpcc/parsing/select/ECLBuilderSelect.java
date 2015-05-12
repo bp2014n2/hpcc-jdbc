@@ -27,6 +27,7 @@ import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.SQLParser;
 import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectParser;
+import de.hpi.hpcc.parsing.visitor.ECLWhereExpressionOptimizer;
 
 public class ECLBuilderSelect extends ECLBuilder {
 	
@@ -164,7 +165,10 @@ public class ECLBuilderSelect extends ECLBuilder {
 		Expression whereItems = sqlParser.getWhere();
     	if (whereItems != null) {
     		eclCode.append("(");
-    		eclCode.append(parseExpressionECL(whereItems));
+    		ECLWhereExpressionOptimizer expressionOptimizer = new ECLWhereExpressionOptimizer(eclLayouts);
+    		expressionOptimizer.setSelectItems(sqlParser.getSelectItems());
+    		Expression newWhere = expressionOptimizer.optimize(whereItems);
+    		eclCode.append(parseExpressionECL(newWhere));
     		eclCode.append(")");
     	}
 	}

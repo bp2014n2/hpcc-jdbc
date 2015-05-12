@@ -8,6 +8,9 @@ import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.ItemsList;
 import net.sf.jsqlparser.expression.operators.relational.ItemsListVisitor;
 import net.sf.jsqlparser.expression.operators.relational.MultiExpressionList;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
 public class ECLItemsListParser implements ItemsListVisitor {
@@ -15,6 +18,7 @@ public class ECLItemsListParser implements ItemsListVisitor {
 	private String parsed;
 	private String inColumn;
 	private ECLLayouts eclLayouts;
+	private Expression whereExpression;
 	
 	public ECLItemsListParser(ECLLayouts eclLayouts) {
 		this.eclLayouts = eclLayouts;
@@ -25,10 +29,19 @@ public class ECLItemsListParser implements ItemsListVisitor {
 		return parsed;
 	}
 	
+	//just for optimization purposes
+	public Expression parseWhereExpression(ItemsList itemsList) {
+		itemsList.accept(this);
+		return whereExpression;
+	}
+	
 	@Override
 	public void visit(SubSelect subSelect) {
 		StringBuilder expressionBuilder = new StringBuilder();
-		expressionBuilder.append(new ECLBuilderSelect(subSelect.getSelectBody(), eclLayouts).generateECL());
+		//TODO: handle Unions as other possible type for selectBodies
+		PlainSelect select = (PlainSelect) subSelect.getSelectBody();
+		whereExpression = select.getWhere();
+		expressionBuilder.append(new ECLBuilderSelect(select, eclLayouts).generateECL());
 		expressionBuilder.append(","+inColumn);
 		expressionBuilder = ECLUtils.convertToSet(expressionBuilder);
 		parsed = expressionBuilder.toString();
