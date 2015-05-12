@@ -98,8 +98,6 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 		this.allTables = allTables;
 	}
 	
-	
-
 	@Override
 	public void visit(NullValue nullValue) {
 		parsed = "''";	
