@@ -1,8 +1,7 @@
 package de.hpi.hpcc.parsing.visitor;
 
-import java.util.List;
+import java.util.Stack;
 
-import de.hpi.hpcc.parsing.ECLLayouts;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
@@ -58,18 +57,13 @@ import net.sf.jsqlparser.expression.operators.relational.PostgreSQLFromForExpres
 import net.sf.jsqlparser.expression.operators.relational.RegExpMatchOperator;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.statement.select.SelectItem;
+import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
 public class ECLWhereExpressionOptimizer implements ExpressionVisitor {
 
-	private List<SelectItem> selectItems;
+	private Stack<FromItem> parentalFromItems = new Stack<FromItem>();
 	private Expression optimizedExpression;
-	private ECLLayouts eclLayouts;
-
-	public ECLWhereExpressionOptimizer(ECLLayouts eclLayouts) {
-		this.eclLayouts = eclLayouts;
-	}
 
 	public Expression optimize(Expression expression) {
 		this.optimizedExpression = expression;
@@ -77,18 +71,18 @@ public class ECLWhereExpressionOptimizer implements ExpressionVisitor {
 		return this.optimizedExpression;
 	}
 	
-	public void setSelectItems(List<SelectItem> selectItems) {
-		this.selectItems = selectItems;
+	public void pushFromItem(FromItem fromItem) {
+		this.parentalFromItems.push(fromItem);
 	}
 
 	@Override
 	public void visit(InExpression inExpression) {
-		optimizedExpression = inExpression;
 		
-		if (selectItems.size() == 1 && selectItems.get(0).equals(inExpression.getLeftExpression())) {
-			ItemsList itemsList = inExpression.getRightItemsList();
-			ECLItemsListParser listParser = new ECLItemsListParser(eclLayouts);
-			optimizedExpression = listParser.parseWhereExpression(itemsList);
+		ItemsList itemsList = inExpression.getRightItemsList();
+		ECLWhereExpressionFinder finder = new ECLWhereExpressionFinder();
+		Expression where = finder.find(itemsList, parentalFromItems.pop());
+		if (where != null) {
+			optimizedExpression = where;
 		}
 	}
 

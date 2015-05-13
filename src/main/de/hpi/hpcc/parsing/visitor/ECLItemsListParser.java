@@ -18,7 +18,6 @@ public class ECLItemsListParser implements ItemsListVisitor {
 	private String parsed;
 	private String inColumn;
 	private ECLLayouts eclLayouts;
-	private Expression whereExpression;
 	
 	public ECLItemsListParser(ECLLayouts eclLayouts) {
 		this.eclLayouts = eclLayouts;
@@ -28,20 +27,12 @@ public class ECLItemsListParser implements ItemsListVisitor {
 		itemsList.accept(this);
 		return parsed;
 	}
-	
-	//just for optimization purposes
-	public Expression parseWhereExpression(ItemsList itemsList) {
-		itemsList.accept(this);
-		return whereExpression;
-	}
+
 	
 	@Override
 	public void visit(SubSelect subSelect) {
 		StringBuilder expressionBuilder = new StringBuilder();
-		//TODO: handle Unions as other possible type for selectBodies
-		PlainSelect select = (PlainSelect) subSelect.getSelectBody();
-		whereExpression = select.getWhere();
-		expressionBuilder.append(new ECLBuilderSelect(select, eclLayouts).generateECL());
+		expressionBuilder.append(new ECLBuilderSelect(subSelect.getSelectBody(), eclLayouts).generateECL());
 		expressionBuilder.append(","+inColumn);
 		expressionBuilder = ECLUtils.convertToSet(expressionBuilder);
 		parsed = expressionBuilder.toString();

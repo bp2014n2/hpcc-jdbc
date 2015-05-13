@@ -67,8 +67,10 @@ public class ECLBuilderSelectTest extends ECLBuilderTest {
 	@Test
 	public void shouldTranslateSelectWithSubselectInWhere() throws HPCCException {
 		assertStatementCanBeParsedAs("TABLE(myTableA(myColumnB IN SET(TABLE(myTableB, {myColumnC}),myColumnB)), {myColumnA})", "select myColumnA from myTableA where myColumnB in (select myColumnC from myTableB)");
-		assertStatementCanBeParsedAs("TABLE(myTableA, {myColumnA})", "select myColumnA from myTableA where myColumnA in (select myColumnA from myTableA)");
-		assertStatementCanBeParsedAs("TABLE(myTableA(myColumnA IN SET(TABLE(myTableA, {myColumnA}),myColumnB)), {myColumnA, myColumnB})", "select myColumnA, myColumnB from myTableA where myColumnA in (select myColumnA from myTableA)");
+		assertStatementCanBeParsedAs("TABLE(myTableA(myColumnC = 'foo'), {myColumnA})", "select myColumnA from myTableA where myColumnA in (select myColumnA from myTableA where myColumnC = 'foo')");
+		assertStatementCanBeParsedAs("TABLE(myTableA(myColumnC = 'foo'), {myColumnA})", "select myColumnA from myTableA where myColumnA in (select myColumnA from mySchema.myTableA where myColumnC = 'foo')");
+		assertStatementCanBeParsedAs("TABLE(myTableA(myColumnC = 'foo'), {myColumnA})", "select myColumnA from mySchema.myTableA where myColumnA in (select myColumnA from mySchema.myTableA a where myColumnC = 'foo')");
+		assertStatementCanBeParsedAs("TABLE(myTableA(myColumnC = 'foo'), {myColumnA, myColumnB})", "select myColumnA, myColumnB from myTableA where myColumnA in (select myColumnA from myTableA where myColumnC = 'foo')");
 //		assertStatementCanBeParsedAs("Table(myTableA(myColumnB in dictionary([{'myValue1'}, {'myValue2'}], {STRING15 myColumnB})), {myColumnA})", "select myColumnA from myTableA where myColumnB in ('myValue1', 'myValue2')");
 	}
 	

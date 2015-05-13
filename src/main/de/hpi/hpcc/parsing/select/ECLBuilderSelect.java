@@ -161,8 +161,8 @@ public class ECLBuilderSelect extends ECLBuilder {
 		Expression whereItems = sqlParser.getWhere();
     	if (whereItems != null) {
     		eclCode.append("(");
-    		ECLWhereExpressionOptimizer expressionOptimizer = new ECLWhereExpressionOptimizer(eclLayouts);
-    		expressionOptimizer.pushFromItems(sqlParser.getFromItem());
+    		ECLWhereExpressionOptimizer expressionOptimizer = new ECLWhereExpressionOptimizer();
+    		expressionOptimizer.pushFromItem(sqlParser.getFromItem());
     		Expression newWhere = expressionOptimizer.optimize(whereItems);
     		eclCode.append(parseExpressionECL(newWhere));
     		eclCode.append(")");

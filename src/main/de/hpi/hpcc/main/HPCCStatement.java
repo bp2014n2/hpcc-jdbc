@@ -25,7 +25,7 @@ public class HPCCStatement implements Statement{
     protected ResultSet result = null;
     protected String name;
     protected String sqlStatement;
-    private boolean federatedDatabase = false;
+    private boolean federatedDatabase = true;
     private Statement postgreSQLStatement;
     
     private static final List<String> whiteList = new ArrayList<String>() {
