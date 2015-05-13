@@ -14,7 +14,7 @@ public class HPCCXmlParser {
 	private HPCCResultSetMetadata	resultSetMetaData;
 	public HPCCXmlParser(InputStream xml, HPCCResultSetMetadata resultSetMetaData) throws HPCCException {
 		try {
-                        HPCCDecodedInputStream xmlEncoded = new HPCCDecodedInputStream(xml);
+            HPCCDecodedInputStream xmlEncoded = new HPCCDecodedInputStream(xml);
 			XMLInputFactory inputFactory = XMLInputFactory.newInstance();
 			this.parser = inputFactory.createXMLStreamReader(xmlEncoded);
 		} catch (XMLStreamException | FactoryConfigurationError e) {

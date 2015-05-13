@@ -12,6 +12,7 @@ public class HPCCDecodedInputStream extends InputStream {
               put("lt",   new Integer((int)'<'));
               put("gt",   new Integer((int)'>'));
               put("tild", new Integer((int)'~'));
+              put("apos", new Integer((int)'\''));
         }};
 
         private InputStream input;
