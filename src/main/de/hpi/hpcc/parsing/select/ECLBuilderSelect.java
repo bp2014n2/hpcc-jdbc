@@ -20,6 +20,7 @@ import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import de.hpi.hpcc.main.HPCCException;
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
@@ -28,7 +29,6 @@ import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectParser;
 
 public class ECLBuilderSelect extends ECLBuilder {
-
 	
 	protected SQLParserSelect sqlParser;
 	private Select select;
@@ -39,7 +39,6 @@ public class ECLBuilderSelect extends ECLBuilder {
 		super(select, eclLayouts);
 		this.select = select;
 	}
-	
 
 	public ECLBuilderSelect(SelectBody table, ECLLayouts eclLayouts) {
 		super(null, eclLayouts);
@@ -54,8 +53,6 @@ public class ECLBuilderSelect extends ECLBuilder {
 		}
 	}
 
-
-	//	private boolean hasAlias = false;
 	/**
 	 * This method generates ECL code from a given SQL code. 
 	 * Therefore it delegates the generation to the appropriate method, 
@@ -184,17 +181,28 @@ public class ECLBuilderSelect extends ECLBuilder {
 		eclCode.append(", ");
 		if(inner) {
 			selectItemsStrings.addAll(createInnerSelectItemsString(sqlParser));
-		}
-    
-		if (sqlParser.isSelectAll()){
-			if(sqlParser.getFromItem() instanceof SubSelect) {
-				selectItemsStrings.addAll(sqlParser.getFromItemColumns());
+			if (sqlParser.isSelectAll()){
+				if(sqlParser.getFromItem() instanceof SubSelect) {
+					selectItemsStrings.addAll(sqlParser.getFromItemColumns());
+				} else {
+					selectItemsStrings.addAll(sqlParser.getAllColumns());
+				}
 			} else {
-				selectItemsStrings.addAll(sqlParser.getAllColumns());
+				selectItemsStrings.addAll(createSelectItems(sqlParser));
 			}
 		} else {
-			selectItemsStrings.addAll(createSelectItems(sqlParser));
+			if (sqlParser.isSelectAll()){
+				if(sqlParser.getFromItem() instanceof SubSelect) {
+					selectItemsStrings.addAll(sqlParser.getFromItemColumns());
+				} else {
+					selectItemsStrings.addAll(sqlParser.getAllColumns());
+				}
+			} else {
+				selectItemsStrings.addAll(createOuterSelectItemsString(sqlParser));
+			}
 		}
+    
+		
     	eclCode.append(ECLUtils.encapsulateWithCurlyBrackets(ECLUtils.join(selectItemsStrings, ", ")));
 	}
 	
@@ -203,10 +211,11 @@ public class ECLBuilderSelect extends ECLBuilder {
 		ArrayList<SelectItem> selectItems = (ArrayList<SelectItem>) sqlParser.getSelectItems();
 		for (SelectItem selectItem : selectItems) {
 			if (selectItem instanceof SelectExpressionItem) {
-				StringBuilder selectItemString = new StringBuilder();
 				SelectExpressionItem sei = (SelectExpressionItem) selectItem;
-				selectItemString.append(selectParser.parse(sei));
-   				selectItemsStrings.add(selectItemString.toString());
+				String selectItemString = selectParser.parse(sei);
+				if (!HPCCJDBCUtils.containsStringCaseInsensitive(selectItemsStrings, selectItemString)) {
+					selectItemsStrings.add(selectItemString);
+				}
    			}
 		}
 		return selectItemsStrings;
@@ -223,6 +232,22 @@ public class ECLBuilderSelect extends ECLBuilder {
 			}
 		}
 		return innerItems;
+	}
+	
+	private LinkedHashSet<String> createOuterSelectItemsString(SQLParserSelect sqlParser) {
+		LinkedHashSet<String> selectItemsStrings = new LinkedHashSet<String>();
+		ArrayList<SelectItem> selectItems = (ArrayList<SelectItem>) sqlParser.getSelectItems();
+		for (SelectItem selectItem : selectItems) {
+			if (selectItem instanceof SelectExpressionItem) {
+				SelectExpressionItem sei = (SelectExpressionItem) selectItem;
+				String selectItemString = selectParser.parseAlias(sei);
+				if (!HPCCJDBCUtils.containsStringCaseInsensitive(selectItemsStrings, selectItemString)) {
+					selectItemsStrings.add(selectItemString);
+				}
+   				
+   			}
+		}
+		return selectItemsStrings;
 	}
 
 	/**
@@ -255,8 +280,7 @@ public class ECLBuilderSelect extends ECLBuilder {
 	}
 
 	@Override
-	protected SQLParserSelect getSqlParser() {
-		// TODO Auto-generated method stub
-		return sqlParser;
+	protected Select getStatement() {
+		return select;
 	}
 }

@@ -1,6 +1,7 @@
 package de.hpi.hpcc.parsing.visitor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -24,9 +25,34 @@ public class ECLAllColumnCollector implements FromItemVisitor {
 		this.layouts = layouts;
 	}
 	
+	public List<SelectExpressionItem> collect(List<FromItem> fromItems) {
+		for(FromItem fromItem : fromItems) {
+			fromItem.accept(this);
+		}
+		return expressions;
+	}
+	
 	public List<SelectExpressionItem> collect(FromItem fromItem) {
 		fromItem.accept(this);
 		return expressions;
+	}
+	
+	private boolean addSelectExpressionItem(SelectExpressionItem sei) {
+		String seiToString = sei.toString();
+		for(SelectExpressionItem addedSei : expressions) {
+			if(seiToString.equals(addedSei.toString())) {
+				return false;
+			}
+		}
+		return expressions.add(sei);
+	}
+	
+	private boolean addAllSelectExpressionItem(List<SelectExpressionItem> seis) {
+		boolean success = true;
+		for(SelectExpressionItem sei : seis) {
+			success &= addSelectExpressionItem(sei);
+		}
+		return success;
 	}
 	
 	@Override
@@ -35,7 +61,7 @@ public class ECLAllColumnCollector implements FromItemVisitor {
 		for(String rawColumn : rawColumns) {
 			Column column = new Column(rawColumn);
 			SelectExpressionItem sei = new SelectExpressionItem(column);
-			expressions.add(sei);
+			addSelectExpressionItem(sei);
 		}
 	}
 
@@ -43,7 +69,7 @@ public class ECLAllColumnCollector implements FromItemVisitor {
 	public void visit(SubSelect subSelect) {
 		ECLSelectItemFinder finder = new ECLSelectItemFinder(layouts);
 		if(subSelect.getSelectBody() != null) {
-			expressions.addAll(finder.find(subSelect.getSelectBody()));
+			addAllSelectExpressionItem(finder.find(subSelect.getSelectBody()));
 		}
 	}
 

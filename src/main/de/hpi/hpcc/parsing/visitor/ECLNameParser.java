@@ -91,14 +91,14 @@ public class ECLNameParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(DoubleValue doubleValue) {
-		// TODO Auto-generated method stub
-		
+		// TODO: handle 2 columns with same value
+		name = "double_"+doubleValue.toString();
 	}
 
 	@Override
 	public void visit(LongValue longValue) {
-		// TODO Auto-generated method stub
-		
+		// TODO: handle 2 columns with same value
+		name = "long_"+longValue.getStringValue();
 	}
 
 	@Override
@@ -127,8 +127,8 @@ public class ECLNameParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(StringValue stringValue) {
-		// TODO Auto-generated method stub
-		
+		// TODO: handle 2 columns with same value
+		name = "string_"+stringValue.getNotExcapedValue().replaceAll("\\W", "");
 	}
 
 	@Override

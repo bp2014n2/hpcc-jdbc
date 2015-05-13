@@ -639,13 +639,17 @@ public class HPCCJDBCUtils
             return urlstr;
     }
     
-    public static boolean containsStringCaseInsensitive(List<String> list, String string) {
-    	for (String listItem : list) {
-			if (listItem.toLowerCase().equals(string.toLowerCase())) {
-				return true;
+    public static int indexOfCaseInsensitive(List<String> list, String string) {
+    	for (int i = 0; i < list.size(); i++) {
+			if (list.get(i).toLowerCase().equals(string.toLowerCase())) {
+				return i;
 			} 
 		}
-    	return false;
+    	return -1;
+    }
+    
+    public static boolean containsStringCaseInsensitive(List<String> list, String string) {
+    	return (indexOfCaseInsensitive(list, string) != -1);
     }
     
     public static boolean containsStringCaseInsensitive(Set<String> set, String string) {

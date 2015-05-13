@@ -16,8 +16,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -34,7 +32,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import de.hpi.hpcc.main.HPCCDFUFile.FileFormat;
-import de.hpi.hpcc.main.HPCCJDBCUtils.EclTypes;
 
 public class HPCCDatabaseMetaData implements DatabaseMetaData
 {
@@ -1226,302 +1223,309 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     public ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern)
             throws SQLException
     {
-        List<List> procedures = new ArrayList<List>();
-        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
-
-        boolean allprocsearch = procedureNamePattern == null || procedureNamePattern.length() == 0
-                || procedureNamePattern.trim().equals("*") || procedureNamePattern.trim().equals("%");
-
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData GETPROCS catalog: " + catalog
-                + ", schemaPattern: " + schemaPattern + ", procedureNamePattern: " + procedureNamePattern);
-
-        metacols.add(new HPCCColumnMetaData("PROCEDURE_CAT", 1, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("PROCEDURE_SCHEM", 2, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData(PROCEDURE_NAME, 3, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("R1", 4, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("R2", 5, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("R6", 6, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("REMARKS", 7, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("PROCEDURE_TYPE", 8, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("SPECIFIC_NAME", 9, java.sql.Types.VARCHAR));
-
-        if (allprocsearch)
-        {
-            if (!isQuerySetMetaDataCached())
-                setQuerySetMetaDataCached(fetchHPCCQueriesInfo());
-
-            Enumeration<Object> aliases = eclqueries.getAliases();
-            while (aliases.hasMoreElements())
-            {
-                String queryalias = (String)aliases.nextElement();
-                HPCCQuery query = eclqueries.getQuerysetQuery(queryalias);
-                procedures.add(populateProcedureRow(query));
-            }
-        }
-        else
-        {
-            procedures.add(populateProcedureRow(getHpccQuery(procedureNamePattern)));
-        }
-
-        return new HPCCResultSet(procedures, metacols, "Procedures");
+//        List<List> procedures = new ArrayList<List>();
+//        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
+//
+//        boolean allprocsearch = procedureNamePattern == null || procedureNamePattern.length() == 0
+//                || procedureNamePattern.trim().equals("*") || procedureNamePattern.trim().equals("%");
+//
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData GETPROCS catalog: " + catalog
+//                + ", schemaPattern: " + schemaPattern + ", procedureNamePattern: " + procedureNamePattern);
+//
+//        metacols.add(new HPCCColumnMetaData("PROCEDURE_CAT", 1, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("PROCEDURE_SCHEM", 2, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData(PROCEDURE_NAME, 3, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("R1", 4, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("R2", 5, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("R6", 6, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("REMARKS", 7, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("PROCEDURE_TYPE", 8, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("SPECIFIC_NAME", 9, java.sql.Types.VARCHAR));
+//
+//        if (allprocsearch)
+//        {
+//            if (!isQuerySetMetaDataCached())
+//                setQuerySetMetaDataCached(fetchHPCCQueriesInfo());
+//
+//            Enumeration<Object> aliases = eclqueries.getAliases();
+//            while (aliases.hasMoreElements())
+//            {
+//                String queryalias = (String)aliases.nextElement();
+//                HPCCQuery query = eclqueries.getQuerysetQuery(queryalias);
+//                procedures.add(populateProcedureRow(query));
+//            }
+//        }
+//        else
+//        {
+//            procedures.add(populateProcedureRow(getHpccQuery(procedureNamePattern)));
+//        }
+//
+//        return new HPCCResultSet(procedures, metacols, "Procedures");
+    	return null;
     }
 
-    private ArrayList populateProcedureRow(HPCCQuery query)
-    {
-        ArrayList rowValues = new ArrayList();
-
-        if (query != null)
-        {
-            rowValues.add("");
-            rowValues.add(query.getQuerySet());
-            rowValues.add(query.getQuerySet() + "::" + query.getName());
-            rowValues.add("");
-            rowValues.add("");
-            rowValues.add("");
-
-            //The remarks string will display this query's actual ID, and its
-            //input parameters in order.
-
-            String remarks = query.getID() + "( ";
-            int index = 0;
-            int totalfields = query.getAllInFields().size();
-            for (HPCCColumnMetaData field : query.getAllInFields())
-            {
-                remarks += field.getColumnName();
-                if (index < totalfields -1)
-                    remarks += ", ";
-                index++;
-            }
-            remarks += " )";
-
-            rowValues.add(remarks);
-            rowValues.add(procedureResultUnknown);
-            rowValues.add(query.getID());
-        }
-
-        return rowValues;
-    }
+//    private ArrayList populateProcedureRow(HPCCQuery query)
+//    {
+//        ArrayList rowValues = new ArrayList();
+//
+//        if (query != null)
+//        {
+//            rowValues.add("");
+//            rowValues.add(query.getQuerySet());
+//            rowValues.add(query.getQuerySet() + "::" + query.getName());
+//            rowValues.add("");
+//            rowValues.add("");
+//            rowValues.add("");
+//
+//            //The remarks string will display this query's actual ID, and its
+//            //input parameters in order.
+//
+//            String remarks = query.getID() + "( ";
+//            int index = 0;
+//            int totalfields = query.getAllInFields().size();
+//            for (HPCCColumnMetaData field : query.getAllInFields())
+//            {
+//                remarks += field.getColumnName();
+//                if (index < totalfields -1)
+//                    remarks += ", ";
+//                index++;
+//            }
+//            remarks += " )";
+//
+//            rowValues.add(remarks);
+//            rowValues.add(procedureResultUnknown);
+//            rowValues.add(query.getID());
+//        }
+//
+//        return rowValues;
+//    }
 
     @Override
     public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern,
             String columnNamePattern) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getProcedureColumns catalog: " + catalog
-                + ", schemaPattern: " + schemaPattern + ", procedureNamePattern: " + procedureNamePattern
-                + " columnanmepat: " + columnNamePattern);
-
-        List<List> procedurecols = new ArrayList<List>();
-        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
-
-        boolean allcolumnsearch = columnNamePattern == null || columnNamePattern.length() == 0
-                || columnNamePattern.trim().equals("*") || columnNamePattern.trim().equals("%");
-
-        metacols.add(new HPCCColumnMetaData("PROCEDURE_CAT", 1, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("PROCEDURE_SCHEM", 2, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData(PROCEDURE_NAME, 3, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("COLUMN_NAME", 4, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("COLUMN_TYPE", 5, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("DATA_TYPE", 6, java.sql.Types.INTEGER));
-        metacols.add(new HPCCColumnMetaData("TYPE_NAME", 7, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("PRECISION", 8, java.sql.Types.INTEGER));
-        metacols.add(new HPCCColumnMetaData("LENGTH", 9, java.sql.Types.INTEGER));
-        metacols.add(new HPCCColumnMetaData("SCALE", 10, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("RADIX", 11, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("NULLABLE", 12, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("REMARKS", 13, java.sql.Types.VARCHAR));
-
-        int coltype = java.sql.Types.NULL;
-        ResultSet procs = getProcedures(catalog, schemaPattern, procedureNamePattern);
-
-        while (procs.next())
-        {
-            HPCCQuery query = getHpccQuery(procs.getString(PROCEDURE_NAME));
-
-            Iterator<HPCCColumnMetaData> queryfields = query.getAllFields().iterator();
-
-            while (queryfields.hasNext())
-            {
-                HPCCColumnMetaData col = (HPCCColumnMetaData) queryfields.next();
-                String fieldname = col.getColumnName();
-                if (!allcolumnsearch && !columnNamePattern.equalsIgnoreCase(fieldname))
-                    continue;
-                coltype = col.getSqlType();
-
-                HPCCJDBCUtils.traceoutln(Level.FINEST, "Proc col Found: " + query.getName() + "." + fieldname + " of type: " + coltype
-                        + "(" + HPCCJDBCUtils.convertSQLtype2JavaClassName(coltype) + ")");
-
-                ArrayList rowValues = new ArrayList();
-                procedurecols.add(rowValues);
-
-                /* 1 */rowValues.add(catalog);
-                /* 2 */rowValues.add(schemaPattern);
-                /* 3 */rowValues.add(query.getQuerySet() + "::" + query.getName());
-                /* 4 */rowValues.add(fieldname);
-                /* 5 */rowValues.add(col.getParamType());
-                /* 6 */rowValues.add(coltype);
-                /* 7 */rowValues.add(HPCCJDBCUtils.convertSQLtype2JavaClassName(coltype));
-                /* 8 */rowValues.add(0);
-                /* 9 */rowValues.add(0);
-                /* 10 */rowValues.add(0);
-                /* 11 */rowValues.add(1);
-                /* 12 */rowValues.add(procedureNoNulls);
-                /* 13 */rowValues.add(col.getParamType() == procedureColumnIn ? "Input param index: " + col.getIndex() + "." : "Output param.");
-
-                if (!allcolumnsearch)
-                    break;
-            }
-        }
-
-        return new HPCCResultSet(procedurecols, metacols, "ProcedureColumns");
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getProcedureColumns catalog: " + catalog
+//                + ", schemaPattern: " + schemaPattern + ", procedureNamePattern: " + procedureNamePattern
+//                + " columnanmepat: " + columnNamePattern);
+//
+//        List<List> procedurecols = new ArrayList<List>();
+//        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
+//
+//        boolean allcolumnsearch = columnNamePattern == null || columnNamePattern.length() == 0
+//                || columnNamePattern.trim().equals("*") || columnNamePattern.trim().equals("%");
+//
+//        metacols.add(new HPCCColumnMetaData("PROCEDURE_CAT", 1, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("PROCEDURE_SCHEM", 2, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData(PROCEDURE_NAME, 3, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("COLUMN_NAME", 4, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("COLUMN_TYPE", 5, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("DATA_TYPE", 6, java.sql.Types.INTEGER));
+//        metacols.add(new HPCCColumnMetaData("TYPE_NAME", 7, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("PRECISION", 8, java.sql.Types.INTEGER));
+//        metacols.add(new HPCCColumnMetaData("LENGTH", 9, java.sql.Types.INTEGER));
+//        metacols.add(new HPCCColumnMetaData("SCALE", 10, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("RADIX", 11, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("NULLABLE", 12, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("REMARKS", 13, java.sql.Types.VARCHAR));
+//
+//        int coltype = java.sql.Types.NULL;
+//        ResultSet procs = getProcedures(catalog, schemaPattern, procedureNamePattern);
+//
+//        while (procs.next())
+//        {
+//            HPCCQuery query = getHpccQuery(procs.getString(PROCEDURE_NAME));
+//
+//            Iterator<HPCCColumnMetaData> queryfields = query.getAllFields().iterator();
+//
+//            while (queryfields.hasNext())
+//            {
+//                HPCCColumnMetaData col = (HPCCColumnMetaData) queryfields.next();
+//                String fieldname = col.getColumnName();
+//                if (!allcolumnsearch && !columnNamePattern.equalsIgnoreCase(fieldname))
+//                    continue;
+//                coltype = col.getSqlType();
+//
+//                HPCCJDBCUtils.traceoutln(Level.FINEST, "Proc col Found: " + query.getName() + "." + fieldname + " of type: " + coltype
+//                        + "(" + HPCCJDBCUtils.convertSQLtype2JavaClassName(coltype) + ")");
+//
+//                ArrayList rowValues = new ArrayList();
+//                procedurecols.add(rowValues);
+//
+//                /* 1 */rowValues.add(catalog);
+//                /* 2 */rowValues.add(schemaPattern);
+//                /* 3 */rowValues.add(query.getQuerySet() + "::" + query.getName());
+//                /* 4 */rowValues.add(fieldname);
+//                /* 5 */rowValues.add(col.getParamType());
+//                /* 6 */rowValues.add(coltype);
+//                /* 7 */rowValues.add(HPCCJDBCUtils.convertSQLtype2JavaClassName(coltype));
+//                /* 8 */rowValues.add(0);
+//                /* 9 */rowValues.add(0);
+//                /* 10 */rowValues.add(0);
+//                /* 11 */rowValues.add(1);
+//                /* 12 */rowValues.add(procedureNoNulls);
+//                /* 13 */rowValues.add(col.getParamType() == procedureColumnIn ? "Input param index: " + col.getIndex() + "." : "Output param.");
+//
+//                if (!allcolumnsearch)
+//                    break;
+//            }
+//        }
+//
+//        return new HPCCResultSet(procedurecols, metacols, "ProcedureColumns");
+    	return null;
     }
 
     @Override
     public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types)
             throws SQLException
     {
-        /*
-         * TABLE_CAT String => table catalog (may be null) TABLE_SCHEM String =>
-         * table schema (may be null) TABLE_NAME String => table name TABLE_TYPE
-         * String => table type. Typical types are "TABLE", "VIEW",
-         * "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS",
-         * "SYNONYM". REMARKS String => explanatory comment on the table
-         * TYPE_CAT String => the types catalog (may be null) TYPE_SCHEM String
-         * => the types schema (may be null) TYPE_NAME String => type name (may
-         * be null) SELF_REFERENCING_COL_NAME String => name of the designated
-         * "identifier" column of a typed table (may be null) REF_GENERATION
-         * String => specifies how values in SELF_REFERENCING_COL_NAME are
-         * created. Values are "SYSTEM", "USER", "DERIVED". (may be null)
-         */
-
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData GETTABLES:");
-        if (catalog != null)
-            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t Catalog: " + catalog);
-        else
-            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t Catalog: null");
-
-        if (schemaPattern != null)
-            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t schemaPattern: " + schemaPattern);
-        else
-            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t schemaPattern: null");
-
-        if (tableNamePattern != null)
-            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t tableNamePattern: " + tableNamePattern);
-        else
-            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t tableNamePattern: null");
-
-        if (types != null && types.length > 0)
-            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t types: " + types[0]);
-        else
-            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t types: null");
-
-        boolean alltablesearch = tableNamePattern == null || tableNamePattern.length() == 0
-                || tableNamePattern.trim().equals("*") || tableNamePattern.trim().equals("%");
-
-        List<List<String>> tables = new ArrayList<List<String>>();
-        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
-
-        metacols.add(new HPCCColumnMetaData("TABLE_CAT", 1, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("TABLE_SCHEM", 2, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData(TABLE_NAME, 3, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("TABLE_TYPE", 4, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("REMARKS", 5, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("TYPE_CAT", 6, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("TABLE_CAT", 7, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("TYPE_SCHEM", 8, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("TYPE_NAME", 9, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("SELF_REFERENCING_COL_NAME", 10, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("REF_GENERATION", 11, java.sql.Types.VARCHAR));
-
-        if (alltablesearch)
-        {
-            if (!isDFUMetaDataCached())
-                setDFUMetaDataCached(fetchHPCCFilesInfo());
-
-            Enumeration<Object> files = dfuFiles.getFiles();
-            while (files.hasMoreElements())
-            {
-            	HPCCDFUFile file = (HPCCDFUFile) files.nextElement();
-                if (file.hasFileRecDef())
-                    tables.add(populateTableInfo(file));
-            }
-        }
-        else
-        {
-        	HPCCDFUFile file = getDFUFile(tableNamePattern);
-            if (file != null && file.hasFileRecDef())
-                tables.add(populateTableInfo(file));
-        }
-        return new HPCCResultSet(tables, metacols, "HPCC Tables");
+//        /*
+//         * TABLE_CAT String => table catalog (may be null) TABLE_SCHEM String =>
+//         * table schema (may be null) TABLE_NAME String => table name TABLE_TYPE
+//         * String => table type. Typical types are "TABLE", "VIEW",
+//         * "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY", "ALIAS",
+//         * "SYNONYM". REMARKS String => explanatory comment on the table
+//         * TYPE_CAT String => the types catalog (may be null) TYPE_SCHEM String
+//         * => the types schema (may be null) TYPE_NAME String => type name (may
+//         * be null) SELF_REFERENCING_COL_NAME String => name of the designated
+//         * "identifier" column of a typed table (may be null) REF_GENERATION
+//         * String => specifies how values in SELF_REFERENCING_COL_NAME are
+//         * created. Values are "SYSTEM", "USER", "DERIVED". (may be null)
+//         */
+//
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData GETTABLES:");
+//        if (catalog != null)
+//            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t Catalog: " + catalog);
+//        else
+//            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t Catalog: null");
+//
+//        if (schemaPattern != null)
+//            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t schemaPattern: " + schemaPattern);
+//        else
+//            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t schemaPattern: null");
+//
+//        if (tableNamePattern != null)
+//            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t tableNamePattern: " + tableNamePattern);
+//        else
+//            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t tableNamePattern: null");
+//
+//        if (types != null && types.length > 0)
+//            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t types: " + types[0]);
+//        else
+//            HPCCJDBCUtils.traceoutln(Level.FINEST, "\t types: null");
+//
+//        boolean alltablesearch = tableNamePattern == null || tableNamePattern.length() == 0
+//                || tableNamePattern.trim().equals("*") || tableNamePattern.trim().equals("%");
+//
+//        List<List<String>> tables = new ArrayList<List<String>>();
+//        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
+//
+//        metacols.add(new HPCCColumnMetaData("TABLE_CAT", 1, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("TABLE_SCHEM", 2, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData(TABLE_NAME, 3, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("TABLE_TYPE", 4, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("REMARKS", 5, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("TYPE_CAT", 6, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("TABLE_CAT", 7, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("TYPE_SCHEM", 8, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("TYPE_NAME", 9, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("SELF_REFERENCING_COL_NAME", 10, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("REF_GENERATION", 11, java.sql.Types.VARCHAR));
+//
+//        if (alltablesearch)
+//        {
+//            if (!isDFUMetaDataCached())
+//                setDFUMetaDataCached(fetchHPCCFilesInfo());
+//
+//            Enumeration<Object> files = dfuFiles.getFiles();
+//            while (files.hasMoreElements())
+//            {
+//            	HPCCDFUFile file = (HPCCDFUFile) files.nextElement();
+//                if (file.hasFileRecDef())
+//                    tables.add(populateTableInfo(file));
+//            }
+//        }
+//        else
+//        {
+//        	HPCCDFUFile file = getDFUFile(tableNamePattern);
+//            if (file != null && file.hasFileRecDef())
+//                tables.add(populateTableInfo(file));
+//        }
+//        return new HPCCResultSet(tables, metacols, "HPCC Tables");
+    	
+    	return null;
     }
 
-    private ArrayList<String> populateTableInfo(HPCCDFUFile table)
-    {
-        ArrayList<String> rowValues = new ArrayList<String>();
-        if (table != null)
-        {
-            /* 1 */rowValues.add(HPCCJDBCUtils.HPCCCATALOGNAME);
-            /* 2 */rowValues.add(null);
-            /* 3 */rowValues.add(table.getFullyQualifiedName());
-            /* 4 */rowValues.add("TABLE");
-            /* 5 */rowValues.add("HPCC File "+ table.getDescription());
-            /* 6 */rowValues.add("");
-            /* 7 */rowValues.add("");
-            /* 8 */rowValues.add("");
-            /* 9 */rowValues.add("");
-            /* 10 */rowValues.add("");
-            /* 11 */rowValues.add("");
-        }
-        return rowValues;
-    }
+//    private ArrayList<String> populateTableInfo(HPCCDFUFile table)
+//    {
+//        ArrayList<String> rowValues = new ArrayList<String>();
+//        if (table != null)
+//        {
+//            /* 1 */rowValues.add(HPCCJDBCUtils.HPCCCATALOGNAME);
+//            /* 2 */rowValues.add(null);
+//            /* 3 */rowValues.add(table.getFullyQualifiedName());
+//            /* 4 */rowValues.add("TABLE");
+//            /* 5 */rowValues.add("HPCC File "+ table.getDescription());
+//            /* 6 */rowValues.add("");
+//            /* 7 */rowValues.add("");
+//            /* 8 */rowValues.add("");
+//            /* 9 */rowValues.add("");
+//            /* 10 */rowValues.add("");
+//            /* 11 */rowValues.add("");
+//        }
+//        return rowValues;
+//    }
 
     @Override
     public ResultSet getSchemas() throws SQLException
     {
-        if (!isDFUMetaDataCached())
-            setDFUMetaDataCached(fetchHPCCFilesInfo());
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData GETSCHEMAS");
-
-        List<List<String>> tables = new ArrayList<List<String>>();
-        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
-
-        metacols.add(new HPCCColumnMetaData("TABLE_SCHEM", 1, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("TABLE_CATALOG", 2, java.sql.Types.VARCHAR));
-
-        return new HPCCResultSet(tables, metacols, "Schemas");
+//        if (!isDFUMetaDataCached())
+//            setDFUMetaDataCached(fetchHPCCFilesInfo());
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData GETSCHEMAS");
+//
+//        List<List<String>> tables = new ArrayList<List<String>>();
+//        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
+//
+//        metacols.add(new HPCCColumnMetaData("TABLE_SCHEM", 1, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("TABLE_CATALOG", 2, java.sql.Types.VARCHAR));
+//
+//        return new HPCCResultSet(tables, metacols, "Schemas");
+        return null;
     }
 
     @Override
     public ResultSet getCatalogs() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getCatalogs");
-
-        List<List<String>> catalogs = new ArrayList<List<String>>();
-        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
-
-        metacols.add(new HPCCColumnMetaData("TABLE_CAT", 1, java.sql.Types.VARCHAR));
-
-        ArrayList<String> rowValues = new ArrayList<String>();
-        catalogs.add(rowValues);
-        rowValues.add("HPCC System");
-
-        return new HPCCResultSet(catalogs, metacols, "Catalogs");
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getCatalogs");
+//
+//        List<List<String>> catalogs = new ArrayList<List<String>>();
+//        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
+//
+//        metacols.add(new HPCCColumnMetaData("TABLE_CAT", 1, java.sql.Types.VARCHAR));
+//
+//        ArrayList<String> rowValues = new ArrayList<String>();
+//        catalogs.add(rowValues);
+//        rowValues.add("HPCC System");
+//
+//        return new HPCCResultSet(catalogs, metacols, "Catalogs");
+    	return null;
     }
 
     @Override
     public ResultSet getTableTypes() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getTableTypes");
-
-        List<List<String>> tabletypes = new ArrayList<List<String>>();
-        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
-
-        metacols.add(new HPCCColumnMetaData("TABLE_TYPE", 1, java.sql.Types.VARCHAR));
-
-        ArrayList<String> rowValues = new ArrayList<String>();
-        tabletypes.add(rowValues);
-        rowValues.add("TABLE");
-
-        return new HPCCResultSet(tabletypes, metacols, "TableTypes");
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getTableTypes");
+//
+//        List<List<String>> tabletypes = new ArrayList<List<String>>();
+//        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
+//
+//        metacols.add(new HPCCColumnMetaData("TABLE_TYPE", 1, java.sql.Types.VARCHAR));
+//
+//        ArrayList<String> rowValues = new ArrayList<String>();
+//        tabletypes.add(rowValues);
+//        rowValues.add("TABLE");
+//
+//        return new HPCCResultSet(tabletypes, metacols, "TableTypes");
+    	return null;
     }
 
     public String[] getAllTableFields(String dbname, String tablename)
@@ -1538,90 +1542,91 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     public ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
             throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData GETCOLUMNS catalog: " + catalog + ", schemaPattern: " + schemaPattern
-                + ", tableNamePattern: " + tableNamePattern + ", columnNamePattern: " + columnNamePattern);
-
-        boolean allfieldsearch = columnNamePattern == null || columnNamePattern.length() == 0
-                || columnNamePattern.trim().equals("*") || columnNamePattern.trim().equals("%");
-
-        List<List<String>> columns = new ArrayList<List<String>>();
-        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
-
-        metacols.add(new HPCCColumnMetaData("TABLE_CAT", 1, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("TABLE_SCHEM", 2, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData(TABLE_NAME, 3, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("COLUMN_NAME", 4, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("DATA_TYPE", 5, java.sql.Types.INTEGER));
-        metacols.add(new HPCCColumnMetaData("TYPE_NAME", 6, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("COLUMN_SIZE", 7, java.sql.Types.INTEGER));
-        metacols.add(new HPCCColumnMetaData("BUFFER_LENGTH", 8, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("DECIMAL_DIGITS", 9, java.sql.Types.INTEGER));
-        metacols.add(new HPCCColumnMetaData("NUM_PREC_RADIX", 10, java.sql.Types.INTEGER));
-        metacols.add(new HPCCColumnMetaData("NULLABLE", 11, java.sql.Types.INTEGER));
-        metacols.add(new HPCCColumnMetaData("REMARKS", 12, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("COLUMN_DEF", 13, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("SQL_DATA_TYPE", 14, java.sql.Types.INTEGER));
-        metacols.add(new HPCCColumnMetaData("SQL_DATETIME_SUB", 15, java.sql.Types.INTEGER));
-        metacols.add(new HPCCColumnMetaData("CHAR_OCTET_LENGTH", 16, java.sql.Types.INTEGER));
-        metacols.add(new HPCCColumnMetaData("ORDINAL_POSITION", 17, java.sql.Types.INTEGER));
-        metacols.add(new HPCCColumnMetaData("IS_NULLABLE", 18, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("SCOPE_CATLOG", 19, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("SCOPE_SCHEMA", 20, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("SCOPE_TABLE", 21, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("SOURCE_DATA_TYPE", 22, java.sql.Types.SMALLINT));
-
-        ResultSet tables = getTables(catalog, schemaPattern, tableNamePattern, null);
-
-        while (tables.next())
-        {
-        	HPCCDFUFile file = getDFUFile(tables.getString(TABLE_NAME));
-
-            Enumeration<Object> e = file.getAllFields();
-            while (e.hasMoreElements())
-            {
-                HPCCColumnMetaData field = (HPCCColumnMetaData) e.nextElement();
-                String fieldname = field.getColumnName();
-                if (!allfieldsearch && !columnNamePattern.equalsIgnoreCase(fieldname))
-                    continue;
-
-                int coltype = java.sql.Types.NULL;
-                coltype = field.getSqlType();
-
-                HPCCJDBCUtils.traceoutln(Level.FINEST, "Table col found: " + file.getFileName() + "." + fieldname + " of type: " + coltype
-                        + "(" + HPCCJDBCUtils.convertSQLtype2JavaClassName(coltype) + ")");
-
-                ArrayList rowValues = new ArrayList();
-                columns.add(rowValues);
-                /* 1 */rowValues.add(catalog);
-                /* 2 */rowValues.add(schemaPattern);
-                /* 3 */rowValues.add(file.getFullyQualifiedName());
-                /* 4 */rowValues.add(fieldname);
-                /* 5 */rowValues.add(coltype);
-                /* 6 */rowValues.add(HPCCJDBCUtils.convertSQLtype2JavaClassName(coltype));
-                /* 7 */rowValues.add(0);
-                /* 8 */rowValues.add("null");
-                /* 9 */rowValues.add(0);
-                /* 10 */rowValues.add(0);
-                /* 11 */rowValues.add(1);
-                /* 12 */rowValues.add(file.isKeyFile() && file.getIdxFilePosField() != null
-                        && file.getIdxFilePosField().equals(fieldname) ? "File Position Field" : "");
-                /* 13 */rowValues.add("");
-                /* 14 */rowValues.add(0);// unused
-                /* 15 */rowValues.add(0);
-                /* 16 */rowValues.add(0);
-                /* 17 */rowValues.add(field.getIndex()); // need to get index
-                /* 18 */rowValues.add("YES");
-                /* 19 */rowValues.add(coltype == java.sql.Types.REF ? null : "");
-                /* 20 */rowValues.add(coltype == java.sql.Types.REF ? null : "");
-                /* 21 */rowValues.add(coltype == java.sql.Types.REF ? null : "");
-                /* 22 */rowValues.add(coltype == java.sql.Types.REF ? null : "");
-
-                if (!allfieldsearch)
-                    break;
-            }
-        }
-
-        return new HPCCResultSet(columns, metacols, tableNamePattern +"'s columns");
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData GETCOLUMNS catalog: " + catalog + ", schemaPattern: " + schemaPattern
+//                + ", tableNamePattern: " + tableNamePattern + ", columnNamePattern: " + columnNamePattern);
+//
+//        boolean allfieldsearch = columnNamePattern == null || columnNamePattern.length() == 0
+//                || columnNamePattern.trim().equals("*") || columnNamePattern.trim().equals("%");
+//
+//        List<List<String>> columns = new ArrayList<List<String>>();
+//        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
+//
+//        metacols.add(new HPCCColumnMetaData("TABLE_CAT", 1, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("TABLE_SCHEM", 2, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData(TABLE_NAME, 3, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("COLUMN_NAME", 4, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("DATA_TYPE", 5, java.sql.Types.INTEGER));
+//        metacols.add(new HPCCColumnMetaData("TYPE_NAME", 6, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("COLUMN_SIZE", 7, java.sql.Types.INTEGER));
+//        metacols.add(new HPCCColumnMetaData("BUFFER_LENGTH", 8, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("DECIMAL_DIGITS", 9, java.sql.Types.INTEGER));
+//        metacols.add(new HPCCColumnMetaData("NUM_PREC_RADIX", 10, java.sql.Types.INTEGER));
+//        metacols.add(new HPCCColumnMetaData("NULLABLE", 11, java.sql.Types.INTEGER));
+//        metacols.add(new HPCCColumnMetaData("REMARKS", 12, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("COLUMN_DEF", 13, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("SQL_DATA_TYPE", 14, java.sql.Types.INTEGER));
+//        metacols.add(new HPCCColumnMetaData("SQL_DATETIME_SUB", 15, java.sql.Types.INTEGER));
+//        metacols.add(new HPCCColumnMetaData("CHAR_OCTET_LENGTH", 16, java.sql.Types.INTEGER));
+//        metacols.add(new HPCCColumnMetaData("ORDINAL_POSITION", 17, java.sql.Types.INTEGER));
+//        metacols.add(new HPCCColumnMetaData("IS_NULLABLE", 18, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("SCOPE_CATLOG", 19, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("SCOPE_SCHEMA", 20, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("SCOPE_TABLE", 21, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("SOURCE_DATA_TYPE", 22, java.sql.Types.SMALLINT));
+//
+//        ResultSet tables = getTables(catalog, schemaPattern, tableNamePattern, null);
+//
+//        while (tables.next())
+//        {
+//        	HPCCDFUFile file = getDFUFile(tables.getString(TABLE_NAME));
+//
+//            Enumeration<Object> e = file.getAllFields();
+//            while (e.hasMoreElements())
+//            {
+//                HPCCColumnMetaData field = (HPCCColumnMetaData) e.nextElement();
+//                String fieldname = field.getColumnName();
+//                if (!allfieldsearch && !columnNamePattern.equalsIgnoreCase(fieldname))
+//                    continue;
+//
+//                int coltype = java.sql.Types.NULL;
+//                coltype = field.getSqlType();
+//
+//                HPCCJDBCUtils.traceoutln(Level.FINEST, "Table col found: " + file.getFileName() + "." + fieldname + " of type: " + coltype
+//                        + "(" + HPCCJDBCUtils.convertSQLtype2JavaClassName(coltype) + ")");
+//
+//                ArrayList rowValues = new ArrayList();
+//                columns.add(rowValues);
+//                /* 1 */rowValues.add(catalog);
+//                /* 2 */rowValues.add(schemaPattern);
+//                /* 3 */rowValues.add(file.getFullyQualifiedName());
+//                /* 4 */rowValues.add(fieldname);
+//                /* 5 */rowValues.add(coltype);
+//                /* 6 */rowValues.add(HPCCJDBCUtils.convertSQLtype2JavaClassName(coltype));
+//                /* 7 */rowValues.add(0);
+//                /* 8 */rowValues.add("null");
+//                /* 9 */rowValues.add(0);
+//                /* 10 */rowValues.add(0);
+//                /* 11 */rowValues.add(1);
+//                /* 12 */rowValues.add(file.isKeyFile() && file.getIdxFilePosField() != null
+//                        && file.getIdxFilePosField().equals(fieldname) ? "File Position Field" : "");
+//                /* 13 */rowValues.add("");
+//                /* 14 */rowValues.add(0);// unused
+//                /* 15 */rowValues.add(0);
+//                /* 16 */rowValues.add(0);
+//                /* 17 */rowValues.add(field.getIndex()); // need to get index
+//                /* 18 */rowValues.add("YES");
+//                /* 19 */rowValues.add(coltype == java.sql.Types.REF ? null : "");
+//                /* 20 */rowValues.add(coltype == java.sql.Types.REF ? null : "");
+//                /* 21 */rowValues.add(coltype == java.sql.Types.REF ? null : "");
+//                /* 22 */rowValues.add(coltype == java.sql.Types.REF ? null : "");
+//
+//                if (!allfieldsearch)
+//                    break;
+//            }
+//        }
+//
+//        return new HPCCResultSet(columns, metacols, tableNamePattern +"'s columns");
+    	return null;
     }
 
     @Override
@@ -1658,72 +1663,75 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     @Override
     public ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getPrimaryKeys catalog: " + catalog + ", schema: " + schema + ", table: " + table);
-
-        List<List<String>> importedkeys = new ArrayList<List<String>>();
-        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
-
-        metacols.add(new HPCCColumnMetaData("TABLE_CAT", 1, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("TABLE_SCHEM", 2, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("TABLE_NAME", 3, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("COLUMN_NAME", 4, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("KEY_SEQ", 5, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("PK_NAME", 6, java.sql.Types.VARCHAR));
-
-        return new HPCCResultSet(importedkeys, metacols, "PrimaryKeys");
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getPrimaryKeys catalog: " + catalog + ", schema: " + schema + ", table: " + table);
+//
+//        List<List<String>> importedkeys = new ArrayList<List<String>>();
+//        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
+//
+//        metacols.add(new HPCCColumnMetaData("TABLE_CAT", 1, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("TABLE_SCHEM", 2, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("TABLE_NAME", 3, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("COLUMN_NAME", 4, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("KEY_SEQ", 5, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("PK_NAME", 6, java.sql.Types.VARCHAR));
+//
+//        return new HPCCResultSet(importedkeys, metacols, "PrimaryKeys");
+    	return null;
     }
 
     @Override
     public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException
     {
-
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getImportedKeys catalog: " + catalog + ", schema: " + schema  + ", table: " + table);
-
-        List<List<String>> importedkeys = new ArrayList<List<String>>();
-        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
-
-        metacols.add(new HPCCColumnMetaData("PKTABLE_CAT", 1, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("PKTABLE_SCHEM", 2, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("PKTABLE_NAME", 3, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("PKCOLUMN_NAME", 4, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("FKTABLE_CAT", 5, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("FKTABLE_SCHEM", 6, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("FKTABLE_NAME", 7, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("FKCOLUMN_NAME", 8, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("KEY_SEQ", 9, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("UPDATE_RULE", 10, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("DELETE_RULE", 11, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("FK_NAME", 12, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("PK_NAME", 13, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("DEFERRABILITY", 14, java.sql.Types.SMALLINT));
-
-        return new HPCCResultSet(importedkeys, metacols, "ImportedKeys");
+//
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getImportedKeys catalog: " + catalog + ", schema: " + schema  + ", table: " + table);
+//
+//        List<List<String>> importedkeys = new ArrayList<List<String>>();
+//        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
+//
+//        metacols.add(new HPCCColumnMetaData("PKTABLE_CAT", 1, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("PKTABLE_SCHEM", 2, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("PKTABLE_NAME", 3, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("PKCOLUMN_NAME", 4, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("FKTABLE_CAT", 5, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("FKTABLE_SCHEM", 6, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("FKTABLE_NAME", 7, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("FKCOLUMN_NAME", 8, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("KEY_SEQ", 9, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("UPDATE_RULE", 10, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("DELETE_RULE", 11, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("FK_NAME", 12, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("PK_NAME", 13, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("DEFERRABILITY", 14, java.sql.Types.SMALLINT));
+//
+//        return new HPCCResultSet(importedkeys, metacols, "ImportedKeys");
+    	return null;
     }
 
     @Override
     public ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getExportedKeys catalog: " + catalog + ", schema: " + schema + ", table: " + table);
-
-        List<List<String>> exportedkeys = new ArrayList<List<String>>();
-        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
-
-        metacols.add(new HPCCColumnMetaData("PKTABLE_CAT", 1, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("PKTABLE_SCHEM", 2, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("PKTABLE_NAME", 3, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("PKCOLUMN_NAME", 4, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("FKTABLE_CAT", 5, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("FKTABLE_SCHEM", 6, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("FKTABLE_NAME", 7, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("FKCOLUMN_NAME", 8, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("KEY_SEQ", 9, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("UPDATE_RULE", 10, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("DELETE_RULE", 11, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("FK_NAME", 12, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("PK_NAME", 13, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("DEFERRABILITY", 14, java.sql.Types.SMALLINT));
-
-        return new HPCCResultSet(exportedkeys, metacols, "ExportedKeys");
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getExportedKeys catalog: " + catalog + ", schema: " + schema + ", table: " + table);
+//
+//        List<List<String>> exportedkeys = new ArrayList<List<String>>();
+//        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
+//
+//        metacols.add(new HPCCColumnMetaData("PKTABLE_CAT", 1, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("PKTABLE_SCHEM", 2, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("PKTABLE_NAME", 3, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("PKCOLUMN_NAME", 4, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("FKTABLE_CAT", 5, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("FKTABLE_SCHEM", 6, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("FKTABLE_NAME", 7, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("FKCOLUMN_NAME", 8, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("KEY_SEQ", 9, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("UPDATE_RULE", 10, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("DELETE_RULE", 11, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("FK_NAME", 12, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("PK_NAME", 13, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("DEFERRABILITY", 14, java.sql.Types.SMALLINT));
+//
+//        return new HPCCResultSet(exportedkeys, metacols, "ExportedKeys");
+    	return null;
     }
 
     @Override
@@ -1737,56 +1745,57 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     @Override
     public ResultSet getTypeInfo() throws SQLException
     {
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData GETTYPEINFO");
-
-        List<List<String>> types = new ArrayList<List<String>>();
-        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
-
-        metacols.add(new HPCCColumnMetaData("TYPE_NAME", 1, java.sql.Types.VARCHAR));
-        metacols.add(new HPCCColumnMetaData("DATA_TYPE", 2, java.sql.Types.INTEGER));// SQL data type from java.sql.Types
-        metacols.add(new HPCCColumnMetaData("PRECISION", 3, java.sql.Types.INTEGER));// maximum precision
-        metacols.add(new HPCCColumnMetaData("LITERAL_PREFIX", 4, java.sql.Types.VARCHAR));// prefix used to quote a literal (may be null)
-        metacols.add(new HPCCColumnMetaData("LITERAL_SUFFIX", 5, java.sql.Types.VARCHAR));// suffix used to quote a literal (may be null)
-        metacols.add(new HPCCColumnMetaData("CREATE_PARAMS", 6, java.sql.Types.VARCHAR));// parameters  used  in  creating the  type (may be null)
-        metacols.add(new HPCCColumnMetaData("NULLABLE", 7, java.sql.Types.SMALLINT));// can you use NULL for this type.
-        metacols.add(new HPCCColumnMetaData("CASE_SENSITIVE", 8, java.sql.Types.BOOLEAN));
-        metacols.add(new HPCCColumnMetaData("SEARCHABLE", 9, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("UNSIGNED_ATTRIBUTE", 10, java.sql.Types.BOOLEAN));
-        metacols.add(new HPCCColumnMetaData("FIXED_PREC_SCALE", 11, java.sql.Types.BOOLEAN));// can it be a money value
-        metacols.add(new HPCCColumnMetaData("AUTO_INCREMENT", 12, java.sql.Types.BOOLEAN));// can it be used for an auto-increment value
-        metacols.add(new HPCCColumnMetaData("LOCAL_TYPE_NAME", 13, java.sql.Types.VARCHAR));// localized version of type name (may be null)
-        metacols.add(new HPCCColumnMetaData("MINIMUM_SCALE", 14, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("MAXIMUM_SCALE", 15, java.sql.Types.SMALLINT));
-        metacols.add(new HPCCColumnMetaData("SQL_DATA_TYPE", 16, java.sql.Types.INTEGER));// unused
-        metacols.add(new HPCCColumnMetaData("SQL_DATETIME_SUB", 17, java.sql.Types.INTEGER));// unused
-        metacols.add(new HPCCColumnMetaData("NUM_PREC_RADIX", 18, java.sql.Types.INTEGER));// unused
-
-        for (EclTypes ecltype : EclTypes.class.getEnumConstants())
-        {
-            ArrayList rowValues = new ArrayList();
-            types.add(rowValues);
-
-            /* 1 */rowValues.add(String.valueOf(ecltype));
-            /* 2 */rowValues.add(HPCCJDBCUtils.convertECLtypeCode2SQLtype(ecltype));
-            /* 3 */rowValues.add(0);
-            /* 4 */rowValues.add(null);
-            /* 5 */rowValues.add(null);
-            /* 6 */rowValues.add(null);
-            /* 7 */rowValues.add(typeNullableUnknown);
-            /* 8 */rowValues.add(false);
-            /* 9 */rowValues.add(typePredNone);
-            /* 10 */rowValues.add(false);
-            /* 11 */rowValues.add(false);
-            /* 12 */rowValues.add(false);
-            /* 13 */rowValues.add(HPCCJDBCUtils.convertSQLtype2JavaClassName(HPCCJDBCUtils.convertECLtypeCode2SQLtype(ecltype)));
-            /* 14 */rowValues.add(0);
-            /* 15 */rowValues.add(0);
-            /* 16 */rowValues.add(0);
-            /* 17 */rowValues.add(0);
-            /* 18 */rowValues.add(0);
-        }
-
-        return new HPCCResultSet(types, metacols, "Types");
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData GETTYPEINFO");
+//
+//        List<List<String>> types = new ArrayList<List<String>>();
+//        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
+//
+//        metacols.add(new HPCCColumnMetaData("TYPE_NAME", 1, java.sql.Types.VARCHAR));
+//        metacols.add(new HPCCColumnMetaData("DATA_TYPE", 2, java.sql.Types.INTEGER));// SQL data type from java.sql.Types
+//        metacols.add(new HPCCColumnMetaData("PRECISION", 3, java.sql.Types.INTEGER));// maximum precision
+//        metacols.add(new HPCCColumnMetaData("LITERAL_PREFIX", 4, java.sql.Types.VARCHAR));// prefix used to quote a literal (may be null)
+//        metacols.add(new HPCCColumnMetaData("LITERAL_SUFFIX", 5, java.sql.Types.VARCHAR));// suffix used to quote a literal (may be null)
+//        metacols.add(new HPCCColumnMetaData("CREATE_PARAMS", 6, java.sql.Types.VARCHAR));// parameters  used  in  creating the  type (may be null)
+//        metacols.add(new HPCCColumnMetaData("NULLABLE", 7, java.sql.Types.SMALLINT));// can you use NULL for this type.
+//        metacols.add(new HPCCColumnMetaData("CASE_SENSITIVE", 8, java.sql.Types.BOOLEAN));
+//        metacols.add(new HPCCColumnMetaData("SEARCHABLE", 9, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("UNSIGNED_ATTRIBUTE", 10, java.sql.Types.BOOLEAN));
+//        metacols.add(new HPCCColumnMetaData("FIXED_PREC_SCALE", 11, java.sql.Types.BOOLEAN));// can it be a money value
+//        metacols.add(new HPCCColumnMetaData("AUTO_INCREMENT", 12, java.sql.Types.BOOLEAN));// can it be used for an auto-increment value
+//        metacols.add(new HPCCColumnMetaData("LOCAL_TYPE_NAME", 13, java.sql.Types.VARCHAR));// localized version of type name (may be null)
+//        metacols.add(new HPCCColumnMetaData("MINIMUM_SCALE", 14, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("MAXIMUM_SCALE", 15, java.sql.Types.SMALLINT));
+//        metacols.add(new HPCCColumnMetaData("SQL_DATA_TYPE", 16, java.sql.Types.INTEGER));// unused
+//        metacols.add(new HPCCColumnMetaData("SQL_DATETIME_SUB", 17, java.sql.Types.INTEGER));// unused
+//        metacols.add(new HPCCColumnMetaData("NUM_PREC_RADIX", 18, java.sql.Types.INTEGER));// unused
+//
+//        for (EclTypes ecltype : EclTypes.class.getEnumConstants())
+//        {
+//            ArrayList rowValues = new ArrayList();
+//            types.add(rowValues);
+//
+//            /* 1 */rowValues.add(String.valueOf(ecltype));
+//            /* 2 */rowValues.add(HPCCJDBCUtils.convertECLtypeCode2SQLtype(ecltype));
+//            /* 3 */rowValues.add(0);
+//            /* 4 */rowValues.add(null);
+//            /* 5 */rowValues.add(null);
+//            /* 6 */rowValues.add(null);
+//            /* 7 */rowValues.add(typeNullableUnknown);
+//            /* 8 */rowValues.add(false);
+//            /* 9 */rowValues.add(typePredNone);
+//            /* 10 */rowValues.add(false);
+//            /* 11 */rowValues.add(false);
+//            /* 12 */rowValues.add(false);
+//            /* 13 */rowValues.add(HPCCJDBCUtils.convertSQLtype2JavaClassName(HPCCJDBCUtils.convertECLtypeCode2SQLtype(ecltype)));
+//            /* 14 */rowValues.add(0);
+//            /* 15 */rowValues.add(0);
+//            /* 16 */rowValues.add(0);
+//            /* 17 */rowValues.add(0);
+//            /* 18 */rowValues.add(0);
+//        }
+//
+//        return new HPCCResultSet(types, metacols, "Types");
+    	return null;
     }
 
     @Override
@@ -1885,46 +1894,47 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     public ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern, int[] types)
             throws SQLException
     {
-        /*
-         * TYPE_CAT String => the type's catalog (may be null) TYPE_SCHEM String
-         * => type's schema (may be null) TYPE_NAME String => type name
-         * CLASS_NAME String => Java class name DATA_TYPE int => type value
-         * defined in java.sql.Types. One of JAVA_OBJECT, STRUCT, or DISTINCT
-         * REMARKS String => explanatory comment on the type BASE_TYPE short =>
-         * type code of the source type of a DISTINCT type or the type that
-         * implements the user-generated reference type of the
-         * SELF_REFERENCING_COLUMN of a structured type as defined in
-         * java.sql.Types (null if DATA_TYPE is not DISTINCT or not STRUCT with
-         * REFERENCE_GENERATION = USER_DEFINED)
-         *
-         * Note: If the driver does not support UDTs, an empty result set is
-         * returned.
-         */
-        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getUDTs");
-
-        List<List<String>> udts = new ArrayList<List<String>>();
-        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
-
-        metacols.add(new HPCCColumnMetaData("TYPE_CAT", 1, java.sql.Types.VARCHAR)); // the type's catalog (may be  null)
-        metacols.add(new HPCCColumnMetaData("TYPE_SCHEM", 2, java.sql.Types.VARCHAR)); // type's  schema  (may  be  null)
-        metacols.add(new HPCCColumnMetaData("TYPE_NAME", 3, java.sql.Types.VARCHAR)); // type  name
-        metacols.add(new HPCCColumnMetaData("CLASS_NAME", 4, java.sql.Types.VARCHAR)); // Java class name
-        metacols.add(new HPCCColumnMetaData("DATA_TYPE", 5, java.sql.Types.INTEGER)); // type value defined in java.sql.Types.
-                                                                                      // One of JAVA_OBJECT, STRUCT, or DISTINCT
-        metacols.add(new HPCCColumnMetaData("REMARKS", 6, java.sql.Types.VARCHAR)); // explanatory comment on the type
-        metacols.add(new HPCCColumnMetaData("BASE_TYPE", 7, java.sql.Types.SMALLINT));
-
-        /*
-         * for(EclTypes ecltype : EclTypes.values()) { ArrayList rowValues = new
-         * ArrayList(); udts.add(rowValues);
-         *
-         * rowValues.add(String.valueOf(ecltype));
-         * rowValues.add(convertECLtypeCode2SQLtype(ecltype.ordinal()));
-         * rowValues.add(0); rowValues.add(null); rowValues.add(null);
-         * rowValues.add(null); rowValues.add(typeNullableUnknown); }
-         */
-
-        return new HPCCResultSet(udts, metacols, "UDTs");
+//        /*
+//         * TYPE_CAT String => the type's catalog (may be null) TYPE_SCHEM String
+//         * => type's schema (may be null) TYPE_NAME String => type name
+//         * CLASS_NAME String => Java class name DATA_TYPE int => type value
+//         * defined in java.sql.Types. One of JAVA_OBJECT, STRUCT, or DISTINCT
+//         * REMARKS String => explanatory comment on the type BASE_TYPE short =>
+//         * type code of the source type of a DISTINCT type or the type that
+//         * implements the user-generated reference type of the
+//         * SELF_REFERENCING_COLUMN of a structured type as defined in
+//         * java.sql.Types (null if DATA_TYPE is not DISTINCT or not STRUCT with
+//         * REFERENCE_GENERATION = USER_DEFINED)
+//         *
+//         * Note: If the driver does not support UDTs, an empty result set is
+//         * returned.
+//         */
+//        HPCCJDBCUtils.traceoutln(Level.FINEST, "HPCCDatabaseMetaData getUDTs");
+//
+//        List<List<String>> udts = new ArrayList<List<String>>();
+//        ArrayList<HPCCColumnMetaData> metacols = new ArrayList<HPCCColumnMetaData>();
+//
+//        metacols.add(new HPCCColumnMetaData("TYPE_CAT", 1, java.sql.Types.VARCHAR)); // the type's catalog (may be  null)
+//        metacols.add(new HPCCColumnMetaData("TYPE_SCHEM", 2, java.sql.Types.VARCHAR)); // type's  schema  (may  be  null)
+//        metacols.add(new HPCCColumnMetaData("TYPE_NAME", 3, java.sql.Types.VARCHAR)); // type  name
+//        metacols.add(new HPCCColumnMetaData("CLASS_NAME", 4, java.sql.Types.VARCHAR)); // Java class name
+//        metacols.add(new HPCCColumnMetaData("DATA_TYPE", 5, java.sql.Types.INTEGER)); // type value defined in java.sql.Types.
+//                                                                                      // One of JAVA_OBJECT, STRUCT, or DISTINCT
+//        metacols.add(new HPCCColumnMetaData("REMARKS", 6, java.sql.Types.VARCHAR)); // explanatory comment on the type
+//        metacols.add(new HPCCColumnMetaData("BASE_TYPE", 7, java.sql.Types.SMALLINT));
+//
+//        /*
+//         * for(EclTypes ecltype : EclTypes.values()) { ArrayList rowValues = new
+//         * ArrayList(); udts.add(rowValues);
+//         *
+//         * rowValues.add(String.valueOf(ecltype));
+//         * rowValues.add(convertECLtypeCode2SQLtype(ecltype.ordinal()));
+//         * rowValues.add(0); rowValues.add(null); rowValues.add(null);
+//         * rowValues.add(null); rowValues.add(typeNullableUnknown); }
+//         */
+//
+//        return new HPCCResultSet(udts, metacols, "UDTs");
+    	return null;
     }
 
     @Override
@@ -2233,6 +2243,8 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
             HPCCJDBCUtils.traceoutln(Level.INFO, "Fetching file information: " + urlString);
             InputStream is = dfulogfilesConn.getInputStream();
             isSuccess = parseDFULogicalFiles(is, false) > 0 ? true : false;
+//            is.close();
+            dfulogfilesConn.disconnect();
         }
         catch (SocketTimeoutException e)
         {
@@ -2574,6 +2586,8 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
                     }
                 }
             }
+            xml.close();
+            clusterInfoConnection.disconnect();
         }
         catch (Exception e)
         {

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.w3c.dom.NodeList;
 
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.parsing.ECLLayouts;
@@ -20,7 +19,7 @@ import de.hpi.hpcc.parsing.SQLParser;
 public class HPCCStatement implements Statement{
 	protected static final Logger logger = HPCCLogger.getLogger();
 	protected HPCCConnection connection;
-	protected ECLParser parser;
+	protected ECLParser eclParser;
     protected boolean closed = false;
     protected SQLWarning warnings;
     protected ResultSet result = null;
@@ -72,6 +71,7 @@ public class HPCCStatement implements Statement{
 		HPCCJDBCUtils.traceoutln(Level.INFO, "started query at: "+difference/1000000);
 		if (checkFederatedDatabase(sqlStatement)) {
 			boolean result = executeQueryOnPostgreSQL(sqlStatement); 
+			//postgreSQLStatement.close();
 			difference = System.nanoTime()-HPCCDriver.beginTime;
 			HPCCJDBCUtils.traceoutln(Level.INFO, "finished Postgresql query at: "+difference/1000000);
 			return result;
@@ -91,27 +91,30 @@ public class HPCCStatement implements Statement{
 	}
 	
 	private boolean checkFederatedDatabase(String sqlStatement) throws SQLException {
-		ECLLayouts eclLayouts = new ECLLayouts(connection.getDatabaseMetaData());
-		SQLParser sqlParser = SQLParser.getInstance(sqlStatement, eclLayouts);
-		Set<String> tables = sqlParser.getAllTables();
+		//ECLLayouts eclLayouts = new ECLLayouts(connection.getDatabaseMetaData());
+		HPCCJDBCUtils.traceoutln(Level.INFO, sqlStatement);
+		Set<String> tables = SQLParser.getAllTables(sqlStatement);
 		
 		return HPCCDriver.isPostgreSQLAvailable() && federatedDatabase && !whiteList.containsAll(tables);
 	}
-	
 
-	
 	private boolean executeQueryOnHPCC(String sqlStatement) throws SQLException {
 		try {
 			ECLLayouts layouts = new ECLLayouts(connection.getDatabaseMetaData());
-			this.parser = new ECLParser(layouts);
-			NodeList rowList = null;
-			for(String query : parser.parse(sqlStatement)) {
-				connection.sendRequest(query);
-				rowList = connection.parseDataset(connection.getInputStream(), System.currentTimeMillis());
+			this.eclParser = new ECLParser(layouts);
+			HPCCResultSetMetadata resultSetMetaData = null;
+			HPCCXmlParser xmlParser = null;
+			boolean sentAnyQuery = false;
+			for(String query : eclParser.parse(sqlStatement)) {
+				if (query != null) {
+					sentAnyQuery = true;
+					connection.sendRequest(query);
+					resultSetMetaData = new HPCCResultSetMetadata(eclParser.getExpectedRetCols(), "HPCC Result");
+				}
 			}
-			
-			if (rowList != null) {
-				result = new HPCCResultSet(this, rowList, new HPCCResultSetMetadata(parser.getExpectedRetCols(),	"HPCC Result"));
+			if (sentAnyQuery) {
+				xmlParser = new HPCCXmlParser(connection.getInputStream(), resultSetMetaData);
+				result = new HPCCResultSet(this, xmlParser, resultSetMetaData);
 			}
 			return result != null;
 		} catch (HPCCException exception) {
@@ -124,12 +127,15 @@ public class HPCCStatement implements Statement{
 	private boolean executeQueryOnPostgreSQL(String sqlStatement) throws SQLException {
 		log("Query sent to PostgreSQL");
 		result = createPostgreSQLStatement().executeQuery(sqlStatement);
+		
 		return result != null;
 	}
 	
 	private int executeUpdateOnPostgreSQL(String sqlStatement) throws SQLException {
 		log("Query sent to PostgreSQL");
-		return createPostgreSQLStatement().executeUpdate(sqlStatement);
+		int i = createPostgreSQLStatement().executeUpdate(sqlStatement);
+		postgreSQLStatement.close();
+		return i;
 	}
 
 	public ResultSet executeQuery(String sqlQuery) throws SQLException {      
@@ -143,7 +149,7 @@ public class HPCCStatement implements Statement{
             closed = true;
             connection = null;
             result = null;
-            parser = null;
+            eclParser = null;
         }
         log("Statement closed");
     }

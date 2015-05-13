@@ -70,6 +70,7 @@ public class ECLSelectParser implements ExpressionVisitor {
 	private SQLParserSelect sqlParser;
 	private List<String> parsedFunctionNames = new ArrayList<String>();
 	private boolean alreadyParsed;
+	private SelectExpressionItem sei;
 	
 	public ECLSelectParser(ECLLayouts eclLayouts, SQLParserSelect sqlParser) {
 		this.eclLayouts = eclLayouts;
@@ -78,16 +79,35 @@ public class ECLSelectParser implements ExpressionVisitor {
 
 	public String parse(SelectExpressionItem sei) {
 		parsed = "";
+		this.sei = sei;
 		Alias alias = sei.getAlias();
 		Expression expression = sei.getExpression();
 		if(alias != null) {
-			ECLDataTypeParser dataTypeParser = new ECLDataTypeParser(eclLayouts, sqlParser);
-			parsed = dataTypeParser.parse(expression) + " ";
-			parsed += alias.getName();
-			parsed += " := ";
-			return(primitiveParse(expression));
+			if(!parsedFunctionNames.contains(alias.getName())) {
+				ECLDataTypeParser dataTypeParser = new ECLDataTypeParser(eclLayouts, sqlParser);
+				parsed = dataTypeParser.parse(expression) + " ";
+				parsed += alias.getName();
+				parsed += " := ";
+				return(primitiveParse(expression));
+			}
+			return alias.getName();
 		}
 		return parse(expression);
+	}
+	
+	public String parseAlias(SelectExpressionItem sei) {
+		parsed = "";
+		this.sei = sei;
+		Alias alias = sei.getAlias();
+		Expression expression = sei.getExpression();
+		if(alias != null) {
+			if(!parsedFunctionNames.contains(alias.getName())) {
+				parsed += alias.getName();
+				return parsed;
+			}
+			return alias.getName();
+		}
+		return primitiveParse(expression);
 	}
 	
 	private String primitiveParse(Expression expression) {
@@ -117,7 +137,11 @@ public class ECLSelectParser implements ExpressionVisitor {
 		String functionName = nameParser.name(function);
 		if (!parsedFunctionNames.contains(functionName)) {
 			parsed = dataTypeParser.parse(function) + " ";
-			parsed += nameParser.name(function);
+			String name = nameParser.name(function);
+			if (sei != null) {
+				sei.setAlias(new Alias(name));
+			}
+			parsed += name;
 			parsed += " := ";
 			parsedFunctionNames.add(functionName);
 		} else {
@@ -152,8 +176,16 @@ public class ECLSelectParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(LongValue longValue) {
-		// TODO Auto-generated method stub
+		ECLDataTypeParser dataTypeParser = new ECLDataTypeParser(eclLayouts, sqlParser);
+		ECLNameParser nameParser = new ECLNameParser();
 		
+		parsed = dataTypeParser.parse(longValue) + " ";
+		String name = nameParser.name(longValue);
+		if (sei != null) {
+			sei.setAlias(new Alias(name));
+		}
+		parsed += name;
+		parsed += " := ";
 	}
 
 	@Override
@@ -182,8 +214,16 @@ public class ECLSelectParser implements ExpressionVisitor {
 
 	@Override
 	public void visit(StringValue stringValue) {
-		// TODO Auto-generated method stub
+		ECLDataTypeParser dataTypeParser = new ECLDataTypeParser(eclLayouts, sqlParser);
+		ECLNameParser nameParser = new ECLNameParser();
 		
+		parsed = dataTypeParser.parse(stringValue) + " ";
+		String name = nameParser.name(stringValue);
+		if (sei != null) {
+			sei.setAlias(new Alias(name));
+		}
+		parsed += name;
+		parsed += " := ";
 	}
 
 	@Override

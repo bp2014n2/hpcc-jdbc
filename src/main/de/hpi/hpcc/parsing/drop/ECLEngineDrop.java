@@ -9,12 +9,11 @@ import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.SQLParser;
 import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
 public class ECLEngineDrop extends ECLEngine {
 	
-	private StringBuilder           eclCode = new StringBuilder();
+	private StringBuilder eclCode = new StringBuilder();
 	private SQLParserDrop sqlParser;
 	private Drop drop;
 	private String originalTableName;
@@ -23,27 +22,22 @@ public class ECLEngineDrop extends ECLEngine {
 		super(drop, layouts);
 		this.drop = drop;
 		originalTableName = drop.getName();
-		
-		// TODO: remove later due to double initialization
-		
+		this.sqlParser = new SQLParserDrop(drop, layouts);
 	}
 
 	public String generateECL() throws SQLException {
 
 		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
 		tempTableParser.replace(drop);
-		this.sqlParser = new SQLParserDrop(drop, layouts);
+		
     	eclCode.append(generateImports());
-//		eclCode.append(eclBuilder.generateECL(sqlQuery));
     	
     	String tablePath = sqlParser.getFullName();
 		
 		availablecols = new HashMap<String, HPCCColumnMetaData>();
 
    		HPCCDFUFile hpccQueryFile = layouts.getDFUFile(tablePath);
-//   		addFileColsToAvailableCols(hpccQueryFile, availablecols);
    		if(hpccQueryFile != null) {
-   			
    			if(hpccQueryFile.isSuperFile()) {
    				eclCode.append("Std.File.DeleteSuperFile('~"+tablePath+"', TRUE);\n");
    			} else {
@@ -54,20 +48,11 @@ public class ECLEngineDrop extends ECLEngine {
    			eclCode.append(EMPTY_QUERY);
    			
    	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
-
-//   	    	HashSet<String> columns = eclLayouts.getAllColumns(((SQLParserDrop) sqlParser).getName());
-//   	    	int i=0;
-//   	    	for (String column : columns) {
-//   	    		i++;
-//   	    		expectedretcolumns.add(new HPCCColumnMetaData(column, i, eclLayouts.getSqlTypeOfColumn(sqlParser.getAllTables(), column)));
-//   	    	}  	
+ 	
 			layouts.removeDFUFile(tablePath);
 			layouts.removeTempTable(layouts.getFullTableName(originalTableName));
    		} else {
-   			/*
-   			 * TODO: replace with much, much, much better solution
-   			 */
-   			eclCode.append(EMPTY_QUERY);
+   			return null;
    		}
    		return eclCode.toString();
 	}
@@ -75,10 +60,5 @@ public class ECLEngineDrop extends ECLEngine {
 	@Override
 	protected SQLParserDrop getSQLParser() {
 		return sqlParser;
-	}
-
-	@Override
-	public void setSQLParser(SQLParser parser) {
-		this.sqlParser = (SQLParserDrop) parser;
 	}
 }

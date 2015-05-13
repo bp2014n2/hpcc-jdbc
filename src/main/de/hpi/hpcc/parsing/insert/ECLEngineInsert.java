@@ -13,7 +13,6 @@ import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.SQLParser;
 import de.hpi.hpcc.parsing.visitor.ECLDataTypeParser;
 import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectItemFinder;
@@ -28,17 +27,15 @@ public class ECLEngineInsert extends ECLEngine {
 	public ECLEngineInsert(Insert insert, ECLLayouts layouts) {
 		super(insert, layouts);
 		this.insert = insert;
+		this.sqlParser = new SQLParserInsert(insert, layouts);
 	}
 	
 	public String generateECL() throws SQLException{
 		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
 		tempTableParser.replace(insert);
-		this.sqlParser = new SQLParserInsert(insert, layouts);
 		
     	ECLBuilderInsert eclBuilder = new ECLBuilderInsert(insert, layouts);
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
-//    	eclCode.append("#OPTION('targetclustertype', 'thor');\n");
-//    	eclCode.append("#OPTION('targetclustertype', 'hthor');\n");
     	eclCode.append("#OPTION('outputlimit', 2000);\n");
     	
     	eclCode.append(generateImports());
@@ -46,18 +43,14 @@ public class ECLEngineInsert extends ECLEngine {
 		eclCode.append(generateTables());
 		
 		String tablePath = "i2b2demodata::"+ sqlParser.getTable().getName();
-		//tablePath = checkForTempTable(tablePath);
 		String newTablePath = tablePath + "_" + Long.toString(System.currentTimeMillis());
-		
-		
+
 		eclCode.append(eclBuilder.generateECL().replace("%NEWTABLE%",newTablePath));
 		
 //		add new subfile to superfile
 		eclCode.append("SEQUENTIAL(\n Std.File.StartSuperFileTransaction(),\n"
 				+ " Std.File.AddSuperFile('~"+tablePath+"', '~"+newTablePath);
 		eclCode.append("'),\n Std.File.FinishSuperFileTransaction());");
-		
-		System.out.println(eclCode.toString());
 		
 		availablecols = new HashMap<String, HPCCColumnMetaData>();
 		String tableName;
@@ -68,19 +61,25 @@ public class ECLEngineInsert extends ECLEngine {
     			tableName = "i2b2demodata::"+table;
     		}
     		
-    		long timeBeforeDFUFile = System.nanoTime();
     		HPCCDFUFile hpccQueryFile = layouts.getDFUFile(tableName);
-    		long timeAfterDFUFile = System.nanoTime();
-    		long timeDifferenceDFUFile = (timeAfterDFUFile-timeBeforeDFUFile)/1000000;
-    		log("Time for getting DFUFile: "+timeDifferenceDFUFile);
     		
- 
     		if(hpccQueryFile != null) {
         		addFileColsToAvailableCols(hpccQueryFile, availablecols);
     		}
     	}
 
-    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
+    	generateExpectedReturnColumns();
+    	
+    	return eclCode.toString();
+	}
+
+	@Override
+	protected SQLParserInsert getSQLParser() {
+		return sqlParser;
+	}
+	
+	private void generateExpectedReturnColumns() {
+		expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
     	ECLSelectItemFinder finder = new ECLSelectItemFinder(layouts);
     	List<SelectExpressionItem> selectItems = finder.find(insert);
     	ECLDataTypeParser parser = new ECLDataTypeParser(layouts, getSQLParser());
@@ -95,13 +94,6 @@ public class ECLEngineInsert extends ECLEngine {
     		int sqlType = ECLLayouts.getSqlType(dataType);
     		expectedretcolumns.add(new HPCCColumnMetaData(name, i, sqlType));
     	}
-    	
-    	return eclCode.toString();
-	}
-
-	@Override
-	protected SQLParserInsert getSQLParser() {
-		return sqlParser;
 	}
 	
 	protected String generateLayouts() {
@@ -121,9 +113,4 @@ public class ECLEngineInsert extends ECLEngine {
   	private static void log(Level loggingLevel, String infoMessage){
   		logger.log(loggingLevel, ECLEngineInsert.class.getSimpleName()+": "+infoMessage);
   	}
-
-	@Override
-	public void setSQLParser(SQLParser parser) {
-		this.sqlParser = (SQLParserInsert) parser;
-	}
 }

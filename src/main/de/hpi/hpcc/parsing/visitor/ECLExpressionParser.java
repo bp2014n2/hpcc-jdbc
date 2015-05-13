@@ -1,6 +1,11 @@
 package de.hpi.hpcc.parsing.visitor;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
@@ -159,8 +164,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(DoubleValue doubleValue) {
-		// TODO Auto-generated method stub
-		
+		parsed = Double.toString(doubleValue.getValue());
 	}
 
 	@Override
@@ -170,8 +174,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(DateValue dateValue) {
-		// TODO Auto-generated method stub
-		
+		parsed = dateValue.getValue().toString();
 	}
 
 	@Override
@@ -192,30 +195,49 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(StringValue stringValue) {
-		parsed = ECLUtils.encapsulateWithSingleQuote(stringValue.getValue());
+		String stringEscaped = stringValue.getValue();
+		stringEscaped = stringEscaped.replace("\n", "");
+		stringEscaped = stringEscaped.replace("\\", "\\\\");
+		stringEscaped = stringEscaped.replace("\'\'", "\'");
+		stringEscaped = stringEscaped.replace("\'", "\\'");
+		stringEscaped = ECLUtils.encapsulateWithSingleQuote(stringEscaped);
+		parsed = stringEscaped;
 	}
 
 	@Override
 	public void visit(Addition addition) {
-		// TODO Auto-generated method stub
-		
+		parsed = visitBinaryExpression(addition, "+");
 	}
 
 	@Override
 	public void visit(Division division) {
-		// TODO Auto-generated method stub
-		
+		parsed = visitBinaryExpression(division, "/");
 	}
 
 	@Override
 	public void visit(Multiplication multiplication) {
-		// TODO Auto-generated method stub
-		
+		parsed = visitBinaryExpression(multiplication, "*");
 	}
 
 	@Override
 	public void visit(Subtraction subtraction) {
-		// TODO Auto-generated method stub
+		if (subtraction.getLeftExpression().toString().equalsIgnoreCase("CURRENT_DATE")) {
+			DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+			Calendar currentDate = Calendar.getInstance();
+			// = dateFormat.format(date); //2014/08/06 15:59:48
+			IntervalExpression interval = (IntervalExpression) subtraction.getRightExpression(); 
+			String parameter = interval.getParameter();
+			Matcher matcher = Pattern.compile("'(\\d+)\\.?\\d+\\s(\\w*)'").matcher(parameter);
+			if (matcher.find()) {
+				int number = Integer.parseInt(matcher.group(1));
+				String type = matcher.group(2);
+				currentDate.add(Calendar.DAY_OF_MONTH, -number);
+			}
+			parsed = ECLUtils.encapsulateWithSingleQuote(dateFormat.format(currentDate.getTime()));
+			return;
+		}
+		
+		parsed = visitBinaryExpression(subtraction, "-");
 	}
 
 	@Override
@@ -236,6 +258,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 		betweenBuilder.append(parse(between.getBetweenExpressionStart()));
 		betweenBuilder.append(" AND ");
 		betweenBuilder.append(parse(between.getBetweenExpressionEnd()));
+		
 		parsed = ECLUtils.encapsulateWithBrackets(betweenBuilder.toString());
 	}
 
@@ -287,7 +310,6 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 		}
 		int count = stringValue.replace("\\\\", "\\").length();
 		
-		
 		likeString.append(parse(likeExpression.getLeftExpression()));
 		likeString.append("[1..");
 		likeString.append(count);
@@ -319,7 +341,6 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 	@Override
 	public void visit(Column tableColumn) {
 		parsed = tableColumn.getColumnName();
-		
 	}
 
 	@Override
@@ -437,7 +458,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 	@Override
 	public void visit(IntervalExpression iexpr) {
 		// TODO Auto-generated method stub
-		
+		parsed = "";
 	}
 
 	@Override

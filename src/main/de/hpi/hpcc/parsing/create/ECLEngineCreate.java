@@ -8,7 +8,6 @@ import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
 import de.hpi.hpcc.parsing.ECLLayouts;
-import de.hpi.hpcc.parsing.SQLParser;
 import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
 public class ECLEngineCreate extends ECLEngine {
@@ -21,24 +20,17 @@ public class ECLEngineCreate extends ECLEngine {
 	public ECLEngineCreate(CreateTable create, ECLLayouts layouts) {
 		super(create, layouts);
 		this.create = create;
+		sqlParser = new SQLParserCreate(create, layouts);
 	}
 
 	public String generateECL() throws SQLException {
-		sqlParser = new SQLParserCreate(create, layouts);
+		
 		if (sqlParser.isTempTable()) {
 			layouts.addTempTable(layouts.getFullTableName(create.getTable().getName()));
 			ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
 			tempTableParser.replace(create);
 		}
-		String tablePath = sqlParser.getFullName();
-		
-		/*
-		if (sqlParser.isTempTable()) {
-			tablePath = eclLayouts.getTempTableName(tablePath);
-			eclLayouts.addTempTable(tablePath);
-		}
-		*/
-		
+		String tablePath = sqlParser.getFullName();		
 		HPCCDFUFile dfuFile = layouts.getDFUFile(tablePath);
 
 		if(dfuFile == null) {
@@ -62,7 +54,7 @@ public class ECLEngineCreate extends ECLEngine {
 	    		expectedretcolumns.add(new HPCCColumnMetaData(column.split("\\s+")[1], i, ECLLayouts.getSqlType(column.split("\\s+")[0])));
 	    	}  	
 		} else {
-			eclCode.append(EMPTY_QUERY);
+			return null;
 		}
 		
 		return eclCode.toString();
@@ -72,10 +64,5 @@ public class ECLEngineCreate extends ECLEngine {
 	@Override
 	protected SQLParserCreate getSQLParser() {
 		return sqlParser;
-	}
-
-	@Override
-	public void setSQLParser(SQLParser parser) {
-		this.sqlParser = (SQLParserCreate) parser;
 	}
 }

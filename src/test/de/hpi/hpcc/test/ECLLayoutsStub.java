@@ -29,8 +29,7 @@ public class ECLLayoutsStub extends ECLLayouts {
 		if (matcher.find()) {
 			layout = matcher.group(1);
 			layouts.put(table.toLowerCase(), layout);
-		}
-		
+		}	
 	}
 	
 	@Override
@@ -124,6 +123,10 @@ public class ECLLayoutsStub extends ECLLayouts {
 		indexes.put(table, currentIndexes);
 		this.keyedColumns.put(indexName, keyedColumns);
 		this.nonKeyedColumns.put(indexName, nonKeyedColumns);
+	}
+	
+	public String getRecord(String tableName) {
+		return getStubbedLayout(tableName);
 	}
 
 }

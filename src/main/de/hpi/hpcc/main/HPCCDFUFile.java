@@ -580,6 +580,11 @@ public class HPCCDFUFile
     {
         return ecl == null ? null : structname + " := RECORD " + ecl + "END; ";
     }
+    
+    public String getRecDef()
+    {
+        return ecl;
+    }
 
     public void setFileRecDef(String ecl)
     {

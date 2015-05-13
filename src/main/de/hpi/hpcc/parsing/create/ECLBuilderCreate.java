@@ -24,14 +24,13 @@ public class ECLBuilderCreate extends ECLBuilder {
 		sqlParser = new SQLParserCreate(create, eclLayouts);
 		eclCode = new StringBuilder();
 		eclCode.append("OUTPUT(DATASET([],{");
-		String recordString = sqlParser.getRecord();
-		eclCode.append(recordString);
+		eclCode.append(sqlParser.getRecord());
 		eclCode.append("}),,'~%NEWTABLE%',OVERWRITE);");
 		return eclCode.toString();
 	}
 
 	@Override
-	protected SQLParserCreate getSqlParser() {
-		return sqlParser;
+	protected CreateTable getStatement() {
+		return create;
 	}
 }

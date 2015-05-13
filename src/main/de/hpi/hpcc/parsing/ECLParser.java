@@ -47,14 +47,19 @@ public class ECLParser {
 		eclCode.append("#WORKUNIT('name', 'i2b2: "+eclMetaEscape(sql)+"');\n");
 		ECLStatementParser typeParser = new ECLStatementParser(layouts);
 		engine = typeParser.getEngine(sql);
-		eclCode.append(engine.generateECL());
+		String generatedECL = engine.generateECL();
+		if (generatedECL == null) {
+			return null;
+		}
+		eclCode.append(generatedECL);
 		eclCode.append("\n\n//"+eclMetaEscape(sql));
 		return eclCode.toString();
 	}
     
 	private String eclMetaEscape(String sqlQuery) {
-		sqlQuery = sqlQuery.replace("'", "\\'");
 		sqlQuery = sqlQuery.replace("\n", " ");
+		sqlQuery = sqlQuery.replace("\\", "\\\\");
+		sqlQuery = sqlQuery.replace("'", "\\'");
 		return sqlQuery;
 	}
 

@@ -32,6 +32,9 @@ public class ECLBuilderTest {
 	public void shouldTranslateSimpleSelect() throws HPCCException {
 		assertStatementCanBeParsedAs("TABLE(myTable, {myColumn, myColumnA, myColumnB})", "select * from mySchema.myTable");
 		assertStatementCanBeParsedAs("TABLE(myTable, {myColumn})", "select myColumn from mySchema.myTable");
+		assertStatementCanBeParsedAs("TABLE(myTable, {string50 string_myValue := 'myValue'})", "select 'myValue' from mySchema.myTable");
+		assertStatementCanBeParsedAs("TABLE(myTable, {string50 string_myValuemyValue := 'myValue:myValue'})", "select 'myValue:myValue' from mySchema.myTable");
+		assertStatementCanBeParsedAs("TABLE(myTable, {string50 string_myValuemyValuemyValue := 'myValue:myValue:myValue'})", "select 'myValue:myValue:myValue' from mySchema.myTable");
 		assertStatementCanBeParsedAs("DEDUP(TABLE(myTable, {myColumn, myColumnA, myColumnB}), All)", "select distinct * from mySchema.myTable");
 		assertStatementCanBeParsedAs("DEDUP(TABLE(myTable, {myColumn}), All)", "select distinct myColumn from mySchema.myTable");
 		assertStatementCanBeParsedAs("TABLE(myTable, {myColumnA, STRING25 myNewColumnB := myColumnB})", "select myColumnA, myColumnB as myNewColumnB from mySchema.myTable");
@@ -103,19 +106,6 @@ public class ECLBuilderTest {
 	}
 	
 	@Test
-	public void shouldTranslateInsertInto() throws HPCCException {
-		assertStatementCanBeParsedAs("OUTPUT(DATASET([{valueA, valueB, valueC}], myTable_record),,'~%NEWTABLE%', overwrite);\n","insert into myTable values (valueA, valueB, valueC)");
-		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueA}], {STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA) values (valueA)");
-		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING25 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA, myColumnB) values (valueA, valueB)");
-		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueB, valueA}], {STRING25 myColumnB, STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnB, myColumnA) values (valueB, valueA)");
-		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING25 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA, myColumnB) values (valueA, valueB) returning *");
-		assertStatementCanBeParsedAs("x := TABLE(anotherTable, {myColumnB});\nOUTPUT(TABLE(TABLE(x, {myColumnB}),{STRING50 myColumn := '', myColumnA, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA) with x as (select myColumnB from anotherTable) select x.myColumnB from x");
-		assertStatementCanBeParsedAs("OUTPUT(TABLE(TABLE((TABLE(anotherTable, {myColumnB})), {myColumnB}),{STRING50 myColumn := '', myColumnA, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA) select * from (select myColumnB from anotherTable)");
-		assertStatementCanBeParsedAs("OUTPUT(TABLE(TABLE((DEDUP(TABLE(myTableA, {myColumnB}), All)), {string50 myColumnA := 'myValue', INTEGER5 myNewColumnB := 0}),{STRING50 myColumn := '', myColumnA, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", "INSERT INTO myTable (myColumnA, myNewColumnB) SELECT 'myValue' AS myColumnA, ROW_NUMBER() OVER(ORDER BY myColumnB) AS myNewColumnB FROM (SELECT DISTINCT myColumnB FROM myTableA) t");
-		assertStatementCanBeParsedAs("OUTPUT(TABLE((DEDUP(TABLE(myTableA, {myColumnB}), All)), {string50 myColumnA := 'myValue', INTEGER5 myNewColumnB := 0, myColumnC}),,'~%NEWTABLE%', overwrite);\n", "INSERT INTO myTable (myColumnA, myNewColumnB, myColumnC) SELECT 'myValue' AS myColumnA, ROW_NUMBER() OVER(ORDER BY myColumnB) AS myNewColumnB, myColumnC FROM (SELECT DISTINCT myColumnB FROM myTableA) t");
-	}
-	
-	@Test
 	public void shouldTranslateUpdate() throws HPCCException {
 		assertStatementCanBeParsedAs("toUpdate := TABLE(TABLE(myTable, {myColumnA, myColumnB}), {STRING50 myColumn := 'myValue', myColumnA, myColumnB});\nOUTPUT(toUpdate,, '~%NEWTABLE%', overwrite);\n","update myTable set myColumn = 'myValue'");
 		assertStatementCanBeParsedAs("toUpdate := TABLE(TABLE(myTable(myColumnB = 'anotherValue'), {myColumn, myColumnB}), {myColumn, STRING50 myColumnA := 'myValue', myColumnB});\nOUTPUT(myTable(NOT(myColumnB = 'anotherValue'))+toUpdate,, '~%NEWTABLE%', overwrite);\n", "update myTable set myColumnA = 'myValue' where myColumnB = 'anotherValue'");	
@@ -125,6 +115,11 @@ public class ECLBuilderTest {
 	@Test
 	public void shouldTranslateDropTable() throws HPCCException {
 		assertStatementCanBeParsedAs("Std.File.DeleteLogicalFile('~i2b2demodata::myTable', true)", "drop table myTable");		
+	}
+	
+	@Test
+	public void shouldTranslateDelete() throws HPCCException {
+		assertStatementCanBeParsedAs("OUTPUT(DATASET([],{STRING50 myColumn; STRING50 myColumnA; STRING25 myColumnB;}),,'~%NEWTABLE%',OVERWRITE);", "delete from myTable");		
 	}
 	
 	@Test

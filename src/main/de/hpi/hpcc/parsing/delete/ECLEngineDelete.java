@@ -1,12 +1,12 @@
-package de.hpi.hpcc.parsing.update;
+package de.hpi.hpcc.parsing.delete;
 
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.sf.jsqlparser.statement.delete.Delete;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
-import net.sf.jsqlparser.statement.update.Update;
 import de.hpi.hpcc.main.HPCCColumnMetaData;
 import de.hpi.hpcc.main.HPCCDFUFile;
 import de.hpi.hpcc.parsing.ECLEngine;
@@ -16,23 +16,24 @@ import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectItemFinder;
 import de.hpi.hpcc.parsing.visitor.ECLTempTableParser;
 
-public class ECLEngineUpdate extends ECLEngine {
-	
+public class ECLEngineDelete extends ECLEngine {
+
+	private Delete delete;
+	private SQLParserDelete sqlParser;
 	private StringBuilder eclCode = new StringBuilder();
-	private SQLParserUpdate sqlParser;
-	private Update update;
 	
-	public ECLEngineUpdate(Update update, ECLLayouts layouts) {
-		super(update, layouts);
-		this.update = update;
-		this.sqlParser = new SQLParserUpdate(update, layouts);
+	public ECLEngineDelete(Delete delete, ECLLayouts layouts) {
+		super(delete, layouts);
+		this.delete = delete;
+		this.sqlParser = new SQLParserDelete(delete, layouts);
 	}
 
+	@Override
 	public String generateECL() throws SQLException {
 		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
-		tempTableParser.replace(update);
+		tempTableParser.replace(delete);
 		
-		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate(update, layouts);
+		ECLBuilderDelete eclBuilder = new ECLBuilderDelete(delete, layouts);
     	eclCode.append(generateImports());
     	eclCode.append(generateLayouts());
 		eclCode.append(generateTables());
@@ -42,7 +43,7 @@ public class ECLEngineUpdate extends ECLEngine {
     	
 		eclCode.append(eclBuilder.generateECL().toString().replace("%NEWTABLE%",newTablePath));
 		
-   		HPCCDFUFile hpccQueryFile = layouts.getDFUFile(sqlParser.getFullName());
+   		HPCCDFUFile hpccQueryFile = layouts.getDFUFile(tablePath);
 		eclCode.append("SEQUENTIAL(\nStd.File.StartSuperFileTransaction(),\n Std.File.ClearSuperFile('~"+tablePath+"'),\n");
 		for(String subfile : hpccQueryFile.getSubfiles()) {
 			eclCode.append("Std.File.DeleteLogicalFile('~"+subfile+"'),\n");
@@ -61,10 +62,15 @@ public class ECLEngineUpdate extends ECLEngine {
     	return eclCode.toString();
 	}
 
+	@Override
+	protected SQLParserDelete getSQLParser() {
+		return sqlParser;
+	}
+	
 	private void generateExpectedReturnColumns() {
 		expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
     	ECLSelectItemFinder finder = new ECLSelectItemFinder(layouts);
-    	List<SelectExpressionItem> selectItems = finder.find(update);
+    	List<SelectExpressionItem> selectItems = finder.find(delete);
     	ECLDataTypeParser parser = new ECLDataTypeParser(layouts, getSQLParser());
     	for (int i=0; i < selectItems.size(); i++) {
     		SelectExpressionItem selectItem = selectItems.get(i);
@@ -77,10 +83,5 @@ public class ECLEngineUpdate extends ECLEngine {
     		int sqlType = ECLLayouts.getSqlType(dataType);
     		expectedretcolumns.add(new HPCCColumnMetaData(name, i, sqlType));
     	}
-	}
-
-	@Override
-	protected SQLParserUpdate getSQLParser() {
-		return sqlParser;
 	}
 }

@@ -7,6 +7,7 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -70,6 +71,15 @@ public class ECLSelectItemFinderTest {
 	}
 	
 	@Test
+	public void shouldFindJoinColumnsOnce() throws HPCCException {
+		List<String> expected = new ArrayList<String>();
+		expected.add("myColumn");
+		expected.add("myColumnA");
+		expected.add("myColumnB");
+		assertAllExpressionsAreFound(expected , "SELECT * FROM myTable, myTableB");
+	}
+	
+	@Test
 	public void shouldFindSubSelects() throws HPCCException {
 		List<String> expected = new ArrayList<String>();
 		expected.add("myColumn");
@@ -104,6 +114,21 @@ public class ECLSelectItemFinderTest {
 		expected.add("myColumnA");
 		expected.add("myColumnB");
 		assertAllExpressionsAreFound(expected , "INSERT INTO myTable VALUES ('1', '2', '3')");
+	}
+	
+	@Test
+	public void shouldFindColumnsWithWith() throws HPCCException {
+		List<String> expected = new ArrayList<String>();
+		expected.add("t.myColumnA");
+		assertAllExpressionsAreFound(expected , "with t as (select myColumnA from myTableB) select t.myColumnA from t");
+	}
+	
+	@Ignore @Test 
+	public void shouldFindAllColumnsWithWith() throws HPCCException {
+		//TODO: implement test
+		List<String> expected = new ArrayList<String>();
+		expected.add("myColumnA");
+		assertAllExpressionsAreFound(expected , "with t as (select myColumnA from myTableB) select * from t");
 	}
 	
 }
