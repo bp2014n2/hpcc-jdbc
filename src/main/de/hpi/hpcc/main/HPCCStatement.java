@@ -97,21 +97,25 @@ public class HPCCStatement implements Statement{
 		
 		return HPCCDriver.isPostgreSQLAvailable() && federatedDatabase && !whiteList.containsAll(tables);
 	}
-	
 
-	
 	private boolean executeQueryOnHPCC(String sqlStatement) throws SQLException {
 		try {
 			ECLLayouts layouts = new ECLLayouts(connection.getDatabaseMetaData());
 			this.eclParser = new ECLParser(layouts);
 			HPCCResultSetMetadata resultSetMetaData = null;
 			HPCCXmlParser xmlParser = null;
+			boolean sentAnyQuery = false;
 			for(String query : eclParser.parse(sqlStatement)) {
-				connection.sendRequest(query);
-				resultSetMetaData = new HPCCResultSetMetadata(eclParser.getExpectedRetCols(), "HPCC Result");
+				if (query != null) {
+					sentAnyQuery = true;
+					connection.sendRequest(query);
+					resultSetMetaData = new HPCCResultSetMetadata(eclParser.getExpectedRetCols(), "HPCC Result");
+				}
 			}
-			xmlParser = new HPCCXmlParser(connection.getInputStream(), resultSetMetaData);
-			result = new HPCCResultSet(this, xmlParser, resultSetMetaData);
+			if (sentAnyQuery) {
+				xmlParser = new HPCCXmlParser(connection.getInputStream(), resultSetMetaData);
+				result = new HPCCResultSet(this, xmlParser, resultSetMetaData);
+			}
 			return result != null;
 		} catch (HPCCException exception) {
 			exception.printStackTrace();
