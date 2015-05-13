@@ -227,7 +227,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 			// = dateFormat.format(date); //2014/08/06 15:59:48
 			IntervalExpression interval = (IntervalExpression) subtraction.getRightExpression(); 
 			String parameter = interval.getParameter();
-			Matcher matcher = Pattern.compile("'(\\d+)\\.?\\d+\\s(\\w*)'").matcher(parameter);
+			Matcher matcher = Pattern.compile("'(\\d+)\\.?\\d*\\s(\\w*)'").matcher(parameter);
 			if (matcher.find()) {
 				int number = Integer.parseInt(matcher.group(1));
 				String type = matcher.group(2);
