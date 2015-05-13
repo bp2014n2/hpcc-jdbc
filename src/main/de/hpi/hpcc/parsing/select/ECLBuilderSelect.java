@@ -8,6 +8,7 @@ import java.util.List;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
@@ -25,6 +26,7 @@ import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.SQLParser;
+import de.hpi.hpcc.parsing.visitor.ECLFromItemGenerator;
 import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectParser;
 import de.hpi.hpcc.parsing.visitor.ECLWhereExpressionOptimizer;
@@ -134,11 +136,11 @@ public class ECLBuilderSelect extends ECLBuilder {
 	
 	private void generateFrom(SQLParserSelect sqlParser) {	
 
-		FromItem table = sqlParser.getFromItem();
+		FromItem fromItem = sqlParser.getFromItem();
 		if (sqlParser.getJoins() != null) {
 			StringBuilder joinString = new StringBuilder();
 			// TODO: Joins with more than two tables
-			joinString.append("JOIN("+((Table)table).getName()+", "+((Table) sqlParser.getJoins().get(0).getRightItem()).getName());
+			joinString.append("JOIN("+((Table)fromItem).getName()+", "+((Table) sqlParser.getJoins().get(0).getRightItem()).getName());
 						
 			EqualsTo joinCondition = findJoinCondition(sqlParser.getWhere());
 			if (joinCondition != null) {
@@ -150,14 +152,8 @@ public class ECLBuilderSelect extends ECLBuilder {
 			}
 			eclCode.append(joinString.toString());
 		} else {
-			
-			if (table instanceof Table) {
-				eclCode.append(((Table) table).getName());
-	    	} else if (table instanceof SubSelect){
-	    		eclCode.append("(");
-	    		eclCode.append(new ECLBuilderSelect(((SubSelect) table).getSelectBody(), eclLayouts).generateECL());
-	    		eclCode.append(")");
-	    	}
+			ECLFromItemGenerator generator = new ECLFromItemGenerator(eclLayouts);
+			eclCode.append(generator.generate(fromItem));
 		}
 	}
 	
@@ -166,7 +162,7 @@ public class ECLBuilderSelect extends ECLBuilder {
     	if (whereItems != null) {
     		eclCode.append("(");
     		ECLWhereExpressionOptimizer expressionOptimizer = new ECLWhereExpressionOptimizer(eclLayouts);
-    		expressionOptimizer.setSelectItems(sqlParser.getSelectItems());
+    		expressionOptimizer.pushFromItems(sqlParser.getFromItem());
     		Expression newWhere = expressionOptimizer.optimize(whereItems);
     		eclCode.append(parseExpressionECL(newWhere));
     		eclCode.append(")");
