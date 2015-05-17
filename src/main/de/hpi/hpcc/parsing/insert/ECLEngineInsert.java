@@ -83,8 +83,8 @@ public class ECLEngineInsert extends ECLEngine {
     	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
     	ECLSelectItemFinder finder = new ECLSelectItemFinder(layouts);
     	List<SelectExpressionItem> selectItems = finder.find(insert);
-    	ECLDataTypeParser parser = new ECLDataTypeParser(layouts, getSQLParser());
     	for (int i=0; i < selectItems.size(); i++) {
+        	ECLDataTypeParser parser = new ECLDataTypeParser(layouts, getSQLParser());
     		SelectExpressionItem selectItem = selectItems.get(i);
     		String dataType = parser.parse(selectItem.getExpression());
     		ECLNameParser namer = new ECLNameParser();
