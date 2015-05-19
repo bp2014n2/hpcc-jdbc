@@ -28,11 +28,12 @@ public class HPCCXmlParser {
 		//TODO use logger :-D
 		try {
 			loop: for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
+				String localName;
 				switch (event) {
 					case XMLStreamConstants.START_ELEMENT:
-						String localName = parser.getLocalName();
+						localName = parser.getLocalName();
 						if (this.isRow(localName)) {
-							return this.parseRow(parser, resultSetMetaData);
+							return this.parseRow(resultSetMetaData);
 				        } else if (this.isException(parser.getLocalName())) {
 				        	this.parseException(parser);
 						}
@@ -56,7 +57,7 @@ public class HPCCXmlParser {
 		}
     }
 
-	private ArrayList<String> parseRow(XMLStreamReader parser, HPCCResultSetMetadata resultSetMetaData) throws XMLStreamException, HPCCException {
+	private ArrayList<String> parseRow(HPCCResultSetMetadata resultSetMetaData) throws XMLStreamException, HPCCException {
 		ArrayList<String> row = resultSetMetaData.createDefaultResultRow();
 		String elementValue = "";
 		String nodeElementName = "";
@@ -84,7 +85,20 @@ public class HPCCXmlParser {
 	}
 
 	private void parseException(XMLStreamReader parser) throws XMLStreamException, HPCCException {
-		String exceptionMessage = "";
+		for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
+			String localName;
+			switch (event) {
+				case XMLStreamConstants.START_ELEMENT:
+					localName = parser.getLocalName();
+					if (this.isMessage(localName)) {
+						throw new HPCCException(HPCCXmlParser.class.getSimpleName()+": Error in server response!!\n"+this.parseMessage());
+					}
+			}
+		}
+	}
+	
+	private String parseMessage() throws XMLStreamException {
+		String exceptionMessage  = "";
 		for (int event = parser.next(); event != XMLStreamConstants.END_ELEMENT; event = parser.next()) {
 			switch (event) {
 				case XMLStreamConstants.CHARACTERS:
@@ -92,17 +106,19 @@ public class HPCCXmlParser {
 					exceptionMessage += parser.getText().trim();
 			}
 		}
-		if (exceptionMessage.contains("System error")) {
-			throw new HPCCException(HPCCXmlParser.class.getSimpleName()+": Error in server response!!\n"+exceptionMessage);
-		}
+		return exceptionMessage;
 	}
-	
+
+	private boolean isMessage(String localName) {
+		return localName.equals("Message");
+	}
+
 	private boolean isRow(String localName) {
 		return localName.equals("Row");
 	}
 	
 	private boolean isException(String localName) {
-		return localName.equals("Exception");
+		return localName.equals("Errors");
 	}
 	
 	private boolean isDataset(String localName) {
