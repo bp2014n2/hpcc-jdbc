@@ -34,7 +34,7 @@ public class HPCCXmlParser {
 						if (this.isRow(localName)) {
 							return this.parseRow(parser, resultSetMetaData);
 				        } else if (this.isException(parser.getLocalName())) {
-				        	//TODO: this.parseException(parser);
+				        	this.parseException(parser);
 						}
 						break;
 					case XMLStreamConstants.END_ELEMENT:
@@ -92,7 +92,9 @@ public class HPCCXmlParser {
 					exceptionMessage += parser.getText().trim();
 			}
 		}
-		throw new HPCCException(HPCCXmlParser.class.getSimpleName()+": Error in server response!!\n"+exceptionMessage);
+		if (exceptionMessage.contains("System error")) {
+			throw new HPCCException(HPCCXmlParser.class.getSimpleName()+": Error in server response!!\n"+exceptionMessage);
+		}
 	}
 	
 	private boolean isRow(String localName) {
