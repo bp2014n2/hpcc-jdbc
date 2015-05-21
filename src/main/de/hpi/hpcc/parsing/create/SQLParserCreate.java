@@ -87,7 +87,7 @@ public class SQLParserCreate extends SQLParser {
 	}
 
 	@Override
-	protected Statement getStatement() {
+	public Statement getStatement() {
 		return create;
 	}
 }

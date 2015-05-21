@@ -124,7 +124,7 @@ public class SQLParserSelect extends SQLParser {
 	}
 
 	@Override
-	protected Statement getStatement() {
+	public Statement getStatement() {
 		return select;
 	}
 }

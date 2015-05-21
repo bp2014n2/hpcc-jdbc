@@ -24,7 +24,7 @@ public abstract class SQLParser{
 		this.eclLayouts = eclLayouts;
 	}
 	
-	protected abstract Statement getStatement();
+	public abstract Statement getStatement();
 	
 	protected static String expressionIsInstanceOf(Expression expression) {
 		if (expression instanceof SubSelect) {

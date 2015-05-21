@@ -13,7 +13,7 @@ public class SQLParserDelete extends SQLParser {
 	}
 
 	@Override
-	protected Delete getStatement() {
+	public Delete getStatement() {
 		return delete;
 	}
 	
