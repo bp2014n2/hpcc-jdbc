@@ -10,9 +10,9 @@ public class ECLBuilderSelectTest extends ECLBuilderTest {
 	public void shouldTranslateSimpleSelect() throws HPCCException {
 		assertStatementCanBeParsedAs("TABLE(myTable, {myColumn, myColumnA, myColumnB})", "select * from mySchema.myTable");
 		assertStatementCanBeParsedAs("TABLE(myTable, {myColumn})", "select myColumn from mySchema.myTable");
-		assertStatementCanBeParsedAs("TABLE(myTable, {string50 string_myValue := 'myValue'})", "select 'myValue' from mySchema.myTable");
-		assertStatementCanBeParsedAs("TABLE(myTable, {string50 string_myValuemyValue := 'myValue:myValue'})", "select 'myValue:myValue' from mySchema.myTable");
-		assertStatementCanBeParsedAs("TABLE(myTable, {string50 string_myValuemyValuemyValue := 'myValue:myValue:myValue'})", "select 'myValue:myValue:myValue' from mySchema.myTable");
+		assertStatementCanBeParsedAs("TABLE(myTable, {STRING50 string_myValue := 'myValue'})", "select 'myValue' from mySchema.myTable");
+		assertStatementCanBeParsedAs("TABLE(myTable, {STRING50 string_myValuemyValue := 'myValue:myValue'})", "select 'myValue:myValue' from mySchema.myTable");
+		assertStatementCanBeParsedAs("TABLE(myTable, {STRING50 string_myValuemyValuemyValue := 'myValue:myValue:myValue'})", "select 'myValue:myValue:myValue' from mySchema.myTable");
 		assertStatementCanBeParsedAs("DEDUP(TABLE(myTable, {myColumn, myColumnA, myColumnB}), All)", "select distinct * from mySchema.myTable");
 		assertStatementCanBeParsedAs("DEDUP(TABLE(myTable, {myColumn}), All)", "select distinct myColumn from mySchema.myTable");
 		assertStatementCanBeParsedAs("TABLE(myTable, {myColumnA, STRING25 myNewColumnB := myColumnB})", "select myColumnA, myColumnB as myNewColumnB from mySchema.myTable");

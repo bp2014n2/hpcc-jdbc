@@ -21,7 +21,7 @@ private static ECLLayoutsStub layouts = new ECLLayoutsStub(null);
 	@BeforeClass
 	public static void initialize() {
 		layouts.setLayout("mytable", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING25 myColumnB; END;");
-		layouts.setLayout("mytablea", "RECORD INTEGER8 myColumn; INTEGER8 myColumnA; STRING50 myColumnB; END;");
+		layouts.setLayout("mytablea", "RECORD INTEGER8 myColumn; INTEGER8 myColumnA; STRING25 myColumnB; END;");
 		layouts.setLayout("mytableb", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
 	}
 	
@@ -74,12 +74,12 @@ private static ECLLayoutsStub layouts = new ECLLayoutsStub(null);
 		expectedTypes.add("INTEGER8");
 		assertCorrectDataType(expectedTypes, "select sum(myColumn from 2 for 4) from myTable");
 		assertCorrectDataType(expectedTypes, "select sum(myColumn from 2 for 4) as myColumn_sum from myTableA");
-		assertCorrectDataType(expectedTypes, "select myColumn_sum from (select substring(myColumn from 2 for 4) as myColumn_sum from myTableA) t");
+		assertCorrectDataType(expectedTypes, "select myColumn_sum from (select sum(myColumn from 2 for 4) as myColumn_sum from myTableA) t");
 		expectedTypes.add("STRING25");
-		assertCorrectDataType(expectedTypes, "select myColumn_sum, myColumnB from (select myColumnB, substring(myColumn from 2 for 4) as myColumn_sum from myTableA) t");
+		assertCorrectDataType(expectedTypes, "select myColumn_sum, myColumnB from (select myColumnB, sum(myColumn from 2 for 4) as myColumn_sum from myTableA) t");
 		expectedTypes.clear();
 		expectedTypes.add("STRING25");
 		expectedTypes.add("INTEGER8");
-		assertCorrectDataType(expectedTypes, "select myColumnB, myColumn_sum from (select myColumnB, substring(myColumn from 2 for 4) as myColumn_sum from myTableA) t");
+		assertCorrectDataType(expectedTypes, "select myColumnB, myColumn_sum from (select myColumnB, sum(myColumn from 2 for 4) as myColumn_sum from myTableA) t");
 	}
 }
