@@ -28,10 +28,12 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.main.*;
+import de.hpi.hpcc.parsing.visitor.ECLSelectTableFinder;
 
 public abstract class ECLEngine
 {
@@ -94,6 +96,9 @@ public abstract class ECLEngine
     	StringBuilder datasetsString = new StringBuilder();
     	StringBuilder indicesString = new StringBuilder();
 //    	String session_id = layouts.getFullTempTableName("");
+    	ECLSelectTableFinder finder = new ECLSelectTableFinder();
+    	List<String> selectTables = finder.findTableNames(getSQLParser().getStatement());
+    	
     	for (String table : getSQLParser().getAllTables()) {
 //    		boolean isTemp = table.contains(session_id);
     		String fullTableName = "i2b2demodata::"+table; //TODO: avoid hard coded i2b2demodata
@@ -101,6 +106,9 @@ public abstract class ECLEngine
 			String index = getIndex(table);
 			if (index != null) {
 				indicesString.append(getIndexString(table, index) + "\n");
+				hasIndex = true;
+			} else if (selectTables.contains(table)) {
+				indicesString.append(generateTempIndexString(table) + "\n");
 				hasIndex = true;
 			} else {
 				hasIndex = false;
@@ -158,6 +166,30 @@ public abstract class ECLEngine
     	joined = ECLUtils.convertToIndex(joined);
     	
     	return tableName + " := " + joined + ";";
+    }
+    
+    private String generateTempIndexString(String tableName) {
+    	List<String> indexParameters = new ArrayList<String>();
+    	indexParameters.add(tableName+"_table");
+    	//TODO: find correct keyed columns
+    	String keyedColumnList = "";
+    	keyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(keyedColumnList);
+    	indexParameters.add(keyedColumnList);
+    	String nonKeyedColumnList = "";
+    	nonKeyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(nonKeyedColumnList);
+    	indexParameters.add(nonKeyedColumnList);
+    	indexParameters.add(ECLUtils.encapsulateWithSingleQuote("~"+layouts.getFullTableName(tableName)+"_idx_tmp"));
+    	
+    	String index = ECLUtils.join(indexParameters, ", ");
+    	index = ECLUtils.convertToIndex(index);
+    	
+    	List<String> buildParameters = new ArrayList<String>();
+    	buildParameters.add(tableName);
+    	buildParameters.add("SORT ALL");
+    	buildParameters.add("OVERWRITE");
+    	String build = ECLUtils.join(buildParameters, ", ");
+    	build = ECLUtils.convertToBuild(build);
+    	return tableName + " := " + index + ";\n" + build + ";";
     }
    
    

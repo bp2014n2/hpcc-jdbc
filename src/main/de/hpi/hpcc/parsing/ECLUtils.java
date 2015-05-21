@@ -104,5 +104,9 @@ public class ECLUtils {
 	public static String convertToSet(String string) {
 		return prepend(encapsulateWithBrackets(string), "SET");
 	}
+
+	public static String convertToBuild(String string) {
+		return prepend(encapsulateWithBrackets(string), "BUILD");
+	}
 	
 }

@@ -20,7 +20,7 @@ public class ECLSelectTableFinderTest {
 	private static void assertAllExpressionsAreFound(List<String> expected, String sql) throws HPCCException {
 		ECLSelectTableFinder finder = new ECLSelectTableFinder();
 		Statement statement = SQLParser.parse(sql);
-		List<Table> found = finder.find(statement);
+		List<Table> found = finder.findTables(statement);
 		assertEquals(expected.size(), found.size());
 		for(Table table : found) {
 			assertTrue(HPCCJDBCUtils.containsStringCaseInsensitive(expected, table.getName()));
