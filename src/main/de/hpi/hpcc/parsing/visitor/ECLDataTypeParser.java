@@ -1,7 +1,10 @@
 package de.hpi.hpcc.parsing.visitor;
 
+import java.util.List;
+
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
+import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
@@ -56,30 +59,29 @@ import net.sf.jsqlparser.expression.operators.relational.PostgreSQLFromForExpres
 import net.sf.jsqlparser.expression.operators.relational.RegExpMatchOperator;
 import net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator;
 import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
-public class ECLDataTypeParser implements ExpressionVisitor {
+public class ECLDataTypeParser extends FullVisitorAdapter {
 
-	private String dataType = "string50";
-	private ECLLayouts eclLayouts;
+	private String dataType = "STRING50";
+	private ECLLayouts layouts;
 	private SQLParser sqlParser;
+	private SelectExpressionItem alias;
+	private String expressionString = "";
 
-	public ECLDataTypeParser(ECLLayouts eclLayouts, SQLParser sqlParser) {
-		this.eclLayouts = eclLayouts;
+	public ECLDataTypeParser(ECLLayouts layouts, SQLParser sqlParser) {
+		this.layouts = layouts;
 		this.sqlParser = sqlParser;
 	}
-
+	
 	public String parse(Expression expression) {
+		dataType = "STRING50";
+		expressionString = expression.toString();
 		expression.accept(this);
 		return dataType;
 	}
 	
-	@Override
-	public void visit(NullValue nullValue) {
-		// TODO Auto-generated method stub
-		
-	}
-
 	@Override
 	public void visit(Function function) {
 		String functionName = function.getName().toLowerCase();
@@ -92,245 +94,39 @@ public class ECLDataTypeParser implements ExpressionVisitor {
 	}
 
 	@Override
-	public void visit(SignedExpression signedExpression) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(JdbcParameter jdbcParameter) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(JdbcNamedParameter jdbcNamedParameter) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(DoubleValue doubleValue) {
-		dataType = "numeric18_5";
-	}
-
-	@Override
 	public void visit(LongValue longValue) {
-		dataType = "integer5";
-	}
-
-	@Override
-	public void visit(DateValue dateValue) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(TimeValue timeValue) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(TimestampValue timestampValue) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Parenthesis parenthesis) {
-		// TODO Auto-generated method stub
-		
+		dataType = "INTEGER5";
 	}
 
 	@Override
 	public void visit(StringValue stringValue) {
-		dataType = "string50";
+		dataType = "STRING50";
 	}
 
 	@Override
-	public void visit(Addition addition) {
-		// TODO Auto-generated method stub
-		
+	public void visit(SelectExpressionItem selectExpressionItem) {
+		if (selectExpressionItem.getAlias() != null) alias = selectExpressionItem;
+		tryAccept(selectExpressionItem.getExpression());
 	}
-
-	@Override
-	public void visit(Division division) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Multiplication multiplication) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Subtraction subtraction) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(AndExpression andExpression) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(OrExpression orExpression) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Between between) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(EqualsTo equalsTo) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(GreaterThan greaterThan) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(GreaterThanEquals greaterThanEquals) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(InExpression inExpression) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(IsNullExpression isNullExpression) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(LikeExpression likeExpression) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(MinorThan minorThan) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(MinorThanEquals minorThanEquals) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(NotEqualsTo notEqualsTo) {
-		// TODO Auto-generated method stub
-		
-	}
-
+	
 	@Override
 	public void visit(Column tableColumn) {
+		boolean columnFound = false;
 		for(String table : sqlParser.getAllTables()) {
-			for(String column : sqlParser.getQueriedColumns(table)) {
-				if(column.equalsIgnoreCase(tableColumn.getColumnName())) {
-					dataType = eclLayouts.getECLDataType(table, column);
-				}
+			ECLSelectItemFinder finder = new ECLSelectItemFinder(layouts);
+			List<SelectExpressionItem> selectExpressionItems = finder.find(sqlParser.getStatement());
+			for(SelectExpressionItem selectItem : selectExpressionItems) {
+				boolean aliasFound = alias != null && alias.getExpression().toString().equalsIgnoreCase(selectItem.toString()) && expressionString.equalsIgnoreCase(alias.getAlias().toString());
+				if(selectItem.toString().equalsIgnoreCase(tableColumn.getColumnName()) || aliasFound) {
+					dataType = layouts.getECLDataType(table, selectItem.toString());
+					columnFound = true;
+					break;
+				} 
 			}
 		}
-	}
-
-	@Override
-	public void visit(SubSelect subSelect) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(CaseExpression caseExpression) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(WhenClause whenClause) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(ExistsExpression existsExpression) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(AllComparisonExpression allComparisonExpression) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(AnyComparisonExpression anyComparisonExpression) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Concat concat) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Matches matches) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(BitwiseAnd bitwiseAnd) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(BitwiseOr bitwiseOr) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(BitwiseXor bitwiseXor) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(CastExpression cast) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(Modulo modulo) {
-		// TODO Auto-generated method stub
-		
+		if (!columnFound) {
+			sqlParser.getStatement().accept(this);
+		}
 	}
 
 	@Override
@@ -340,65 +136,4 @@ public class ECLDataTypeParser implements ExpressionVisitor {
 		default: dataType = "INTEGER5"; break;
 		}
 	}
-
-	@Override
-	public void visit(WithinGroupExpression wgexpr) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(ExtractExpression eexpr) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(IntervalExpression iexpr) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(OracleHierarchicalExpression oexpr) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(RegExpMatchOperator rexpr) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(JsonExpression jsonExpr) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(RegExpMySQLOperator regExpMySQLOperator) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(UserVariable var) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(NumericBind bind) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void visit(PostgreSQLFromForExpression postgreSQLFromForExpression) {
-		// TODO Auto-generated method stub
-		
-	}
-
 }

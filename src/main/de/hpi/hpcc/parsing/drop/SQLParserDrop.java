@@ -23,7 +23,7 @@ public class SQLParserDrop extends SQLParser {
 	}
 
 	@Override
-	protected Statement getStatement() {
+	public Statement getStatement() {
 		return drop;
 	}
 }

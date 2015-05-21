@@ -43,10 +43,10 @@ public class ECLBuilderSelect extends ECLBuilder {
 		this.select = select;
 	}
 
-	public ECLBuilderSelect(SelectBody table, ECLLayouts eclLayouts) {
+	public ECLBuilderSelect(SelectBody selectBody, ECLLayouts eclLayouts) {
 		super(null, eclLayouts);
 		try {
-			Statement statement = SQLParser.parse(table.toString());
+			Statement statement = SQLParser.parse(selectBody.toString());
 			if(statement instanceof Select) {
 				this.select = (Select) statement;
 			}
