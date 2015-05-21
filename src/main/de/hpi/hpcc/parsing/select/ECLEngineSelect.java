@@ -79,9 +79,9 @@ public class ECLEngineSelect extends ECLEngine {
 	protected SQLParserSelect getSQLParser() {
 		return sqlParser;
 	}
-	
+	/*
 	@Override
-	protected String getIndex(String tableName) {
+	public String getIndex(String tableName) {
     	String session_id = layouts.getFullTempTableName("");
     	boolean isTemp = tableName.contains(session_id);
 		if(layouts.hasIndex(tableName)) {
@@ -95,5 +95,5 @@ public class ECLEngineSelect extends ECLEngine {
 				return null;
 			}
 		}
-	}
+	}*/
 }

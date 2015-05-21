@@ -42,6 +42,7 @@ public class ECLEngineTest {
 	}
 	
 	private static String selectIndex(ECLEngine engine, String table) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		/*
 		Class[] cArg = new Class[1];
 		cArg[0] = String.class;
 		Method method = ECLEngine.class.getDeclaredMethod("getIndex", cArg);
@@ -49,6 +50,9 @@ public class ECLEngineTest {
 		Object[] args = new Object[1];
 		args[0] = table;
 		return (String) method.invoke(engine, args);
+		*/
+		
+		return engine.getIndex(table);
 	}
 	
 	private static ECLEngine getEngine(String sql) throws HPCCException {

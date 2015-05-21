@@ -117,7 +117,7 @@ public abstract class ECLEngine
      * @param tableName
      * @return returns the name of the index or null, if non exists
      */
-    protected String getIndex(String tableName) {
+    public String getIndex(String tableName) {
        	List<String> indexes = layouts.getListOfIndexes(tableName);
     	Set<String> columns = getSQLParser().getQueriedColumns(tableName);
        	ArrayList<Integer> scores = new ArrayList<Integer>();
