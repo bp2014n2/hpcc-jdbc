@@ -68,7 +68,7 @@ public class SQLParserInsert extends SQLParser {
 	}
 
 	@Override
-	protected Statement getStatement() {
+	public Statement getStatement() {
 		return insert;
 	}
 }
