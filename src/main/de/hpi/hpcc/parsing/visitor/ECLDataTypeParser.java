@@ -1,9 +1,6 @@
 package de.hpi.hpcc.parsing.visitor;
 
 import java.util.List;
-import java.util.Set;
-import java.util.Stack;
-
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.SQLParser;
 import net.sf.jsqlparser.expression.AnalyticExpression;
@@ -14,17 +11,12 @@ import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.FromItem;
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 
 public class ECLDataTypeParser extends FullVisitorAdapter {
 
 	private String dataType = "STRING50";
 	private ECLLayouts layouts;
 	private SQLParser sqlParser;
-	private SelectExpressionItem alias;
-	private String expressionString = "";
-	
-	private Stack<FromItem> fromItems = new Stack<FromItem>();
 
 	public ECLDataTypeParser(ECLLayouts layouts, SQLParser sqlParser) {
 		this.layouts = layouts;
@@ -33,7 +25,6 @@ public class ECLDataTypeParser extends FullVisitorAdapter {
 	
 	public String parse(Expression expression) {
 		dataType = "STRING50";
-		expressionString = expression.toString();
 		expression.accept(this);
 		return dataType;
 	}
@@ -59,12 +50,6 @@ public class ECLDataTypeParser extends FullVisitorAdapter {
 		dataType = "STRING50";
 	}
 
-	@Override
-	public void visit(SelectExpressionItem selectExpressionItem) {
-		if (selectExpressionItem.getAlias() != null) alias = selectExpressionItem;
-		tryAccept(selectExpressionItem.getExpression());
-	}
-	
 	@Override
 	public void visit(Column tableColumn) {
 		ECLFromItemsCollector collector = new ECLFromItemsCollector();

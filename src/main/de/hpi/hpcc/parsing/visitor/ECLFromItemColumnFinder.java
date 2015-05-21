@@ -25,7 +25,6 @@ public class ECLFromItemColumnFinder extends FullVisitorAdapter {
 	public boolean contains(Expression expression) {
 		this.expression = expression;
 		this.fromItem.accept(this);
-		//this.expression = null;
 		return this.contains;
 	}
 
