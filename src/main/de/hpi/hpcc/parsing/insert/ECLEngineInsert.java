@@ -36,7 +36,7 @@ public class ECLEngineInsert extends ECLEngine {
 		
     	ECLBuilderInsert eclBuilder = new ECLBuilderInsert(insert, layouts);
     	eclCode.append("#OPTION('expandpersistinputdependencies', 1);\n");
-    	eclCode.append("#OPTION('outputlimit', 2000);\n");
+    	eclCode.append("#OPTION('outputlimit', " + outputLimit + ");\n");
     	
     	eclCode.append(generateImports());
 		eclCode.append(generateLayouts());

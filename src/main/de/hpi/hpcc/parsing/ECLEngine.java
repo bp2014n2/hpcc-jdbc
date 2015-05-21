@@ -35,13 +35,14 @@ import de.hpi.hpcc.main.*;
 
 public abstract class ECLEngine
 {
-	private static final String	HPCCEngine = "THOR"; // TODO: use property from Connection
+	private static final String	HPCCDataType = "FLAT";
     
 	protected List<HPCCColumnMetaData>    expectedretcolumns = null;
     protected HashMap<String, HPCCColumnMetaData> availablecols = null;
     protected ECLLayouts layouts;
 	protected final static String EMPTY_QUERY = "OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n";
 	protected static final Logger logger = HPCCLogger.getLogger();
+	protected static final int outputLimit = 2000;
 
     public ECLEngine(Statement statement, ECLLayouts layouts) {
         this.layouts = layouts;
@@ -92,20 +93,21 @@ public abstract class ECLEngine
     protected String generateTables() {
     	StringBuilder datasetsString = new StringBuilder();
     	StringBuilder indicesString = new StringBuilder();
+//    	String session_id = layouts.getFullTempTableName("");
     	for (String table : getSQLParser().getAllTables()) {
+//    		boolean isTemp = table.contains(session_id);
     		String fullTableName = "i2b2demodata::"+table; //TODO: avoid hard coded i2b2demodata
-    		boolean hasIndex = layouts.hasIndex(table);
-    		if (hasIndex) {
-    			String index = getIndex(table);
-    			if (index != null) {
-    				indicesString.append(getIndexString(table, index) + "\n");
-    			} else {
-    				hasIndex = false;
-    			}
-    		}
+    		boolean hasIndex;
+			String index = getIndex(table);
+			if (index != null) {
+				indicesString.append(getIndexString(table, index) + "\n");
+				hasIndex = true;
+			} else {
+				hasIndex = false;
+			}
 			datasetsString.append(table).append(hasIndex?"_table":"").append(" := ").append("DATASET(");
 			datasetsString.append("'~").append(fullTableName).append("'");
-			datasetsString.append(", ").append(table+"_record").append(",").append(HPCCEngine).append(");\n");			
+			datasetsString.append(", ").append(table+"_record").append(",").append(HPCCDataType).append(");\n");			
 		}
     	return datasetsString.toString() + indicesString.toString();
     }
@@ -115,7 +117,7 @@ public abstract class ECLEngine
      * @param tableName
      * @return returns the name of the index or null, if non exists
      */
-    private String getIndex(String tableName) {
+    protected String getIndex(String tableName) {
        	List<String> indexes = layouts.getListOfIndexes(tableName);
     	Set<String> columns = getSQLParser().getQueriedColumns(tableName);
        	ArrayList<Integer> scores = new ArrayList<Integer>();

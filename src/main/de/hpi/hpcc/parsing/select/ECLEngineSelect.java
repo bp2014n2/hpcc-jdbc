@@ -36,7 +36,7 @@ public class ECLEngineSelect extends ECLEngine {
 		
 		
     	ECLBuilderSelect eclBuilder = new ECLBuilderSelect(select, layouts);
-    	eclCode.append("#OPTION('outputlimit', 2000);\n");
+    	eclCode.append("#OPTION('outputlimit', " + outputLimit + ");\n");
     	eclCode.append(generateImports());
         eclCode.append(generateLayouts());
 		eclCode.append(generateTables());
@@ -78,5 +78,22 @@ public class ECLEngineSelect extends ECLEngine {
 	@Override
 	protected SQLParserSelect getSQLParser() {
 		return sqlParser;
+	}
+	
+	@Override
+	protected String getIndex(String tableName) {
+    	String session_id = layouts.getFullTempTableName("");
+    	boolean isTemp = tableName.contains(session_id);
+		if(layouts.hasIndex(tableName)) {
+			return super.getIndex(tableName);
+		} else {
+			if(isTemp) {
+				String indexString = tableName + " := INDEX(" + tableName + "_table,{";
+				indexString += "";
+				return indexString;
+			} else {
+				return null;
+			}
+		}
 	}
 }

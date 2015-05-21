@@ -33,6 +33,7 @@ public class ECLEngineUpdate extends ECLEngine {
 		tempTableParser.replace(update);
 		
 		ECLBuilderUpdate eclBuilder = new ECLBuilderUpdate(update, layouts);
+    	eclCode.append("#OPTION('outputlimit', " + outputLimit + ");\n");
     	eclCode.append(generateImports());
     	eclCode.append(generateLayouts());
 		eclCode.append(generateTables());

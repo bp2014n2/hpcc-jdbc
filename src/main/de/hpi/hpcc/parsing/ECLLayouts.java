@@ -180,6 +180,10 @@ public class ECLLayouts {
 		}
 		return false;
 	}
+	
+	public boolean allHaveNoIndex() {
+		return false;
+	}
 
 	public HPCCDFUFile getDFUFile(String hpccfilename) {
 		return dbMetadata.getDFUFile(hpccfilename);
