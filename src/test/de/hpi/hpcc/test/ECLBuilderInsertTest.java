@@ -6,7 +6,6 @@ import de.hpi.hpcc.main.HPCCException;
 
 public class ECLBuilderInsertTest extends ECLBuilderTest {
 
-	
 	@Test
 	public void shouldTranslateSimpleInsertInto() throws HPCCException {
 		// insert into myTable values (valueA, valueB, valueC)

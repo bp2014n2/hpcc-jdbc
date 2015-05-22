@@ -37,7 +37,6 @@ public class ECLBuilderSelectTest extends ECLBuilderTest {
 		assertStatementCanBeParsedAs("TABLE(SORT(TABLE(myTable, {myColumn}), myColumn), {myColumn})", "select myColumn from mySchema.myTable order by myColumn");
 		assertStatementCanBeParsedAs("DEDUP(TABLE(SORT(TABLE(myTable, {myColumn}), myColumn), {myColumn}), All)", "select distinct myColumn from mySchema.myTable order by myColumn");
 		assertStatementCanBeParsedAs("TABLE(SORT(TABLE(myTable, {INTEGER8 func_count := COUNT(GROUP), myColumn}, myColumn), func_count), {myColumn})", "select myColumn from myTable group by myColumn order by count(*)");
-		
 	}
 	
 	@Test 

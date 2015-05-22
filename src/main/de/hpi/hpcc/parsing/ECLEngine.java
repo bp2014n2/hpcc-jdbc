@@ -107,7 +107,7 @@ public abstract class ECLEngine
 			if (index != null) {
 				indicesString.append(getIndexString(table, index) + "\n");
 				hasIndex = true;
-			} else if (selectTables.contains(table)) {
+			} else if (HPCCJDBCUtils.containsStringCaseInsensitive(selectTables, table)) {
 				indicesString.append(generateTempIndexString(table) + "\n");
 				hasIndex = true;
 			} else {
@@ -127,6 +127,7 @@ public abstract class ECLEngine
      */
     public String getIndex(String tableName) {
        	List<String> indexes = layouts.getListOfIndexes(tableName);
+       	if (indexes == null) return null;
     	Set<String> columns = getSQLParser().getQueriedColumns(tableName);
        	ArrayList<Integer> scores = new ArrayList<Integer>();
        	for (String index : indexes) {
@@ -172,7 +173,8 @@ public abstract class ECLEngine
     	List<String> indexParameters = new ArrayList<String>();
     	indexParameters.add(tableName+"_table");
     	//TODO: find correct keyed columns
-    	String keyedColumnList = "";
+    	Set<String> queriedColumns = getSQLParser().getQueriedColumns(tableName);
+    	String keyedColumnList = ECLUtils.join(queriedColumns, ", ");
     	keyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(keyedColumnList);
     	indexParameters.add(keyedColumnList);
     	String nonKeyedColumnList = "";
