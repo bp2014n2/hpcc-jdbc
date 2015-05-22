@@ -189,6 +189,7 @@ public abstract class ECLEngine
     	buildParameters.add(tableName);
     	buildParameters.add("SORT ALL");
     	buildParameters.add("OVERWRITE");
+    	buildParameters.add("EXPIRE(1)");
     	String build = ECLUtils.join(buildParameters, ", ");
     	build = ECLUtils.convertToBuild(build);
     	return tableName + " := " + index + ";\n" + build + ";";

@@ -640,11 +640,13 @@ public class HPCCJDBCUtils
     }
     
     public static int indexOfCaseInsensitive(List<String> list, String string) {
-    	for (int i = 0; i < list.size(); i++) {
-			if (list.get(i).toLowerCase().equals(string.toLowerCase())) {
-				return i;
-			} 
-		}
+    	if (list != null) {
+    		for (int i = 0; i < list.size(); i++) {
+    			if (list.get(i).toLowerCase().equals(string.toLowerCase())) {
+    				return i;
+    			} 
+    		}
+    	}
     	return -1;
     }
     
