@@ -18,6 +18,18 @@ public class ECLBuilderInsertTest extends ECLBuilderTest {
 		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueB, valueA}], {STRING25 myColumnB, STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnB, myColumnA) values (valueB, valueA)");
 		//insert into myTable (myColumnA, myColumnB) values (valueA, valueB) returning *
 		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING25 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA, myColumnB) values (valueA, valueB) returning *");
+		
+		// insert into myTempTable values (valueA, valueB, valueC)
+		assertStatementCanBeParsedAs("OUTPUT(DATASET([{valueA, valueB, valueC}], myTempTable_record),,'~%NEWTABLE%', overwrite, EXPIRE(1));\n","insert into myTempTable values (valueA, valueB, valueC)");
+		//insert into myTempTable (myColumnA) values (valueA)
+		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueA}], {STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite, EXPIRE(1));\n", "insert into myTempTable (myColumnA) values (valueA)");
+		//insert into myTempTable (myColumnA, myColumnB) values (valueA, valueB)
+		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING25 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite, EXPIRE(1));\n", "insert into myTempTable (myColumnA, myColumnB) values (valueA, valueB)");
+		//insert into myTempTable (myColumnB, myColumnA) values (valueB, valueA)
+		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueB, valueA}], {STRING25 myColumnB, STRING50 myColumnA}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite, EXPIRE(1));\n", "insert into myTempTable (myColumnB, myColumnA) values (valueB, valueA)");
+		//insert into myTempTable (myColumnA, myColumnB) values (valueA, valueB) returning *
+		assertStatementCanBeParsedAs("OUTPUT(TABLE(DATASET([{valueA, valueB}], {STRING50 myColumnA, STRING25 myColumnB}),{STRING50 myColumn := '', myColumnA, myColumnB}),,'~%NEWTABLE%', overwrite, EXPIRE(1));\n", "insert into myTempTable (myColumnA, myColumnB) values (valueA, valueB) returning *");
+					
 	}
 	
 	@Test
@@ -26,7 +38,13 @@ public class ECLBuilderInsertTest extends ECLBuilderTest {
 		assertStatementCanBeParsedAs("x := TABLE(anotherTable, {myColumnB});\nOUTPUT(TABLE(TABLE(x, {myColumnB}),{STRING50 myColumn := '', STRING50 myColumnA := myColumnB, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA) with x as (select myColumnB from anotherTable) select x.myColumnB from x");
 		//insert into myTable (myColumnA, myColumnB) with x as (select myColumnB from anotherTable) select 'myValue', x.myColumnB from x
 		assertStatementCanBeParsedAs("x := TABLE(anotherTable, {myColumnB});\nOUTPUT(TABLE(TABLE(x, {STRING50 string_myValue := 'myValue', myColumnB}),{STRING50 myColumn := '', STRING50 myColumnA := string_myValue, STRING25 myColumnB := myColumnB}),,'~%NEWTABLE%', overwrite);\n", "insert into myTable (myColumnA, myColumnB) with x as (select myColumnB from anotherTable) select 'myValue', x.myColumnB from x");		
+		//insert into myTempTable (myColumnA) with x as (select myColumnB from anotherTable) select x.myColumnB from x
+		assertStatementCanBeParsedAs("x := TABLE(anotherTable, {myColumnB});\nOUTPUT(TABLE(TABLE(x, {myColumnB}),{STRING50 myColumn := '', STRING50 myColumnA := myColumnB, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite, EXPIRE(1));\n", "insert into myTempTable (myColumnA) with x as (select myColumnB from anotherTable) select x.myColumnB from x");
+		//insert into myTempTable (myColumnA, myColumnB) with x as (select myColumnB from anotherTable) select 'myValue', x.myColumnB from 
+		assertStatementCanBeParsedAs("x := TABLE(anotherTable, {myColumnB});\nOUTPUT(TABLE(TABLE(x, {STRING50 string_myValue := 'myValue', myColumnB}),{STRING50 myColumn := '', STRING50 myColumnA := string_myValue, STRING25 myColumnB := myColumnB}),,'~%NEWTABLE%', overwrite, EXPIRE(1));\n", "insert into myTempTable (myColumnA, myColumnB) with x as (select myColumnB from anotherTable) select 'myValue', x.myColumnB from x");		
+			
 	}
+	
 	
 	@Test
 	public void shouldTranslateInsertWithSelect() throws HPCCException {

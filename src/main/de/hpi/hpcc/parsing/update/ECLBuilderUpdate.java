@@ -94,16 +94,20 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			String col = sqlParser.getColumns().get(0);
 			String expr = sqlParser.getExpressions().get(sqlParser.getColumnsToLowerCase().indexOf(col.toLowerCase())).toString();
 			expr = expr.equals("NULL")? (eclLayouts.isColumnOfIntInAnyTable(tableList, col) ? "0" : "''") : expr;
-			String update = eclLayouts.getECLDataType(tableName, col)+" "+col+" := "+expr;
+			String updateString = eclLayouts.getECLDataType(tableName, col)+" "+col+" := "+expr;
 			String existExpression = parseExpressionECL(exist);
 			joinTable.append(existExpression)
-				.append(", "+ECLUtils.encapsulateWithCurlyBrackets(joinColumn + ", " + update));
+				.append(", "+ECLUtils.encapsulateWithCurlyBrackets(joinColumn + ", " + updateString));
 			String joinTableString = ECLUtils.convertToTable(joinTable.toString());
 			
 			eclCode.append("OUTPUT(JOIN(")
 				.append(tableName + ECLUtils.encapsulateWithBrackets(preSelection) + ", " + joinTableString + ", ")
 				.append("LEFT." + joinColumn + " = RIGHT." + joinColumn + ", ")
-				.append("update(LEFT, RIGHT), LEFT OUTER) + " + tableName + "(NOT " + preSelection.toString() + "),,'~%NEWTABLE%',OVERWRITE);");
+				.append("update(LEFT, RIGHT), LEFT OUTER) + " + tableName + "(NOT " + preSelection.toString() + "),,'~%NEWTABLE%',OVERWRITE");
+			if(eclLayouts.isTempTable(update.getTables().get(0).getName())) {
+				eclCode.append(", "+expireString);
+			}
+			eclCode.append(");\n");
 		} else {
 			StringBuilder updateTable = new StringBuilder();
 			
@@ -149,7 +153,11 @@ public class ECLBuilderUpdate extends ECLBuilder {
 				outputTable.append(")+");
 			}
 
-			outputTable.append("toUpdate,, '~%NEWTABLE%', overwrite);\n");
+			outputTable.append("toUpdate,, '~%NEWTABLE%', overwrite");
+			if(eclLayouts.isTempTable(update.getTables().get(0).getName())) {
+				outputTable.append(", "+expireString);
+			}
+			outputTable.append(");\n");
 			eclCode.append(outputTable.toString());
 		}
 		return eclCode.toString();

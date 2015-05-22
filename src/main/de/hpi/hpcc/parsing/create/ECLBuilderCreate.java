@@ -1,6 +1,7 @@
 package de.hpi.hpcc.parsing.create;
 
 import net.sf.jsqlparser.statement.create.table.CreateTable;
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
 
@@ -25,7 +26,11 @@ public class ECLBuilderCreate extends ECLBuilder {
 		eclCode = new StringBuilder();
 		eclCode.append("OUTPUT(DATASET([],{");
 		eclCode.append(sqlParser.getRecord());
-		eclCode.append("}),,'~%NEWTABLE%',OVERWRITE);");
+		eclCode.append("}),,'~%NEWTABLE%',OVERWRITE");
+		if(HPCCJDBCUtils.containsStringCaseInsensitive(create.getCreateOptionsStrings(), "temp")) {
+			eclCode.append(", "+expireString);
+		}
+		eclCode.append(");");
 		return eclCode.toString();
 	}
 

@@ -10,19 +10,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.hpi.hpcc.main.HPCCDatabaseMetaData;
+import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLLayouts;
 
 public class ECLLayoutsStub extends ECLLayouts {
 
 	public ECLLayoutsStub(HPCCDatabaseMetaData dbMetadata) {
 		super(dbMetadata);
-		// TODO Auto-generated constructor stub
+		tempTableList.add("myTempTable");
 	}
 
 	Map<String, String> layouts = new HashMap<String, String>();
 	Map<String, List<String>> indexes = new HashMap<String, List<String>>();
 	Map<String, List<Object>> keyedColumns = new HashMap<String, List<Object>>();
 	Map<String, List<Object>> nonKeyedColumns = new HashMap<String, List<Object>>();
+	private List<String> tempTableList = new ArrayList<String>();
 	
 	public void setLayout(String table, String layout) {
 		Matcher matcher = Pattern.compile("record\\s+(.*)\\s+end;", Pattern.CASE_INSENSITIVE).matcher(layout);
@@ -127,6 +129,14 @@ public class ECLLayoutsStub extends ECLLayouts {
 	
 	public String getRecord(String tableName) {
 		return getStubbedLayout(tableName);
+	}
+	
+	@Override
+	public boolean isTempTable(String tableName) {
+		if (HPCCJDBCUtils.containsStringCaseInsensitive(tempTableList , tableName)) {
+			return true;
+		}
+		return false;
 	}
 
 }

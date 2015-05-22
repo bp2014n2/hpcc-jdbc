@@ -56,7 +56,11 @@ public class ECLBuilderInsert extends ECLBuilder {
 		} catch (HPCCException e) {
 			return null;
 		}
-		eclCode.append(",,'~%NEWTABLE%', overwrite);\n");
+		eclCode.append(",,'~%NEWTABLE%', overwrite");
+		if(eclLayouts.isTempTable(insert.getTable().getName())) {
+			eclCode.append(", "+expireString);
+		}
+		eclCode.append(");\n");
 		
 		return eclCode.toString();
 	}

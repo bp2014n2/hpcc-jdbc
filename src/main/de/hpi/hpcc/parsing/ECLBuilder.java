@@ -7,6 +7,7 @@ import net.sf.jsqlparser.statement.Statement;
 abstract public class ECLBuilder {
 	protected ECLLayouts eclLayouts;
 	protected StringBuilder eclCode;
+	protected static String expireString = "EXPIRE(1)";
 	
 	public ECLBuilder(Statement statement, ECLLayouts eclLayouts) {
 		this.eclLayouts = eclLayouts;
