@@ -84,6 +84,7 @@
 			<batchtest fork="yes" todir="${report.dir}">
 				<fileset dir="${test.dir}">
 					<include name="**/*Test*.java" />
+					<exclude name="**//ECLBuilderTest.java" />
 					<exclude name="**/AllTests.java" />
 				</fileset>
 			</batchtest>
