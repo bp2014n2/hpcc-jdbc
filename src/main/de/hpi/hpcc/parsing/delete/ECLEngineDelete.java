@@ -51,6 +51,8 @@ public class ECLEngineDelete extends ECLEngine {
 		eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 		eclCode.append("Std.File.FinishSuperFileTransaction());");
 		System.out.println(eclCode.toString());
+		
+		outputCount += eclBuilder.getOutputCount();
     	
     	availablecols = new HashMap<String, HPCCColumnMetaData>();
 

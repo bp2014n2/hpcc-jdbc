@@ -42,6 +42,8 @@ public abstract class ECLEngine
 	protected List<HPCCColumnMetaData>    expectedretcolumns = null;
     protected HashMap<String, HPCCColumnMetaData> availablecols = null;
     protected ECLLayouts layouts;
+
+	protected int outputCount = 0;
 	protected final static String EMPTY_QUERY = "OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n";
 	protected static final Logger logger = HPCCLogger.getLogger();
 	protected static final int outputLimit = 2000;
@@ -192,6 +194,9 @@ public abstract class ECLEngine
     	buildParameters.add("EXPIRE(1)");
     	String build = ECLUtils.join(buildParameters, ", ");
     	build = ECLUtils.convertToBuild(build);
+    	
+    	outputCount++;
+    	
     	return tableName + " := " + index + ";\n" + build + ";";
     }
    
@@ -204,5 +209,9 @@ public abstract class ECLEngine
   	private static void log(Level loggingLevel, String infoMessage){
   		logger.log(loggingLevel, ECLEngine.class.getSimpleName()+": "+infoMessage);
   	}
+
+	public int getOutputCount() {
+		return outputCount;
+	}
 
 }

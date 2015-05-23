@@ -66,5 +66,9 @@ public class ECLParser {
 	public List<HPCCColumnMetaData> getExpectedRetCols() {
 		return engine.getExpectedRetCols();
 	}
+
+	public int getOutputCount() {
+		return engine.getOutputCount();
+	}
 	
 }

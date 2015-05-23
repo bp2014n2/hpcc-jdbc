@@ -43,6 +43,8 @@ public class ECLEngineSelect extends ECLEngine {
 		
     	eclCode.append(eclBuilder.generateECL());
 
+    	outputCount += eclBuilder.getOutputCount();
+    	
     	availablecols = new HashMap<String, HPCCColumnMetaData>();
     	
     	for (String table : sqlParser.getAllTables()) {

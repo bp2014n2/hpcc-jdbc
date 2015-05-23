@@ -52,7 +52,7 @@ public class ECLFromItemsCollector implements StatementVisitor, SelectVisitor {
 
 	@Override
 	public void visit(Update update) {
-		fromItems.add(update.getFromItem());
+		fromItems.addAll(update.getTables());
 	}
 
 	@Override

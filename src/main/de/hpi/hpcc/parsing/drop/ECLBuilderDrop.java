@@ -6,6 +6,11 @@ import de.hpi.hpcc.parsing.ECLLayouts;
 
 public class ECLBuilderDrop extends ECLBuilder {
 	
+	/*
+	 * TODO: remove
+	 * this class is used only within tests
+	 */
+	
 	private Drop drop;
 	private SQLParserDrop sqlParser;
 

@@ -52,6 +52,8 @@ public class ECLEngineInsert extends ECLEngine {
 				+ " Std.File.AddSuperFile('~"+tablePath+"', '~"+newTablePath);
 		eclCode.append("'),\n Std.File.FinishSuperFileTransaction());");
 		
+		outputCount += eclBuilder.getOutputCount();
+		
 		availablecols = new HashMap<String, HPCCColumnMetaData>();
 		String tableName;
     	for (String table : sqlParser.getAllTables()) {

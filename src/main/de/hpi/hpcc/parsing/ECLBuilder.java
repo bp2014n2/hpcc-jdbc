@@ -7,6 +7,7 @@ import net.sf.jsqlparser.statement.Statement;
 abstract public class ECLBuilder {
 	protected ECLLayouts eclLayouts;
 	protected StringBuilder eclCode;
+	protected int outputCount;
 	protected static String expireString = "EXPIRE(1)";
 	
 	public ECLBuilder(Statement statement, ECLLayouts eclLayouts) {
@@ -29,5 +30,9 @@ abstract public class ECLBuilder {
 		expression.append(expressionParser.parse(expressionItem));
 		 
 		return expression.toString();
+	}
+	
+	public int getOutputCount() {
+		return outputCount;
 	}
 }

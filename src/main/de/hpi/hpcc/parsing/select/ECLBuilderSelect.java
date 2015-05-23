@@ -86,6 +86,8 @@ public class ECLBuilderSelect extends ECLBuilder {
     	generateDistinct(sqlParser);
     	generateLimit(sqlParser);
     	
+    	outputCount++;
+    	
     	return(eclCode.toString());
 	}
 	

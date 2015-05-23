@@ -31,6 +31,7 @@ public class ECLBuilderCreate extends ECLBuilder {
 			eclCode.append(", "+expireString);
 		}
 		eclCode.append(");");
+		outputCount++;
 		return eclCode.toString();
 	}
 
@@ -38,4 +39,6 @@ public class ECLBuilderCreate extends ECLBuilder {
 	protected CreateTable getStatement() {
 		return create;
 	}
+
+	
 }

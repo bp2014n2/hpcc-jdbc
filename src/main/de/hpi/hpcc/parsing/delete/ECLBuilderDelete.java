@@ -22,6 +22,8 @@ public class ECLBuilderDelete extends ECLBuilder {
 		String recordString = eclLayouts.getRecord(sqlParser.getName());
 		eclCode.append(recordString);
 		eclCode.append("}),,'~%NEWTABLE%',OVERWRITE);");
+		
+		outputCount++;
 		return eclCode.toString();
 	}
 

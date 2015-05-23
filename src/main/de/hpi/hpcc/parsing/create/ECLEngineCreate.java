@@ -45,6 +45,7 @@ public class ECLEngineCreate extends ECLEngine {
 			eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 			eclCode.append("Std.File.FinishSuperFileTransaction());");
 			
+			outputCount += eclBuilder.getOutputCount();
 			String recordString = sqlParser.getRecord();
 
 	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();

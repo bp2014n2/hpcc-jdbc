@@ -46,7 +46,7 @@ public class ECLEngineDrop extends ECLEngine {
    			
    			// TODO: replace with much, much, much better solution
    			eclCode.append(EMPTY_QUERY);
-   			
+   			outputCount++;
    	    	expectedretcolumns = new LinkedList<HPCCColumnMetaData>();
  	
 			layouts.removeDFUFile(tablePath);

@@ -43,6 +43,8 @@ public class ECLEngineUpdate extends ECLEngine {
     	
 		eclCode.append(eclBuilder.generateECL().toString().replace("%NEWTABLE%",newTablePath));
 		
+		outputCount += eclBuilder.getOutputCount();
+		
    		HPCCDFUFile hpccQueryFile = layouts.getDFUFile(sqlParser.getFullName());
 		eclCode.append("SEQUENTIAL(\nStd.File.StartSuperFileTransaction(),\n Std.File.ClearSuperFile('~"+tablePath+"'),\n");
 		for(String subfile : hpccQueryFile.getSubfiles()) {
@@ -67,6 +69,7 @@ public class ECLEngineUpdate extends ECLEngine {
     	ECLSelectItemFinder finder = new ECLSelectItemFinder(layouts);
     	List<SelectExpressionItem> selectItems = finder.find(update);
     	ECLDataTypeParser parser = new ECLDataTypeParser(layouts, getSQLParser());
+   
     	for (int i=0; i < selectItems.size(); i++) {
     		SelectExpressionItem selectItem = selectItems.get(i);
     		String dataType = parser.parse(selectItem.getExpression());

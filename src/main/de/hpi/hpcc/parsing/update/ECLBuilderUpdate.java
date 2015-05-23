@@ -160,6 +160,8 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			outputTable.append(");\n");
 			eclCode.append(outputTable.toString());
 		}
+		
+		outputCount++;
 		return eclCode.toString();
 	}
 

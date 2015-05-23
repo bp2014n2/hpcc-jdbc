@@ -62,6 +62,8 @@ public class ECLBuilderInsert extends ECLBuilder {
 		}
 		eclCode.append(");\n");
 		
+		outputCount++;
+		
 		return eclCode.toString();
 	}
 
