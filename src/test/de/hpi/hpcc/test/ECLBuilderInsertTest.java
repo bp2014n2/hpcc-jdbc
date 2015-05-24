@@ -42,7 +42,9 @@ public class ECLBuilderInsertTest extends ECLBuilderTest {
 		assertStatementCanBeParsedAs("x := TABLE(anotherTable, {myColumnB});\nOUTPUT(TABLE(TABLE(x, {myColumnB}),{STRING50 myColumn := '', STRING50 myColumnA := myColumnB, STRING25 myColumnB := ''}),,'~%NEWTABLE%', overwrite, EXPIRE(1));\n", "insert into myTempTable (myColumnA) with x as (select myColumnB from anotherTable) select x.myColumnB from x");
 		//insert into myTempTable (myColumnA, myColumnB) with x as (select myColumnB from anotherTable) select 'myValue', x.myColumnB from 
 		assertStatementCanBeParsedAs("x := TABLE(anotherTable, {myColumnB});\nOUTPUT(TABLE(TABLE(x, {STRING50 string_myValue := 'myValue', myColumnB}),{STRING50 myColumn := '', STRING50 myColumnA := string_myValue, STRING25 myColumnB := myColumnB}),,'~%NEWTABLE%', overwrite, EXPIRE(1));\n", "insert into myTempTable (myColumnA, myColumnB) with x as (select myColumnB from anotherTable) select 'myValue', x.myColumnB from x");		
-			
+		//insert into myTable (myColumn) with x as (select myColumn from myTableA), y as (select myColumn from myTableB)select myColumn from y
+		assertStatementCanBeParsedAs("", "insert into myTable (myColumn) with x as (select myColumn from myTableA), y as (select myColumn from myTableB)select myColumn from y");		
+		
 	}
 	
 	
