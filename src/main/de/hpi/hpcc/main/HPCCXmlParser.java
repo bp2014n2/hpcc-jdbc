@@ -12,7 +12,6 @@ import javax.xml.stream.XMLStreamReader;
 public class HPCCXmlParser {
 	private XMLStreamReader 		parser;
 	private HPCCResultSetMetadata	resultSetMetaData;
-	private int outputCount;
 	public HPCCXmlParser(InputStream xml, HPCCResultSetMetadata resultSetMetaData, int outputCount) throws HPCCException {
 		try {
             HPCCDecodedInputStream xmlEncoded = new HPCCDecodedInputStream(xml);
@@ -22,40 +21,56 @@ public class HPCCXmlParser {
 			throw new HPCCException("Error creating the XML parser!");
 		}
 		this.resultSetMetaData = resultSetMetaData;
-		this.outputCount = outputCount;
+		this.setPointerToNeededDataset(outputCount);
 	}
 	
+	private void setPointerToNeededDataset(int outputCount) throws HPCCException {
+		//TODO how to deal with exceptions before the needed dataset?
+		try {
+			for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
+				String localName;
+				switch (event) {
+					case XMLStreamConstants.START_ELEMENT:
+						localName = parser.getLocalName();
+						if (this.isDataset(localName)) {
+							if (outputCount == 1) {
+								return;
+							}
+							outputCount--;
+						}
+						break;
+				}
+			}
+		} catch (XMLStreamException | FactoryConfigurationError e1) {
+			throw new HPCCException("Error creating the XML parser!");
+		}
+	}
+
 	public ArrayList<String> parseNextRow() throws HPCCException {
 		//TODO track time
 		//TODO use logger :-D
-		int currentOutput = 1;
+		
 		try {
 			loop: for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
 				String localName;
 				switch (event) {
 					case XMLStreamConstants.START_ELEMENT:
-						if (currentOutput == outputCount) {
-							localName = parser.getLocalName();
-							if (this.isRow(localName)) {
-								return this.parseRow(resultSetMetaData);
-					        } else if (this.isException(parser.getLocalName())) {
-					        	this.parseException(parser);
-							}
+						localName = parser.getLocalName();
+						if (this.isRow(localName)) {
+							return this.parseRow(resultSetMetaData);
+					    } else if (this.isException(parser.getLocalName())) {
+					      	this.parseException(parser);
 						}
 						break;
 					case XMLStreamConstants.END_ELEMENT:
 						localName = parser.getLocalName();
 						if (this.isDataset(localName)) {
-							if (currentOutput == outputCount) {
-								break loop;
-							}
 							/*
 							*	We are only parsing the first dataset!
 							*	Additionally, it is possible that the dataset itself is the root element.
 							*	So please do not return the rows here! Just break the loop!
 							*/
-							currentOutput++;
-							break;
+							break loop;
 						}	
 				}
 			}
@@ -73,9 +88,7 @@ public class HPCCXmlParser {
 		for (int event = parser.next(); event != XMLStreamConstants.END_DOCUMENT; event = parser.next()) {
 			switch (event) {
 				case XMLStreamConstants.START_ELEMENT:
-					if (!this.isRow(parser.getLocalName())) {
-						nodeElementName = parser.getLocalName();
-					}
+					nodeElementName = parser.getLocalName();
 					break;
 				case XMLStreamConstants.CHARACTERS:
 				case XMLStreamConstants.CDATA:

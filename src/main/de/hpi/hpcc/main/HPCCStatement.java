@@ -105,17 +105,15 @@ public class HPCCStatement implements Statement{
 			HPCCResultSetMetadata resultSetMetaData = null;
 			HPCCXmlParser xmlParser = null;
 			boolean sentAnyQuery = false;
-			int outputCount = 1;
 			for(String query : eclParser.parse(sqlStatement)) {
 				if (query != null) {
 					sentAnyQuery = true;
-					outputCount = eclParser.getOutputCount();
 					connection.sendRequest(query);
 					resultSetMetaData = new HPCCResultSetMetadata(eclParser.getExpectedRetCols(), "HPCC Result");
 				}
 			}
 			if (sentAnyQuery) {
-				xmlParser = new HPCCXmlParser(connection.getInputStream(), resultSetMetaData, outputCount);
+				xmlParser = new HPCCXmlParser(connection.getInputStream(), resultSetMetaData, eclParser.getOutputCount());
 				result = new HPCCResultSet(this, xmlParser, resultSetMetaData);
 			}
 			return result != null;

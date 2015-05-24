@@ -83,7 +83,6 @@ public class HPCCResultSet implements ResultSet {
 	}
 
 	public void close() throws SQLException {
-		// TODO: close connection's inputstream too?
 		log(Level.FINEST, "HPCCResultSet close");
 		this.closed = true;
 	}
