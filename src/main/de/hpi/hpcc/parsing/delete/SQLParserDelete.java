@@ -8,7 +8,7 @@ public class SQLParserDelete extends SQLParser {
 
 	private Delete delete;
 	public SQLParserDelete(Delete delete, ECLLayouts eclLayouts) {
-		super(delete, eclLayouts);
+		super(eclLayouts);
 		this.delete = delete;
 	}
 

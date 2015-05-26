@@ -21,21 +21,22 @@ public class ECLEngineSelect extends ECLEngine {
 	private StringBuilder           eclCode = new StringBuilder();
 	private SQLParserSelect sqlParser;
 	private Select select;
+	private ECLSelectVisitor selectVisitor = new ECLSelectVisitor(layouts);
 	
 	public ECLEngineSelect(Select select, ECLLayouts layouts) {
 		super(select, layouts);
 		this.select = select;
-		this.sqlParser = new SQLParserSelect(select, layouts);
+		
+		this.sqlParser = selectVisitor.findParser(select.getSelectBody());
 	}
 	
 	public String generateECL() throws SQLException
     {
-
 		ECLTempTableParser tempTableParser = new ECLTempTableParser(layouts);
 		tempTableParser.replace(select);
 		
 		
-    	ECLBuilderSelect eclBuilder = new ECLBuilderSelect(select, layouts);
+    	ECLBuilderSelect eclBuilder = selectVisitor.findBuilder(select.getSelectBody());
     	eclCode.append("#OPTION('outputlimit', " + outputLimit + ");\n");
     	eclCode.append(generateImports());
         eclCode.append(generateLayouts());
@@ -81,21 +82,4 @@ public class ECLEngineSelect extends ECLEngine {
 	protected SQLParserSelect getSQLParser() {
 		return sqlParser;
 	}
-	/*
-	@Override
-	public String getIndex(String tableName) {
-    	String session_id = layouts.getFullTempTableName("");
-    	boolean isTemp = tableName.contains(session_id);
-		if(layouts.hasIndex(tableName)) {
-			return super.getIndex(tableName);
-		} else {
-			if(isTemp) {
-				String indexString = tableName + " := INDEX(" + tableName + "_table,{";
-				indexString += "";
-				return indexString;
-			} else {
-				return null;
-			}
-		}
-	}*/
 }

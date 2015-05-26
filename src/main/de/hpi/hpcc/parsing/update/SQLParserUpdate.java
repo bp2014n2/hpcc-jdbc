@@ -17,7 +17,7 @@ public class SQLParserUpdate extends SQLParser {
 	private Update update;
 
 	public SQLParserUpdate(Update update, ECLLayouts eclLayouts) {
-		super(update, eclLayouts);
+		super(eclLayouts);
 		this.update = update;
 	}
 	
@@ -26,6 +26,7 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	public String getFullName() {
+		//TODO: do not use hard coded schema
 		return "i2b2demodata::"+getName();
 	}
 	

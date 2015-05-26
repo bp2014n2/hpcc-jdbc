@@ -10,7 +10,7 @@ public class SQLParserDrop extends SQLParser {
 	private Drop drop;
 
 	public SQLParserDrop(Drop statement, ECLLayouts layouts) {
-		super(statement, layouts);
+		super(layouts);
 		this.drop = statement;
 	}
 	

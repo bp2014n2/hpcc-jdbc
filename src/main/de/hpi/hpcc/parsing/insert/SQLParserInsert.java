@@ -19,7 +19,7 @@ public class SQLParserInsert extends SQLParser {
 	private Insert insert;
 
 	public SQLParserInsert(Insert insert, ECLLayouts layouts) {
-		super(insert, layouts);
+		super(layouts);
 		this.insert = insert;
 	}
 	

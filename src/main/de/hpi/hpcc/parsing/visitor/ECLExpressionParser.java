@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
+import de.hpi.hpcc.parsing.select.ECLSelectVisitor;
+import de.hpi.hpcc.parsing.select.SQLParserPlainSelect;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
@@ -359,16 +361,16 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(ExistsExpression existsExpression) {
-		SQLParserSelect subParser = new SQLParserSelect(((SubSelect)existsExpression.getRightExpression()).getSelectBody(), eclLayouts);	
-
+		ECLSelectVisitor selectVisitor = new ECLSelectVisitor(eclLayouts);
+		//TODO: avoid casting, support exist with union
+		SQLParserPlainSelect subParser = (SQLParserPlainSelect) selectVisitor.findParser(((SubSelect)existsExpression.getRightExpression()).getSelectBody());
+		
 		StringBuilder existString = new StringBuilder();
 
-		if(subParser.getSelectItems().size() == 1) {
-			if(subParser.getSelectItems().get(0).toString().equals("1")) {
-				if(subParser.getFromItem() instanceof SubSelect) {
+		if(subParser.getSelectItems().size() == 1
+				&& subParser.getSelectItems().get(0).toString().equals("1")
+				&& subParser.getFromItem() instanceof SubSelect) {
 					existString.append(parse(subParser.getFromItem()));
-				}
-			}
 		} else {
 			existString.append(parse(existsExpression.getRightExpression()));
 		}

@@ -16,7 +16,7 @@ public class SQLParserCreate extends SQLParser {
 	private CreateTable create;
 
 	public SQLParserCreate(CreateTable statement, ECLLayouts eclLayouts) {
-		super(statement, eclLayouts);
+		super(eclLayouts);
 		this.create = statement;
 	}
 	

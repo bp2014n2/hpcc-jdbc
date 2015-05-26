@@ -20,7 +20,7 @@ public abstract class SQLParser{
 	
 	protected ECLLayouts eclLayouts;
 	
-	public SQLParser(Statement sql, ECLLayouts eclLayouts) {
+	public SQLParser(ECLLayouts eclLayouts) {
 		this.eclLayouts = eclLayouts;
 	}
 	
