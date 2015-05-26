@@ -19,7 +19,7 @@ public class SQLParserDrop extends SQLParser {
 	}
 	
 	public String getFullName() {
-		return "i2b2demodata::"+getName();
+		return this.eclLayouts.getPublicSchema()+"::"+getName();
 	}
 
 	@Override

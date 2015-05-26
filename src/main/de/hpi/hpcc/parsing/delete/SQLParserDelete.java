@@ -18,7 +18,7 @@ public class SQLParserDelete extends SQLParser {
 	}
 	
 	public String getFullName() {
-		return "i2b2demodata::"+getName();
+		return this.eclLayouts.getPublicSchema()+"::"+getName();
 	}
 
 	public String getName() {

@@ -48,7 +48,7 @@ public class ECLEngineSelect extends ECLEngine {
     	availablecols = new HashMap<String, HPCCColumnMetaData>();
     	
     	for (String table : sqlParser.getAllTables()) {
-    		String tableName = table.contains(".")?table.replace(".", "::"):"i2b2demodata::"+table;
+    		String tableName = table.contains(".")?table.replace(".", "::"):this.layouts.getPublicSchema()+"::"+table;
     		
     		HPCCDFUFile hpccQueryFile = layouts.getDFUFile(tableName);
     		addFileColsToAvailableCols(hpccQueryFile, availablecols);
