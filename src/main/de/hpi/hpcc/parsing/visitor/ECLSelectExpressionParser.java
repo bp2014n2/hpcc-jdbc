@@ -63,7 +63,7 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
-public class ECLSelectParser implements ExpressionVisitor {
+public class ECLSelectExpressionParser implements ExpressionVisitor {
 
 	private String parsed = "";
 	private ECLLayouts eclLayouts;
@@ -72,7 +72,7 @@ public class ECLSelectParser implements ExpressionVisitor {
 	private boolean alreadyParsed;
 	private SelectExpressionItem sei;
 	
-	public ECLSelectParser(ECLLayouts eclLayouts, SQLParserSelect sqlParser) {
+	public ECLSelectExpressionParser(ECLLayouts eclLayouts, SQLParserSelect sqlParser) {
 		this.eclLayouts = eclLayouts;
 		this.sqlParser = sqlParser;
 	}

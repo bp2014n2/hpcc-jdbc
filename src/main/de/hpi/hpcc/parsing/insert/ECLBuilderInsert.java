@@ -17,6 +17,8 @@ import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
+import de.hpi.hpcc.parsing.select.ECLBuilderWithItem;
+import de.hpi.hpcc.parsing.select.ECLSelectParser;
 import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectItemFinder;
 
@@ -46,7 +48,7 @@ public class ECLBuilderInsert extends ECLBuilder {
 		if (sqlParser.hasWith()) {
 			for (WithItem withItem : sqlParser.getWithItemsList()) {
 				eclCode.append(withItem.getName()+" := ");
-				eclCode.append(new ECLBuilderSelect(withItem.getSelectBody(), eclLayouts).generateECL()+";\n");
+				eclCode.append(new ECLBuilderWithItem(withItem, eclLayouts).generateECL()+";\n");
 			}
 		}
 
@@ -77,7 +79,8 @@ public class ECLBuilderInsert extends ECLBuilder {
 			if (sqlParser.getItemsList() instanceof SubSelect) {
 				eclCode.append(parseExpressionECL((Expression) sqlParser.getItemsList()).toString());
 			} else if (sqlParser.getSelect() != null) {
-				eclCode.append(new ECLBuilderSelect(sqlParser.getSelect(), eclLayouts).generateECL());
+				ECLSelectParser selectParser = new ECLSelectParser(eclLayouts);
+				eclCode.append(selectParser.parse(sqlParser.getSelect().getSelectBody()));
 			} else {
 				eclCode.append("DATASET([{");
 				List<String> columnNames = sqlParser.getColumnNames();
@@ -100,7 +103,8 @@ public class ECLBuilderInsert extends ECLBuilder {
 			
 			List<String> tableColumnStrings = new ArrayList<String>();
 			if (sqlParser.getSelect() != null) {
-				eclCode.append(new ECLBuilderSelect(sqlParser.getSelect(), eclLayouts).generateECL());
+				ECLSelectParser selectParser = new ECLSelectParser(eclLayouts);
+				eclCode.append(selectParser.parse(sqlParser.getSelect().getSelectBody()));
 				ECLSelectItemFinder itemFinder = new ECLSelectItemFinder(eclLayouts);
 				List<SelectExpressionItem> selectItems = itemFinder.find(sqlParser.getSelect());
 				

@@ -19,8 +19,8 @@ import de.hpi.hpcc.parsing.insert.ECLEngineInsert;
 import de.hpi.hpcc.parsing.insert.SQLParserInsert;
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
 import de.hpi.hpcc.parsing.select.ECLEngineSelect;
+import de.hpi.hpcc.parsing.select.ECLSelectParser;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
-import de.hpi.hpcc.parsing.select.SQLParserSelectVisitor;
 import de.hpi.hpcc.parsing.update.ECLBuilderUpdate;
 import de.hpi.hpcc.parsing.update.ECLEngineUpdate;
 import de.hpi.hpcc.parsing.update.SQLParserUpdate;
@@ -72,10 +72,10 @@ public class ECLStatementParser implements StatementVisitor {
 	
 	@Override
 	public void visit(Select select) {
-		SQLParserSelectVisitor selectVisitor = new SQLParserSelectVisitor(layouts);
-		parser = selectVisitor.find(select.getSelectBody());
+		ECLSelectParser selectParser = new ECLSelectParser(layouts);
+		parser = selectParser.findParser(select.getSelectBody());
 		engine = new ECLEngineSelect(select, layouts);
-		builder = new ECLBuilderSelect(select, layouts);
+		builder = selectParser.findBuilder(select.getSelectBody());
 	}
 
 	@Override

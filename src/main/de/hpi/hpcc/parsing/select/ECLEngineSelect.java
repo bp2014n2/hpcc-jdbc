@@ -21,13 +21,13 @@ public class ECLEngineSelect extends ECLEngine {
 	private StringBuilder           eclCode = new StringBuilder();
 	private SQLParserSelect sqlParser;
 	private Select select;
-	private ECLSelectVisitor selectVisitor = new ECLSelectVisitor(layouts);
+	private ECLSelectParser selectParser = new ECLSelectParser(layouts);
 	
 	public ECLEngineSelect(Select select, ECLLayouts layouts) {
 		super(select, layouts);
 		this.select = select;
 		
-		this.sqlParser = selectVisitor.findParser(select.getSelectBody());
+		this.sqlParser = selectParser.findParser(select.getSelectBody());
 	}
 	
 	public String generateECL() throws SQLException
@@ -36,13 +36,13 @@ public class ECLEngineSelect extends ECLEngine {
 		tempTableParser.replace(select);
 		
 		
-    	ECLBuilderSelect eclBuilder = selectVisitor.findBuilder(select.getSelectBody());
+    	ECLBuilderSelect eclBuilder = selectParser.findBuilder(select.getSelectBody());
     	eclCode.append("#OPTION('outputlimit', " + outputLimit + ");\n");
     	eclCode.append(generateImports());
         eclCode.append(generateLayouts());
 		eclCode.append(generateTables());
 		
-    	eclCode.append(eclBuilder.generateECL());
+    	eclCode.append(selectParser.parse(select.getSelectBody()));
 
     	outputCount += eclBuilder.getOutputCount();
     	

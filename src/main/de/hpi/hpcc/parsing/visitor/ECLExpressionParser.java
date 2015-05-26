@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
-import de.hpi.hpcc.parsing.select.ECLSelectVisitor;
+import de.hpi.hpcc.parsing.select.ECLSelectParser;
 import de.hpi.hpcc.parsing.select.SQLParserPlainSelect;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
@@ -344,7 +344,8 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(SubSelect subSelect) {
-		parsed = ECLUtils.encapsulateWithBrackets(new ECLBuilderSelect(subSelect.getSelectBody(), eclLayouts).generateECL());
+		ECLSelectParser selectParser = new ECLSelectParser(eclLayouts);
+		parsed = ECLUtils.encapsulateWithBrackets(selectParser.parse(subSelect.getSelectBody()));
 	}
 
 	@Override
@@ -361,7 +362,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(ExistsExpression existsExpression) {
-		ECLSelectVisitor selectVisitor = new ECLSelectVisitor(eclLayouts);
+		ECLSelectParser selectVisitor = new ECLSelectParser(eclLayouts);
 		//TODO: avoid casting, support exist with union
 		SQLParserPlainSelect subParser = (SQLParserPlainSelect) selectVisitor.findParser(((SubSelect)existsExpression.getRightExpression()).getSelectBody());
 		

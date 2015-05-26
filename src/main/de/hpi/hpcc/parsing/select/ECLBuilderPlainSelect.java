@@ -23,13 +23,13 @@ import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.visitor.ECLFromItemGenerator;
 import de.hpi.hpcc.parsing.visitor.ECLNameParser;
-import de.hpi.hpcc.parsing.visitor.ECLSelectParser;
+import de.hpi.hpcc.parsing.visitor.ECLSelectExpressionParser;
 import de.hpi.hpcc.parsing.visitor.ECLWhereExpressionOptimizer;
 
 public class ECLBuilderPlainSelect extends ECLBuilderSelect {
 	
 	protected SQLParserPlainSelect sqlParser;
-	private ECLSelectParser selectParser;
+	private ECLSelectExpressionParser selectExpressionParser;
 	private PlainSelect plainSelect;
 
 	public ECLBuilderPlainSelect(PlainSelect selectBody, ECLLayouts eclLayouts) {
@@ -46,7 +46,7 @@ public class ECLBuilderPlainSelect extends ECLBuilderSelect {
 	 */
 	public String generateECL() {
 		sqlParser = new SQLParserPlainSelect(plainSelect, eclLayouts);
-		selectParser = new ECLSelectParser(eclLayouts, sqlParser);
+		selectExpressionParser = new ECLSelectExpressionParser(eclLayouts, sqlParser);
 		eclCode = new StringBuilder();
 		
     	generateFrom(sqlParser);
@@ -195,7 +195,7 @@ public class ECLBuilderPlainSelect extends ECLBuilderSelect {
 		for (SelectItem selectItem : selectItems) {
 			if (selectItem instanceof SelectExpressionItem) {
 				SelectExpressionItem sei = (SelectExpressionItem) selectItem;
-				String selectItemString = selectParser.parse(sei);
+				String selectItemString = selectExpressionParser.parse(sei);
 				if (!HPCCJDBCUtils.containsStringCaseInsensitive(selectItemsStrings, selectItemString)) {
 					selectItemsStrings.add(selectItemString);
 				}
@@ -209,8 +209,8 @@ public class ECLBuilderPlainSelect extends ECLBuilderSelect {
 		if (sqlParser.getOrderBys() != null) {
 			for (OrderByElement orderByElement : sqlParser.getOrderBys()) {
 				Expression orderBy = orderByElement.getExpression();
-				ECLSelectParser selectParser = new ECLSelectParser(eclLayouts, sqlParser);
-				String select = selectParser.parse(orderBy);
+				ECLSelectExpressionParser selectExpressionParser = new ECLSelectExpressionParser(eclLayouts, sqlParser);
+				String select = selectExpressionParser.parse(orderBy);
 				innerItems.add(select);
 			}
 		}
@@ -223,7 +223,7 @@ public class ECLBuilderPlainSelect extends ECLBuilderSelect {
 		for (SelectItem selectItem : selectItems) {
 			if (selectItem instanceof SelectExpressionItem) {
 				SelectExpressionItem sei = (SelectExpressionItem) selectItem;
-				String selectItemString = selectParser.parseAlias(sei);
+				String selectItemString = selectExpressionParser.parseAlias(sei);
 				if (!HPCCJDBCUtils.containsStringCaseInsensitive(selectItemsStrings, selectItemString)) {
 					selectItemsStrings.add(selectItemString);
 				}

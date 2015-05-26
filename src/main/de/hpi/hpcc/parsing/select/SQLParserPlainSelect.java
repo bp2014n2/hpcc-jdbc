@@ -47,8 +47,8 @@ public class SQLParserPlainSelect extends SQLParserSelect {
 			table = ((Table) fromItem).getName();
 			return eclLayouts.getAllColumns(table);
 		} else {
-			SQLParserSelectVisitor visitor = new SQLParserSelectVisitor(eclLayouts);
-			return visitor.find(((SubSelect) fromItem).getSelectBody()).getAllColumns();
+			ECLSelectParser selectParser = new ECLSelectParser(eclLayouts);
+			return selectParser.findParser(((SubSelect) fromItem).getSelectBody()).getAllColumns();
 		}
 	}
 	
@@ -105,8 +105,8 @@ public class SQLParserPlainSelect extends SQLParserSelect {
 	public List<String> getFromItemColumns() {
 		if (plain == null) return null;
 		if (plain.getFromItem() instanceof SubSelect) {
-			SQLParserSelectVisitor visitor = new SQLParserSelectVisitor(eclLayouts);
-			List<SelectItem> selectItems = visitor.find(((SubSelect) plain.getFromItem()).getSelectBody()).getSelectItems();
+			ECLSelectParser visitor = new ECLSelectParser(eclLayouts);
+			List<SelectItem> selectItems = visitor.findParser(((SubSelect) plain.getFromItem()).getSelectBody()).getSelectItems();
 			List<String> selectItemStrings = new ArrayList<String>();
 			for (SelectItem selectItem : selectItems) {
 				selectItemStrings.add(selectItem.toString());

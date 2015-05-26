@@ -14,9 +14,9 @@ import net.sf.jsqlparser.statement.update.Update;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.select.ECLSelectParser;
 import de.hpi.hpcc.parsing.select.SQLParserPlainSelect;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
-import de.hpi.hpcc.parsing.select.SQLParserSelectVisitor;
 import de.hpi.hpcc.parsing.visitor.ECLExpressionParser;
 import de.hpi.hpcc.parsing.ECLUtils;
 
@@ -50,10 +50,10 @@ public class ECLBuilderUpdate extends ECLBuilder {
 		Expression exist = sqlParser.getExist(sqlParser.getWhere());
 		//TODO: check for empty exist
 		if (exist != null) {
-			SQLParserSelectVisitor selectVisitor = new SQLParserSelectVisitor(eclLayouts);
+			ECLSelectParser selectVisitor = new ECLSelectParser(eclLayouts);
 			
 			//TODO: avoid casting
-			SQLParserPlainSelect subParser = (SQLParserPlainSelect) selectVisitor.find(((SubSelect)((ExistsExpression) exist).getRightExpression()).getSelectBody());
+			SQLParserPlainSelect subParser = (SQLParserPlainSelect) selectVisitor.findParser(((SubSelect)((ExistsExpression) exist).getRightExpression()).getSelectBody());
 			
 			Expression where = subParser.getWhere();
 			String joinColumn = null;

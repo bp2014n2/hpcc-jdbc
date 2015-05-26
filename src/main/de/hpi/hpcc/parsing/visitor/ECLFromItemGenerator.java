@@ -3,6 +3,7 @@ package de.hpi.hpcc.parsing.visitor;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
+import de.hpi.hpcc.parsing.select.ECLSelectParser;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.FromItemVisitor;
@@ -33,7 +34,8 @@ public class ECLFromItemGenerator implements FromItemVisitor {
 
 	@Override
 	public void visit(SubSelect subSelect) {
-		generated = ECLUtils.encapsulateWithBrackets(new ECLBuilderSelect(subSelect.getSelectBody(), layouts).generateECL());
+		ECLSelectParser selectParser = new ECLSelectParser(layouts);
+		generated = ECLUtils.encapsulateWithBrackets(selectParser.parse(subSelect.getSelectBody()));
 	}
 
 	@Override

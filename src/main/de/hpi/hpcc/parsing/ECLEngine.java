@@ -199,6 +199,8 @@ public abstract class ECLEngine
     	
     	List<String> buildParameters = new ArrayList<String>();
     	buildParameters.add(tableName);
+    	//TODO: make accessible
+    	//buildParameters.add("CLUSTER("+layouts.getTargetCluster()+")");
     	buildParameters.add("SORT ALL");
     	buildParameters.add("OVERWRITE");
     	buildParameters.add("EXPIRE(1)");

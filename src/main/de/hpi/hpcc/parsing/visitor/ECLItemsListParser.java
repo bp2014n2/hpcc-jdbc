@@ -3,6 +3,7 @@ package de.hpi.hpcc.parsing.visitor;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
+import de.hpi.hpcc.parsing.select.ECLSelectParser;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.ItemsList;
@@ -29,7 +30,8 @@ public class ECLItemsListParser implements ItemsListVisitor {
 	@Override
 	public void visit(SubSelect subSelect) {
 		StringBuilder expressionBuilder = new StringBuilder();
-		expressionBuilder.append(new ECLBuilderSelect(subSelect.getSelectBody(), eclLayouts).generateECL());
+		ECLSelectParser selectParser = new ECLSelectParser(eclLayouts);
+		expressionBuilder.append(selectParser.parse(subSelect.getSelectBody()));
 		expressionBuilder.append(","+inColumn);
 		expressionBuilder = ECLUtils.convertToSet(expressionBuilder);
 		parsed = expressionBuilder.toString();
