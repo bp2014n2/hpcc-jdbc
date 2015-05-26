@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -30,7 +31,6 @@ import java.util.logging.Logger;
 
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
-
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.main.*;
 import de.hpi.hpcc.parsing.visitor.ECLSelectTableFinder;
@@ -172,14 +172,24 @@ public abstract class ECLEngine
     }
     
     private String generateTempIndexString(String tableName) {
+    	//TODO: optimize index order
+    	Set<String> keyedColumns = new HashSet<String>();
+    	Set<String> nonKeyedColumns = new HashSet<String>();
+    	for (String column : getSQLParser().getQueriedColumns(tableName)) {
+    		if (column.contains("blob")) {
+    			nonKeyedColumns.add(column);
+    		} else {
+    			keyedColumns.add(column);
+    		}
+    	}
+    	
     	List<String> indexParameters = new ArrayList<String>();
+    	
     	indexParameters.add(tableName+"_table");
-    	//TODO: find correct keyed columns
-    	Set<String> queriedColumns = getSQLParser().getQueriedColumns(tableName);
-    	String keyedColumnList = ECLUtils.join(queriedColumns, ", ");
+    	String keyedColumnList = ECLUtils.join(keyedColumns, ", ");
     	keyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(keyedColumnList);
     	indexParameters.add(keyedColumnList);
-    	String nonKeyedColumnList = "";
+    	String nonKeyedColumnList = ECLUtils.join(nonKeyedColumns, ", ");;
     	nonKeyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(nonKeyedColumnList);
     	indexParameters.add(nonKeyedColumnList);
     	indexParameters.add(ECLUtils.encapsulateWithSingleQuote("~"+layouts.getFullTableName(tableName)+"_idx_tmp"));
