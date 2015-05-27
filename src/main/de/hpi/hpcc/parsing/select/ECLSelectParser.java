@@ -1,6 +1,12 @@
 package de.hpi.hpcc.parsing.select;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.select.plainSelect.ECLBuilderPlainSelect;
+import de.hpi.hpcc.parsing.select.plainSelect.SQLParserPlainSelect;
+import de.hpi.hpcc.parsing.select.setOperationList.ECLBuilderSetOperationList;
+import de.hpi.hpcc.parsing.select.setOperationList.SQLParserSetOperationList;
+import de.hpi.hpcc.parsing.select.withItem.ECLBuilderWithItem;
+import de.hpi.hpcc.parsing.select.withItem.SQLParserWithItem;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SelectVisitor;

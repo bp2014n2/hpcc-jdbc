@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.select.ECLSelectParser;
-import de.hpi.hpcc.parsing.select.SQLParserPlainSelect;
+import de.hpi.hpcc.parsing.select.plainSelect.SQLParserPlainSelect;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;

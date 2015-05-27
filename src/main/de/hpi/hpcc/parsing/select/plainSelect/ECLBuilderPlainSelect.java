@@ -1,4 +1,4 @@
-package de.hpi.hpcc.parsing.select;
+package de.hpi.hpcc.parsing.select.plainSelect;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,6 +21,7 @@ import net.sf.jsqlparser.statement.select.SubSelect;
 import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
+import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
 import de.hpi.hpcc.parsing.visitor.ECLFromItemGenerator;
 import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectExpressionParser;

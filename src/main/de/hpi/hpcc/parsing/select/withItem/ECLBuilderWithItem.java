@@ -1,8 +1,9 @@
-package de.hpi.hpcc.parsing.select;
+package de.hpi.hpcc.parsing.select.withItem;
 
 import net.sf.jsqlparser.statement.select.WithItem;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
+import de.hpi.hpcc.parsing.select.ECLSelectParser;
 
 public class ECLBuilderWithItem extends ECLBuilderSelect {
 

@@ -1,4 +1,4 @@
-package de.hpi.hpcc.parsing.select;
+package de.hpi.hpcc.parsing.select.plainSelect;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -6,6 +6,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.select.ECLSelectParser;
+import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;

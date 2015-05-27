@@ -15,8 +15,8 @@ import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.select.ECLSelectParser;
-import de.hpi.hpcc.parsing.select.SQLParserPlainSelect;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
+import de.hpi.hpcc.parsing.select.plainSelect.SQLParserPlainSelect;
 import de.hpi.hpcc.parsing.visitor.ECLExpressionParser;
 import de.hpi.hpcc.parsing.ECLUtils;
 

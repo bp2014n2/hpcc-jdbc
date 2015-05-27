@@ -1,9 +1,10 @@
-package de.hpi.hpcc.parsing.select;
+package de.hpi.hpcc.parsing.select.withItem;
 
 import java.util.LinkedHashSet;
 import java.util.List;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.WithItem;
 

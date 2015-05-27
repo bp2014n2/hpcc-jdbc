@@ -1,8 +1,10 @@
-package de.hpi.hpcc.parsing.select;
+package de.hpi.hpcc.parsing.select.setOperationList;
 
 import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SetOperationList;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
+import de.hpi.hpcc.parsing.select.ECLSelectParser;
 import de.hpi.hpcc.parsing.visitor.ECLSetOperationParser;
 
 public class ECLBuilderSetOperationList extends ECLBuilderSelect {

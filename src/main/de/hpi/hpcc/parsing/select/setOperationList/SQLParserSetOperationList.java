@@ -1,4 +1,4 @@
-package de.hpi.hpcc.parsing.select;
+package de.hpi.hpcc.parsing.select.setOperationList;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -7,6 +7,7 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SetOperationList;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.select.SQLParserSelect;
 
 public class SQLParserSetOperationList extends SQLParserSelect {
 	

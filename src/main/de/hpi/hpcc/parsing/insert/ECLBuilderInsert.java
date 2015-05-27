@@ -17,8 +17,8 @@ import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
-import de.hpi.hpcc.parsing.select.ECLBuilderWithItem;
 import de.hpi.hpcc.parsing.select.ECLSelectParser;
+import de.hpi.hpcc.parsing.select.withItem.ECLBuilderWithItem;
 import de.hpi.hpcc.parsing.visitor.ECLNameParser;
 import de.hpi.hpcc.parsing.visitor.ECLSelectItemFinder;
 
