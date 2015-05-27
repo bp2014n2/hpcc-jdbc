@@ -6,15 +6,20 @@ import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
 
 public class ECLBuilderWithItem extends ECLBuilderSelect {
 
+	private WithItem withItem;
+
 	public ECLBuilderWithItem(WithItem withItem, ECLLayouts eclLayouts) {
 		super(withItem, eclLayouts);
-		// TODO Auto-generated constructor stub
+		this.withItem = withItem;
 	}
 
 	@Override
 	public String generateECL() {
-		// TODO Auto-generated method stub
-		return null;
+		StringBuilder eclCode = new StringBuilder();
+		eclCode.append(withItem.getName()+" := ");
+		ECLSelectParser selectParser = new ECLSelectParser(eclLayouts);
+		eclCode.append(selectParser.parse(withItem.getSelectBody())+";\n");
+		return eclCode.toString();
 	}
 
 }

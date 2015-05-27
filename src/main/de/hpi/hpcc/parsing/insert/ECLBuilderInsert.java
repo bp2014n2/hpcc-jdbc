@@ -47,8 +47,7 @@ public class ECLBuilderInsert extends ECLBuilder {
 		
 		if (sqlParser.hasWith()) {
 			for (WithItem withItem : sqlParser.getWithItemsList()) {
-				eclCode.append(withItem.getName()+" := ");
-				eclCode.append(new ECLBuilderWithItem(withItem, eclLayouts).generateECL()+";\n");
+				eclCode.append(new ECLBuilderWithItem(withItem, eclLayouts).generateECL());
 			}
 		}
 

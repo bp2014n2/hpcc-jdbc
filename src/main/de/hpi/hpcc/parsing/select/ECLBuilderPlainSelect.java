@@ -28,7 +28,7 @@ import de.hpi.hpcc.parsing.visitor.ECLWhereExpressionOptimizer;
 
 public class ECLBuilderPlainSelect extends ECLBuilderSelect {
 	
-	protected SQLParserPlainSelect sqlParser;
+	private SQLParserPlainSelect sqlParser;
 	private ECLSelectExpressionParser selectExpressionParser;
 	private PlainSelect plainSelect;
 

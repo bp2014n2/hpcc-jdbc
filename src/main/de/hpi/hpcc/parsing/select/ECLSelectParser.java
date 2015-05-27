@@ -53,6 +53,7 @@ public class ECLSelectParser implements SelectVisitor {
 	@Override
 	public void visit(WithItem withItem) {
 		parser = new SQLParserWithItem(withItem, layouts);
+		builder = new ECLBuilderWithItem(withItem, layouts);
 		eclCode = builder.generateECL();
 	}
 

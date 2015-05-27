@@ -10,7 +10,6 @@ import de.hpi.hpcc.parsing.SQLParser;
 
 abstract public class ECLBuilderSelect extends ECLBuilder {
 	
-	protected SQLParserSelect sqlParser;
 	protected Select select;
 	
 	
