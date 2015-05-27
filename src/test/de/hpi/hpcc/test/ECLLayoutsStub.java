@@ -35,6 +35,11 @@ public class ECLLayoutsStub extends ECLLayouts {
 	}
 	
 	@Override
+	public String getPublicSchema() {
+		return "i2b2demodata";
+	}
+	
+	@Override
 	public String getECLDataType(String table, String columnName){
 		String layout = getStubbedLayout(table);
 		if(layout != null) {

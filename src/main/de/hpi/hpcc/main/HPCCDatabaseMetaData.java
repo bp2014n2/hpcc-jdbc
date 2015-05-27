@@ -129,6 +129,14 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         }
         HPCCJDBCUtils.traceoutln(Level.INFO, "HPCCDatabaseMetaData initialized");
     }
+    
+    public String getTargetCluster() {
+    	return this.targetcluster;
+    }
+    
+    public String getPublicSchema() {
+    	return "i2b2demodata";
+    }
 
     public boolean isDFUMetaDataCached()
     {
@@ -1932,7 +1940,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
 //         * rowValues.add(0); rowValues.add(null); rowValues.add(null);
 //         * rowValues.add(null); rowValues.add(typeNullableUnknown); }
 //         */
-//
+//		  
 //        return new HPCCResultSet(udts, metacols, "UDTs");
     	return null;
     }

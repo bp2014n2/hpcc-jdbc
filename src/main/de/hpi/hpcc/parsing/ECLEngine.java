@@ -103,7 +103,7 @@ public abstract class ECLEngine
     	
     	for (String table : getSQLParser().getAllTables()) {
 //    		boolean isTemp = table.contains(session_id);
-    		String fullTableName = "i2b2demodata::"+table; //TODO: avoid hard coded i2b2demodata
+    		String fullTableName = this.layouts.getPublicSchema()+"::"+table;
     		boolean hasIndex;
 			String index = getIndex(table);
 			if (index != null) {

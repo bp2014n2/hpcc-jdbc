@@ -83,7 +83,7 @@ public class SQLParserCreate extends SQLParser {
 	}
 
 	public String getFullName() {
-		return "i2b2demodata::"+getTableName();
+		return this.eclLayouts.getPublicSchema()+"::"+getTableName();
 	}
 
 	@Override

@@ -42,7 +42,7 @@ public class ECLEngineInsert extends ECLEngine {
 		eclCode.append(generateLayouts());
 		eclCode.append(generateTables());
 		
-		String tablePath = "i2b2demodata::"+ sqlParser.getTable().getName();
+		String tablePath = this.layouts.getPublicSchema()+"::"+ sqlParser.getTable().getName();
 		String newTablePath = tablePath + "_" + Long.toString(System.currentTimeMillis());
 
 		eclCode.append(eclBuilder.generateECL().replace("%NEWTABLE%",newTablePath));
@@ -60,7 +60,7 @@ public class ECLEngineInsert extends ECLEngine {
     		if(table.contains(".")) {
     			tableName = table.replace(".", "::");
     		} else {
-    			tableName = "i2b2demodata::"+table;
+    			tableName = this.layouts.getPublicSchema()+"::"+table;
     		}
     		
     		HPCCDFUFile hpccQueryFile = layouts.getDFUFile(tableName);

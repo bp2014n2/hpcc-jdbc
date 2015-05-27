@@ -26,8 +26,7 @@ public class SQLParserUpdate extends SQLParser {
 	}
 	
 	public String getFullName() {
-		//TODO: do not use hard coded schema
-		return "i2b2demodata::"+getName();
+		return this.eclLayouts.getPublicSchema()+"::"+getName();
 	}
 	
 	public Expression getWhere() {

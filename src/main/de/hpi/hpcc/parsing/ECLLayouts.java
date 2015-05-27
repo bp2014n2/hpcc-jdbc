@@ -22,6 +22,10 @@ public class ECLLayouts {
 		this.dbMetadata = dbMetadata;
 	}
 	
+	public String getPublicSchema() {
+		return this.dbMetadata.getPublicSchema();
+	}
+	
 	/**
 	 * checks whether tableName refers to an existing temporary table
 	 * @param tableName
@@ -131,7 +135,7 @@ public class ECLLayouts {
 	
 	public String getFullTableName(String tableName) {
 		Matcher matcher = Pattern.compile("(~?(\\w+)::)?([\\w\\-]+)", Pattern.CASE_INSENSITIVE).matcher(tableName);
-		String schema = "i2b2demodata";
+		String schema = this.getPublicSchema();
 		if (matcher.find()) {
 			if (matcher.group(2) != null) {
 				schema = matcher.group(2);
