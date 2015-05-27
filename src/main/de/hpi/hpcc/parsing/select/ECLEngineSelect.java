@@ -43,8 +43,13 @@ public class ECLEngineSelect extends ECLEngine {
 		eclCode.append(generateTables());
 		
     	eclCode.append(selectParser.parse(select.getSelectBody()));
-
     	outputCount += eclBuilder.getOutputCount();
+    	
+    	if (!tempIndices.isEmpty()) {
+			for (String index : tempIndices) {
+				eclCode.append(removeTempIndex(index));
+			}
+		}
     	
     	availablecols = new HashMap<String, HPCCColumnMetaData>();
     	

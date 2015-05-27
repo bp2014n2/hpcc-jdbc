@@ -21,7 +21,6 @@ abstract public class ECLBuilderTest {
 	
 	@BeforeClass
 	public static void initialize() {
-//		eclBuilder = new ECLBuilder();
 		eclLayouts.setLayout("mytable", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING25 myColumnB; END;");
 		eclLayouts.setLayout("mytablea", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
 		eclLayouts.setLayout("mytableb", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");

@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
@@ -70,14 +71,19 @@ public class ECLBuilderUpdate extends ECLBuilder {
 
 			StringBuilder joinRecord = new StringBuilder();
 			String updateColumn = sqlParser.getColumns().get(0);
-			joinRecord.append("join_record := RECORD ")
+			//TODO: use random id for multiple joins... changes for test necessary
+			//String joinId = UUID.randomUUID().toString();
+			String joinId = "1"; 
+			String joinRecordName = "exists_record"+joinId;
+			joinRecord.append(joinRecordName+" := RECORD ")
 				.append(eclLayouts.getECLDataType(tableName, joinColumn)+" "+joinColumn+"; ")
 				.append(eclLayouts.getECLDataType(tableName, updateColumn)+" "+updateColumn+"; END;\n");
 			eclCode.append(joinRecord.toString());
 			
 			StringBuilder transformFunction = new StringBuilder();
 			String transformResultType = tableName + "_record";
-			transformFunction.append(transformResultType + " update(" + transformResultType + " l, " + "join_record r) := TRANSFORM\n");
+			String joinTransformFunction = "exists"+joinId;
+			transformFunction.append(transformResultType + " "+joinTransformFunction+"(" + transformResultType + " l, " + joinRecordName + " r) := TRANSFORM\n");
 			for (String col : eclLayouts.getAllColumns(tableName)) {
 				if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getColumns(),col)) {
 					transformFunction.append("  SELF." + col + " := IF(r." + col +" = ")
@@ -108,7 +114,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			eclCode.append("OUTPUT(JOIN(")
 				.append(tableName + ECLUtils.encapsulateWithBrackets(preSelection) + ", " + joinTableString + ", ")
 				.append("LEFT." + joinColumn + " = RIGHT." + joinColumn + ", ")
-				.append("update(LEFT, RIGHT), LEFT OUTER) + " + tableName + "(NOT " + preSelection.toString() + "),,'~%NEWTABLE%',OVERWRITE");
+				.append(joinTransformFunction+"(LEFT, RIGHT), LEFT OUTER) + " + tableName + "(NOT " + preSelection.toString() + "),,'~%NEWTABLE%',OVERWRITE");
 			if(eclLayouts.isTempTable(update.getTables().get(0).getName())) {
 				eclCode.append(", "+expireString);
 			}

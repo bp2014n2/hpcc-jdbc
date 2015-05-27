@@ -52,6 +52,13 @@ public class ECLEngineUpdate extends ECLEngine {
 		}
 		eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
 		eclCode.append("Std.File.FinishSuperFileTransaction());");
+		
+		if (!tempIndices.isEmpty()) {
+			for (String index : tempIndices) {
+				eclCode.append(removeTempIndex(index));
+			}
+		}
+		
 		System.out.println(eclCode.toString());
     	
     	availablecols = new HashMap<String, HPCCColumnMetaData>();

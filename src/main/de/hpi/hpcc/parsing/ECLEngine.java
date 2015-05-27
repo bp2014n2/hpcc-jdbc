@@ -44,6 +44,8 @@ public abstract class ECLEngine
     protected ECLLayouts layouts;
 
 	protected int outputCount = 0;
+
+	protected ArrayList<String> tempIndices = new ArrayList<String>();
 	protected final static String EMPTY_QUERY = "OUTPUT(DATASET([{1}],{unsigned1 dummy})(dummy=0));\n";
 	protected static final Logger logger = HPCCLogger.getLogger();
 	protected static final int outputLimit = 2000;
@@ -68,6 +70,8 @@ public abstract class ECLEngine
 	        availablecols.put(col.getTableName().toLowerCase() + "." + col.getColumnName().toLowerCase(), col);
 	    }
     }
+    
+    
     
     protected String generateImports() {
     	return "IMPORT STD;\n";
@@ -104,17 +108,15 @@ public abstract class ECLEngine
     	for (String table : getSQLParser().getAllTables()) {
 //    		boolean isTemp = table.contains(session_id);
     		String fullTableName = this.layouts.getPublicSchema()+"::"+table;
-    		boolean hasIndex;
+    		boolean hasIndex = false;
 			String index = getIndex(table);
 			if (index != null) {
 				indicesString.append(getIndexString(table, index) + "\n");
 				hasIndex = true;
 			} else if (HPCCJDBCUtils.containsStringCaseInsensitive(selectTables, table)) {
 				indicesString.append(generateTempIndexString(table) + "\n");
-				hasIndex = true;
-			} else {
-				hasIndex = false;
-			}
+				tempIndices.add(table);
+			} 
 			datasetsString.append(table).append(hasIndex?"_table":"").append(" := ").append("DATASET(");
 			datasetsString.append("'~").append(fullTableName).append("'");
 			datasetsString.append(", ").append(table+"_record").append(",").append(HPCCDataType).append(");\n");			
@@ -210,6 +212,10 @@ public abstract class ECLEngine
     	outputCount++;
     	
     	return tableName + " := " + index + ";\n" + build + ";";
+    }
+    
+    protected String removeTempIndex(String tableName) {
+    	return "Std.File.DeleteLogicalFile('~"+layouts.getFullTableName(tableName)+"_idx_tmp');\n";
     }
    
    

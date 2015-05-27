@@ -2,7 +2,6 @@ package de.hpi.hpcc.parsing.select;
 
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.Select;

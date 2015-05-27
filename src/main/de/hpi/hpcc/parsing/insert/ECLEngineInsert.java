@@ -52,6 +52,12 @@ public class ECLEngineInsert extends ECLEngine {
 				+ " Std.File.AddSuperFile('~"+tablePath+"', '~"+newTablePath);
 		eclCode.append("'),\n Std.File.FinishSuperFileTransaction());");
 		
+		if (!tempIndices.isEmpty()) {
+			for (String index : tempIndices) {
+				eclCode.append(removeTempIndex(index));
+			}
+		}
+		
 		outputCount += eclBuilder.getOutputCount();
 		
 		availablecols = new HashMap<String, HPCCColumnMetaData>();
