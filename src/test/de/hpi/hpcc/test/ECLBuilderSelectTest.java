@@ -89,6 +89,6 @@ public class ECLBuilderSelectTest extends ECLBuilderTest {
 	@Test
 	public void shouldTranslateSelectWithUnionAll() throws HPCCException {
 		//select myColumn from myTable group by myColumn union all select myColumn from myTableA group by myColumn
-		assertStatementCanBeParsedAs("", "select myColumn from myTable group by myColumn union all select myColumn from myTableA group by myColumn");
+		assertStatementCanBeParsedAs("TABLE(myTable, {myColumn}, myColumn) + TABLE(myTableA, {myColumn}, myColumn)", "select myColumn from myTable group by myColumn union all select myColumn from myTableA group by myColumn");
 	}
 }

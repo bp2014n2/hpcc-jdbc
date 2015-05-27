@@ -15,8 +15,7 @@ abstract public class ECLBuilderTest {
 	
 	public static void assertStatementCanBeParsedAs(String expected, String sql) throws HPCCException {
 		ECLStatementParser typeParser = new ECLStatementParser(eclLayouts);
-		ECLBuilder builder;
-		builder = typeParser.getBuilder(sql);
+		ECLBuilder builder = typeParser.getBuilder(sql);
 		assertEquals(expected, builder.generateECL());
     }
 	

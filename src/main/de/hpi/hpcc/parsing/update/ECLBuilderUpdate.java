@@ -47,13 +47,13 @@ public class ECLBuilderUpdate extends ECLBuilder {
 		Set<String> tableList = new HashSet<String>();
 		tableList.add(fullTableName);
 
-		Expression exist = sqlParser.getExist(sqlParser.getWhere());
+		ExistsExpression exist = sqlParser.getExist(sqlParser.getWhere());
 		//TODO: check for empty exist
 		if (exist != null) {
 			ECLSelectParser selectVisitor = new ECLSelectParser(eclLayouts);
 			
 			//TODO: avoid casting
-			SQLParserPlainSelect subParser = (SQLParserPlainSelect) selectVisitor.findParser(((SubSelect)((ExistsExpression) exist).getRightExpression()).getSelectBody());
+			SQLParserPlainSelect subParser = (SQLParserPlainSelect) selectVisitor.findParser(((SubSelect) exist.getRightExpression()).getSelectBody());
 			
 			Expression where = subParser.getWhere();
 			String joinColumn = null;

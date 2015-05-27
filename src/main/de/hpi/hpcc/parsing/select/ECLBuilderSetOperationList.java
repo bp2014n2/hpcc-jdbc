@@ -3,6 +3,7 @@ package de.hpi.hpcc.parsing.select;
 import net.sf.jsqlparser.statement.select.SelectBody;
 import net.sf.jsqlparser.statement.select.SetOperationList;
 import de.hpi.hpcc.parsing.ECLLayouts;
+import de.hpi.hpcc.parsing.visitor.ECLSetOperationParser;
 
 public class ECLBuilderSetOperationList extends ECLBuilderSelect {
 
@@ -17,18 +18,19 @@ public class ECLBuilderSetOperationList extends ECLBuilderSelect {
 	public String generateECL() {
 		StringBuilder eclCode = new StringBuilder();
 		ECLSelectParser selectParser = new ECLSelectParser(eclLayouts);
+		ECLSetOperationParser operationParser = new ECLSetOperationParser();
 		for (int i = 0; i<setOperationList.getSelects().size(); i++) {
 			SelectBody sb = setOperationList.getSelects().get(i);
 			
 			if (i != 0) {
 				//TOOD: append setOperation
-				//eclCode.append(operationParser.parse(setOperationList.getOperations().get(i-1)));
+				eclCode.append(operationParser.parse(setOperationList.getOperations().get(i-1)));
 			}
 			
 			eclCode.append(selectParser.parse(sb));
 		}
 		setOperationList.getSelects().size();
-		return null;
+		return eclCode.toString();
 	}
 
 }

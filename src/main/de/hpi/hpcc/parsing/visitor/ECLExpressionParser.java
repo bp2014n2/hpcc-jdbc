@@ -9,10 +9,8 @@ import java.util.regex.Pattern;
 
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.ECLUtils;
-import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
 import de.hpi.hpcc.parsing.select.ECLSelectParser;
 import de.hpi.hpcc.parsing.select.SQLParserPlainSelect;
-import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnalyticExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
@@ -78,7 +76,7 @@ import net.sf.jsqlparser.statement.select.ValuesList;
 
 public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
-	private String parsed;
+	private String parsed = "";
 	private Set<String> allTables;
 	private ECLLayouts eclLayouts;
 	
@@ -367,14 +365,8 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 		SQLParserPlainSelect subParser = (SQLParserPlainSelect) selectVisitor.findParser(((SubSelect)existsExpression.getRightExpression()).getSelectBody());
 		
 		StringBuilder existString = new StringBuilder();
-
-		if(subParser.getSelectItems().size() == 1
-				&& subParser.getSelectItems().get(0).toString().equals("1")
-				&& subParser.getFromItem() instanceof SubSelect) {
-					existString.append(parse(subParser.getFromItem()));
-		} else {
-			existString.append(parse(existsExpression.getRightExpression()));
-		}
+		
+		existString.append(parse(subParser.getFromItem()));
 		
 		parsed = existString.toString();
 		
@@ -519,8 +511,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(Table tableName) {
-		// TODO Auto-generated method stub
-		
+		parsed = tableName.getName();
 	}
 
 	@Override

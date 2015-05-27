@@ -61,9 +61,9 @@ public class SQLParserUpdate extends SQLParser {
 		return getExist(update.getWhere()) == null;
 	}
 	
-	public Expression getExist(Expression expr) {
+	public ExistsExpression getExist(Expression expr) {
 		if (expr instanceof ExistsExpression) {
-			return expr;
+			return (ExistsExpression) expr;
 		} else if (expr instanceof BinaryExpression) {
 			BinaryExpression be = (BinaryExpression) expr;
 			if (getExist(be.getLeftExpression()) != null) {
