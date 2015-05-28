@@ -25,7 +25,6 @@ public class HPCCStatement implements Statement{
     protected ResultSet result = null;
     protected String name;
     protected String sqlStatement;
-    private boolean federatedDatabase = true;
     private Statement postgreSQLStatement;
     
     private static final List<String> whiteList = new ArrayList<String>() {
@@ -95,7 +94,7 @@ public class HPCCStatement implements Statement{
 		HPCCJDBCUtils.traceoutln(Level.INFO, sqlStatement);
 		Set<String> tables = SQLParser.getAllTables(sqlStatement);
 		
-		return HPCCDriver.isPostgreSQLAvailable() && federatedDatabase && !whiteList.containsAll(tables);
+		return HPCCDriver.isPostgreSQLAvailable() && this.connection.isFederated() && !whiteList.containsAll(tables);
 	}
 
 	private boolean executeQueryOnHPCC(String sqlStatement) throws SQLException {

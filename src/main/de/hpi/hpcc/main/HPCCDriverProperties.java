@@ -38,6 +38,8 @@ public class HPCCDriverProperties extends Properties{
 			put("WsECLWatchAddress", 	new String[]{DEFAULT_SERVER_ADDRESS, "WsECLWatch address (required if different than ServerAddress)."});
 			put("WsECLAddress", 		new String[]{DEFAULT_SERVER_ADDRESS, "WsECLAddress Address (required if different than ServerAddress)."});
 			put("WsECLDirectAddress", 	new String[]{DEFAULT_SERVER_ADDRESS, "WsECLDirect Address (required if different than ServerAddress)."});
+			put("isFederated", 			new String[]{"true", "WsECLDirect Address (required if different than ServerAddress)."});
+			put("publicSchema",			new String[]{"i2b2demodata", "WsECLDirect Address (required if different than ServerAddress)."});
 		}
 	};
 	
