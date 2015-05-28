@@ -108,5 +108,9 @@ public class ECLUtils {
 	public static String convertToBuild(String string) {
 		return prepend(encapsulateWithBrackets(string), "BUILD");
 	}
+
+	public static String convertToRecord(String string) {
+		return "RECORD " + string + " END;";
+	}
 	
 }

@@ -43,6 +43,7 @@ public class ECLEngineSelect extends ECLEngine {
 		eclCode.append(generateTables());
 		
     	eclCode.append(selectParser.parse(select.getSelectBody()));
+    	eclCode.append(";\n");
     	outputCount += eclBuilder.getOutputCount();
     	
     	if (!tempIndices.isEmpty()) {

@@ -3,13 +3,16 @@ package de.hpi.hpcc.parsing.visitor;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.delete.Delete;
 import net.sf.jsqlparser.statement.select.LateralSubSelect;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.SubJoin;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import net.sf.jsqlparser.statement.select.ValuesList;
+import net.sf.jsqlparser.statement.update.Update;
 
 public class ECLSelectTableFinder extends FullVisitorAdapter {
 
@@ -43,28 +46,29 @@ public class ECLSelectTableFinder extends FullVisitorAdapter {
 		selectTable = true;
 		super.visit(plainSelect);
 	}
-
+	
 	@Override
-	public void visit(SubSelect subSelect) {
-		selectTable = false;
-		super.visit(subSelect);
+	public void visit(Update update) {
+		selectTable = true;
+		if(update.getTables() != null) {
+			for(Table table : update.getTables()) {
+				table.accept(this);
+			}
+		}
+		if(update.getColumns() != null) {
+			for(Column column : update.getColumns()) {
+				column.accept(this);
+			}
+		}		
+		tryAccept(update.getFromItem());
+		tryAccept(update.getSelect());	
+		tryAccept(update.getWhere());
+		
 	}
-
+	
 	@Override
-	public void visit(SubJoin subjoin) {
-		selectTable = false;
-		super.visit(subjoin);
-	}
-
-	@Override
-	public void visit(LateralSubSelect lateralSubSelect) {
-		selectTable = false;
-		super.visit(lateralSubSelect);
-	}
-
-	@Override
-	public void visit(ValuesList valuesList) {
-		selectTable = false;
-		super.visit(valuesList);
+	public void visit(Delete delete) {
+		selectTable = true;
+		super.visit(delete);
 	}
 }

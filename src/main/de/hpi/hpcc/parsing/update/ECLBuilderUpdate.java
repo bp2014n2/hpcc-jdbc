@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
-
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
@@ -16,7 +14,6 @@ import de.hpi.hpcc.main.HPCCJDBCUtils;
 import de.hpi.hpcc.parsing.ECLBuilder;
 import de.hpi.hpcc.parsing.ECLLayouts;
 import de.hpi.hpcc.parsing.select.ECLSelectParser;
-import de.hpi.hpcc.parsing.select.SQLParserSelect;
 import de.hpi.hpcc.parsing.select.plainSelect.SQLParserPlainSelect;
 import de.hpi.hpcc.parsing.visitor.ECLExpressionParser;
 import de.hpi.hpcc.parsing.ECLUtils;
@@ -81,7 +78,7 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			eclCode.append(joinRecord.toString());
 			
 			StringBuilder transformFunction = new StringBuilder();
-			String transformResultType = tableName + "_record";
+			String transformResultType = tableName + "_idx_record";
 			String joinTransformFunction = "exists"+joinId;
 			transformFunction.append(transformResultType + " "+joinTransformFunction+"(" + transformResultType + " l, " + joinRecordName + " r) := TRANSFORM\n");
 			for (String col : eclLayouts.getAllColumns(tableName)) {

@@ -51,7 +51,7 @@ public class ECLEngineUpdate extends ECLEngine {
 			eclCode.append("Std.File.DeleteLogicalFile('~"+subfile+"'),\n");
 		}
 		eclCode.append("Std.File.AddSuperFile('~"+tablePath+"','~"+newTablePath+"'),\n");
-		eclCode.append("Std.File.FinishSuperFileTransaction());");
+		eclCode.append("Std.File.FinishSuperFileTransaction());\n");
 		
 		if (!tempIndices.isEmpty()) {
 			for (String index : tempIndices) {

@@ -71,8 +71,6 @@ public abstract class ECLEngine
 	    }
     }
     
-    
-    
     protected String generateImports() {
     	return "IMPORT STD;\n";
     }
@@ -113,10 +111,14 @@ public abstract class ECLEngine
 			if (index != null) {
 				indicesString.append(getIndexString(table, index) + "\n");
 				hasIndex = true;
+				indicesString.append(generateIndexRecord(table) + "\n");
 			} else if (HPCCJDBCUtils.containsStringCaseInsensitive(selectTables, table)) {
 				indicesString.append(generateTempIndexString(table) + "\n");
+				hasIndex = true;
 				tempIndices.add(table);
+				indicesString.append(generateIndexRecord(table) + "\n");
 			} 
+			
 			datasetsString.append(table).append(hasIndex?"_table":"").append(" := ").append("DATASET(");
 			datasetsString.append("'~").append(fullTableName).append("'");
 			datasetsString.append(", ").append(table+"_record").append(",").append(HPCCDataType).append(");\n");			
@@ -208,10 +210,33 @@ public abstract class ECLEngine
     	buildParameters.add("EXPIRE(1)");
     	String build = ECLUtils.join(buildParameters, ", ");
     	build = ECLUtils.convertToBuild(build);
-    	
     	outputCount++;
     	
-    	return tableName + " := " + index + ";\n" + build + ";";
+    	
+    	
+    	return tableName + " := " + index + ";\n" + build + ";\n";
+    }
+    
+    protected String generateIndexRecord(String tableName) {
+    	//TODO: optimize index order
+    	Set<String> keyedColumns = new HashSet<String>();
+    	Set<String> nonKeyedColumns = new HashSet<String>();
+    	for (String column : getSQLParser().getQueriedColumns(tableName)) {
+    		if (column.contains("blob")) {
+    			nonKeyedColumns.add(column);
+    		} else {
+    			keyedColumns.add(column);
+    		}
+    	}
+    	
+    	
+    	Set<String> indexColumns = new HashSet<String>();
+    	indexColumns.addAll(keyedColumns);
+    	indexColumns.addAll(nonKeyedColumns);
+    	String indexRecord = ECLUtils.join(indexColumns, ", ");
+    	indexRecord = ECLUtils.convertToRecord(indexRecord);
+    	
+    	return tableName + "_idx_record := " + indexRecord;
     }
     
     protected String removeTempIndex(String tableName) {

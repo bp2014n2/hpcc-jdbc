@@ -70,7 +70,6 @@ import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.FromItemVisitor;
 import net.sf.jsqlparser.statement.select.LateralSubSelect;
-import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SubJoin;
 import net.sf.jsqlparser.statement.select.SubSelect;
 import net.sf.jsqlparser.statement.select.ValuesList;
@@ -367,18 +366,19 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 		
 		StringBuilder existString = new StringBuilder();
 		
-		//existString.append(parse(subParser.getFromItem()));
-		
-		if(subParser.getSelectItems().size() == 1
-			&& subParser.getSelectItems().get(0).toString().equalsIgnoreCase("1 as long_1")		
-			&& subParser.getFromItem() instanceof Table) {
-				existString.append(parse(subParser.getFromItem()));		
+		//TODO:
+		if(subParser.getSelectItems().size() == 1) {
+			if (subParser.getSelectItems().get(0).toString().equalsIgnoreCase("1 as long_1")) {
+				if (subParser.getFromItem() instanceof SubSelect) {
+					existString.append(parse(subParser.getFromItem()));
+				} else if (subParser.getFromItem() instanceof Table) {
+					existString.append(parse(subParser.getFromItem()));
+				}
+			}
 		} else {		
 			existString.append(parse(existsExpression.getRightExpression()));		
 		}
-		
 		parsed = existString.toString();
-		
 	}
 
 	@Override

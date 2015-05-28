@@ -51,4 +51,11 @@ public class ECLTableFinderTest {
 		assertAllTablesAreFound(expectedTables, "SELECT * FROM myTable WHERE myColumn IN (SELECT anotherColumn FROM anotherTable)");
 	}
 	
+	@Test
+	public void shouldFindUpdate() throws HPCCException {
+		Set<String> expectedTables = new HashSet<String>();
+		expectedTables.add("mytable");
+		assertAllTablesAreFound(expectedTables, "UPDATE myTable set myColumn = 1;");
+	}
+	
 }

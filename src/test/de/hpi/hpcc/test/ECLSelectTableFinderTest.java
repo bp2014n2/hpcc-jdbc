@@ -44,12 +44,14 @@ public class ECLSelectTableFinderTest {
 	@Test
 	public void shouldNotFindTableInUpdate() throws HPCCException {
 		List<String> expected = new ArrayList<String>();
+		expected.add("myTable");
 		assertAllExpressionsAreFound(expected , "update myTable set myColumn = 'myValue'");
 	}
 	
 	@Test
 	public void shouldFindTableInSelectOfUpdate() throws HPCCException {
 		List<String> expected = new ArrayList<String>();
+		expected.add("myTable");
 		expected.add("myTableA");
 		assertAllExpressionsAreFound(expected , "update myTable set myColumnA = 'myValue' where exists (select 1 from myTableA where myTable.myColumnB = myTableA.myColumnB)");
 	}

@@ -87,9 +87,10 @@ public class ECLBuilderSelectTest extends ECLBuilderTest {
 		assertStatementCanBeParsedAs("TABLE(SORT(TABLE(myTable(myColumnB IN [514702, 514702, 865892, 300036] AND myColumn[1..4] = '2009'), {myColumnB, myColumn, INTEGER8 func_SUM := SUM(GROUP, myColumnA)}, myColumn), myColumnB), {myColumn, func_SUM})", "SELECT myColumn, SUM(myColumnA) FROM myTable WHERE myColumnB IN (514702, 514702, 865892, 300036) AND SUBSTRING(myColumn FROM 1 FOR 4) = '2009' GROUP BY myColumn ORDER BY myColumnB");
 	}
 	
+	@Ignore
 	@Test
 	public void shouldTranslateSelectWithExist() throws HPCCException {
-		assertStatementCanBeParsedAs("", "select myColumn from myTable where exists (select 1 from myTableA where myTable.myColumnA = myTableA.myColumnA)");
+		assertStatementCanBeParsedAs("exist_record1 := RECORD STRING25 myColumnA; END;\nmyTable_record exist1(myTable_record l, exist_record1 r) := TRANSFORM\n  SELF := l;\nEND;\nJOIN(myTable(myColumnA = 'anotherValue'), TABLE(myTableA, {myColumnB, STRING50 myColumnA := 'myValue'}), LEFT.myColumnB = RIGHT.myColumnB, exist1(LEFT, RIGHT), INNER)\nTABLE(myTable(myTableA), {myColumn})\n", "select myColumn from myTable where exists (select 1 from myTableA where myTable.myColumnA = myTableA.myColumnA)");
 	}
 	
 	@Test

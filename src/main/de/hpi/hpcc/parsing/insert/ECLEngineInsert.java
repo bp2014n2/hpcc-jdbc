@@ -50,7 +50,7 @@ public class ECLEngineInsert extends ECLEngine {
 //		add new subfile to superfile
 		eclCode.append("SEQUENTIAL(\n Std.File.StartSuperFileTransaction(),\n"
 				+ " Std.File.AddSuperFile('~"+tablePath+"', '~"+newTablePath);
-		eclCode.append("'),\n Std.File.FinishSuperFileTransaction());");
+		eclCode.append("'),\n Std.File.FinishSuperFileTransaction());\n");
 		
 		if (!tempIndices.isEmpty()) {
 			for (String index : tempIndices) {
