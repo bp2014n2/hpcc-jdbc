@@ -64,6 +64,10 @@ public class HPCCConnection implements Connection{
             HPCCJDBCUtils.traceoutln(Level.INFO,  "HPCCConnection not initialized - server: " + driverProperties.getProperty("ServerAddress"));
     }
     
+    public boolean isFederated() {
+    	return Boolean.valueOf(this.driverProperties.getProperty("isFederated"));
+    }
+    
     public String getSessionID() {
     	return this.sessionID.toString().replace("-", "");
     }

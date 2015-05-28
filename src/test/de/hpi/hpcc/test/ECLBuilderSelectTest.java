@@ -89,7 +89,9 @@ public class ECLBuilderSelectTest extends ECLBuilderTest {
 	
 	@Ignore
 	@Test
+	//TODO: needed in order to support excludes from all patients
 	public void shouldTranslateSelectWithExist() throws HPCCException {
+		//select myColumn from myTable where exists (select 1 from myTableA where myTable.myColumnA = myTableA.myColumnA)
 		assertStatementCanBeParsedAs("exist_record1 := RECORD STRING25 myColumnA; END;\nmyTable_record exist1(myTable_record l, exist_record1 r) := TRANSFORM\n  SELF := l;\nEND;\nJOIN(myTable(myColumnA = 'anotherValue'), TABLE(myTableA, {myColumnB, STRING50 myColumnA := 'myValue'}), LEFT.myColumnB = RIGHT.myColumnB, exist1(LEFT, RIGHT), INNER)\nTABLE(myTable(myTableA), {myColumn})\n", "select myColumn from myTable where exists (select 1 from myTableA where myTable.myColumnA = myTableA.myColumnA)");
 	}
 	

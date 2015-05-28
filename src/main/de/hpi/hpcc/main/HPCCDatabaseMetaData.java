@@ -60,6 +60,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     private String                      queryset;
     private String                      basewseclwatchurl;
     private String                      basicAuth;
+    private String                      publicSchema;
     private String                      UserName;
     private boolean                     lazyLoad;
     private int                         pageSize;
@@ -90,6 +91,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
         this.serverAddress = props.getProperty("ServerAddress");
         this.targetcluster = props.getProperty("TargetCluster");
         this.queryset = props.getProperty("QuerySet");
+        this.publicSchema = props.getProperty("publicSchema");
 
         this.basewseclwatchurl = protocol+(props.getProperty("WsECLWatchAddress") + ":" + props.getProperty("WsECLWatchPort"));
         this.UserName = props.getProperty("username");
@@ -135,7 +137,7 @@ public class HPCCDatabaseMetaData implements DatabaseMetaData
     }
     
     public String getPublicSchema() {
-    	return "i2b2demodata";
+    	return this.publicSchema;
     }
 
     public boolean isDFUMetaDataCached()
