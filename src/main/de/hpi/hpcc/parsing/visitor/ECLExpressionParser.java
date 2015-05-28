@@ -339,9 +339,11 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 	@Override
 	public void visit(Column tableColumn) {
 		parsed = "";
+		/*
 		if (tableColumn.getTable() != null && tableColumn.getTable().getName() != null) {
 			parsed = tableColumn.getTable().getName() + "."; 
 		}
+		*/
 		parsed += tableColumn.getColumnName();
 	}
 
