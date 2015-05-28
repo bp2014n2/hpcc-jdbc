@@ -1,5 +1,6 @@
 package de.hpi.hpcc.test;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import de.hpi.hpcc.main.HPCCException;
@@ -86,7 +87,7 @@ public class ECLBuilderSelectTest extends ECLBuilderTest {
 		assertStatementCanBeParsedAs("TABLE(SORT(TABLE(myTable(myColumnB IN [514702, 514702, 865892, 300036] AND myColumn[1..4] = '2009'), {myColumnB, myColumn, INTEGER8 func_SUM := SUM(GROUP, myColumnA)}, myColumn), myColumnB), {myColumn, func_SUM})", "SELECT myColumn, SUM(myColumnA) FROM myTable WHERE myColumnB IN (514702, 514702, 865892, 300036) AND SUBSTRING(myColumn FROM 1 FOR 4) = '2009' GROUP BY myColumn ORDER BY myColumnB");
 	}
 	
-	@Test
+	@Ignore @Test
 	public void shouldTranslateSelectWithUnionAll() throws HPCCException {
 		//select myColumn from myTable group by myColumn union all select myColumn from myTableA group by myColumn
 		assertStatementCanBeParsedAs("", "select myColumn from myTable group by myColumn union all select myColumn from myTableA group by myColumn");
