@@ -5,6 +5,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -659,11 +660,11 @@ public class HPCCJDBCUtils
     	return containsStringCaseInsensitive(new ArrayList<String>(set), string);
     }
     
-    public static boolean containsAllCaseInsensitive(List<Object> indexColumns, Set<String> subSet) {
+    public static boolean containsAllCaseInsensitive(List<String> set, List<String> subset) {
     	int found = 0;
-    	for (Object item : indexColumns) {
-    		if (HPCCJDBCUtils.containsStringCaseInsensitive(subSet, item.toString())) {
-    			if (++found == subSet.size()) return true;
+    	for (String item : set) {
+    		if (containsStringCaseInsensitive(subset, item)) {
+    			if (++found == subset.size()) return true;
     		}
     	}
     	return false;

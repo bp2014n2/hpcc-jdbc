@@ -46,7 +46,7 @@ public class ECLSelectTableFinder extends FullVisitorAdapter {
 		selectTable = true;
 		super.visit(plainSelect);
 	}
-	
+	/*
 	@Override
 	public void visit(Update update) {
 		selectTable = true;
@@ -65,6 +65,7 @@ public class ECLSelectTableFinder extends FullVisitorAdapter {
 		tryAccept(update.getWhere());
 		
 	}
+	*/
 	
 	@Override
 	public void visit(Delete delete) {

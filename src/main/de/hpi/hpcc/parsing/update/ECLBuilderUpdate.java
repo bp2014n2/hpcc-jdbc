@@ -78,9 +78,10 @@ public class ECLBuilderUpdate extends ECLBuilder {
 			eclCode.append(joinRecord.toString());
 			
 			StringBuilder transformFunction = new StringBuilder();
-			String transformResultType = tableName + "_idx_record";
+			String transformResultType = tableName + "_record";
 			String joinTransformFunction = "exists"+joinId;
 			transformFunction.append(transformResultType + " "+joinTransformFunction+"(" + transformResultType + " l, " + joinRecordName + " r) := TRANSFORM\n");
+			
 			for (String col : eclLayouts.getAllColumns(tableName)) {
 				if (HPCCJDBCUtils.containsStringCaseInsensitive(sqlParser.getColumns(),col)) {
 					transformFunction.append("  SELF." + col + " := IF(r." + col +" = ")

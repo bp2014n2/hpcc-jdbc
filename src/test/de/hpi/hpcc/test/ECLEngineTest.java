@@ -2,7 +2,6 @@ package de.hpi.hpcc.test;
 
 import static org.junit.Assert.assertEquals;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,19 +19,19 @@ public class ECLEngineTest {
 	@BeforeClass
 	public static void initialize() {
 		layouts.setLayout("myTable", "RECORD STRING10 myColumnA; STRING10 myColumnB; STRING10 myColumnC; STRING10 myColumnD; STRING10 myColumnE; END;"); 
-		List<Object> keyedColumns = new ArrayList<Object>();
-		List<Object> nonKeyedColumns = new ArrayList<Object>();
+		List<String> keyedColumns = new ArrayList<String>();
+		List<String> nonKeyedColumns = new ArrayList<String>();
 		keyedColumns.add("myColumnA");
 		nonKeyedColumns.add("myColumnC");
 		layouts.setIndex("myTable", "myTable_idx_small", keyedColumns, nonKeyedColumns);
-		keyedColumns = new ArrayList<Object>();
-		nonKeyedColumns = new ArrayList<Object>();
+		keyedColumns = new ArrayList<String>();
+		nonKeyedColumns = new ArrayList<String>();
 		keyedColumns.add("myColumnA");
 		nonKeyedColumns.add("myColumnC");
 		keyedColumns.add("myColumnB");
 		layouts.setIndex("myTable", "myTable_idx_mid", keyedColumns, nonKeyedColumns);
-		keyedColumns = new ArrayList<Object>();
-		nonKeyedColumns = new ArrayList<Object>();
+		keyedColumns = new ArrayList<String>();
+		nonKeyedColumns = new ArrayList<String>();
 		keyedColumns.add("myColumnA");
 		nonKeyedColumns.add("myColumnC");
 		keyedColumns.add("myColumnB");

@@ -62,6 +62,10 @@ public class ECLLayouts {
 		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(table);
 		if (dfuFile != null) {
 			HPCCColumnMetaData columnMeta = dfuFile.getFieldMetaData(column);
+			//TODO: only a quick fix, make it more general
+			if (columnMeta == null && column == "__internal_fpos__") {
+				return "unsigned8";
+			}
 			return columnMeta.getEclType();
 		}
 		return ""; //TODO: why not null?
@@ -72,21 +76,52 @@ public class ECLLayouts {
 	 * @param index
 	 * @return
 	 */
-	public List<Object> getKeyedColumns(String index) {  //TODO: assure right order of keyed/non-keyed columns
-		index = getFullTableName(index);
-		HPCCDFUFile file = dbMetadata.getDFUFile(index);
-		if(file != null) {
-			return getSortedPropertyValues(file.getKeyedColumns());
-		} 
-		return null;
+	public List<String> getKeyedColumns(String tableName, String index) {  //TODO: assure right order of keyed/non-keyed columns
+		if (index != null) {
+			index = getFullTableName(index);
+			HPCCDFUFile file = dbMetadata.getDFUFile(index);
+			if(file != null) {
+				List<String> output = new ArrayList<String>();
+				for (Object column : getSortedPropertyValues(file.getKeyedColumns())) {
+					output.add(column.toString());
+				}
+				return output;
+			} 
+		}
+		return getKeyedColumnsForTempIndex(tableName);
 		
 	}
 	
-	public List<Object> getNonKeyedColumns(String index) {
-		index = getFullTableName(index);
-		HPCCDFUFile file = dbMetadata.getDFUFile(index);
-		if(file != null) {
-			return getSortedPropertyValues(file.getNonKeyedColumns());
+	public List<String> getNonKeyedColumns(String tableName, String index) {
+		if (index != null) {
+			index = getFullTableName(index);
+			HPCCDFUFile file = dbMetadata.getDFUFile(index);
+			if(file != null) {
+				List<String> output = new ArrayList<String>();
+				for (Object column : getSortedPropertyValues(file.getNonKeyedColumns())) {
+					output.add(column.toString());
+				}
+				return output;
+			}
+		}
+		 
+		return getNonKeyedColumnsForTempIndex(tableName);
+	}
+	
+	public List<String> getKeyedColumnsForTempIndex(String tableName) {  //TODO: assure right order of keyed/non-keyed columns
+		tableName = getFullTableName(tableName);
+		HPCCDFUFile file = dbMetadata.getDFUFile(tableName);
+		if(file != null && file.getTempIndex() != null) {
+			return file.getTempIndex().getKeyedColumnNames();
+		} 
+		return null;
+	}
+	
+	public List<String> getNonKeyedColumnsForTempIndex(String tableName) {
+		tableName = getFullTableName(tableName);
+		HPCCDFUFile file = dbMetadata.getDFUFile(tableName);
+		if(file != null && file.getTempIndex() != null) {
+			return file.getTempIndex().getNonKeyedColumnNames();
 		} 
 		return null;
 	}
@@ -114,6 +149,21 @@ public class ECLLayouts {
 			return new LinkedHashSet<String>(list);
 		}
 		return null;	
+	}
+	
+	public LinkedHashSet<String> getAllIndexColumns(String table, String index) {
+		LinkedHashSet<String> set = new LinkedHashSet<String>();
+		List<String> keyed = getKeyedColumns(table, index);
+		List<String> nonKeyed = getNonKeyedColumns(table, index);
+
+		if (keyed != null) {
+			set.addAll(keyed);
+		}
+		if (nonKeyed != null) {
+			set.addAll(nonKeyed);
+		}
+		
+		return set;	
 	}
 
 	
@@ -226,29 +276,42 @@ public class ECLLayouts {
 			return null;
 		}
 	}
-	
-//	public String getLayoutOrdered(String table, List<String> orderedColumns) {
-//		String name = getFullTableName(table);
-//		StringBuilder layout = new StringBuilder(table.toLowerCase()+"_record := RECORD ");
-//		
-//		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
-//		List<Object> fields = Collections.list(dfuFile.getAllFields());
-//		
-//		for (String columnName : orderedColumns) {
-//			for (Object field : fields) {
-//				HPCCColumnMetaData column = (HPCCColumnMetaData) field;
-//				if (!column.getColumnName().equalsIgnoreCase(columnName)) {
-//					continue;
-//				}
-//				layout.append(column.getEclType());
-//				layout.append(" ");
-//				layout.append(column.getColumnName());
-//				layout.append("; ");
-//			}
-//		}
-//		layout.append("END;");
-//		
-//		return layout.toString();
-//	}
 
+	public void setKeyedColumnsForTempIndex(String tableName, List<String> keyedColumns) {
+		String name = getFullTableName(tableName);
+		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
+		
+		TempIndex index = new TempIndex();
+		if (dfuFile != null) {
+			if (dfuFile.getTempIndex() != null) {
+				index = dfuFile.getTempIndex();
+			}
+			List<Tuple<String, String>> keyed = new ArrayList<Tuple<String, String>>();
+			for (String column : keyedColumns) {
+				keyed.add(new Tuple<String, String>(column.toString(), getECLDataType(tableName, column)));
+			}
+			index.setKeyedColumns(keyed);
+			dfuFile.setTempIndex(index);
+		}
+	}
+
+	public void setNonKeyedColumnsForTempIndex(String tableName, List<String> nonKeyedColumns) {
+		String name = getFullTableName(tableName);
+		HPCCDFUFile dfuFile = dbMetadata.getDFUFile(name);
+		
+		TempIndex index = new TempIndex();
+		if (dfuFile != null) {
+			if (dfuFile.getTempIndex() != null) {
+				index = dfuFile.getTempIndex();
+			}
+			List<Tuple<String, String>> nonKeyed = new ArrayList<Tuple<String, String>>();
+			for (String column : nonKeyedColumns) {
+				nonKeyed.add(new Tuple<String, String>(column.toString(), getECLDataType(tableName, column)));
+			}
+			nonKeyed.add(new Tuple<String, String>("__internal_fpos__", "unsigned8"));
+			
+			index.setNonKeyedColumns(nonKeyed);
+			dfuFile.setTempIndex(index);
+		}
+	}
 }

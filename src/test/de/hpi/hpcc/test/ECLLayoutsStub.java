@@ -22,8 +22,8 @@ public class ECLLayoutsStub extends ECLLayouts {
 
 	Map<String, String> layouts = new HashMap<String, String>();
 	Map<String, List<String>> indexes = new HashMap<String, List<String>>();
-	Map<String, List<Object>> keyedColumns = new HashMap<String, List<Object>>();
-	Map<String, List<Object>> nonKeyedColumns = new HashMap<String, List<Object>>();
+	Map<String, List<String>> keyedColumns = new HashMap<String, List<String>>();
+	Map<String, List<String>> nonKeyedColumns = new HashMap<String, List<String>>();
 	private List<String> tempTableList = new ArrayList<String>();
 	
 	public void setLayout(String table, String layout) {
@@ -112,16 +112,16 @@ public class ECLLayoutsStub extends ECLLayouts {
 	}
 	
 	@Override
-	public List<Object> getKeyedColumns(String indexName) {
+	public List<String> getKeyedColumns(String tableName, String indexName) {
 		return keyedColumns.get(indexName);
 	}
 	
 	@Override
-	public List<Object> getNonKeyedColumns(String indexName) {
+	public List<String> getNonKeyedColumns(String tableName, String indexName) {
 		return nonKeyedColumns.get(indexName);
 	}
 
-	public void setIndex(String table, String indexName, List<Object> keyedColumns, List<Object> nonKeyedColumns) {
+	public void setIndex(String table, String indexName, List<String> keyedColumns, List<String> nonKeyedColumns) {
 		List<String> currentIndexes = indexes.get(table);
 		if (currentIndexes == null) {
 			currentIndexes = new ArrayList<String>();

@@ -28,6 +28,8 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.hpi.hpcc.parsing.TempIndex;
+
 public class HPCCDFUFile
 {
     private String              prefix = null;
@@ -65,6 +67,7 @@ public class HPCCDFUFile
     private String              idxFilePosField = null;
     private boolean             hasPayLoad = false;
     private boolean             hasKeyedFieldInfoBeenSet = false;
+	private TempIndex tempIndex;
 
     private final static String RELATEDINDEXKEYWORD = "XDBC:RelIndexes";
     private final static Pattern RELINDEXPATTERN = Pattern.compile(
@@ -889,6 +892,14 @@ public class HPCCDFUFile
     public boolean hasKeyedFieldInfoBeenSet()
     {
         return hasKeyedFieldInfoBeenSet;
+    }
+    
+    public void setTempIndex(TempIndex index) {
+    	this.tempIndex = index;
+    }
+    
+    public TempIndex getTempIndex() {
+    	return this.tempIndex;
     }
 
 }

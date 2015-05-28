@@ -29,7 +29,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.Statement;
 import de.hpi.hpcc.logging.HPCCLogger;
 import de.hpi.hpcc.main.*;
@@ -111,12 +110,11 @@ public abstract class ECLEngine
 			if (index != null) {
 				indicesString.append(getIndexString(table, index) + "\n");
 				hasIndex = true;
-				indicesString.append(generateIndexRecord(table) + "\n");
+				indicesString.append(generateIndexRecord(index) + "\n");
 			} else if (HPCCJDBCUtils.containsStringCaseInsensitive(selectTables, table)) {
 				indicesString.append(generateTempIndexString(table) + "\n");
 				hasIndex = true;
 				tempIndices.add(table);
-				indicesString.append(generateIndexRecord(table) + "\n");
 			} 
 			
 			datasetsString.append(table).append(hasIndex?"_table":"").append(" := ").append("DATASET(");
@@ -134,11 +132,12 @@ public abstract class ECLEngine
     public String getIndex(String tableName) {
        	List<String> indexes = layouts.getListOfIndexes(tableName);
        	if (indexes == null) return null;
-    	Set<String> columns = getSQLParser().getQueriedColumns(tableName);
+    	List<String> columns = new ArrayList<String>();
+    	columns.addAll(getSQLParser().getQueriedColumns(tableName));
        	ArrayList<Integer> scores = new ArrayList<Integer>();
        	for (String index : indexes) {
-           	List<Object> indexColumns = layouts.getKeyedColumns(index);
-           	indexColumns.addAll(layouts.getNonKeyedColumns(index));
+           	List<String> indexColumns = layouts.getKeyedColumns(tableName, index);
+           	indexColumns.addAll(layouts.getNonKeyedColumns(tableName, index));
            	if (!HPCCJDBCUtils.containsAllCaseInsensitive(indexColumns, columns)) {
            		scores.add(0);
            	} else {
@@ -161,10 +160,10 @@ public abstract class ECLEngine
     private String getIndexString(String tableName, String index) {
     	List<String> indexParameters = new ArrayList<String>();
     	indexParameters.add(tableName+"_table");
-    	String keyedColumnList = ECLUtils.join(layouts.getKeyedColumns(index), ", ");
+    	String keyedColumnList = ECLUtils.join(getKeyedColumns(tableName, index), ", ");
     	keyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(keyedColumnList);
     	indexParameters.add(keyedColumnList);
-    	String nonKeyedColumnList = ECLUtils.join(layouts.getNonKeyedColumns(index), ", ");
+    	String nonKeyedColumnList = ECLUtils.join(getNonKeyedColumns(tableName, index), ", ");
     	nonKeyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(nonKeyedColumnList);
     	indexParameters.add(nonKeyedColumnList);
     	indexParameters.add(ECLUtils.encapsulateWithSingleQuote("~"+index));
@@ -175,17 +174,39 @@ public abstract class ECLEngine
     	return tableName + " := " + joined + ";";
     }
     
+    private List<String> getKeyedColumns(String tableName, String indexName) {
+    	List<String> keyedColumns = layouts.getKeyedColumns(tableName, indexName);
+    	if (keyedColumns == null) {
+    		keyedColumns = new ArrayList<String>();
+    		for (String column : getSQLParser().getQueriedColumns(tableName)) {
+        		if (!column.contains("blob")) {
+        			keyedColumns.add(column);
+        		}
+        	}
+    		layouts.setKeyedColumnsForTempIndex(tableName, keyedColumns);
+    	}
+    	return keyedColumns;
+    }
+    
+    private List<String> getNonKeyedColumns(String tableName, String indexName) {
+    	List<String> nonKeyedColumns = layouts.getNonKeyedColumns(tableName, indexName);
+    	if (nonKeyedColumns == null) {
+    		nonKeyedColumns = new ArrayList<String>();
+    		for (String column : getSQLParser().getQueriedColumns(tableName)) {
+        		if (column.contains("blob")) {
+        			nonKeyedColumns.add(column);
+        		}
+        	}
+    		layouts.setNonKeyedColumnsForTempIndex(tableName, nonKeyedColumns);
+    	}
+    	return nonKeyedColumns;
+    }
+    
     private String generateTempIndexString(String tableName) {
     	//TODO: optimize index order
-    	Set<String> keyedColumns = new HashSet<String>();
-    	Set<String> nonKeyedColumns = new HashSet<String>();
-    	for (String column : getSQLParser().getQueriedColumns(tableName)) {
-    		if (column.contains("blob")) {
-    			nonKeyedColumns.add(column);
-    		} else {
-    			keyedColumns.add(column);
-    		}
-    	}
+    	List<String> keyedColumns = getKeyedColumns(tableName, null);
+    	List<String> nonKeyedColumns = getNonKeyedColumns(tableName, null);
+    	
     	
     	List<String> indexParameters = new ArrayList<String>();
     	
@@ -212,31 +233,38 @@ public abstract class ECLEngine
     	build = ECLUtils.convertToBuild(build);
     	outputCount++;
     	
+    	String record = generateTempIndexRecord(tableName);
     	
-    	
-    	return tableName + " := " + index + ";\n" + build + ";\n";
+    	return tableName + " := " + index + ";\n" + build + ";\n" + record;
     }
     
-    protected String generateIndexRecord(String tableName) {
-    	//TODO: optimize index order
-    	Set<String> keyedColumns = new HashSet<String>();
-    	Set<String> nonKeyedColumns = new HashSet<String>();
-    	for (String column : getSQLParser().getQueriedColumns(tableName)) {
-    		if (column.contains("blob")) {
-    			nonKeyedColumns.add(column);
-    		} else {
-    			keyedColumns.add(column);
-    		}
+    private String generateTempIndexRecord(String tableName) {
+    	
+    	List<String> keyedColumns = getKeyedColumns(tableName, null);
+    	List<String> nonKeyedColumns = getNonKeyedColumns(tableName, null);
+    	List<String> indexColumns = new ArrayList<String>();
+    	
+    	for(String column : keyedColumns) {
+    		String datatype = layouts.getECLDataType(tableName, column);
+    		indexColumns.add(datatype + " " + column);
+    	}
+    	for(String column : nonKeyedColumns) {
+    		String datatype = layouts.getECLDataType(tableName, column);
+    		indexColumns.add(datatype + " " + column);
     	}
     	
+    	//indexColumns.add("unsigned8 __internal_fpos__");
     	
-    	Set<String> indexColumns = new HashSet<String>();
-    	indexColumns.addAll(keyedColumns);
-    	indexColumns.addAll(nonKeyedColumns);
-    	String indexRecord = ECLUtils.join(indexColumns, ", ");
+    	String indexRecord = ECLUtils.join(indexColumns, "; ");
     	indexRecord = ECLUtils.convertToRecord(indexRecord);
-    	
     	return tableName + "_idx_record := " + indexRecord;
+	}
+
+	protected String generateIndexRecord(String tableName) {
+    	if (tableName.contains("::")) {
+    		tableName = tableName.split("::")[1];
+    	}
+    	return layouts.getLayout(tableName);
     }
     
     protected String removeTempIndex(String tableName) {

@@ -39,7 +39,8 @@ public abstract class SQLParser{
 		try {
 			return CCJSqlParserUtil.parse(sql);
 		} catch (JSQLParserException e) {
-			throw new HPCCException("No valid SQL");
+			
+			throw new HPCCException("No valid SQL: "+sql);
 		}
 	}
 

@@ -10,7 +10,7 @@ public class ECLBuilderWithItem extends ECLBuilderSelect {
 	private WithItem withItem;
 
 	public ECLBuilderWithItem(WithItem withItem, ECLLayouts eclLayouts) {
-		super(withItem, eclLayouts);
+		super(withItem.getSelectBody(), eclLayouts);
 		this.withItem = withItem;
 	}
 

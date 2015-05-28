@@ -110,7 +110,7 @@ public class ECLUtils {
 	}
 
 	public static String convertToRecord(String string) {
-		return "RECORD " + string + " END;";
+		return "RECORD " + string + "; END;";
 	}
 	
 }
