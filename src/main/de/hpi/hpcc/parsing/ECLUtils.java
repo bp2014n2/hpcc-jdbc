@@ -112,5 +112,9 @@ public class ECLUtils {
 	public static String convertToRecord(String string) {
 		return "RECORD " + string + "; END;";
 	}
+
+	public static String convertToNot(String string) {
+		return prepend(encapsulateWithBrackets(string), "NOT");
+	}
 	
 }

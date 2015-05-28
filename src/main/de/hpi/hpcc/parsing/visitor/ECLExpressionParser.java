@@ -136,6 +136,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 		PostgreSQLFromForExpression fromFor = (PostgreSQLFromForExpression) function.getParameters().getExpressions().get(0);
 		String column = parse(fromFor.getSourceExpression());
 		int start = Integer.parseInt(parse(fromFor.getFromExpression()));
+		int i = 1;
 		int end = start + Integer.parseInt(parse(fromFor.getForExpression())) - 1;
 		return column + "[" + start + ".." + end + "]";
 	}
@@ -337,7 +338,11 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(Column tableColumn) {
-		parsed = tableColumn.getColumnName();
+		parsed = "";
+		if (tableColumn.getTable() != null && tableColumn.getTable().getName() != null) {
+			parsed = tableColumn.getTable().getName() + "."; 
+		}
+		parsed += tableColumn.getColumnName();
 	}
 
 	@Override
@@ -365,20 +370,27 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 		SQLParserPlainSelect subParser = (SQLParserPlainSelect) selectVisitor.findParser(((SubSelect)existsExpression.getRightExpression()).getSelectBody());
 		
 		StringBuilder existString = new StringBuilder();
-		
 		//TODO:
 		if(subParser.getSelectItems().size() == 1) {
 			if (subParser.getSelectItems().get(0).toString().equalsIgnoreCase("1 as long_1")) {
 				if (subParser.getFromItem() instanceof SubSelect) {
 					existString.append(parse(subParser.getFromItem()));
 				} else if (subParser.getFromItem() instanceof Table) {
+					existString.append("EXIST(");
 					existString.append(parse(subParser.getFromItem()));
+					existString.append(ECLUtils.encapsulateWithBrackets(parse(subParser.getWhere())));
+					existString.append(")");
 				}
 			}
 		} else {		
 			existString.append(parse(existsExpression.getRightExpression()));		
 		}
-		parsed = existString.toString();
+		if (existsExpression.isNot()) {
+			parsed = "NOT " + existString.toString();
+		} else {
+			parsed = existString.toString();
+		}
+		
 	}
 
 	@Override
