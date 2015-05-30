@@ -19,9 +19,9 @@ public class ECLColumnFinderTest {
 	
 	@BeforeClass
 	public static void initialize() {
-		eclLayouts.setLayout("mytable", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING25 myColumnB; END;");
-		eclLayouts.setLayout("mytablea", "RECORD STRING50 columnFromA; END;");
-		eclLayouts.setLayout("mytableb", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
+		eclLayouts.setLayout("myTable", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING25 myColumnB; END;");
+		eclLayouts.setLayout("myTableA", "RECORD STRING50 columnFromA; END;");
+		eclLayouts.setLayout("myTableB", "RECORD STRING50 myColumn; STRING50 myColumnA; STRING50 myColumnB; END;");
 	}
 	
 	public static void assertAllColumnsAreFound(Set<String> expectedColumns, String tableName, String sql) throws HPCCException {
@@ -33,82 +33,82 @@ public class ECLColumnFinderTest {
 	
 	@Test
 	public void shouldFindColumns() throws HPCCException {
-		String tableName = "mytable";
+		String tableName = "myTable";
 		Set<String> expectedColumns = new HashSet<String>();
-		expectedColumns.add("mycolumn");
+		expectedColumns.add("myColumn");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT myColumn from myTable");
-		expectedColumns.add("mycolumna");
+		expectedColumns.add("myColumnA");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT myColumn, myColumnA from myTable");
-		expectedColumns.add("mycolumnb");
+		expectedColumns.add("myColumnB");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT * from myTable");
 	}
 	
 	@Test
 	public void shouldFindJoinColumns() throws HPCCException {
-		String tableName = "mytable";
+		String tableName = "myTable";
 		Set<String> expectedColumns = new HashSet<String>();
-		expectedColumns.add("mycolumn");
+		expectedColumns.add("myColumn");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT myColumn from myTable, myTableA");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT myColumn from myTableA, myTable");
-		expectedColumns.add("mycolumna");
+		expectedColumns.add("myColumnA");
 		assertAllColumnsAreFound(expectedColumns, tableName, "WITH t AS (SELECT myColumn, myColumnA FROM myTable) SELECT myColumn from myTableA, t");
 	}
 	
 	@Test
 	public void shouldFindColumnsInWhere() throws HPCCException {
-		String tableName = "mytable";
+		String tableName = "myTable";
 		Set<String> expectedColumns = new HashSet<String>();
-		expectedColumns.add("mycolumn");
-		expectedColumns.add("mycolumna");
+		expectedColumns.add("myColumn");
+		expectedColumns.add("myColumnA");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT myColumn from myTable WHERE myColumnA = 'myValue'");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT myColumn from myTable WHERE myTable.myColumnA = 'myValue'");
 		assertAllColumnsAreFound(expectedColumns, tableName, "UPDATE myTable SET myColumnA = 'updated' WHERE myColumn = 'myValue'");
-		expectedColumns.add("mycolumnb");
+		expectedColumns.add("myColumnB");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT myColumn from myTable WHERE myColumnA = myColumnB");
 	}
 	
 	@Test
 	public void shouldFindColumnsInSubSelect() throws HPCCException {
-		String tableName = "mytable";
+		String tableName = "myTable";
 		Set<String> expectedColumns = new HashSet<String>();
-		expectedColumns.add("mycolumn");
+		expectedColumns.add("myColumn");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT myColumn from (SELECT myColumn FROM myTable)");
-		expectedColumns.add("mycolumna");
+		expectedColumns.add("myColumnA");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT myColumn from (SELECT myColumn, myColumnA FROM myTable)");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT myColumn from (SELECT myColumn FROM myTable WHERE myColumnA = 'myValue')");
 		assertAllColumnsAreFound(expectedColumns, tableName, "INSERT INTO myTable (SELECT myColumn from myTable WHERE myColumnA = 'myValue')");
-		expectedColumns.add("mycolumnb");
+		expectedColumns.add("myColumnB");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT myColumn from (SELECT * FROM myTable)");
 		assertAllColumnsAreFound(expectedColumns, tableName, "UPDATE myTable SET myColumnA = 'updated' WHERE myColumn IN (SELECT myColumn from myTable WHERE myColumnB = 'myValue')");
 	}
 	
 	@Test
 	public void shouldFindColumnsInWith() throws HPCCException {
-		String tableName = "mytable";
+		String tableName = "myTable";
 		Set<String> expectedColumns = new HashSet<String>();
-		expectedColumns.add("mycolumna");
-		expectedColumns.add("mycolumnb");
+		expectedColumns.add("myColumnA");
+		expectedColumns.add("myColumnB");
 		assertAllColumnsAreFound(expectedColumns, tableName, "INSERT INTO myTable WITH t AS (SELECT myColumnA from myTable WHERE myColumnB = 'myValue') SELECT myColumnA FROM t");
-		expectedColumns.add("mycolumn");
+		expectedColumns.add("myColumn");
 		assertAllColumnsAreFound(expectedColumns, tableName, "INSERT INTO myTable WITH t AS (SELECT * from myTable WHERE myColumnB = 'myValue') SELECT myColumnA FROM t");
 	}
 	
 	@Test
 	public void shouldFindColumnsWithTableAlias() throws HPCCException {
-		String tableName = "mytable";
+		String tableName = "myTable";
 		Set<String> expectedColumns = new HashSet<String>();
-		expectedColumns.add("mycolumna");
+		expectedColumns.add("myColumnA");
 		assertAllColumnsAreFound(expectedColumns, tableName, "SELECT t.myColumnA FROM myTable t");
 	}	
 	
 	@Test
 	public void shouldFindColumnsInFunction() throws HPCCException {
-		String tableName = "mytable";
+		String tableName = "myTable";
 		Set<String> expectedColumns = new HashSet<String>();
-		expectedColumns.add("mycolumna");
-		expectedColumns.add("mycolumnb");
+		expectedColumns.add("myColumnA");
+		expectedColumns.add("myColumnB");
 		assertAllColumnsAreFound(expectedColumns, tableName, "INSERT INTO myTable WITH t AS (SELECT myColumnA, COUNT(myColumnB) as count_b FROM myTable GROUP BY myColumnA ORDER BY count_b) SELECT myColumnA FROM t");
-		expectedColumns.add("mycolumn");
+		expectedColumns.add("myColumn");
 		assertAllColumnsAreFound(expectedColumns, tableName, "UPDATE myTable SET myColumnA = 'A' WHERE myColumnB IN (SELECT myColumnB, SUM(myColumn) as myCount FROM myTable GROUP BY myColumnB ORDER BY myCount LIMIT 10)");
 		assertAllColumnsAreFound(expectedColumns, tableName, "UPDATE myTable SET myColumnA = 'A' WHERE myColumnB IN (SELECT myColumnB FROM myTable WHERE SUBSTRING(myColumn FROM 1 FOR 3) = 'abc')");
 	}

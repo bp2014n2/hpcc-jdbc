@@ -40,7 +40,7 @@ public class ECLColumnFinder extends FullVisitorAdapter {
 
 	@Override
 	public void visit(Column tableColumn) {
-		String columnName = tableColumn.getColumnName().toLowerCase();
+		String columnName = tableColumn.getColumnName();
 		if (!tables.empty() 
 				&& HPCCJDBCUtils.containsStringCaseInsensitive(eclLayouts.getAllColumns(tableName), columnName)
 				&& HPCCJDBCUtils.containsStringCaseInsensitive(tables.peek(), tableName)) {
@@ -53,14 +53,14 @@ public class ECLColumnFinder extends FullVisitorAdapter {
 		if (!tables.empty() && tables.peek().contains(tableName)) {
 			Set<String> allColumnsSet = eclLayouts.getAllColumns(tableName);
 			for(String column : allColumnsSet) {
-				columns.add(column.toLowerCase());
+				columns.add(column);
 			}
 		}
 	}
 	
 	@Override
 	public void visit(Table tableName) {
-		tables.peek().add(tableName.getName().toLowerCase());
+		tables.peek().add(tableName.getName());
 	}
 	
 	@Override
