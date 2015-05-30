@@ -372,7 +372,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 				if (subParser.getFromItem() instanceof SubSelect) {
 					existString.append(parse(subParser.getFromItem()));
 				} else if (subParser.getFromItem() instanceof Table) {
-					existString.append("EXIST(");
+					existString.append("EXISTS(");
 					existString.append(parse(subParser.getFromItem()));
 					ECLExpressionParserExists parser = new ECLExpressionParserExists(eclLayouts);
 					String where = parser.parse(subParser.getWhere());
