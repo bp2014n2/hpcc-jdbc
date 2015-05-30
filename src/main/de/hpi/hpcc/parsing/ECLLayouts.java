@@ -335,7 +335,6 @@ public class ECLLayouts {
 			for (String column : nonKeyedColumns) {
 				nonKeyed.add(new Tuple<String, String>(column.toString(), getECLDataType(tableName, column)));
 			}
-			nonKeyed.add(new Tuple<String, String>("__internal_fpos__", "unsigned8"));
 			
 			index.setNonKeyedColumns(nonKeyed);
 			dfuFile.setTempIndex(index);

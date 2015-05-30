@@ -41,6 +41,7 @@ public class HPCCStatement implements Statement{
 		add("concept_dimension");
 		add("qt_patient_set_collection");
 		add("qt_patient_env_collection");
+		add("qt_enc_collection");
 		add("avk_fdb_t_leistungskosten");
     	
     }};    

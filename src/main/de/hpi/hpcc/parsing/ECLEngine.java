@@ -208,7 +208,6 @@ public abstract class ECLEngine
     	List<String> keyedColumns = getKeyedColumns(tableName, null);
     	List<String> nonKeyedColumns = getNonKeyedColumns(tableName, null);
     	
-    	
     	List<String> indexParameters = new ArrayList<String>();
     	
     	indexParameters.add(tableName+"_table");
