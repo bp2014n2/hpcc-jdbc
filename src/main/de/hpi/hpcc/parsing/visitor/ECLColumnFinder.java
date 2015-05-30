@@ -43,7 +43,8 @@ public class ECLColumnFinder extends FullVisitorAdapter {
 		String columnName = tableColumn.getColumnName();
 		if (!tables.empty() 
 				&& HPCCJDBCUtils.containsStringCaseInsensitive(eclLayouts.getAllColumns(tableName), columnName)
-				&& HPCCJDBCUtils.containsStringCaseInsensitive(tables.peek(), tableName)) {
+				&& HPCCJDBCUtils.containsStringCaseInsensitive(tables.peek(), tableName)
+				&& !HPCCJDBCUtils.containsStringCaseInsensitive(columns, columnName)) {
 			columns.add(columnName);
 		}
 	}
