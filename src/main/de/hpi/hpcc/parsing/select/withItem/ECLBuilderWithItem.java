@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.WithItem;
 import de.hpi.hpcc.parsing.ECLLayouts;
@@ -13,6 +14,8 @@ import de.hpi.hpcc.parsing.SQLParser;
 import de.hpi.hpcc.parsing.select.ECLBuilderSelect;
 import de.hpi.hpcc.parsing.select.ECLSelectParser;
 import de.hpi.hpcc.parsing.select.SQLParserSelect;
+import de.hpi.hpcc.parsing.visitor.ECLNameParser;
+import de.hpi.hpcc.parsing.visitor.ECLSelectItemFinder;
 
 public class ECLBuilderWithItem extends ECLBuilderSelect {
 
@@ -40,13 +43,22 @@ public class ECLBuilderWithItem extends ECLBuilderSelect {
 	private String generateTempIndex() {
 		List<String> parameterList = new ArrayList<String>();
 		parameterList.add(withItem.getName()+"_table");
-		SQLParserSelect parser = selectParser.findParser(withItem.getSelectBody());
-		List<SelectItem> selectItems = parser.getSelectItems();
-		
-		
-//		String keyedColumnList = ECLUtils.join(columns, ", ");
-//    	keyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(keyedColumnList);
-//		parameterList.add(keyedColumnList); // keyed
+		List<String> columns = new ArrayList<String>();
+		ECLSelectItemFinder finder = new ECLSelectItemFinder(eclLayouts);
+    	List<SelectExpressionItem> selectItems = finder.find(select);
+    	
+		for (int i=0; i < selectItems.size(); i++) {
+    		SelectExpressionItem selectItem = selectItems.get(i);
+    		ECLNameParser namer = new ECLNameParser();
+    		String name = namer.name(selectItem.getExpression());
+    		if(selectItem.getAlias() != null) {
+    			name = selectItem.getAlias().getName();
+    		}
+    		columns.add(name);
+		}
+		String keyedColumnList = ECLUtils.join(columns, ", ");
+    	keyedColumnList = ECLUtils.encapsulateWithCurlyBrackets(keyedColumnList);
+		parameterList.add(keyedColumnList); // keyed
 		parameterList.add("{}"); //nonkeyed
 		parameterList.add(ECLUtils.encapsulateWithSingleQuote("~"+eclLayouts.getPublicSchema()+"::"+withItem.getName()+"_idx_tmp"));
     
