@@ -76,7 +76,7 @@ import net.sf.jsqlparser.statement.select.ValuesList;
 
 public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
-	private String parsed = "";
+	protected String parsed = "";
 	private Set<String> allTables;
 	private ECLLayouts eclLayouts;
 	
@@ -338,11 +338,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	@Override
 	public void visit(Column tableColumn) {
-		parsed = "";
-		if (tableColumn.getTable() != null && tableColumn.getTable().getName() != null) {
-			parsed = tableColumn.getTable().getName() + "."; 
-		}
-		parsed += tableColumn.getColumnName();
+		parsed = tableColumn.getColumnName();
 	}
 
 	@Override
@@ -378,7 +374,9 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 				} else if (subParser.getFromItem() instanceof Table) {
 					existString.append("EXIST(");
 					existString.append(parse(subParser.getFromItem()));
-					existString.append(ECLUtils.encapsulateWithBrackets(parse(subParser.getWhere())));
+					ECLExpressionParserExists parser = new ECLExpressionParserExists(eclLayouts);
+					String where = parser.parse(subParser.getWhere());
+					existString.append(ECLUtils.encapsulateWithBrackets(where));
 					existString.append(")");
 				}
 			}
