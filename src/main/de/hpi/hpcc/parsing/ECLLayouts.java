@@ -3,6 +3,7 @@ package de.hpi.hpcc.parsing;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Properties;
@@ -17,6 +18,7 @@ import de.hpi.hpcc.main.HPCCDatabaseMetaData;
 public class ECLLayouts {
     
 	HPCCDatabaseMetaData dbMetadata;
+	private HashMap<String, List<String>> tableNameAliases = new HashMap<String, List<String>>();
 	
 	public ECLLayouts (HPCCDatabaseMetaData dbMetadata) {
 		this.dbMetadata = dbMetadata;
@@ -24,6 +26,31 @@ public class ECLLayouts {
 	
 	public String getPublicSchema() {
 		return this.dbMetadata.getPublicSchema();
+	}
+	
+	public String getTableNameForAlias(String alias) {
+		if (tableNameAliases.containsKey(alias)) {
+			return alias;
+		}
+		for(String table : tableNameAliases.keySet()) {
+			List<String> aliases = tableNameAliases.get(table);
+			for (String currentAlias : aliases) {
+				if (currentAlias.equalsIgnoreCase(alias)) {
+					return table;
+				}
+			}
+		}
+		return null;
+	}
+	
+	public void addAlias(String tableName, String alias) {
+		if (tableNameAliases.containsKey(tableName) && alias != null) {
+			tableNameAliases.get(tableName).add(alias);
+		} else {
+			List<String> newAlias = new ArrayList<String>();
+			if (alias != null) newAlias.add(alias);
+			tableNameAliases.put(tableName, newAlias);
+		} 
 	}
 	
 	/**

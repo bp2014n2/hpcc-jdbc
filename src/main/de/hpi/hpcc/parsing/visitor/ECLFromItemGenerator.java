@@ -15,7 +15,6 @@ public class ECLFromItemGenerator implements FromItemVisitor {
 
 	private String generated;
 	private ECLLayouts layouts;
-	
 
 	public ECLFromItemGenerator(ECLLayouts layouts) {
 		this.layouts = layouts;
@@ -25,34 +24,40 @@ public class ECLFromItemGenerator implements FromItemVisitor {
 		fromItem.accept(this);
 		return this.generated;
 	}
-	
+
 	@Override
 	public void visit(Table tableName) {
 		generated = tableName.getName();
+		String aliasName = null;
+		if (tableName.getAlias() != null) {
+			aliasName = tableName.getAlias().getName();
+		}
+		layouts.addAlias(tableName.getName(), aliasName);
 	}
 
 	@Override
 	public void visit(SubSelect subSelect) {
 		ECLSelectParser selectParser = new ECLSelectParser(layouts);
-		generated = ECLUtils.encapsulateWithBrackets(selectParser.parse(subSelect.getSelectBody()));
+		generated = ECLUtils.encapsulateWithBrackets(selectParser
+				.parse(subSelect.getSelectBody()));
 	}
 
 	@Override
 	public void visit(SubJoin subjoin) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void visit(LateralSubSelect lateralSubSelect) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void visit(ValuesList valuesList) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

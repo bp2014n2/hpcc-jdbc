@@ -103,6 +103,7 @@ public abstract class ECLEngine
     	List<String> selectTables = finder.findTableNames(getSQLParser().getStatement());
     	
     	for (String table : getSQLParser().getAllTables()) {
+    		layouts.addAlias(table, null);
 //    		boolean isTemp = table.contains(session_id);
     		String fullTableName = this.layouts.getPublicSchema()+"::"+table;
     		boolean hasIndex = false;

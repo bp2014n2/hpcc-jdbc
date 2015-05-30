@@ -78,7 +78,7 @@ public class ECLExpressionParser implements ExpressionVisitor, FromItemVisitor {
 
 	protected String parsed = "";
 	private Set<String> allTables;
-	private ECLLayouts eclLayouts;
+	protected ECLLayouts eclLayouts;
 	
 	public ECLExpressionParser(ECLLayouts eclLayouts) {
 		this.eclLayouts = eclLayouts;

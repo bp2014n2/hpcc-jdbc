@@ -18,6 +18,7 @@ public class ECLBuilderUpdateTest extends ECLBuilderTest {
 	
 	@Test
 	public void shouldTranslateUpdateWithExists() throws HPCCException {
+		eclLayouts.addAlias("myTable", "myTableA");
 		//update myTable set myColumnA = 'myValue' where myColumnA = 'anotherValue' and exists (select 1 from myTableA where myTable.myColumnB = myTableA.myColumnB)
 		assertStatementCanBeParsedAs("exists_record1 := RECORD STRING25 myColumnB; STRING50 myColumnA; END;\nmyTable_record exists1(myTable_record l, exists_record1 r) := TRANSFORM\n  SELF.myColumn := l.myColumn;\n  SELF.myColumnA := IF(r.myColumnA = '', l.myColumnA, r.myColumnA);\n  SELF.myColumnB := l.myColumnB;\nEND;\nOUTPUT(JOIN(myTable(myColumnA = 'anotherValue'), TABLE(EXISTS(myTableA(myTable.myColumnB = myTableA.myColumnB)), {myColumnB, STRING50 myColumnA := 'myValue'}), LEFT.myColumnB = RIGHT.myColumnB, exists1(LEFT, RIGHT), LEFT OUTER) + myTable(NOT myColumnA = 'anotherValue'),,'~%NEWTABLE%',OVERWRITE);\n", "update myTable set myColumnA = 'myValue' where myColumnA = 'anotherValue' and exists (select 1 from myTableA where myTable.myColumnB = myTableA.myColumnB)");
 		//currently not supported
